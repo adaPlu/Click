@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Headless build of the pure C# gameplay assemblies (decision D-001).
+    Compiles the exact source files Unity uses, at Unity's C# language level.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ScriptsRoot>..\..\ClickDungeon\Assets\ClickDungeon\Scripts</ScriptsRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(ScriptsRoot)\Domain\**\*.cs" />
+    <Compile Include="$(ScriptsRoot)\Content\**\*.cs" />
+    <Compile Include="$(ScriptsRoot)\Simulation\**\*.cs" />
+    <Compile Include="$(ScriptsRoot)\Application\**\*.cs" />
+    <Compile Include="$(ScriptsRoot)\Tests\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>

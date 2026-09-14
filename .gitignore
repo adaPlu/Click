@@ -1,0 +1,26 @@
+# Unity
+ClickDungeon/[Ll]ibrary/
+ClickDungeon/[Tt]emp/
+ClickDungeon/[Oo]bj/
+ClickDungeon/[Bb]uild/
+ClickDungeon/[Bb]uilds/
+ClickDungeon/[Ll]ogs/
+ClickDungeon/[Uu]ser[Ss]ettings/
+ClickDungeon/MemoryCaptures/
+ClickDungeon/*.csproj
+ClickDungeon/*.sln
+ClickDungeon/*.slnx
+ClickDungeon/.vs/
+ClickDungeon/.vscode/
+ClickDungeon/*.pidb
+ClickDungeon/*.userprefs
+ClickDungeon/crashlytics-buildid.txt
+
+# dotnet
+Sim/**/bin/
+Sim/**/obj/
+TestResults/
+
+# OS
+Thumbs.db
+.DS_Store

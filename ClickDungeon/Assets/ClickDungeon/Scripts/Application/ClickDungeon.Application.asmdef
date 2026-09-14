@@ -1,0 +1,20 @@
+{
+    "name": "ClickDungeon.Application",
+    "rootNamespace": "ClickDungeon.Application",
+    "references": [
+        "ClickDungeon.Domain",
+        "ClickDungeon.Content",
+        "ClickDungeon.Simulation"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

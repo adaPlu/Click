@@ -1,0 +1,832 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using ClickDungeon.Content;
+using ClickDungeon.Domain;
+using ClickDungeon.Simulation;
+using ClickDungeon.Unity.Ui;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
+using Terrain = ClickDungeon.Domain.Terrain;
+
+namespace ClickDungeon.Unity.Screens
+{
+    /// <summary>
+    /// Main gameplay screen, laid out after the reference "main game screen": logo, portrait and HP top-left,
+    /// floor plaque, centred 5×5 board, MOVE/SLASH/SHIELD/DASH/POTION under the board, settings top-right.
+    /// Every gameplay change goes through GameSession.Submit.
+    /// </summary>
+    public sealed class GameScreen
+    {
+        enum TargetMode { Move, Slash, Dash }
+
+        sealed class AbilityButton
+        {
+            public UiFactory.ButtonParts Parts;
+            public Image Selected;
+            public Image BadgeBack;
+            public Text Badge;
+            public CanvasGroup Group;
+        }
+
+        static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
+        static readonly Vector2 TopLeft = new Vector2(0f, 1f);
+        static readonly Vector2 TopRight = new Vector2(1f, 1f);
+        const int MaxLogLines = 14;
+
+        readonly ClickDungeonApp _app;
+        readonly BoardView _board;
+        readonly ModalOverlay _modal;
+        readonly ChestOverlay _chest;
+        readonly Dictionary<CommandKind, AbilityButton> _abilities = new Dictionary<CommandKind, AbilityButton>();
+        readonly List<string> _log = new List<string>();
+
+        Text _face;
+        Text _speechFace;
+        Text _speech;
+        Text _hpText;
+        RectTransform _hpFill;
+        Text _floorTitle;
+        Text _floorName;
+        Text _keyChip;
+        Text _slashChip;
+        Text _turnChip;
+        Text _logText;
+        Text _inspectTitle;
+        Text _inspectBody;
+
+        TargetMode _mode = TargetMode.Move;
+        GridPos? _hover;
+        List<Threat> _threats = new List<Threat>();
+        string _lastDamageSource;
+
+        public GameScreen(ClickDungeonApp app, RectTransform parent)
+        {
+            _app = app;
+            Root = UiFactory.Rect(parent, "GameScreen");
+            Root.Stretch();
+
+            Backdrop.Build(Root, new[] { new Vector2(-420f, 220f), new Vector2(420f, 220f), new Vector2(-420f, -120f), new Vector2(420f, -120f) });
+            BuildTopLeft();
+            BuildTopRight();
+            _logText = BuildPanel("WhatHappened", new Vector2(0f, 0.5f), new Vector2(36f, -60f), "WHAT HAPPENED", out _);
+            _logText.text = "<color=#A69F93>Nothing yet.\n\nEvery hit, discovery and wake-up will be explained here, newest first.</color>";
+            _inspectBody = BuildPanel("Inspect", new Vector2(1f, 0.5f), new Vector2(-36f, -60f), "INSPECT", out _inspectTitle);
+
+            _board = new BoardView(Root, app, new Vector2(0f, 66f));
+            _board.CellClicked += OnCellClicked;
+            _board.CellEntered += p =>
+            {
+                _hover = p;
+                RefreshBoardOnly();
+            };
+            _board.CellExited += p =>
+            {
+                if (_hover.HasValue && _hover.Value == p) _hover = null;
+                RefreshBoardOnly();
+            };
+
+            BuildAbilityBar();
+            BuildSpeechStrip();
+
+            _chest = new ChestOverlay(Root, app);
+            _modal = new ModalOverlay(Root, app);
+        }
+
+        public RectTransform Root { get; }
+
+        RunState Run => _app.Session.Run;
+        ContentCatalog Catalog => _app.Catalog;
+        bool Blocked => _modal.IsOpen || _chest.IsOpen || Run == null || Run.Status != RunStatus.InProgress;
+
+        // ------------------------------------------------------------------ lifecycle
+
+        public void Begin(List<GameEvent> events, string notice)
+        {
+            _log.Clear();
+            if (events != null)
+            {
+                AppendLog(events);
+                Say(Lines.FloorStart(Run.Floor), Run.Floor.IsBossFloor ? Expression.Shocked : Expression.Confident);
+            }
+            else
+            {
+                Say(notice ?? "Welcome back. Where were we? Ah yes: danger.", Expression.Happy);
+                _logText.text = "Run resumed.";
+            }
+            Refresh(false);
+
+            if (!_app.AutomationMode && !UserPrefs.SeenHelp)
+            {
+                UserPrefs.SeenHelp = true;
+                OpenHelp();
+            }
+        }
+
+        public void Tick()
+        {
+            var kb = Keyboard.current;
+            if (kb == null) return;
+
+            if (_chest.IsOpen)
+            {
+                if (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame) _chest.Tap();
+                return;
+            }
+            if (_modal.IsOpen)
+            {
+                if (kb.escapeKey.wasPressedThisFrame) _modal.Back();
+                return;
+            }
+            if (kb.escapeKey.wasPressedThisFrame)
+            {
+                if (_mode != TargetMode.Move) SetMode(TargetMode.Move);
+                else OpenPause();
+                return;
+            }
+            if (kb.slashKey.wasPressedThisFrame || kb.hKey.wasPressedThisFrame)
+            {
+                OpenHelp();
+                return;
+            }
+            if (Blocked) return;
+
+            if (kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame) Directional(Direction.Up);
+            else if (kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame) Directional(Direction.Down);
+            else if (kb.leftArrowKey.wasPressedThisFrame || kb.aKey.wasPressedThisFrame) Directional(Direction.Left);
+            else if (kb.rightArrowKey.wasPressedThisFrame || kb.dKey.wasPressedThisFrame) Directional(Direction.Right);
+            else if (kb.spaceKey.wasPressedThisFrame) Submit(PlayerCommand.Wait());
+            else if (kb.digit1Key.wasPressedThisFrame || kb.numpad1Key.wasPressedThisFrame) OnAbility(CommandKind.Move);
+            else if (kb.digit2Key.wasPressedThisFrame || kb.numpad2Key.wasPressedThisFrame) OnAbility(CommandKind.Slash);
+            else if (kb.digit3Key.wasPressedThisFrame || kb.numpad3Key.wasPressedThisFrame) OnAbility(CommandKind.Shield);
+            else if (kb.digit4Key.wasPressedThisFrame || kb.numpad4Key.wasPressedThisFrame) OnAbility(CommandKind.Dash);
+            else if (kb.digit5Key.wasPressedThisFrame || kb.numpad5Key.wasPressedThisFrame) OnAbility(CommandKind.Potion);
+        }
+
+        /// <summary>Automation hook (screenshots/smoke runs): same path as a player tap.</summary>
+        public void AutomationSubmit(PlayerCommand command) => Submit(command);
+
+        // ------------------------------------------------------------------ input → commands
+
+        void Directional(Direction dir)
+        {
+            var hero = Run.Hero.Pos;
+            switch (_mode)
+            {
+                case TargetMode.Slash:
+                    Submit(PlayerCommand.Slash(hero.Step(dir)));
+                    break;
+                case TargetMode.Dash:
+                    Submit(PlayerCommand.Dash(hero.Step(dir, Catalog.HeroClass(Run.Hero.ClassId).DashDistance)));
+                    break;
+                default:
+                    if (Commands.TryContextual(Run, hero.Step(dir), out var command)) Submit(command);
+                    break;
+            }
+        }
+
+        void OnCellClicked(GridPos p)
+        {
+            if (Blocked) return;
+            switch (_mode)
+            {
+                case TargetMode.Slash:
+                    Submit(PlayerCommand.Slash(p));
+                    break;
+                case TargetMode.Dash:
+                    Submit(PlayerCommand.Dash(p));
+                    break;
+                default:
+                    if (Commands.TryContextual(Run, p, out var command))
+                    {
+                        Submit(command);
+                    }
+                    else
+                    {
+                        _board.Nudge(p);
+                        Say("Too far! One step at a time. (DASH jumps two.)", Expression.Worried);
+                    }
+                    break;
+            }
+        }
+
+        void OnAbility(CommandKind kind)
+        {
+            if (Blocked) return;
+            switch (kind)
+            {
+                case CommandKind.Move:
+                    SetMode(TargetMode.Move);
+                    break;
+                case CommandKind.Slash:
+                    SetMode(_mode == TargetMode.Slash ? TargetMode.Move : TargetMode.Slash);
+                    break;
+                case CommandKind.Dash:
+                    SetMode(_mode == TargetMode.Dash ? TargetMode.Move : TargetMode.Dash);
+                    break;
+                case CommandKind.Shield:
+                    Submit(PlayerCommand.Shield());
+                    break;
+                case CommandKind.Potion:
+                    Submit(PlayerCommand.Potion());
+                    break;
+            }
+        }
+
+        void SetMode(TargetMode mode)
+        {
+            if (mode == TargetMode.Slash && Commands.LegalTargets(Run, CommandKind.Slash, Catalog).Count == 0)
+            {
+                Say("Nothing to slash. Stand next to an enemy or a bomb.", Expression.Neutral);
+                mode = TargetMode.Move;
+            }
+            else if (mode == TargetMode.Dash && Commands.LegalTargets(Run, CommandKind.Dash, Catalog).Count == 0)
+            {
+                Say(Run.Hero.DashCooldown > 0 ? $"Dash is recharging ({Run.Hero.DashCooldown})." : "No room to dash.", Expression.Worried);
+                mode = TargetMode.Move;
+            }
+            else if (mode == TargetMode.Slash)
+            {
+                Say("SLASH: pick a lit tile next to you.", Expression.Confident);
+            }
+            else if (mode == TargetMode.Dash)
+            {
+                Say("DASH: leap exactly two tiles in a straight line, clearing traps.", Expression.Confident);
+            }
+
+            _mode = mode;
+            Refresh(false);
+        }
+
+        void Submit(PlayerCommand command)
+        {
+            if (Blocked) return;
+            var run = Run;
+            int floorBefore = run.Floor.FloorIndex;
+
+            var result = _app.Session.Submit(command);
+            if (!result.Accepted)
+            {
+                Say(result.RejectReason, Expression.Worried);
+                _board.Nudge(command.Target);
+                return;
+            }
+
+            _mode = TargetMode.Move;
+            bool floorChanged = run.Floor.FloorIndex != floorBefore;
+            AppendLog(result.Events);
+
+            RewardRecord reward = null;
+            int bestPriority = 0;
+            string line = null;
+            var face = Expression.Neutral;
+            bool shake = false;
+            foreach (var e in result.Events)
+            {
+                int priority = Lines.React(e, run, Catalog, out var candidate, out var candidateFace);
+                if (candidate != null && priority > bestPriority)
+                {
+                    bestPriority = priority;
+                    line = candidate;
+                    face = candidateFace;
+                }
+                if (e.Kind == GameEventKind.HeroDamaged)
+                {
+                    _lastDamageSource = e.Source;
+                    shake = true;
+                }
+                if (e.Kind == GameEventKind.ChestOpened) reward = e.Reward;
+                if (!floorChanged) ShowPopup(e);
+            }
+
+            if (floorChanged && run.Status == RunStatus.InProgress)
+            {
+                _hover = null;
+                line = Lines.FloorStart(run.Floor);
+                face = run.Floor.IsBossFloor ? Expression.Shocked : Expression.Confident;
+            }
+            if (line != null) Say(line, face);
+            if (shake) _board.Shake();
+
+            Refresh(!floorChanged);
+
+            if (reward != null)
+            {
+                _chest.Open(reward, () =>
+                {
+                    Refresh(false);
+                    CheckRunEnd();
+                });
+            }
+            else
+            {
+                CheckRunEnd();
+            }
+        }
+
+        void ShowPopup(GameEvent e)
+        {
+            switch (e.Kind)
+            {
+                case GameEventKind.HeroDamaged: _board.Popup(e.To, $"-{e.Amount}", Palette.Danger); break;
+                case GameEventKind.HeroBlocked: _board.Popup(e.To, "BLOCK!", Palette.Gold); break;
+                case GameEventKind.HeroHealed: _board.Popup(e.To, $"+{e.Amount}", Palette.Safe); break;
+                case GameEventKind.EnemyDamaged: _board.Popup(e.To, $"-{e.Amount}", Color.white); break;
+                case GameEventKind.EnemyImmune: _board.Popup(e.To, "IMMUNE", Palette.Steel); break;
+                case GameEventKind.EnemyStaggered: _board.Popup(e.To, "DAZED", Palette.Gold); break;
+                case GameEventKind.EnemyWoke: _board.Popup(e.To, "!", Palette.Danger); break;
+                case GameEventKind.EnemyMissed: _board.Popup(e.To, "MISS", Palette.TextDim); break;
+                case GameEventKind.BombExploded: _board.Popup(e.To, "BOOM!", Palette.Fuse); break;
+                case GameEventKind.KeyCollected: _board.Popup(e.To, "KEY!", Palette.Gold); break;
+                case GameEventKind.PotionCollected: _board.Popup(e.To, "+POTION", Palette.Safe); break;
+                case GameEventKind.ExitUnlocked:
+                    if (e.To.InBounds) _board.Popup(e.To, "OPEN!", Palette.Gold);
+                    break;
+            }
+        }
+
+        void CheckRunEnd()
+        {
+            var run = Run;
+            if (run == null || run.Status == RunStatus.InProgress) return;
+
+            var floorName = Catalog.ProfileFor(run.Floor.FloorIndex).Name;
+            if (run.Status == RunStatus.Won)
+            {
+                _modal.Show("VICTORY!",
+                    $"Lord Blobert is defeated. Again.\n\nTurns taken: {run.Turn}\nChests opened: {run.Rewards.Count}\n\nSir Clickington: \"Victory! Snacks for everyone!\"",
+                    () => { },
+                    Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
+                    Menus.B("TITLE", Palette.NavyLight, _app.ShowTitle));
+            }
+            else
+            {
+                _modal.Show("DEFEATED",
+                    $"Fell on floor {run.Floor.FloorIndex}: {floorName}\nFinal blow: {Lines.SourceName(_lastDamageSource ?? "?", Catalog)}\nTurns survived: {run.Turn}\n\nThe WHAT HAPPENED log shows every hit.\n\nSir Clickington: \"Tell my horse... wait. I don't have a horse.\"",
+                    () => { },
+                    Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
+                    Menus.B("TITLE", Palette.NavyLight, _app.ShowTitle));
+            }
+        }
+
+        // ------------------------------------------------------------------ menus
+
+        void OpenPause()
+        {
+            if (_chest.IsOpen || Run == null) return;
+            var run = Run;
+            _modal.Show("PAUSED",
+                $"Floor {run.Floor.FloorIndex}: {Catalog.ProfileFor(run.Floor.FloorIndex).Name}\nTurn {run.Turn + 1}    Seed {run.RunSeed}\nYour run is saved after every turn.",
+                _modal.Hide,
+                Menus.B("RESUME", Palette.PlayGreen, _modal.Hide),
+                Menus.B("HOW TO PLAY", Palette.NavyLight, OpenHelp),
+                Menus.B("SETTINGS", Palette.NavyLight, () => Menus.OpenSettings(_modal, OpenPause)),
+                Menus.B("ABANDON RUN", Palette.QuitRed, ConfirmAbandon),
+                Menus.B("QUIT TO TITLE", Palette.NavyLight, _app.ShowTitle));
+        }
+
+        void OpenHelp()
+        {
+            _modal.Show("HOW TO PLAY", Menus.HelpText, _modal.Hide, Menus.B("GOT IT", Palette.PlayGreen, _modal.Hide));
+        }
+
+        void ConfirmAbandon()
+        {
+            _modal.Show("ABANDON RUN?", "This run will be lost for good.", OpenPause,
+                Menus.B("ABANDON", Palette.QuitRed, () =>
+                {
+                    _app.Session.Abandon();
+                    _app.ShowTitle();
+                }),
+                Menus.B("KEEP PLAYING", Palette.PlayGreen, _modal.Hide));
+        }
+
+        // ------------------------------------------------------------------ rendering
+
+        void Say(string line, Expression face)
+        {
+            _speech.text = line;
+            _speechFace.text = Lines.Face(face);
+            _face.text = Lines.Face(face);
+        }
+
+        void AppendLog(List<GameEvent> events)
+        {
+            var lines = new List<string>();
+            foreach (var e in events)
+            {
+                var text = Lines.Describe(e, Run, Catalog);
+                if (text != null) lines.Add(text);
+            }
+            if (lines.Count == 0) return;
+
+            lines.Reverse();
+            lines.Insert(0, $"<color=#8F8778>- turn {Math.Max(1, Run.Turn)} -</color>");
+            _log.InsertRange(0, lines);
+            if (_log.Count > MaxLogLines) _log.RemoveRange(MaxLogLines, _log.Count - MaxLogLines);
+            _logText.text = string.Join("\n", _log);
+        }
+
+        void Refresh(bool animate)
+        {
+            var run = Run;
+            if (run == null) return;
+            var hero = run.Hero;
+
+            _hpText.text = $"{hero.Hp} / {hero.MaxHp}";
+            _hpFill.anchorMax = new Vector2(Mathf.Clamp01(hero.Hp / (float)hero.MaxHp), 1f);
+            _keyChip.text = run.Floor.IsBossFloor ? "BOSS FLOOR" : hero.HasKey ? "KEY: YES" : "KEY: NO";
+            _keyChip.color = hero.HasKey || run.Floor.IsBossFloor ? Palette.Gold : Palette.TextLight;
+            _slashChip.text = $"SLASH {hero.SlashDamage}";
+            _turnChip.text = $"TURN {run.Turn + 1}";
+            _floorTitle.text = $"FLOOR {run.Floor.FloorIndex}";
+            _floorName.text = (Catalog.ProfileFor(run.Floor.FloorIndex).Name ?? "").ToUpperInvariant();
+
+            bool live = run.Status == RunStatus.InProgress;
+            SetAbility(CommandKind.Move, _mode == TargetMode.Move, live, null);
+            SetAbility(CommandKind.Slash, _mode == TargetMode.Slash, live && Commands.LegalTargets(run, CommandKind.Slash, Catalog).Count > 0, null);
+            SetAbility(CommandKind.Shield, false, live && hero.ShieldCooldown == 0, hero.ShieldCooldown > 0 ? hero.ShieldCooldown.ToString() : null);
+            SetAbility(CommandKind.Dash, _mode == TargetMode.Dash, live && Commands.LegalTargets(run, CommandKind.Dash, Catalog).Count > 0,
+                hero.DashCooldown > 0 ? hero.DashCooldown.ToString() : null);
+            SetAbility(CommandKind.Potion, false, live && Commands.Validate(run, PlayerCommand.Potion(), Catalog, out _), hero.Potions.ToString());
+
+            _threats = Threats.Compute(run, Catalog);
+            RenderBoard(animate);
+        }
+
+        void RefreshBoardOnly()
+        {
+            if (Run == null) return;
+            RenderBoard(false);
+        }
+
+        void RenderBoard(bool animate)
+        {
+            var run = Run;
+            var legal = new HashSet<GridPos>();
+            if (run.Status == RunStatus.InProgress)
+            {
+                switch (_mode)
+                {
+                    case TargetMode.Slash:
+                        legal.UnionWith(Commands.LegalTargets(run, CommandKind.Slash, Catalog));
+                        break;
+                    case TargetMode.Dash:
+                        legal.UnionWith(Commands.LegalTargets(run, CommandKind.Dash, Catalog));
+                        break;
+                    default:
+                        foreach (var d in Directions.All)
+                        {
+                            var p = run.Hero.Pos.Step(d);
+                            if (Commands.TryContextual(run, p, out var command) && Commands.Validate(run, command, Catalog, out _)) legal.Add(p);
+                        }
+                        break;
+                }
+            }
+            _board.Render(run, Catalog, _threats, legal, _mode != TargetMode.Move, _hover, animate);
+            UpdateInspector();
+        }
+
+        void SetAbility(CommandKind kind, bool selected, bool usable, string badge)
+        {
+            var ability = _abilities[kind];
+            ability.Selected.enabled = selected;
+            ability.Group.alpha = usable || selected ? 1f : 0.45f;
+            ability.BadgeBack.gameObject.SetActive(badge != null);
+            if (badge != null) ability.Badge.text = badge;
+        }
+
+        void UpdateInspector()
+        {
+            var run = Run;
+            var floor = run.Floor;
+            var sb = new StringBuilder();
+
+            if (!_hover.HasValue)
+            {
+                _inspectTitle.text = "INSPECT";
+                if (floor.IsBossFloor && !floor.ExitUnlocked) sb.AppendLine("Goal: defeat Lord Blobert to open the exit.");
+                else if (floor.ExitUnlocked || run.Hero.HasKey) sb.AppendLine("Goal: reach the EXIT.");
+                else sb.AppendLine("Goal: find the KEY, then reach the EXIT.");
+                sb.AppendLine();
+                switch (_mode)
+                {
+                    case TargetMode.Slash: sb.AppendLine("SLASH: tap a lit tile next to you. Bombs can be slashed to arm them."); break;
+                    case TargetMode.Dash: sb.AppendLine("DASH: tap a lit tile two steps away. You jump over the middle tile."); break;
+                    default: sb.AppendLine("Tap a lit tile to step. Tap an enemy beside you to slash, a chest to open it, or yourself to wait.\n\nHover any tile to learn what is known about it."); break;
+                }
+                int incoming = Threats.DamageAt(_threats, run.Hero.Pos);
+                if (incoming > 0) sb.AppendLine($"\n<color=#FF6B5E>Your tile is hit for {incoming} next turn!</color>");
+                _inspectBody.text = sb.ToString();
+                return;
+            }
+
+            var p = _hover.Value;
+            var cell = floor[p];
+            var enemy = floor.EnemyAt(p);
+            string title;
+
+            if (p == run.Hero.Pos)
+            {
+                var hero = run.Hero;
+                title = "SIR CLICKINGTON";
+                sb.AppendLine($"HP {hero.Hp}/{hero.MaxHp}   Slash {hero.SlashDamage}   Potions {hero.Potions}");
+                sb.AppendLine(hero.ShieldCooldown > 0 ? $"Shield recharging: {hero.ShieldCooldown}" : "Shield ready.");
+                sb.AppendLine(hero.DashCooldown > 0 ? $"Dash recharging: {hero.DashCooldown}" : "Dash ready.");
+                sb.AppendLine("Tap him to wait a turn.");
+            }
+            else if (enemy != null && enemy.Awake)
+            {
+                var def = Catalog.Enemy(enemy.DefId);
+                title = def.DisplayName.ToUpperInvariant();
+                sb.AppendLine($"HP {enemy.Hp}/{enemy.MaxHp}");
+                sb.AppendLine(Lines.IntentExplain(enemy, def));
+            }
+            else if (cell.Terrain == Terrain.Wall)
+            {
+                title = "WALL";
+                sb.AppendLine("Solid stone. Blocks movement and fire.");
+            }
+            else if (cell.Terrain == Terrain.Pit)
+            {
+                title = "PIT";
+                sb.AppendLine("Nobody crosses. Fire flies right over it.");
+            }
+            else if (cell.Knowledge == Knowledge.Unseen)
+            {
+                title = "UNKNOWN";
+                sb.AppendLine("Get within two steps to sense what is here.");
+            }
+            else if (cell.Knowledge == Knowledge.Sensed)
+            {
+                title = "SENSED";
+                sb.AppendLine(Lines.ClueExplain(Board.ClueAt(floor, p)));
+                sb.AppendLine("Step next to it to reveal it.");
+            }
+            else
+            {
+                title = "STONE FLOOR";
+                if (cell.IsExit)
+                {
+                    title = "EXIT";
+                    sb.AppendLine(floor.ExitUnlocked ? "Open. Step on it to descend."
+                        : floor.IsBossFloor ? "Sealed until Lord Blobert falls."
+                        : run.Hero.HasKey ? "Locked. You have the key: step on it!" : "Locked. Find the key first.");
+                }
+                if (cell.Hazard == HazardKind.Spikes)
+                {
+                    title = "SPIKES";
+                    sb.AppendLine($"Stepping on costs {Catalog.Hazards.SpikeDamage} HP. Dash jumps over. Enemies avoid spikes.");
+                }
+                else if (cell.Hazard == HazardKind.Bomb)
+                {
+                    title = cell.BombArmed ? "ARMED BOMB" : "BOMB";
+                    sb.AppendLine(!cell.BombArmed
+                        ? $"Step on it or slash it to arm it. It explodes after your next action, hitting everything in a 3x3 for {Catalog.Hazards.BombDamage}."
+                        : cell.BombFuse == 0 ? "Explodes after your next action! Get two tiles away or Shield." : "Explodes in two turns.");
+                }
+                if (cell.Content == ContentKind.Key)
+                {
+                    title = "KEY";
+                    sb.AppendLine("Opens this floor's exit. Walk over it.");
+                }
+                else if (cell.Content == ContentKind.Chest)
+                {
+                    title = "CHEST";
+                    sb.AppendLine(cell.ChestOpened ? "Already opened." : "Stand next to it and tap it to open (1 turn).");
+                }
+                else if (cell.Content == ContentKind.Potion)
+                {
+                    title = "POTION";
+                    sb.AppendLine("Walk over it to pick it up.");
+                }
+                if (sb.Length == 0) sb.AppendLine("Nothing here.");
+            }
+
+            int damage = Threats.DamageAt(_threats, p);
+            if (damage > 0) sb.AppendLine($"\n<color=#FF6B5E>Danger: -{damage} next turn to whoever stands here.</color>");
+
+            _inspectTitle.text = title;
+            _inspectBody.text = sb.ToString();
+        }
+
+        // ------------------------------------------------------------------ layout
+
+        void BuildTopLeft()
+        {
+            var logo = UiFactory.Text(Root, "Logo", "ClickDungeon", 60, Palette.Gold, TextAnchor.MiddleLeft, FontStyle.Bold);
+            logo.horizontalOverflow = HorizontalWrapMode.Overflow;
+            logo.rectTransform.Place(TopLeft, TopLeft, new Vector2(34f, -14f), new Vector2(430f, 96f));
+            UiFactory.Outline(logo, Palette.Ink, 3f);
+            UiFactory.Shadow(logo, new Color(0f, 0f, 0f, 0.8f), 5f);
+
+            var portrait = UiFactory.Rect(Root, "Portrait");
+            portrait.Place(TopLeft, TopLeft, new Vector2(470f, -10f), new Vector2(104f, 104f));
+            _face = Icons.Portrait(portrait, 104f);
+            UiFactory.Image(portrait, "Frame", Palette.Gold, Shapes.Frame, true).rectTransform.Stretch();
+
+            var hp = UiFactory.Rect(Root, "Hp");
+            hp.Place(TopLeft, TopLeft, new Vector2(592f, -28f), new Vector2(440f, 54f));
+            UiFactory.Image(hp, "Back", Palette.HpBack, Shapes.Rounded, true).rectTransform.Stretch();
+            var fillArea = UiFactory.Rect(hp, "FillArea");
+            fillArea.Stretch(40, 7, 7, 7);
+            var fill = UiFactory.Image(fillArea, "Fill", Palette.Hp, Shapes.Rounded, true);
+            _hpFill = fill.rectTransform;
+            _hpFill.anchorMin = Vector2.zero;
+            _hpFill.anchorMax = Vector2.one;
+            _hpFill.offsetMin = Vector2.zero;
+            _hpFill.offsetMax = Vector2.zero;
+            UiFactory.Image(hp, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch();
+
+            var heart = UiFactory.Rect(hp, "Heart");
+            heart.Place(new Vector2(0f, 0.5f), Center, new Vector2(10f, 0f), new Vector2(64f, 64f));
+            var heartColor = Palette.Hp.Dim(1.2f);
+            Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(-10f, 6f), new Vector2(34f, 34f));
+            Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(10f, 6f), new Vector2(34f, 34f));
+            Icons.Shape(heart, Shapes.Triangle, heartColor, new Vector2(0f, -10f), new Vector2(50f, 36f), 180f);
+
+            _hpText = UiFactory.Text(hp, "Text", "", 32, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _hpText.rectTransform.Stretch(40, 0, 0, 0);
+            UiFactory.Outline(_hpText, new Color(0f, 0f, 0f, 0.8f), 2f);
+
+            _keyChip = Chip("KeyChip", new Vector2(1050f, -32f), 190f);
+            _slashChip = Chip("SlashChip", new Vector2(1254f, -32f), 170f);
+            _turnChip = Chip("TurnChip", new Vector2(1438f, -32f), 170f);
+
+            var plaque = UiFactory.Rect(Root, "FloorPlaque");
+            plaque.Place(TopLeft, TopLeft, new Vector2(100f, -126f), new Vector2(380f, 104f));
+            UiFactory.Image(plaque, "Shadow", new Color(0f, 0f, 0f, 0.5f), Shapes.Rounded, true).rectTransform.Stretch(-4, 2, -8, -10);
+            UiFactory.Image(plaque, "Back", Palette.Parchment, Shapes.Rounded, true).rectTransform.Stretch();
+            UiFactory.Image(plaque, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch();
+            _floorTitle = UiFactory.Text(plaque, "Title", "", 42, Palette.Ink, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _floorTitle.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -6f), new Vector2(360f, 54f));
+            _floorName = UiFactory.Text(plaque, "Name", "", 22, Palette.Ink, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _floorName.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(360f, 34f));
+        }
+
+        Text Chip(string name, Vector2 pos, float width)
+        {
+            var rt = UiFactory.Rect(Root, name);
+            rt.Place(TopLeft, TopLeft, pos, new Vector2(width, 46f));
+            UiFactory.Image(rt, "Back", Palette.Navy, Shapes.Rounded, true).rectTransform.Stretch();
+            UiFactory.Image(rt, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch();
+            var text = UiFactory.Text(rt, "Text", "", 24, Palette.TextLight, TextAnchor.MiddleCenter, FontStyle.Bold);
+            text.rectTransform.Stretch(6, 2, 6, 2);
+            return text;
+        }
+
+        void BuildTopRight()
+        {
+            var pause = UiFactory.Button(Root, "Settings", "", Palette.Navy, 10, OpenPause);
+            pause.Rect.Place(TopRight, TopRight, new Vector2(-28f, -16f), new Vector2(98f, 98f));
+            var gear = UiFactory.Rect(pause.Rect, "Gear");
+            gear.Place(Center, Center, Vector2.zero, new Vector2(80f, 80f));
+            Icons.Gear(gear, Palette.Gold, 66f);
+
+            var help = UiFactory.Button(Root, "Help", "?", Palette.Navy, 58, OpenHelp);
+            help.Rect.Place(TopRight, TopRight, new Vector2(-140f, -16f), new Vector2(98f, 98f));
+            help.Label.color = Palette.Gold;
+        }
+
+        Text BuildPanel(string name, Vector2 anchor, Vector2 pos, string title, out Text titleText)
+        {
+            var rt = UiFactory.Rect(Root, name);
+            rt.Place(anchor, anchor, pos, new Vector2(380f, 600f));
+            UiFactory.Image(rt, "Back", Palette.Navy.WithAlpha(0.95f), Shapes.Rounded, true).rectTransform.Stretch();
+            UiFactory.Image(rt, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch();
+
+            titleText = UiFactory.Text(rt, "Title", title, 30, Palette.Gold, TextAnchor.MiddleCenter, FontStyle.Bold);
+            titleText.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -14f), new Vector2(350f, 44f));
+            UiFactory.Shadow(titleText, new Color(0f, 0f, 0f, 0.8f), 2f);
+            var divider = UiFactory.Image(rt, "Divider", Palette.GoldDark, null);
+            divider.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -64f), new Vector2(320f, 3f));
+
+            var body = UiFactory.Text(rt, "Body", "", 23, Palette.TextLight, TextAnchor.UpperLeft);
+            body.rectTransform.Stretch(22, 80, 22, 20);
+            body.verticalOverflow = VerticalWrapMode.Truncate;
+            body.lineSpacing = 1.08f;
+            return body;
+        }
+
+        void BuildAbilityBar()
+        {
+            var bar = UiFactory.Rect(Root, "AbilityBar");
+            bar.Place(Center, Center, new Vector2(0f, -378f), new Vector2(900f, 150f));
+
+            var kinds = new[] { CommandKind.Move, CommandKind.Slash, CommandKind.Shield, CommandKind.Dash, CommandKind.Potion };
+            var labels = new[] { "MOVE", "SLASH", "SHIELD", "DASH", "POTION" };
+            var colors = new[] { Palette.MoveButton, Palette.SlashButton, Palette.ShieldButton, Palette.DashButton, Palette.PotionButton };
+
+            for (int i = 0; i < kinds.Length; i++)
+            {
+                var kind = kinds[i];
+                var parts = UiFactory.Button(bar, labels[i], labels[i], colors[i], 26, () => OnAbility(kind));
+                parts.Rect.Place(Center, Center, new Vector2((i - 2) * 178f, 0f), new Vector2(162f, 144f));
+                parts.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(156f, 34f));
+                var group = parts.Rect.gameObject.AddComponent<CanvasGroup>();
+
+                var icon = UiFactory.Rect(parts.Rect, "Icon");
+                icon.Place(Center, Center, new Vector2(0f, 18f), new Vector2(90f, 90f));
+                Icons.Ability(icon, kind);
+
+                var hint = UiFactory.Text(parts.Rect, "Hotkey", (i + 1).ToString(), 18, Palette.TextDim, TextAnchor.UpperLeft, FontStyle.Bold);
+                hint.rectTransform.Stretch(12, 8, 0, 0);
+
+                var selected = UiFactory.Image(parts.Rect, "Selected", Palette.Gold, Shapes.Frame, true);
+                selected.pixelsPerUnitMultiplier = 1f;
+                selected.rectTransform.Stretch(-7, -7, -7, -7);
+                selected.enabled = false;
+
+                var badgeBack = UiFactory.Image(parts.Rect, "Badge", Palette.Navy, Shapes.Circle);
+                badgeBack.rectTransform.Place(TopRight, Center, new Vector2(-12f, -12f), new Vector2(46f, 46f));
+                UiFactory.Image(badgeBack.rectTransform, "Ring", Palette.Gold, Shapes.Ring).rectTransform.Stretch();
+                var badge = UiFactory.Text(badgeBack.rectTransform, "Text", "", 26, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                badge.rectTransform.Stretch();
+
+                _abilities[kind] = new AbilityButton { Parts = parts, Selected = selected, BadgeBack = badgeBack, Badge = badge, Group = group };
+            }
+        }
+
+        void BuildSpeechStrip()
+        {
+            var strip = UiFactory.Rect(Root, "Speech");
+            strip.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(1060f, 80f));
+            UiFactory.Image(strip, "Back", Palette.Navy.WithAlpha(0.95f), Shapes.Rounded, true).rectTransform.Stretch();
+            UiFactory.Image(strip, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch();
+
+            var faceBack = UiFactory.Image(strip, "FaceBack", Palette.Parchment, Shapes.Circle);
+            faceBack.rectTransform.Place(new Vector2(0f, 0.5f), Center, new Vector2(48f, 0f), new Vector2(64f, 64f));
+            _speechFace = UiFactory.Text(faceBack.rectTransform, "Face", ":)", 24, Palette.Ink, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _speechFace.rectTransform.Stretch();
+            _speechFace.horizontalOverflow = HorizontalWrapMode.Overflow;
+
+            _speech = UiFactory.Text(strip, "Line", "", 28, Palette.TextLight, TextAnchor.MiddleLeft, FontStyle.Italic);
+            _speech.rectTransform.Stretch(96, 4, 24, 4);
+            _speech.resizeTextForBestFit = true;
+            _speech.resizeTextMinSize = 18;
+            _speech.resizeTextMaxSize = 28;
+        }
+    }
+
+    /// <summary>Menus shared by the title and game screens.</summary>
+    public static class Menus
+    {
+        public const string HelpText =
+            "- Tap a lit tile next to you to step. Tap an enemy beside you to SLASH, a chest to open it, or Sir Clickington to wait.\n" +
+            "- Tiles two steps away are SENSED. Icons tell you what is there: red diamond ! = enemy, orange triangle ! = trap, K = key, $ = treasure, dot = safe.\n" +
+            "- Stepping next to a sensed enemy wakes it. It shows its intent and only acts on the NEXT turn.\n" +
+            "- Tiles marked -N will be hit next turn. Step off, SHIELD to block (staggers attackers), or DASH two tiles over traps.\n" +
+            "- Find the KEY, reach the EXIT. Floor 5: defeat Lord Blobert.\n\n" +
+            "Keys: WASD / arrows, Space = wait, 1-5 = abilities, Esc = menu, H = help.";
+
+        public static (string label, Color color, Action action) B(string label, Color color, Action action) => (label, color, action);
+
+        public static void OpenSettings(ModalOverlay modal, Action back)
+        {
+            modal.Show("SETTINGS", "Presentation only. Gameplay never depends on these.", back,
+                B($"REDUCED MOTION: {(UserPrefs.ReducedMotion ? "ON" : "OFF")}", Palette.NavyLight, () =>
+                {
+                    UserPrefs.ReducedMotion = !UserPrefs.ReducedMotion;
+                    OpenSettings(modal, back);
+                }),
+                B($"SCREEN SHAKE: {(UserPrefs.ScreenShake ? "ON" : "OFF")}", Palette.NavyLight, () =>
+                {
+                    UserPrefs.ScreenShake = !UserPrefs.ScreenShake;
+                    OpenSettings(modal, back);
+                }),
+                B("BACK", Palette.PlayGreen, back));
+        }
+    }
+
+    /// <summary>Torch-lit stone wall behind every screen. Kept low-contrast so the board stays dominant.</summary>
+    public static class Backdrop
+    {
+        public static void Build(RectTransform root, Vector2[] torches)
+        {
+            var wall = UiFactory.Rect(root, "Backdrop");
+            wall.Stretch();
+            const float brickWidth = 150f;
+            const float brickHeight = 64f;
+            for (int row = -9; row <= 9; row++)
+            for (int col = -9; col <= 9; col++)
+            {
+                float x = col * brickWidth + (row % 2 == 0 ? 0f : brickWidth * 0.5f);
+                float y = row * brickHeight;
+                float shade = 0.85f + 0.3f * Mathf.PerlinNoise(col * 0.37f + 3.1f, row * 0.53f + 7.7f);
+                Icons.Shape(wall, Shapes.Rounded, Palette.StoneDark.Dim(shade).WithAlpha(0.6f), new Vector2(x, y), new Vector2(brickWidth - 8f, brickHeight - 8f));
+            }
+            foreach (var torch in torches) Torch(wall, torch);
+        }
+
+        public static void Torch(Transform parent, Vector2 pos)
+        {
+            Icons.Shape(parent, Shapes.Circle, Palette.Fuse.WithAlpha(0.08f), pos + new Vector2(0f, 24f), new Vector2(260f, 260f));
+            Icons.Shape(parent, Shapes.Circle, Palette.Fuse.WithAlpha(0.16f), pos + new Vector2(0f, 24f), new Vector2(120f, 120f));
+            Icons.Shape(parent, Shapes.Square, Palette.ChestWood.Dim(0.7f), pos + new Vector2(0f, -30f), new Vector2(14f, 60f));
+            Icons.Shape(parent, Shapes.Rounded, Palette.GoldDark, pos + new Vector2(0f, -2f), new Vector2(44f, 18f));
+            Icons.Shape(parent, Shapes.Triangle, Palette.Fuse, pos + new Vector2(0f, 26f), new Vector2(36f, 50f));
+            Icons.Shape(parent, Shapes.Triangle, Palette.Gold, pos + new Vector2(0f, 18f), new Vector2(18f, 26f));
+        }
+    }
+}

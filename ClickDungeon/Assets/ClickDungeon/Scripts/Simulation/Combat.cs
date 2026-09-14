@@ -1,0 +1,76 @@
+using System;
+using System.Collections.Generic;
+using ClickDungeon.Content;
+using ClickDungeon.Domain;
+
+namespace ClickDungeon.Simulation
+{
+    public static class Combat
+    {
+        /// <summary>Applies damage to the hero. Returns true when Guard blocked it.</summary>
+        public static bool DamageHero(RunState run, int amount, string source, List<GameEvent> events, bool blockable = true)
+        {
+            var hero = run.Hero;
+            if (amount <= 0 || hero.Hp <= 0) return false;
+            if (blockable && hero.Guard)
+            {
+                events.Add(GameEvent.Of(GameEventKind.HeroBlocked, to: hero.Pos, amount: amount, source: source));
+                return true;
+            }
+            hero.Hp = Math.Max(0, hero.Hp - amount);
+            events.Add(GameEvent.Of(GameEventKind.HeroDamaged, to: hero.Pos, amount: amount, source: source));
+            return false;
+        }
+
+        public static void DamageEnemy(RunState run, EnemyState enemy, int amount, string source, ContentCatalog catalog,
+            List<GameEvent> events)
+        {
+            if (amount <= 0 || enemy.Hp <= 0) return;
+            if (enemy.Mode == EnemyMode.Puffed)
+            {
+                events.Add(GameEvent.Of(GameEventKind.EnemyImmune, enemy.Id, to: enemy.Pos, source: source, subject: enemy.DefId));
+                return;
+            }
+            if (enemy.Mode == EnemyMode.Deflated) amount *= catalog.Enemy(enemy.DefId).DeflatedDamageMultiplier;
+            enemy.Hp = Math.Max(0, enemy.Hp - amount);
+            events.Add(GameEvent.Of(GameEventKind.EnemyDamaged, enemy.Id, to: enemy.Pos, amount: amount, source: source, subject: enemy.DefId));
+        }
+
+        /// <summary>Removes dead enemies, handles boss death, and ends the run if the hero fell.</summary>
+        public static void ResolveDeaths(RunState run, ContentCatalog catalog, List<GameEvent> events)
+        {
+            var floor = run.Floor;
+            bool bossDied = false;
+            for (int i = 0; i < floor.Enemies.Count;)
+            {
+                var enemy = floor.Enemies[i];
+                if (enemy.Hp > 0)
+                {
+                    i++;
+                    continue;
+                }
+                floor.Enemies.RemoveAt(i);
+                events.Add(GameEvent.Of(GameEventKind.EnemyDied, enemy.Id, to: enemy.Pos, source: enemy.DefId));
+                if (catalog.Enemy(enemy.DefId).IsBoss) bossDied = true;
+            }
+
+            if (bossDied)
+            {
+                foreach (var minion in floor.Enemies)
+                    events.Add(GameEvent.Of(GameEventKind.EnemyDied, minion.Id, to: minion.Pos, source: minion.DefId));
+                floor.Enemies.Clear();
+                if (!floor.ExitUnlocked)
+                {
+                    floor.ExitUnlocked = true;
+                    events.Add(GameEvent.Of(GameEventKind.ExitUnlocked, to: floor.Exit));
+                }
+            }
+
+            if (run.Hero.Hp <= 0 && run.Status == RunStatus.InProgress)
+            {
+                run.Status = RunStatus.Lost;
+                events.Add(GameEvent.Of(GameEventKind.RunLost));
+            }
+        }
+    }
+}

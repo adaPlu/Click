@@ -1,0 +1,131 @@
+using System;
+using System.Collections.Generic;
+
+namespace ClickDungeon.Domain
+{
+    // Runtime state is plain [Serializable] classes with public fields only.
+    // The save system serializes fields, so do not add auto-properties holding data.
+
+    [Serializable]
+    public sealed class CellState
+    {
+        public Terrain Terrain;
+        public bool IsExit;
+        public HazardKind Hazard;
+        /// <summary>-1 = bomb not armed.</summary>
+        public int BombFuse = -1;
+        public ContentKind Content;
+        public bool ChestOpened;
+        public Knowledge Knowledge;
+
+        public bool BombArmed => Hazard == HazardKind.Bomb && BombFuse >= 0;
+        public bool IsClosedChest => Content == ContentKind.Chest && !ChestOpened;
+    }
+
+    [Serializable]
+    public sealed class EnemyState
+    {
+        public int Id;
+        public string DefId;
+        public GridPos Pos;
+        public int Hp;
+        public int MaxHp;
+        public bool Awake;
+        /// <summary>Woke or was summoned this turn: declares but does not act (first contact).</summary>
+        public bool JustWoken;
+        public bool Staggered;
+        public Intent Intent;
+        /// <summary>Behaviour-specific step counter (slime rest cycle, boss script index).</summary>
+        public int ActionCounter;
+        public EnemyMode Mode;
+        public int ModeTurns;
+    }
+
+    [Serializable]
+    public sealed class HeroState
+    {
+        public string IdentityId;
+        public string ClassId;
+        public GridPos Pos;
+        public int Hp;
+        public int MaxHp;
+        public int SlashDamage;
+        public int Potions;
+        public bool HasKey;
+        public bool Guard;
+        public int ShieldCooldown;
+        public int DashCooldown;
+    }
+
+    [Serializable]
+    public sealed class FloorState
+    {
+        public int FloorIndex;
+        public bool IsBossFloor;
+        public string TemplateId;
+        public int Transform;
+        public int AttemptIndex;
+        public GridPos Start;
+        public GridPos Exit;
+        public bool ExitUnlocked;
+        public CellState[] Cells;
+        public List<EnemyState> Enemies = new List<EnemyState>();
+        public int NextActorId = 1;
+
+        public CellState this[GridPos p] => Cells[p.Index];
+
+        public EnemyState EnemyAt(GridPos p)
+        {
+            for (int i = 0; i < Enemies.Count; i++)
+                if (Enemies[i].Pos == p) return Enemies[i];
+            return null;
+        }
+
+        public EnemyState EnemyById(int id)
+        {
+            for (int i = 0; i < Enemies.Count; i++)
+                if (Enemies[i].Id == id) return Enemies[i];
+            return null;
+        }
+
+        public static FloorState CreateEmpty()
+        {
+            var floor = new FloorState { Cells = new CellState[BoardRules.CellCount], Start = GridPos.Invalid, Exit = GridPos.Invalid };
+            for (int i = 0; i < floor.Cells.Length; i++) floor.Cells[i] = new CellState();
+            return floor;
+        }
+    }
+
+    [Serializable]
+    public sealed class RewardRecord
+    {
+        public string TransactionId;
+        public RewardKind Kind;
+        public int Amount;
+        public int FloorIndex;
+        public int Turn;
+    }
+
+    [Serializable]
+    public sealed class RunState
+    {
+        public int SaveSchemaVersion = Versions.SaveSchema;
+        public int RulesetVersion = Versions.Ruleset;
+        public int ContentCatalogVersion;
+        public int GenerationVersion = Versions.Generation;
+        public ulong RunSeed;
+        public int FloorCount;
+        public int Turn;
+        public RunStatus Status;
+        public HeroState Hero;
+        public FloorState Floor;
+        public List<RewardRecord> Rewards = new List<RewardRecord>();
+
+        public bool HasReward(string transactionId)
+        {
+            for (int i = 0; i < Rewards.Count; i++)
+                if (Rewards[i].TransactionId == transactionId) return true;
+            return false;
+        }
+    }
+}

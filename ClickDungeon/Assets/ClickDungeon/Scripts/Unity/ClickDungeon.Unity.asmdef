@@ -1,0 +1,21 @@
+{
+    "name": "ClickDungeon.Unity",
+    "rootNamespace": "ClickDungeon.Unity",
+    "references": [
+        "ClickDungeon.Domain",
+        "ClickDungeon.Content",
+        "ClickDungeon.Simulation",
+        "ClickDungeon.Application",
+        "Unity.InputSystem",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

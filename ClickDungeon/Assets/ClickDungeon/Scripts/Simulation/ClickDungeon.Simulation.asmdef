@@ -1,0 +1,17 @@
+{
+    "name": "ClickDungeon.Simulation",
+    "rootNamespace": "ClickDungeon.Simulation",
+    "references": [
+        "ClickDungeon.Domain",
+        "ClickDungeon.Content"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
