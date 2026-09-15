@@ -373,11 +373,25 @@ namespace ClickDungeon.Unity.Screens
 
         public void Popup(GridPos p, string text, Color color)
         {
+            const float height = 60f;
+            const float rise = 70f;
+            const float margin = 12f;
+
             var label = UiFactory.Text(_fxLayer, "Popup", text, 40, color, TextAnchor.MiddleCenter, FontStyle.Bold);
             label.horizontalOverflow = HorizontalWrapMode.Overflow;
-            label.rectTransform.Place(Center, Center, CellPosition(p) + new Vector2(0f, 24f), new Vector2(260f, 60f));
+            float halfFrame = FrameSize * 0.5f - margin;
+            float width = Mathf.Min(label.preferredWidth + 16f, halfFrame * 2f);
+
+            // Keep the whole float path inside the board frame so popups never drift over the HUD
+            // (top row) or the side panels (edge columns).
+            var start = CellPosition(p) + new Vector2(0f, 24f);
+            start.y = Mathf.Min(start.y, halfFrame - height * 0.5f - rise);
+            float maxX = halfFrame - width * 0.5f;
+            start.x = Mathf.Clamp(start.x, -maxX, maxX);
+
+            label.rectTransform.Place(Center, Center, start, new Vector2(width, height));
             UiFactory.Outline(label, new Color(0f, 0f, 0f, 0.9f), 2.5f);
-            _host.StartCoroutine(Tween.Popup(label.rectTransform, label, 70f, 1.0f));
+            _host.StartCoroutine(Tween.Popup(label.rectTransform, label, rise, 1.0f));
         }
 
         public void Shake()
