@@ -6,11 +6,11 @@ alongside observation and interviews. See decision D-015.
 ## Privacy and storage
 
 - Local files only. Nothing is sent over the network.
-- One JSON-lines file per app launch:
+- One JSON-lines file per app launch, created when the first event is logged:
   `%USERPROFILE%\AppData\LocalLow\Clickd\ClickDungeon\telemetry\session-<utc>-<id>.jsonl`
   (Android and iOS use `Application.persistentDataPath/telemetry`).
 - No personal data: session ids are random, and runs are identified by their seed.
-- On by default in prototype builds. Toggle: **Settings → PLAYTEST LOG**. Automation runs never log.
+- On by default in prototype builds. Toggle: **Settings → PLAYTEST LOG**. Automation runs (`-cdShot`) only log when `-cdTelemetryDir <folder>` is given, which keeps bot data out of playtest logs.
 - Collect files from testers' machines by hand.
 
 ## Reading the logs

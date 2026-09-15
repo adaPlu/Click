@@ -220,6 +220,26 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
+        public void JsonlSinkCreatesNoFileUntilSomethingIsLogged()
+        {
+            var dir = Path.Combine(Path.GetTempPath(), "clickdungeon-telemetry-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                string path;
+                using (var sink = new JsonlTelemetrySink(dir, FixedTime))
+                {
+                    path = sink.FilePath;
+                    new GameSession(Catalog, null, Recorder(sink));
+                }
+                Assert.That(File.Exists(path), Is.False);
+            }
+            finally
+            {
+                if (Directory.Exists(dir)) Directory.Delete(dir, true);
+            }
+        }
+
+        [Test]
         public void SummaryAnswersGateTwoQuestions()
         {
             var sink = new MemoryTelemetrySink();

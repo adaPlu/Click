@@ -34,6 +34,7 @@ namespace ClickDungeon.Unity
         {
             UnityEngine.Application.targetFrameRate = 60;
             AutomationMode = ArgValue("-cdShot") != null;
+            _automationTelemetryDir = AutomationMode ? ArgValue("-cdTelemetryDir") : null;
             Catalog = ContentCatalog.CreateDefault();
             Store = new FileSaveStore(Path.Combine(UnityEngine.Application.persistentDataPath, AutomationMode ? "saves-automation" : "saves"));
             Session = new GameSession(Catalog, Store);
@@ -52,7 +53,8 @@ namespace ClickDungeon.Unity
         }
 
         /// <summary>
-        /// Dev automation: -cdShot path.png [-cdScreen title|game] [-cdSeed n] [-cdTurns n].
+        /// Dev automation: -cdShot path.png [-cdScreen title|game] [-cdSeed n] [-cdTurns n] [-cdTelemetryDir dir].
+        /// Telemetry stays off in automation unless -cdTelemetryDir is given, so bot runs never mix with playtest logs.
         /// Plays random legal turns through the normal input path, captures a screenshot and quits.
         /// </summary>
         IEnumerator AutomationShot()
@@ -98,6 +100,7 @@ namespace ClickDungeon.Unity
         }
 
         JsonlTelemetrySink _telemetrySink;
+        string _automationTelemetryDir;
 
         public string TelemetryDirectory => Path.Combine(UnityEngine.Application.persistentDataPath, "telemetry");
         public bool TelemetryActive => _telemetrySink != null;
@@ -105,12 +108,12 @@ namespace ClickDungeon.Unity
         /// <summary>Starts or stops the local playtest log to match the user setting (decision D-015).</summary>
         public void ApplyTelemetrySetting()
         {
-            bool wanted = !AutomationMode && UserPrefs.PlaytestLog;
+            bool wanted = AutomationMode ? _automationTelemetryDir != null : UserPrefs.PlaytestLog;
             if (wanted && _telemetrySink == null)
             {
                 try
                 {
-                    _telemetrySink = new JsonlTelemetrySink(TelemetryDirectory, System.DateTime.UtcNow);
+                    _telemetrySink = new JsonlTelemetrySink(_automationTelemetryDir ?? TelemetryDirectory, System.DateTime.UtcNow);
                     Session.Telemetry = new TelemetryRecorder(_telemetrySink, Catalog);
                 }
                 catch (System.Exception ex)

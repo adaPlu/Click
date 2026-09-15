@@ -39,24 +39,39 @@ namespace ClickDungeon.Application
         public List<TelemetryEvent> Named(string name) => Events.FindAll(e => e.Name == name);
     }
 
-    /// <summary>Appends JSON lines to a local file, one file per app session. Nothing is sent over the network.</summary>
+    /// <summary>
+    /// Appends JSON lines to a local file, one file per app session. The file is created on the first event,
+    /// so launches that never start a run leave nothing behind. Nothing is sent over the network.
+    /// </summary>
     public sealed class JsonlTelemetrySink : ITelemetrySink, IDisposable
     {
-        readonly StreamWriter _writer;
+        readonly string _directory;
+        StreamWriter _writer;
 
         public JsonlTelemetrySink(string directory, DateTime startedUtc)
         {
-            Directory.CreateDirectory(directory);
+            _directory = directory;
             FilePath = Path.Combine(directory, $"session-{startedUtc:yyyyMMdd-HHmmss}-{Guid.NewGuid().ToString("N").Substring(0, 6)}.jsonl");
-            var stream = new FileStream(FilePath, FileMode.Append, FileAccess.Write, FileShare.Read);
-            _writer = new StreamWriter(stream, new UTF8Encoding(false)) { AutoFlush = true };
         }
 
         public string FilePath { get; }
 
-        public void Write(TelemetryEvent telemetryEvent) => _writer.WriteLine(telemetryEvent.ToJson());
+        public void Write(TelemetryEvent telemetryEvent)
+        {
+            if (_writer == null)
+            {
+                Directory.CreateDirectory(_directory);
+                var stream = new FileStream(FilePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+                _writer = new StreamWriter(stream, new UTF8Encoding(false)) { AutoFlush = true };
+            }
+            _writer.WriteLine(telemetryEvent.ToJson());
+        }
 
-        public void Dispose() => _writer.Dispose();
+        public void Dispose()
+        {
+            _writer?.Dispose();
+            _writer = null;
+        }
     }
 
     /// <summary>

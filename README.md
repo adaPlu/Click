@@ -61,3 +61,12 @@ dotnet run --project Sim/ClickDungeon.Telemetry.Report -- "%USERPROFILE%\AppData
 ```
 
 In Unity: **ClickDungeon → Telemetry → Summarize Logs**.
+
+### Playtest kit
+
+```bash
+powershell -ExecutionPolicy Bypass -File tools/playtest-kit/make-kit.ps1
+```
+
+Zips the Windows build with a tester README and `collect-logs.bat` into `ClickDungeon/Builds/Playtest/`.
+Session plan, interview questions and decision criteria: `docs/playtest-guide.md`.
