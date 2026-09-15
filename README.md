@@ -70,3 +70,9 @@ powershell -ExecutionPolicy Bypass -File tools/playtest-kit/make-kit.ps1
 
 Zips the Windows build with a tester README and `collect-logs.bat` into `ClickDungeon/Builds/Playtest/`.
 Session plan, interview questions and decision criteria: `docs/playtest-guide.md`.
+
+## Art
+
+Brief (reference images, specs, deliverables, decisions): `docs/art-brief.md`.
+Drop PNGs into `ClickDungeon/Assets/ClickDungeon/Art/Runtime/` named by key (e.g. `tile_spikes.png`);
+anything missing keeps its placeholder. **ClickDungeon → Art → Report Art Coverage** lists what's done.

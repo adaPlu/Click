@@ -43,6 +43,7 @@ namespace ClickDungeon.Unity.Screens
         readonly List<string> _log = new List<string>();
 
         Text _face;
+        Image _portraitArt;
         Text _speechFace;
         Text _speech;
         Text _hpText;
@@ -67,7 +68,7 @@ namespace ClickDungeon.Unity.Screens
             Root = UiFactory.Rect(parent, "GameScreen");
             Root.Stretch();
 
-            Backdrop.Build(Root, new[] { new Vector2(-420f, 220f), new Vector2(420f, 220f), new Vector2(-420f, -120f), new Vector2(420f, -120f) });
+            Backdrop.Build(Root, ArtKeys.GameplayBackground, new[] { new Vector2(-420f, 220f), new Vector2(420f, 220f), new Vector2(-420f, -120f), new Vector2(420f, -120f) });
             BuildTopLeft();
             BuildTopRight();
             _logText = BuildPanel("WhatHappened", new Vector2(0f, 0.5f), new Vector2(36f, -60f), "WHAT HAPPENED", out _);
@@ -409,6 +410,8 @@ namespace ClickDungeon.Unity.Screens
             _speech.text = line;
             _speechFace.text = Lines.Face(face);
             _face.text = Lines.Face(face);
+            if (_portraitArt != null && Art.TryGetSprite(ArtKeys.Portrait(ArtKeys.HeroId, face.ToString()), out var portrait))
+                _portraitArt.sprite = portrait;
         }
 
         void AppendLog(List<GameEvent> events)
@@ -638,10 +641,12 @@ namespace ClickDungeon.Unity.Screens
             logo.rectTransform.Place(TopLeft, TopLeft, new Vector2(34f, -14f), new Vector2(430f, 96f));
             UiFactory.Outline(logo, Palette.Ink, 3f);
             UiFactory.Shadow(logo, new Color(0f, 0f, 0f, 0.8f), 5f);
+            Icons.ReplaceTextWithArt(logo, ArtKeys.Logo);
 
             var portrait = UiFactory.Rect(Root, "Portrait");
             portrait.Place(TopLeft, TopLeft, new Vector2(470f, -10f), new Vector2(104f, 104f));
             _face = Icons.Portrait(portrait, 104f);
+            _portraitArt = Icons.TryArtImage(portrait, ArtKeys.Portrait(ArtKeys.HeroId, "neutral"), 104f);
             UiFactory.Image(portrait, "Frame", Palette.Gold, Shapes.Frame, true).rectTransform.Stretch();
 
             var hp = UiFactory.Rect(Root, "Hp");
@@ -826,10 +831,22 @@ namespace ClickDungeon.Unity.Screens
     /// <summary>Torch-lit stone wall behind every screen. Kept low-contrast so the board stays dominant.</summary>
     public static class Backdrop
     {
-        public static void Build(RectTransform root, Vector2[] torches)
+        public static void Build(RectTransform root, string backgroundKey, Vector2[] torches)
         {
             var wall = UiFactory.Rect(root, "Backdrop");
             wall.Stretch();
+
+            // Production background art replaces the procedural wall and torches.
+            if (Art.TryGet(backgroundKey, out var background))
+            {
+                var sprite = background.Frames[0];
+                var image = UiFactory.Image(wall, "Art " + backgroundKey, Color.white, sprite);
+                image.rectTransform.Stretch();
+                var fitter = image.gameObject.AddComponent<AspectRatioFitter>();
+                fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+                fitter.aspectRatio = sprite.rect.width / sprite.rect.height;
+                return;
+            }
             const float brickWidth = 150f;
             const float brickHeight = 64f;
             for (int row = -9; row <= 9; row++)

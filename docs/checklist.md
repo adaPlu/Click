@@ -34,6 +34,12 @@ Evidence key: **T** = automated test (headless `dotnet test` + Unity EditMode), 
 | Landscape layout per reference screens | ✅ | **S** title + gameplay screenshots from the Windows build. Found and fixed an off-board index crash on edge hover (regression test added) |
 | Representative phone layout | — | Canvas uses Expand + safe area; not yet run on a device |
 
+## Gate 3 prep — art pipeline (running alongside Gate 2)
+- [x] Art brief from the reference images: `docs/art-brief.md`.
+- [x] Art registry with placeholder fallback, import standards and coverage report (D-016).
+- [ ] Decide brief D1–D5 (unbuilt systems, side banners, mana bar, art source, tile set).
+- [ ] Style frame: one finished 5×5 board, approved before mass production.
+
 ## Deferred (by design)
 Gold, gems, shop, talents, inventory, daily reward, mail, extra heroes, equipment, rarity,
 production art, audio. Their space in the reference layout is left empty rather than faked.

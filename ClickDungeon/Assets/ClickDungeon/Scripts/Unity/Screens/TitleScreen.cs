@@ -31,20 +31,24 @@ namespace ClickDungeon.Unity.Screens
             Root = UiFactory.Rect(parent, "TitleScreen");
             Root.Stretch();
 
-            Backdrop.Build(Root, new[] { new Vector2(-345f, 120f), new Vector2(345f, 120f), new Vector2(-345f, -200f), new Vector2(345f, -200f) });
+            Backdrop.Build(Root, ArtKeys.TitleBackground, new[] { new Vector2(-345f, 120f), new Vector2(345f, 120f), new Vector2(-345f, -200f), new Vector2(345f, -200f) });
 
-            // Arch behind the hero.
-            Icons.Shape(Root, Shapes.Rounded, Palette.StoneLight, new Vector2(0f, -40f), new Vector2(660f, 780f));
-            Icons.Shape(Root, Shapes.Rounded, Palette.Navy.Dim(0.55f), new Vector2(0f, -50f), new Vector2(610f, 750f));
-            for (int i = -2; i <= 2; i++)
-                Icons.Shape(Root, Shapes.Square, Palette.StoneDark.WithAlpha(0.8f), new Vector2(i * 90f, -40f), new Vector2(12f, 600f));
+            // Placeholder scenery. A composite bg_title (arch, banners, characters) replaces all of it.
+            bool compositeBackground = Art.Has(ArtKeys.TitleBackground);
+            if (!compositeBackground)
+            {
+                Icons.Shape(Root, Shapes.Rounded, Palette.StoneLight, new Vector2(0f, -40f), new Vector2(660f, 780f));
+                Icons.Shape(Root, Shapes.Rounded, Palette.Navy.Dim(0.55f), new Vector2(0f, -50f), new Vector2(610f, 750f));
+                for (int i = -2; i <= 2; i++)
+                    Icons.Shape(Root, Shapes.Square, Palette.StoneDark.WithAlpha(0.8f), new Vector2(i * 90f, -40f), new Vector2(12f, 600f));
 
-            Banner(new Vector2(-850f, -60f), "SMALL\nCLICKS\n\nBIG\nADVENTURES");
-            Banner(new Vector2(470f, -60f), "DUNGEONS\nMAKE\nBETTER\nHEROES");
+                Banner(new Vector2(-850f, -60f), "SMALL\nCLICKS\n\nBIG\nADVENTURES");
+                Banner(new Vector2(470f, -60f), "DUNGEONS\nMAKE\nBETTER\nHEROES");
+            }
 
             BuildHeroCard();
             BuildLogo();
-            BuildCharacters();
+            if (!compositeBackground) BuildCharacters();
 
             _continuePanel = BuildContinuePanel(out _continueFloor, out _continueName);
             BuildHowTo();
@@ -133,6 +137,7 @@ namespace ClickDungeon.Unity.Screens
             portrait.Place(new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(14f, 0f), new Vector2(108f, 108f));
             var face = Icons.Portrait(portrait, 108f);
             face.text = ":D";
+            Icons.TryArtImage(portrait, ArtKeys.Portrait(ArtKeys.HeroId, "happy"), 108f);
 
             var identity = _app.Catalog.HeroIdentity(Content.ContentCatalog.DefaultHeroId);
             var name = UiFactory.Text(card, "Name", identity.DisplayName, 38, Palette.Gold, TextAnchor.MiddleLeft, FontStyle.Bold);
@@ -149,8 +154,11 @@ namespace ClickDungeon.Unity.Screens
             logo.horizontalOverflow = HorizontalWrapMode.Overflow;
             UiFactory.Outline(logo, Palette.Ink, 5f);
             UiFactory.Shadow(logo, new Color(0f, 0f, 0f, 0.85f), 9f);
-            var gem = Icons.Shape(Root, Shapes.Diamond, Palette.Summon, Vector2.zero, new Vector2(44f, 44f));
-            gem.rectTransform.Place(TopCenter, Center, new Vector2(40f, -52f), new Vector2(44f, 44f));
+            if (Icons.ReplaceTextWithArt(logo, ArtKeys.Logo) == null)
+            {
+                var gem = Icons.Shape(Root, Shapes.Diamond, Palette.Summon, Vector2.zero, new Vector2(44f, 44f));
+                gem.rectTransform.Place(TopCenter, Center, new Vector2(40f, -52f), new Vector2(44f, 44f));
+            }
 
             var plank = UiFactory.Rect(Root, "Tagline");
             plank.Place(TopCenter, TopCenter, new Vector2(40f, -250f), new Vector2(860f, 76f));

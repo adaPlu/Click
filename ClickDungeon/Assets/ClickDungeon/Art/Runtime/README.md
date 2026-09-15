@@ -1,0 +1,28 @@
+# ClickDungeon runtime art — drop-in folder
+
+Put game-ready PNGs here. Full specs and the art brief: `docs/art-brief.md` (decision D-016).
+
+## Rules
+
+- **The file name is the key.** Lowercase snake case, e.g. `tile_spikes.png`, `icon_clue_enemy.png`.
+- **Animations:** numbered frames `<key>_000.png`, `<key>_001.png`… become one animation for `<key>`
+  (e.g. `actor_goblin_idle_000.png` … `actor_goblin_idle_005.png`).
+- **Folders are for humans:** `Tiles/`, `Actors/`, `Portraits/`, `Icons/`, `UI/`, `FX/`, `Backgrounds/`.
+  Keys must be unique across all folders.
+- **Import:** new files are imported automatically as UI sprites (100 PPU, bilinear, no mipmaps, clamp,
+  high-quality compression). Later manual changes, such as 9-slice borders, are kept.
+- **Catalog:** `Art/Resources/ArtCatalog.asset` rebuilds when files change, or via
+  **ClickDungeon → Art → Rebuild Art Catalog**. Edit animation fps there; it survives rebuilds.
+- **Coverage:** **ClickDungeon → Art → Report Art Coverage** writes `ClickDungeon/Art/art-coverage.md`.
+
+Any key without art keeps its placeholder, so art can arrive one file at a time.
+
+## Keys the game uses today
+
+- Tiles: `tile_floor_stone`, `tile_wall`, `tile_pit`, `tile_spikes`, `tile_bomb`, `tile_bomb_armed`,
+  `tile_key`, `tile_chest_closed`, `tile_chest_open`, `tile_potion`, `tile_exit_locked`, `tile_exit_open`
+- Actors: `actor_<id>_idle` for `sir_clickington`, `goblin`, `crowned_slime`, `fire_imp`, `slimelet`,
+  `lord_blobert`; also `actor_lord_blobert_puffed`, `actor_lord_blobert_deflated`
+- Icons: `icon_clue_<enemy|danger|objective|treasure|safe>`, `icon_ability_<move|slash|shield|dash|potion>`
+- Portraits: `portrait_sir_clickington_<neutral|happy|confident|worried|shocked|angry|victorious|defeated>`
+- Screens: `logo_clickdungeon`, `bg_gameplay`, `bg_title`

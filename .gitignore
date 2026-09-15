@@ -16,6 +16,9 @@ ClickDungeon/*.pidb
 ClickDungeon/*.userprefs
 ClickDungeon/crashlytics-buildid.txt
 
+# Generated art coverage report (ClickDungeon -> Art -> Report Art Coverage)
+ClickDungeon/Art/art-coverage.md
+
 # dotnet
 Sim/**/bin/
 Sim/**/obj/

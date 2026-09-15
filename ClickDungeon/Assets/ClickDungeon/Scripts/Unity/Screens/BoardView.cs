@@ -180,15 +180,15 @@ namespace ClickDungeon.Unity.Screens
         {
             if (cell.Terrain == Terrain.Wall)
             {
-                view.Base.color = Palette.Wall;
-                view.Edge.color = Palette.WallEdge;
+                if (ApplyTileArt(view, ArtKeys.Wall, Color.white)) return;
+                SetPlaceholderBase(view, Palette.Wall, Palette.WallEdge);
                 Icons.WallBricks(view.Icons);
                 return;
             }
             if (cell.Terrain == Terrain.Pit)
             {
-                view.Base.color = Palette.Stone;
-                view.Edge.color = Palette.StoneDark;
+                if (ApplyTileArt(view, ArtKeys.Pit, Color.white)) return;
+                SetPlaceholderBase(view, Palette.Stone, Palette.StoneDark);
                 Icons.Pit(view.Icons);
                 return;
             }
@@ -196,8 +196,8 @@ namespace ClickDungeon.Unity.Screens
             switch (cell.Knowledge)
             {
                 case Knowledge.Revealed:
-                    view.Base.color = Palette.FloorRevealed;
-                    view.Edge.color = Palette.StoneLight.Dim(1.2f);
+                    if (!ApplyTileArt(view, ArtKeys.FloorStone, Color.white))
+                        SetPlaceholderBase(view, Palette.FloorRevealed, Palette.StoneLight.Dim(1.2f));
                     if (cell.IsExit) Icons.Exit(view.Icons, floor.ExitUnlocked);
                     if (cell.Hazard == HazardKind.Spikes) Icons.Spikes(view.Icons);
                     else if (cell.Hazard == HazardKind.Bomb) Icons.Bomb(view.Icons, cell.BombArmed, cell.BombFuse);
@@ -206,15 +206,35 @@ namespace ClickDungeon.Unity.Screens
                     else if (cell.Content == ContentKind.Potion) Icons.Potion(view.Icons);
                     break;
                 case Knowledge.Sensed:
-                    view.Base.color = Palette.FloorSensed;
-                    view.Edge.color = Palette.Stone;
+                    if (!ApplyTileArt(view, ArtKeys.FloorStone, new Color(0.55f, 0.55f, 0.6f)))
+                        SetPlaceholderBase(view, Palette.FloorSensed, Palette.Stone);
                     Icons.Clues(view.Icons, Board.ClueAt(floor, p));
                     break;
                 default:
-                    view.Base.color = Palette.FloorUnseen;
-                    view.Edge.color = Palette.StoneDark.Dim(1.3f);
+                    if (!ApplyTileArt(view, ArtKeys.FloorStone, new Color(0.3f, 0.3f, 0.34f)))
+                        SetPlaceholderBase(view, Palette.FloorUnseen, Palette.StoneDark.Dim(1.3f));
                     break;
             }
+        }
+
+        /// <summary>Uses tile art for the cell base when the catalog has it (tinted for knowledge state).</summary>
+        static bool ApplyTileArt(CellParts view, string key, Color tint)
+        {
+            if (!Art.TryGetSprite(key, out var sprite)) return false;
+            view.Base.sprite = sprite;
+            view.Base.type = Image.Type.Simple;
+            view.Base.color = tint;
+            view.Edge.enabled = false;
+            return true;
+        }
+
+        static void SetPlaceholderBase(CellParts view, Color fill, Color edge)
+        {
+            view.Base.sprite = Shapes.Rounded;
+            view.Base.type = Image.Type.Sliced;
+            view.Base.color = fill;
+            view.Edge.enabled = true;
+            view.Edge.color = edge;
         }
 
         void DrawThreats(CellParts view, List<ThreatKind> kinds, int damage)

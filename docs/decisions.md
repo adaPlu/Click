@@ -115,3 +115,14 @@ Rules referenced here live in `docs/rules.md`.
 - **DEPENDENCIES**: `GameEvent` vocabulary, `Threats`, `Commands.LegalTargets`.
 - **REVERSIBILITY**: high. The schema is versioned (`schema` in `run_started`), and a network sink can
   replace the file sink later.
+
+## D-016 Art registry keyed by file name, with placeholder fallback
+- **DECISION**: Production art lives in `Assets/ClickDungeon/Art/Runtime/`. The file name is the key, and
+  numbered files form animations. An editor tool builds `Art/Resources/ArtCatalog.asset`. Presentation
+  looks art up by key through `Art` and draws the existing procedural placeholder for any missing key.
+  Import standards apply to new files automatically. Brief and key list: `docs/art-brief.md`.
+- **WHY**: art will arrive piece by piece from an undecided source (brief D4), so the game must never break
+  or wait on a missing file. File-name keys need no scene wiring in a code-built UI and make coverage
+  reportable.
+- **DEPENDENCIES**: presentation layer only (`Icons`, `BoardView`, screens). Simulation is untouched.
+- **REVERSIBILITY**: high. Keys are the contract; storage (Resources, Addressables) can change later.

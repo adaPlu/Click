@@ -7,11 +7,13 @@ using UnityEngine.UI;
 namespace ClickDungeon.Unity.Ui
 {
     /// <summary>
-    /// Programmer-art icons composed from procedural shapes. Every gameplay meaning uses shape and a
-    /// glyph as well as colour, so nothing is communicated by colour alone.
+    /// Board, actor and UI icons. Each one uses production art from the art catalog when its key exists and
+    /// otherwise draws programmer art from procedural shapes. Every gameplay meaning uses shape and a glyph
+    /// as well as colour, so nothing is communicated by colour alone.
     /// </summary>
     public static class Icons
     {
+        public const float TileSize = 136f;
         static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
 
         public static Image Shape(Transform parent, Sprite sprite, Color color, Vector2 pos, Vector2 size, float rotation = 0f)
@@ -40,6 +42,53 @@ namespace ClickDungeon.Unity.Ui
             return rt;
         }
 
+        // ---------------------------------------------------------------- production art
+
+        /// <summary>Places catalog art for the key (animated when it has several frames). False = draw the placeholder.</summary>
+        public static bool TryArt(Transform parent, string key, float size, Vector2 pos = default)
+        {
+            return TryArtImage(parent, key, size, pos) != null;
+        }
+
+        public static bool TryArtFirst(Transform parent, float size, params string[] keys)
+        {
+            foreach (var key in keys)
+                if (TryArt(parent, key, size))
+                    return true;
+            return false;
+        }
+
+        public static Image TryArtImage(Transform parent, string key, float size, Vector2 pos = default)
+        {
+            return Art.TryGet(key, out var entry) ? ArtImage(parent, entry, new Vector2(size, size), pos) : null;
+        }
+
+        public static Image ArtImage(Transform parent, ArtCatalog.Entry entry, Vector2 size, Vector2 pos)
+        {
+            var image = UiFactory.Image(parent, "Art " + entry.Key, Color.white, entry.Frames[0]);
+            image.preserveAspect = true;
+            image.rectTransform.Place(Center, Center, pos, size);
+            if (entry.Frames.Length > 1) image.gameObject.AddComponent<SpriteFrameAnimator>().Play(image, entry.Frames, entry.Fps);
+            return image;
+        }
+
+        /// <summary>Swaps a text logo for its image in the same rect, if the art exists.</summary>
+        public static Image ReplaceTextWithArt(Text text, string key)
+        {
+            if (!Art.TryGet(key, out var entry)) return null;
+            var source = text.rectTransform;
+            var image = UiFactory.Image(source.parent, "Art " + key, Color.white, entry.Frames[0]);
+            var rt = image.rectTransform;
+            rt.anchorMin = source.anchorMin;
+            rt.anchorMax = source.anchorMax;
+            rt.pivot = source.pivot;
+            rt.anchoredPosition = source.anchoredPosition;
+            rt.sizeDelta = source.sizeDelta;
+            image.preserveAspect = true;
+            text.enabled = false;
+            return image;
+        }
+
         // ---------------------------------------------------------------- board objects
 
         public static void WallBricks(Transform t)
@@ -59,6 +108,7 @@ namespace ClickDungeon.Unity.Ui
 
         public static void Spikes(Transform t)
         {
+            if (TryArt(t, ArtKeys.Spikes, TileSize)) return;
             var spots = new[] { new Vector2(-34f, -10f), new Vector2(0f, 12f), new Vector2(34f, -10f) };
             foreach (var s in spots)
             {
@@ -69,16 +119,22 @@ namespace ClickDungeon.Unity.Ui
 
         public static void Bomb(Transform t, bool armed, int fuse)
         {
-            if (armed) Shape(t, Shapes.Ring, Palette.Fuse, Vector2.zero, new Vector2(122f, 122f));
-            Shape(t, Shapes.Circle, Palette.Bomb, new Vector2(-4f, -6f), new Vector2(72f, 72f));
-            Shape(t, Shapes.Circle, Color.white.WithAlpha(0.22f), new Vector2(-18f, 8f), new Vector2(18f, 18f));
-            Shape(t, Shapes.Square, Palette.StoneLight, new Vector2(20f, 28f), new Vector2(10f, 20f), -35f);
-            Shape(t, Shapes.Circle, Palette.Fuse, new Vector2(28f, 40f), new Vector2(18f, 18f));
+            bool art = armed ? TryArtFirst(t, TileSize, ArtKeys.BombArmed, ArtKeys.Bomb) : TryArt(t, ArtKeys.Bomb, TileSize);
+            if (!art)
+            {
+                if (armed) Shape(t, Shapes.Ring, Palette.Fuse, Vector2.zero, new Vector2(122f, 122f));
+                Shape(t, Shapes.Circle, Palette.Bomb, new Vector2(-4f, -6f), new Vector2(72f, 72f));
+                Shape(t, Shapes.Circle, Color.white.WithAlpha(0.22f), new Vector2(-18f, 8f), new Vector2(18f, 18f));
+                Shape(t, Shapes.Square, Palette.StoneLight, new Vector2(20f, 28f), new Vector2(10f, 20f), -35f);
+                Shape(t, Shapes.Circle, Palette.Fuse, new Vector2(28f, 40f), new Vector2(18f, 18f));
+            }
+            // The fuse state is gameplay information, so it stays as live text even with art.
             if (armed) Label(t, fuse <= 0 ? "BOOM!" : "ARMED", 20, Palette.Fuse, new Vector2(0f, -50f), new Vector2(120f, 24f));
         }
 
         public static void Key(Transform t)
         {
+            if (TryArt(t, ArtKeys.Key, TileSize)) return;
             Shape(t, Shapes.Ring, Palette.Gold, new Vector2(-24f, 12f), new Vector2(48f, 48f));
             Shape(t, Shapes.Square, Palette.Gold, new Vector2(18f, 12f), new Vector2(52f, 12f));
             Shape(t, Shapes.Square, Palette.Gold, new Vector2(34f, 0f), new Vector2(10f, 20f));
@@ -88,6 +144,7 @@ namespace ClickDungeon.Unity.Ui
 
         public static void Chest(Transform t, bool opened, float scale = 1f)
         {
+            if (TryArt(t, opened ? ArtKeys.ChestOpen : ArtKeys.ChestClosed, TileSize * scale)) return;
             var g = Group(t, Vector2.zero, 0f, scale);
             var wood = opened ? Palette.ChestWood.Dim(0.55f) : Palette.ChestWood;
             if (opened) Shape(g, Shapes.Rounded, wood.Dim(0.8f), new Vector2(0f, 34f), new Vector2(88f, 26f));
@@ -108,6 +165,7 @@ namespace ClickDungeon.Unity.Ui
 
         public static void Potion(Transform t, float scale = 1f)
         {
+            if (TryArt(t, ArtKeys.Potion, TileSize * scale)) return;
             var g = Group(t, Vector2.zero, 0f, scale);
             Shape(g, Shapes.Square, Palette.Steel, new Vector2(0f, 28f), new Vector2(18f, 22f));
             Shape(g, Shapes.Square, Palette.ChestWood, new Vector2(0f, 42f), new Vector2(22f, 10f));
@@ -118,6 +176,7 @@ namespace ClickDungeon.Unity.Ui
 
         public static void Exit(Transform t, bool unlocked)
         {
+            if (TryArt(t, unlocked ? ArtKeys.ExitOpen : ArtKeys.ExitLocked, TileSize)) return;
             Shape(t, Shapes.Rounded, Palette.StoneDark, Vector2.zero, new Vector2(112f, 112f));
             for (int i = 0; i < 3; i++)
                 Shape(t, Shapes.Square, Palette.StoneLight.Dim(1f - i * 0.22f), new Vector2(0f, 28f - i * 22f), new Vector2(86f - i * 14f, 14f));
@@ -163,15 +222,16 @@ namespace ClickDungeon.Unity.Ui
 
         public static void Clues(Transform t, Clue clue)
         {
-            var marks = new List<(Sprite sprite, Color color, string glyph)>();
-            if ((clue & Clue.Enemy) != 0) marks.Add((Shapes.Diamond, Palette.Danger, "!"));
-            if ((clue & Clue.Danger) != 0) marks.Add((Shapes.Triangle, Palette.Fuse, "!"));
-            if ((clue & Clue.Objective) != 0) marks.Add((Shapes.Ring, Palette.Gold, "K"));
-            if ((clue & Clue.Treasure) != 0) marks.Add((Shapes.Diamond, Palette.Gold, "$"));
+            var marks = new List<(Clue flag, Sprite sprite, Color color, string glyph)>();
+            if ((clue & Clue.Enemy) != 0) marks.Add((Clue.Enemy, Shapes.Diamond, Palette.Danger, "!"));
+            if ((clue & Clue.Danger) != 0) marks.Add((Clue.Danger, Shapes.Triangle, Palette.Fuse, "!"));
+            if ((clue & Clue.Objective) != 0) marks.Add((Clue.Objective, Shapes.Ring, Palette.Gold, "K"));
+            if ((clue & Clue.Treasure) != 0) marks.Add((Clue.Treasure, Shapes.Diamond, Palette.Gold, "$"));
 
             if (marks.Count == 0)
             {
-                Shape(t, Shapes.Circle, Palette.Safe.WithAlpha(0.7f), Vector2.zero, new Vector2(16f, 16f));
+                if (!TryArt(t, ArtKeys.ClueIcon(Clue.Safe), 28f))
+                    Shape(t, Shapes.Circle, Palette.Safe.WithAlpha(0.7f), Vector2.zero, new Vector2(16f, 16f));
                 return;
             }
 
@@ -180,6 +240,7 @@ namespace ClickDungeon.Unity.Ui
             for (int i = 0; i < marks.Count; i++)
             {
                 var pos = new Vector2(x0 + i * spacing, 0f);
+                if (TryArt(t, ArtKeys.ClueIcon(marks[i].flag), 44f, pos)) continue;
                 Shape(t, marks[i].sprite, marks[i].color, pos, new Vector2(44f, 44f));
                 Label(t, marks[i].glyph, 22, Color.white, pos + new Vector2(0f, -2f), new Vector2(40f, 40f));
             }
@@ -190,6 +251,7 @@ namespace ClickDungeon.Unity.Ui
         public static void Hero(Transform t, bool guard)
         {
             if (guard) Shape(t, Shapes.Ring, Palette.Gold, Vector2.zero, new Vector2(128f, 128f));
+            if (TryArt(t, ArtKeys.Actor(ArtKeys.HeroId), TileSize)) return;
             Shape(t, Shapes.Triangle, Palette.Hp, new Vector2(10f, 48f), new Vector2(36f, 32f), -15f);
             Shape(t, Shapes.Circle, Palette.Steel, Vector2.zero, new Vector2(98f, 98f));
             Shape(t, Shapes.Circle, Palette.Hero, new Vector2(0f, -4f), new Vector2(80f, 80f));
@@ -199,6 +261,18 @@ namespace ClickDungeon.Unity.Ui
 
         public static void Enemy(Transform t, EnemyDefinition def, EnemyMode mode)
         {
+            if (def.IsBoss)
+            {
+                // Immunity must stay readable without relying on the art: keep the steel ring.
+                if (mode == EnemyMode.Puffed) Shape(t, Shapes.Ring, Palette.Steel, Vector2.zero, new Vector2(134f, 134f));
+                string state = mode == EnemyMode.Puffed ? "puffed" : mode == EnemyMode.Deflated ? "deflated" : "idle";
+                if (TryArtFirst(t, TileSize * 1.4f, ArtKeys.Actor(def.Id, state), ArtKeys.Actor(def.Id))) return;
+            }
+            else if (TryArt(t, ArtKeys.Actor(def.Id), TileSize))
+            {
+                return;
+            }
+
             switch (def.Id)
             {
                 case "goblin":
@@ -226,7 +300,6 @@ namespace ClickDungeon.Unity.Ui
                 case "lord_blobert":
                     if (mode == EnemyMode.Puffed)
                     {
-                        Shape(t, Shapes.Ring, Palette.Steel, Vector2.zero, new Vector2(134f, 134f));
                         Shape(t, Shapes.Circle, Palette.Boss.Dim(1.15f), Vector2.zero, new Vector2(122f, 122f));
                     }
                     else if (mode == EnemyMode.Deflated)
@@ -282,6 +355,7 @@ namespace ClickDungeon.Unity.Ui
 
         public static void Ability(Transform t, CommandKind kind)
         {
+            if (TryArt(t, ArtKeys.AbilityIcon(kind), 96f)) return;
             switch (kind)
             {
                 case CommandKind.Move:
