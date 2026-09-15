@@ -198,6 +198,20 @@ namespace ClickDungeon.Unity.Ui
         /// <summary>Small badge for a hazard or exit that an actor's token is covering.</summary>
         public static void Underfoot(Transform t, CellState cell, bool exitUnlocked)
         {
+            const float badge = 44f;
+
+            // State-specific art is the whole badge.
+            if (TryArt(t, ArtKeys.Underfoot(cell, exitUnlocked), badge)) return;
+
+            // An armed bomb can reuse plain bomb badge art inside the procedural fuse ring, so the armed state
+            // never depends on having its own art.
+            if (cell.BombArmed && Art.Has(ArtKeys.UnderfootBomb))
+            {
+                Shape(t, Shapes.Ring, Palette.Fuse, Vector2.zero, new Vector2(badge + 6f, badge + 6f));
+                TryArt(t, ArtKeys.UnderfootBomb, badge - 6f);
+                return;
+            }
+
             var ring = cell.BombArmed ? Palette.Fuse : Palette.GoldDark;
             Shape(t, Shapes.Circle, Palette.Navy, Vector2.zero, new Vector2(42f, 42f));
             Shape(t, Shapes.Ring, ring, Vector2.zero, new Vector2(44f, 44f));

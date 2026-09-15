@@ -181,6 +181,12 @@ namespace ClickDungeon.Unity.Ui
         public const string ChestGem = "fx_chest_gem";
         public const string ChestShimmer = "fx_chest_shimmer";
 
+        public const string UnderfootSpikes = "icon_underfoot_spikes";
+        public const string UnderfootBomb = "icon_underfoot_bomb";
+        public const string UnderfootBombArmed = "icon_underfoot_bomb_armed";
+        public const string UnderfootExitLocked = "icon_underfoot_exit_locked";
+        public const string UnderfootExitOpen = "icon_underfoot_exit_open";
+
         /// <summary>Sir Clickington's chest reactions, in order: overlay opens, burst, then two beats after it.</summary>
         public static readonly string[] ChestReactionSteps = { "anticipation", "reveal", "heavy", "triumph" };
 
@@ -210,6 +216,15 @@ namespace ClickDungeon.Unity.Ui
         public static string AbilityIcon(CommandKind kind) => $"icon_ability_{kind.ToString().ToLowerInvariant()}";
 
         public static string ChestReaction(string step) => $"ui_chest_reaction_{step}";
+
+        /// <summary>Underfoot badge for a hazard or exit under a token; null when nothing needs a badge.</summary>
+        public static string Underfoot(CellState cell, bool exitUnlocked)
+        {
+            if (cell.Hazard == HazardKind.Spikes) return UnderfootSpikes;
+            if (cell.Hazard == HazardKind.Bomb) return cell.BombArmed ? UnderfootBombArmed : UnderfootBomb;
+            if (cell.IsExit) return exitUnlocked ? UnderfootExitOpen : UnderfootExitLocked;
+            return null;
+        }
 
         /// <summary>Portrait expression shown in a frame when a reaction pose has no art.</summary>
         public static string ChestReactionFallback(string step)
@@ -304,6 +319,7 @@ namespace ClickDungeon.Unity.Ui
             keys.AddRange(new[] { ChestRays, ChestCoin, ChestGem, ChestShimmer });
             foreach (var step in ChestReactionSteps) keys.Add(ChestReaction(step));
             foreach (var kind in RewardKinds) keys.Add(RewardIcon(kind));
+            keys.AddRange(new[] { UnderfootSpikes, UnderfootBomb, UnderfootBombArmed, UnderfootExitLocked, UnderfootExitOpen });
             return keys;
         }
     }

@@ -35,6 +35,7 @@ reference slice or procedural placeholder.
 - Intent badges: `icon_intent_<attack|move|fire|rest|recover|summon|slam|puffup>` (badge text stays live)
 - Danger telegraphs: `ui_danger_<attack|fire|slam|blast|armed|summon>` (tile-sized overlay), `icon_danger_warning` (corner);
   the `-N` damage number and HIT/FIRE/SLAM/BOOM tag stay live text
+- Underfoot badges: `icon_underfoot_<spikes|bomb|bomb_armed|exit_locked|exit_open>` (whole badge; armed bomb falls back to the bomb art in an orange ring)
 - Highlights: `ui_highlight_<legal|target|hover>` (thin edge frame, within the outer 8 px: they draw over enemy intent badges)
 - HUD frames: `ui_frame_portrait`, `ui_hp_back`, `ui_hp_fill`, `ui_hp_frame`, `ui_icon_heart`, `ui_chip`, `ui_plaque_floor`,
   `ui_panel`, `ui_speech_strip`, `ui_badge_count` (set 9-slice borders in the importer for frames)
