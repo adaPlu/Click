@@ -288,6 +288,16 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 07b7533ad88a31b4ea2e15069a36ea91, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: ui_chest_large_closed
+    Frames:
+    - {fileID: 21300000, guid: 77960fd84aeae9f4e9b3dff6e3122902, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_chest_large_open
+    Frames:
+    - {fileID: 21300000, guid: facb0d5e5bb7dc547875622cecf1e77f, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: ui_continue_preview
     Frames:
     - {fileID: 21300000, guid: f95c3113e1caa55439a7922dd2b29510, type: 3}

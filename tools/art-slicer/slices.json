@@ -11,7 +11,8 @@
     "ref-items": { "file": "ItemDemoArt.png", "size": [1448, 1086], "label": "Supporting: items and equipment library" },
     "ref-knight-sheet": { "file": "SirClickingtonDetailsAnimations.png", "size": [1086, 1448], "label": "Sir Clickington details and animations" },
     "ref-slime-sheet": { "file": "CrownedSlimeDetailsAnimations.png", "size": [1092, 1440], "label": "Crowned Slime details and animations" },
-    "ref-imp-sheet": { "file": "FireImpDetailsAnimations.png", "size": [1168, 1346], "label": "Fire Imp details and animations" }
+    "ref-imp-sheet": { "file": "FireImpDetailsAnimations.png", "size": [1168, 1346], "label": "Fire Imp details and animations" },
+    "ref-items2": { "file": "items2.png", "size": [1448, 1086], "label": "Supporting: items and equipment library (second sheet)" }
   },
   "slices": [
     { "key": "tile_floor_stone", "source": "ref4-tiles-b", "rect": [16, 157, 168, 168], "mode": "tile", "size": 256, "folder": "Tiles", "snap": true, "wired": true },
@@ -89,6 +90,8 @@
     { "key": "fx_chest_reward_anticipation", "source": "ref6-vertical-slice", "rect": [15, 878, 345, 200], "mode": "wide", "size": 512, "folder": "FX" },
     { "key": "fx_chest_reward_burst", "source": "ref6-vertical-slice", "rect": [370, 858, 345, 220], "mode": "wide", "size": 512, "folder": "FX" },
     { "key": "fx_chest_reward_heavy", "source": "ref6-vertical-slice", "rect": [730, 858, 350, 220], "mode": "wide", "size": 512, "folder": "FX" },
-    { "key": "fx_chest_reward_triumph", "source": "ref6-vertical-slice", "rect": [1088, 858, 355, 220], "mode": "wide", "size": 512, "folder": "FX" }
+    { "key": "fx_chest_reward_triumph", "source": "ref6-vertical-slice", "rect": [1088, 858, 355, 220], "mode": "wide", "size": 512, "folder": "FX" },
+    { "key": "ui_chest_large_closed", "source": "ref-items", "rect": [672, 592, 64, 58], "mode": "icon", "tolerance": 50, "largest_only": true, "size": 512, "folder": "UI", "wired": true },
+    { "key": "ui_chest_large_open", "source": "ref-items2", "rect": [1220, 735, 195, 190], "mode": "icon", "tolerance": 50, "largest_only": true, "size": 512, "folder": "UI", "wired": true }
   ]
 }
