@@ -37,6 +37,7 @@ namespace ClickDungeon.Unity
             Catalog = ContentCatalog.CreateDefault();
             Store = new FileSaveStore(Path.Combine(UnityEngine.Application.persistentDataPath, AutomationMode ? "saves-automation" : "saves"));
             Session = new GameSession(Catalog, Store);
+            ApplyTelemetrySetting();
 
             EnsureCamera();
             EnsureEventSystem();
@@ -94,6 +95,43 @@ namespace ClickDungeon.Unity
         {
             if (_game != null) _game.Tick();
             else _title?.Tick();
+        }
+
+        JsonlTelemetrySink _telemetrySink;
+
+        public string TelemetryDirectory => Path.Combine(UnityEngine.Application.persistentDataPath, "telemetry");
+        public bool TelemetryActive => _telemetrySink != null;
+
+        /// <summary>Starts or stops the local playtest log to match the user setting (decision D-015).</summary>
+        public void ApplyTelemetrySetting()
+        {
+            bool wanted = !AutomationMode && UserPrefs.PlaytestLog;
+            if (wanted && _telemetrySink == null)
+            {
+                try
+                {
+                    _telemetrySink = new JsonlTelemetrySink(TelemetryDirectory, System.DateTime.UtcNow);
+                    Session.Telemetry = new TelemetryRecorder(_telemetrySink, Catalog);
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogWarning($"[ClickDungeon] Playtest log disabled: {ex.Message}");
+                    _telemetrySink = null;
+                    Session.Telemetry = null;
+                }
+            }
+            else if (!wanted && _telemetrySink != null)
+            {
+                Session.Telemetry = null;
+                _telemetrySink.Dispose();
+                _telemetrySink = null;
+            }
+        }
+
+        void OnDestroy()
+        {
+            _telemetrySink?.Dispose();
+            _telemetrySink = null;
         }
 
         public void ShowTitle()
@@ -226,6 +264,13 @@ namespace ClickDungeon.Unity
         {
             get => PlayerPrefs.GetInt("cd.screenShake", 1) == 1;
             set => SetBool("cd.screenShake", value);
+        }
+
+        /// <summary>Local-only playtest telemetry. On by default in prototype builds.</summary>
+        public static bool PlaytestLog
+        {
+            get => PlayerPrefs.GetInt("cd.playtestLog", 1) == 1;
+            set => SetBool("cd.playtestLog", value);
         }
 
         public static bool SeenHelp

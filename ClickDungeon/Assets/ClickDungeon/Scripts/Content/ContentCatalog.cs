@@ -107,12 +107,79 @@ namespace ClickDungeon.Content
                 ".....",
                 ".o.#.",
                 "...#.");
+            AddTemplate(c, "cross_roads", false,
+                "#.#.#",
+                ".....",
+                "#.#.#",
+                ".....",
+                "#.#.#");
+            AddTemplate(c, "switchback", false,
+                ".....",
+                ".###.",
+                "...#.",
+                ".#...",
+                ".....");
+            AddTemplate(c, "twin_rooms", false,
+                "...#.",
+                "...#.",
+                ".#...",
+                ".#...",
+                ".#...");
+            AddTemplate(c, "pit_bridge", false,
+                ".....",
+                ".o.o.",
+                "..o..",
+                ".o.o.",
+                ".....");
+            AddTemplate(c, "vault", false,
+                ".....",
+                ".###.",
+                ".#.#.",
+                ".#.#.",
+                ".....");
+            AddTemplate(c, "hourglass", false,
+                ".....",
+                "#...#",
+                "##.##",
+                "#...#",
+                ".....");
+            AddTemplate(c, "ring_road", false,
+                ".....",
+                ".#o#.",
+                ".o#o.",
+                ".#o#.",
+                ".....");
+            AddTemplate(c, "comb", false,
+                ".....",
+                ".#.#.",
+                ".#.#.",
+                ".#.#.",
+                ".#.#.");
+            AddTemplate(c, "broken_diagonal", false,
+                "....#",
+                "...#.",
+                ".....",
+                ".#...",
+                "#....");
+
             AddTemplate(c, "blobert_court", true,
                 ".....",
                 ".o.o.",
                 ".....",
                 ".o.o.",
                 ".....");
+            AddTemplate(c, "blobert_throne", true,
+                ".....",
+                ".....",
+                "..#..",
+                ".....",
+                ".....");
+            AddTemplate(c, "blobert_pits", true,
+                "o...o",
+                ".....",
+                "..o..",
+                ".....",
+                "o...o");
 
             c.FloorProfiles.Add(new FloorProfile
             {

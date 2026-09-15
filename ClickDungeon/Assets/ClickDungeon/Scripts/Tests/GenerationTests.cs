@@ -73,8 +73,40 @@ namespace ClickDungeon.Tests
                 templates.Add(floor.TemplateId);
                 signatures.Add(Signature(floor));
             }
-            Assert.That(templates.Count, Is.GreaterThanOrEqualTo(5));
+            Assert.That(templates.Count, Is.GreaterThanOrEqualTo(10));
             Assert.That(signatures.Count, Is.GreaterThanOrEqualTo(95));
+        }
+
+        [Test]
+        public void TemplateLibraryHasEnoughDistinctLayouts()
+        {
+            var layouts = new HashSet<string>();
+            foreach (var template in Catalog.Templates.Where(t => !t.BossArena))
+            for (int t = 0; t < TemplateTransform.Count; t++)
+            {
+                var sb = new StringBuilder();
+                foreach (var p in Board.AllCells)
+                {
+                    var tp = TemplateTransform.ToTemplate(p, t);
+                    sb.Append((int)template.TerrainAt(tp.X, tp.Y));
+                }
+                layouts.Add(sb.ToString());
+            }
+            TestContext.WriteLine($"Distinct room layouts: {layouts.Count}");
+            Assert.That(layouts.Count, Is.GreaterThanOrEqualTo(40), $"Only {layouts.Count} distinct room layouts.");
+        }
+
+        [Test]
+        public void EveryTemplateCanGenerateValidFloors()
+        {
+            var used = new HashSet<string>();
+            for (ulong seed = 1; seed <= 400; seed++)
+            {
+                used.Add(FloorGenerator.Generate(seed, 2, Catalog).TemplateId);
+                used.Add(FloorGenerator.Generate(seed, 5, Catalog).TemplateId);
+            }
+            foreach (var template in Catalog.Templates)
+                Assert.That(used, Does.Contain(template.Id), $"Template '{template.Id}' never produced a valid floor.");
         }
 
         [Test]

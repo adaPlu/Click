@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Summarizes playtest telemetry logs (JSONL) outside Unity. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ScriptsRoot>..\..\ClickDungeon\Assets\ClickDungeon\Scripts</ScriptsRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="$(ScriptsRoot)\Domain\**\*.cs" />
+    <Compile Include="$(ScriptsRoot)\Content\**\*.cs" />
+    <Compile Include="$(ScriptsRoot)\Simulation\**\*.cs" />
+    <Compile Include="$(ScriptsRoot)\Application\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>

@@ -2,6 +2,10 @@
     "name": "ClickDungeon.Editor",
     "rootNamespace": "ClickDungeon.EditorTools",
     "references": [
+        "ClickDungeon.Domain",
+        "ClickDungeon.Content",
+        "ClickDungeon.Simulation",
+        "ClickDungeon.Application",
         "ClickDungeon.Unity"
     ],
     "includePlatforms": [

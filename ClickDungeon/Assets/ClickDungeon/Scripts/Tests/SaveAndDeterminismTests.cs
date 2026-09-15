@@ -165,7 +165,9 @@ namespace ClickDungeon.Tests
                 Assert.That(positions.Add(enemy.Pos), Is.True, $"{where}: overlapping actors at {enemy.Pos}");
                 Assert.That(Board.BlocksMovement(run.Floor[enemy.Pos]), Is.False, where);
                 Assert.That(enemy.Hp, Is.GreaterThan(0), where);
-                if (enemy.Awake) Assert.That(enemy.Intent.Kind, Is.Not.EqualTo(IntentKind.None), where);
+                // A run that ends mid-turn stops before enemies declare, so only live runs must telegraph.
+                if (enemy.Awake && run.Status == RunStatus.InProgress)
+                    Assert.That(enemy.Intent.Kind, Is.Not.EqualTo(IntentKind.None), where);
             }
         }
     }

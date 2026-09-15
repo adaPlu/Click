@@ -279,7 +279,7 @@ namespace ClickDungeon.Unity.Screens
             Icons.Ability(Icons.Group(swords, Vector2.zero, 0f, 0.8f), CommandKind.Slash);
             play.Label.rectTransform.Stretch(80, 4, 8, 4);
 
-            var settings = UiFactory.Button(Root, "Settings", "SETTINGS", Palette.Navy, 34, () => Menus.OpenSettings(_modal, _modal.Hide));
+            var settings = UiFactory.Button(Root, "Settings", "SETTINGS", Palette.Navy, 34, () => Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting));
             settings.Rect.Place(new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-356f, 28f), new Vector2(280f, 136f));
             settings.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(270f, 44f));
             var gear = UiFactory.Rect(settings.Rect, "Gear");

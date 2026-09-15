@@ -103,3 +103,15 @@ Rules referenced here live in `docs/rules.md`.
 - **DECISION**: Shield and Dash use cooldowns (3). No resource bar.
 - **WHY**: fewer systems; cooldowns stop ability spam.
 - **REVERSIBILITY**: high.
+
+## D-015 Local JSONL playtest telemetry recorded from simulation results
+- **DECISION**: `TelemetryRecorder` (Application layer) snapshots decision context before each command and
+  maps the `CommandResult` afterwards. It writes JSON lines to local files, one per app launch. Tile choices
+  record only player-visible information (telegraphs, revealed hazards and pickups, clues). The log is on by
+  default in prototype builds, can be turned off in Settings, and uses no network. Details: `docs/telemetry.md`.
+- **WHY**: Gate 2 must judge whether choices were informed, which is only possible against what was
+  knowable. Local files avoid consent, back-end and privacy work before a product decision. Recording in
+  Application keeps presentation dumb and makes telemetry testable headless.
+- **DEPENDENCIES**: `GameEvent` vocabulary, `Threats`, `Commands.LegalTargets`.
+- **REVERSIBILITY**: high. The schema is versioned (`schema` in `run_started`), and a network sink can
+  replace the file sink later.

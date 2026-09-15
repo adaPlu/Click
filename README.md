@@ -50,3 +50,14 @@ ClickDungeon/Builds/Windows/ClickDungeon.exe -cdShot shot.png -cdScreen game -cd
 ```
 
 Uses a separate save folder and quits after capturing.
+
+## Playtest telemetry (Gate 2)
+
+Runs write local JSONL logs (no network) to `%USERPROFILE%\AppData\LocalLow\Clickd\ClickDungeon\telemetry`.
+Turn them off in **Settings → PLAYTEST LOG**. Schema and metrics: `docs/telemetry.md`.
+
+```bash
+dotnet run --project Sim/ClickDungeon.Telemetry.Report -- "%USERPROFILE%\AppData\LocalLow\Clickd\ClickDungeon\telemetry"
+```
+
+In Unity: **ClickDungeon → Telemetry → Summarize Logs**.

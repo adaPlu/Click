@@ -27,7 +27,7 @@ Evidence key: **T** = automated test (headless `dotnet test` + Unity EditMode), 
 | Five-floor run can complete | ✅ | T `FinalExitWinsTheRun`, boss death unlocks exit; full bot clear not yet asserted |
 | Death ends run cleanly | ✅ | T `DeathEndsTheRunAndRejectsFurtherCommands`, save cleared on death |
 | Save and resume | ✅ | T `ResumedRunContinuesIdentically`, atomic store + backup recovery |
-| Core rules have automated tests | ✅ | 77 tests, passing headless (`dotnet test`) and in Unity EditMode (77/77) |
+| Core rules have automated tests | ✅ | 89 tests, passing headless (`dotnet test`) and in Unity EditMode (89/89) |
 | Generation validation rejects illegal boards | ✅ | T validator tests + 2,000-floor fuzz |
 | Three enemy behaviours + boss | ✅ | Goblin, Crowned Slime, Fire Imp, Lord Blobert (Slam / Summon / Puff Up / Deflate) |
 | Windows build | ✅ | B `ClickDungeon/Builds/Windows/ClickDungeon.exe` via **ClickDungeon → Build Windows** |
@@ -39,9 +39,12 @@ Gold, gems, shop, talents, inventory, daily reward, mail, extra heroes, equipmen
 production art, audio. Their space in the reference layout is left empty rather than faked.
 
 ## Gate 2 — Fun test: prep and watch list
-Not started. Before playtesting:
-- [ ] Minimal telemetry (§38): tile choices with sensed options, damage source, ability use.
-- [ ] 30–50 floor configurations (currently 6 templates × 8 transforms × seeded placement).
+In progress.
+- [x] Playtest telemetry (§38): local JSONL logs with tile-choice context, damage sources, ability use and skipped rewards (`docs/telemetry.md`, D-015).
+- [x] Report: **ClickDungeon → Telemetry → Summarize Logs**, or `dotnet run --project Sim/ClickDungeon.Telemetry.Report -- <folder>`.
+- [x] Floor variety: 15 room templates → 51 distinct room layouts after rotation and mirroring, plus 3 Lord Blobert arenas, with seeded placement on top. Covered by `TemplateLibraryHasEnoughDistinctLayouts` and `EveryTemplateCanGenerateValidFloors`.
+- [ ] Run sessions with 5+ players and interview them about their tile choices.
+- [ ] Review the summary against the ~70% informed-choice target and decide: continue, or redesign sensing.
 
 Design risks to watch in playtests (tunable without rule changes unless noted):
 1. **Bomb and Slam can't be escaped by walking.** Every orthogonal step from a bomb stays in its 3×3,

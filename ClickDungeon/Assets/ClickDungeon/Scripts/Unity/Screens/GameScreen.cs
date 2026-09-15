@@ -377,11 +377,11 @@ namespace ClickDungeon.Unity.Screens
             if (_chest.IsOpen || Run == null) return;
             var run = Run;
             _modal.Show("PAUSED",
-                $"Floor {run.Floor.FloorIndex}: {Catalog.ProfileFor(run.Floor.FloorIndex).Name}\nTurn {run.Turn + 1}    Seed {run.RunSeed}\nYour run is saved after every turn.",
+                $"Floor {run.Floor.FloorIndex}: {Catalog.ProfileFor(run.Floor.FloorIndex).Name}\nTurn {run.Turn + 1}    Seed {run.RunSeed}\nYour run is saved after every turn.{(_app.TelemetryActive ? "\nPlaytest log is on (saved on this device only)." : "")}",
                 _modal.Hide,
                 Menus.B("RESUME", Palette.PlayGreen, _modal.Hide),
                 Menus.B("HOW TO PLAY", Palette.NavyLight, OpenHelp),
-                Menus.B("SETTINGS", Palette.NavyLight, () => Menus.OpenSettings(_modal, OpenPause)),
+                Menus.B("SETTINGS", Palette.NavyLight, () => Menus.OpenSettings(_modal, OpenPause, _app.ApplyTelemetrySetting)),
                 Menus.B("ABANDON RUN", Palette.QuitRed, ConfirmAbandon),
                 Menus.B("QUIT TO TITLE", Palette.NavyLight, _app.ShowTitle));
         }
@@ -782,18 +782,24 @@ namespace ClickDungeon.Unity.Screens
 
         public static (string label, Color color, Action action) B(string label, Color color, Action action) => (label, color, action);
 
-        public static void OpenSettings(ModalOverlay modal, Action back)
+        public static void OpenSettings(ModalOverlay modal, Action back, Action changed = null)
         {
-            modal.Show("SETTINGS", "Presentation only. Gameplay never depends on these.", back,
+            modal.Show("SETTINGS", "Gameplay never depends on these.\nThe playtest log stays on this device and is never sent anywhere.", back,
                 B($"REDUCED MOTION: {(UserPrefs.ReducedMotion ? "ON" : "OFF")}", Palette.NavyLight, () =>
                 {
                     UserPrefs.ReducedMotion = !UserPrefs.ReducedMotion;
-                    OpenSettings(modal, back);
+                    OpenSettings(modal, back, changed);
                 }),
                 B($"SCREEN SHAKE: {(UserPrefs.ScreenShake ? "ON" : "OFF")}", Palette.NavyLight, () =>
                 {
                     UserPrefs.ScreenShake = !UserPrefs.ScreenShake;
-                    OpenSettings(modal, back);
+                    OpenSettings(modal, back, changed);
+                }),
+                B($"PLAYTEST LOG: {(UserPrefs.PlaytestLog ? "ON" : "OFF")}", Palette.NavyLight, () =>
+                {
+                    UserPrefs.PlaytestLog = !UserPrefs.PlaytestLog;
+                    changed?.Invoke();
+                    OpenSettings(modal, back, changed);
                 }),
                 B("BACK", Palette.PlayGreen, back));
         }
