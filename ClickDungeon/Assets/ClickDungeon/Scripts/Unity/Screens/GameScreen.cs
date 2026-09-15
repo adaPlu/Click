@@ -478,14 +478,20 @@ namespace ClickDungeon.Unity.Screens
             _logText.text = string.Join("\n", _log);
         }
 
-        /// <summary>Tells the player once when saving stops working. Play continues in memory; the run may not resume later.</summary>
+        /// <summary>
+        /// Tells the player once when saving a run in progress stops working; play continues in memory. A finished run needs no
+        /// warning, since what is left on disk cannot be continued. The raw error can contain file paths, so it only goes to the
+        /// player log.
+        /// </summary>
         void WarnIfSaveFailed()
         {
             var error = _app.Session.SaveError;
             if (error == _saveWarning) return;
             _saveWarning = error;
             if (error == null) return;
-            _log.Insert(0, $"<color=#FF9A2E>Couldn't save your run ({error}). You can keep playing, but it may not resume later.</color>");
+            Debug.LogWarning("[ClickDungeon] Saving failed: " + error);
+            if (Run == null || Run.Status != RunStatus.InProgress) return;
+            _log.Insert(0, "<color=#FF9A2E>Couldn't save your run. You can keep playing, but it may not resume later.</color>");
             _logText.text = string.Join("\n", _log);
         }
 

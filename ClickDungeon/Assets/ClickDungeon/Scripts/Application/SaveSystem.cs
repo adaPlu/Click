@@ -158,7 +158,9 @@ namespace ClickDungeon.Application
 
         public void Delete()
         {
-            foreach (var path in new[] { MainPath, TempPath, BackupPath })
+            // Main goes last: if a delete fails part-way, the newest save is what remains, never an older backup
+            // (after a finished run is written, the backup still holds the turn before the end).
+            foreach (var path in new[] { BackupPath, TempPath, MainPath })
                 if (File.Exists(path)) File.Delete(path);
         }
 

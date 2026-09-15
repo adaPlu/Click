@@ -7,7 +7,11 @@ namespace ClickDungeon.Unity.Ui
     /// <summary>Tiny coroutine tweens. Reduced motion snaps instead of animating.</summary>
     public static class Tween
     {
-        public static IEnumerator MoveTo(RectTransform rt, Vector2 to, float duration)
+        /// <summary>
+        /// Moves <paramref name="rt"/> to <paramref name="to"/>. <paramref name="isCurrent"/> lets the owner cancel it: once it returns
+        /// false (a newer move or an instant placement took over) the tween stops without touching the position again.
+        /// </summary>
+        public static IEnumerator MoveTo(RectTransform rt, Vector2 to, float duration, System.Func<bool> isCurrent = null)
         {
             if (rt == null) yield break;
             if (UserPrefs.ReducedMotion || duration <= 0f)
@@ -16,17 +20,13 @@ namespace ClickDungeon.Unity.Ui
                 yield break;
             }
             var from = rt.anchoredPosition;
-            var last = from;
             for (float t = 0f; t < duration; t += Time.unscaledDeltaTime)
             {
-                if (rt == null) yield break;
-                // Something else placed the target meanwhile (an instant render or a newer move): that position wins.
-                if (rt.anchoredPosition != last) yield break;
-                last = Vector2.LerpUnclamped(from, to, Mathf.SmoothStep(0f, 1f, t / duration));
-                rt.anchoredPosition = last;
+                if (rt == null || (isCurrent != null && !isCurrent())) yield break;
+                rt.anchoredPosition = Vector2.LerpUnclamped(from, to, Mathf.SmoothStep(0f, 1f, t / duration));
                 yield return null;
             }
-            if (rt != null && rt.anchoredPosition == last) rt.anchoredPosition = to;
+            if (rt != null && (isCurrent == null || isCurrent())) rt.anchoredPosition = to;
         }
 
         public static IEnumerator Popup(RectTransform rt, Graphic graphic, float rise, float duration)

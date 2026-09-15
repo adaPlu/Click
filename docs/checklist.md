@@ -27,7 +27,7 @@ Evidence key: **T** = automated test (headless `dotnet test` + Unity EditMode), 
 | Five-floor run can complete | ✅ | T `FinalExitWinsTheRun`, boss death unlocks exit; `BalanceTests` assert novice AutoPlayer runs beat Lord Blobert |
 | Death ends run cleanly | ✅ | T `DeathEndsTheRunAndRejectsFurtherCommands`, save cleared on death |
 | Save and resume | ✅ | T `ResumedRunContinuesIdentically`, atomic store + backup recovery |
-| Core rules have automated tests | ✅ | 135 headless tests (`dotnet test`); Unity EditMode 196 (193 passed, 3 explicit tuning tools skipped) |
+| Core rules have automated tests | ✅ | 137 headless tests (`dotnet test`); Unity EditMode 199 (196 passed, 3 explicit tuning tools skipped) |
 | Generation validation rejects illegal boards | ✅ | T validator tests + 2,000-floor fuzz |
 | Three enemy behaviours + boss | ✅ | Goblin, Crowned Slime, Fire Imp, Lord Blobert (Slam / Summon / Puff Up / Deflate) |
 | Windows build | ✅ | B `ClickDungeon/Builds/Windows/ClickDungeon.exe` via **ClickDungeon → Build Windows** |

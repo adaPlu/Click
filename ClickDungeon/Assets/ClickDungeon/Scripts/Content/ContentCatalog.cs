@@ -37,8 +37,8 @@ namespace ClickDungeon.Content
             Difficulties.TryGetValue(id, out var info) ? info : throw new KeyNotFoundException($"Unknown difficulty '{id}'.");
 
         /// <summary>
-        /// This catalog's content tuned for <paramref name="difficulty"/>, using this catalog's own tier table (so tuned catalogs stay
-        /// tuned); this catalog when it already matches.
+        /// The default content tuned for <paramref name="difficulty"/> with this catalog's own tier table (so tuned tiers stay tuned);
+        /// this catalog when it already matches. Other edits to this catalog (floor count, hazards) are not carried over.
         /// </summary>
         public ContentCatalog ForDifficulty(Difficulty difficulty)
         {
@@ -289,7 +289,7 @@ namespace ClickDungeon.Content
             foreach (var profile in FloorProfiles)
             {
                 if (profile.IsBoss || profile.MaxEnemies <= 0) continue;
-                // A floor that had enemies keeps at least one, whatever its original minimum.
+                // A minimum of 1 or more stays at least 1, and the maximum stays at least 1. A minimum of 0 stays 0.
                 profile.MinEnemies = Math.Max(Math.Min(1, profile.MinEnemies), profile.MinEnemies + d.ExtraEnemies);
                 profile.MaxEnemies = Math.Max(Math.Max(1, profile.MinEnemies), profile.MaxEnemies + d.ExtraEnemies);
             }

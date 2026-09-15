@@ -123,10 +123,28 @@ Evidence: **VERIFIED** tests pass and go red when the fix is reverted · **TESTE
 
 Not in scope (PLAUSIBLE, unverified): DATA-04 (partly mitigated by REL-01's finished-save order), DATA-05, DATA-06, REL-08, MAINT-01, MAINT-05.
 
-**Independent review:** a disprove-the-fix reviewer was still running when this was committed; apply its verdicts next.
+**Independent review** (fresh read-only reviewer tasked to disprove; verdicts re-checked by the lead before acting):
+APPROVED: DATA-01, DATA-02, REL-02/REL-09, CI-01/CI-02, DATA-03, SEC-01, REL-07, REL-03, REL-05, REL-06, PERF-01, MAINT-07,
+MAINT-02/03/04/08. REJECTED: REL-04 (its fix caused REL-10). NEEDS_CHANGES: REL-01 (REL-11), MAINT-06 (inaccurate comments).
+
+### Repair loop (after commit 161ecd8, uncommitted)
+
+| ID | Status | Evidence | Change |
+|---|---|---|---|
+| REL-10 (new, Low) | FIXED | TESTED (tween); BoardView wiring COMPILED | Regression from the first REL-04 fix: a newer move on the same token was cancelled by the older one, leaving tokens on stale tiles. Now each placement bumps `Token.MoveVersion`; `Tween.MoveTo` takes an `isCurrent` check and stops without writing. Replaces the REL-04 fix; REL-04 now FIXED via REL-10. |
+| REL-11 (new, Low; remainder of REL-01/DATA-04) | FIXED | VERIFIED (reverted order → test red: "Expected Lost, was InProgress") | `FileSaveStore.Delete` removes backup, temp, then main, so a delete failing part-way leaves the finished save, not the pre-death backup. |
+| REL-12 (new, Low) | FIXED | COMPILED | Save warning no longer shows the raw error (paths with the user name) and is not shown for finished runs; raw error goes to Player.log (redacted by collect-logs). |
+| MAINT-06 | FIXED | docs | Comments now state the clamp and `ForDifficulty` limits accurately. |
+| TEST-01 | PARTIALLY_FIXED | TESTED | `EveryStateTheGameProducesPassesValidation` round-trips every AutoPlayer state incl. win, loss and Blobert's floor; `DeleteThatFailsPartWayNeverLeavesAResumableRun`; tween tests cover two moves on one token. |
+
+Results after repairs: headless 137/137; Unity EditMode 196 passed / 0 failed / 3 explicit skipped.
+Known non-load-bearing tests: `RunSeedsAreRandom` (smoke), `FloorsThatHadEnemiesKeepAtLeastOne` (no min-0 profile),
+`BossExitTests` (pins an unchanged rule), `HoverRedrawsHighlightsWithoutRebuildingTiles` (BoardView only, not the GameScreen hover wiring).
+Reviewer residuals, not fixed: a save refused by `ContentProblem` is kept, so CONTINUE repeats the message (by design, the player is told to start a new run);
+collect-logs fails cleanly (exit 1) if the temp path contains `[` or `]`; 8.3 short profile paths are not redacted.
 
 ### Next order
-1. Apply the reviewer's NEEDS_CHANGES items (new IDs for any new defects).
+1. Commit the repair loop (REL-10, REL-11, REL-12, MAINT-06 comments, new tests).
 2. Run make-kit once to execute CI-01/CI-02 (WRITTEN → verified).
 3. Verify the PLAUSIBLE findings; screen-flow tests (TEST-01).
 4. Resume Knight's Trial / Blobert's Wrath tuning (`DifficultySweep`).

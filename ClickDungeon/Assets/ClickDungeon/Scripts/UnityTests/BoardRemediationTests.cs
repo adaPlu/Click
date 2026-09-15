@@ -35,18 +35,38 @@ namespace ClickDungeon.UnityTests
         }
 
         [Test]
-        public void MoveTweenStopsWhenSomethingElsePlacesTheTarget()
+        public void OlderMoveStopsOnceANewerOneTakesOver()
         {
             var rt = UiFactory.Rect(_root.transform, "Token");
             rt.anchoredPosition = Vector2.zero;
-            var tween = Tween.MoveTo(rt, new Vector2(100f, 0f), 0.14f);
+            int version = 1;
+            var older = Tween.MoveTo(rt, new Vector2(100f, 0f), 0.14f, () => version == 1);
+            Assert.That(older.MoveNext(), Is.True);
 
-            Assert.That(tween.MoveNext(), Is.True);
+            // A second move on the same token (the next turn within 0.14 s), as BoardView.UpsertToken does it.
+            version = 2;
+            var newer = Tween.MoveTo(rt, new Vector2(-300f, 50f), 0.14f, () => version == 2);
+            Assert.That(newer.MoveNext(), Is.True);
+            var afterNewerStep = rt.anchoredPosition;
+
+            Assert.That(older.MoveNext(), Is.False, "The older move stops.");
+            Assert.That(rt.anchoredPosition, Is.EqualTo(afterNewerStep), "It does not write its own position again.");
+        }
+
+        [Test]
+        public void CancelledMoveNeverSnapsToItsTarget()
+        {
+            var rt = UiFactory.Rect(_root.transform, "Token");
+            rt.anchoredPosition = Vector2.zero;
+            bool current = true;
+            var move = Tween.MoveTo(rt, new Vector2(100f, 0f), 0.14f, () => current);
+            Assert.That(move.MoveNext(), Is.True);
+
+            current = false;   // an instant placement on the next floor's start
             var placed = new Vector2(-300f, 50f);
-            rt.anchoredPosition = placed;   // an instant render, e.g. the hero placed on the next floor's start
-
-            while (tween.MoveNext()) { }
-            Assert.That(rt.anchoredPosition, Is.EqualTo(placed), "The newer placement wins.");
+            rt.anchoredPosition = placed;
+            Assert.That(move.MoveNext(), Is.False);
+            Assert.That(rt.anchoredPosition, Is.EqualTo(placed));
         }
 
         [Test]

@@ -115,7 +115,7 @@ namespace ClickDungeon.Content
         public int BossSlamDamage;
         /// <summary>Added to spike and bomb damage.</summary>
         public int HazardDamage;
-        /// <summary>Added to the enemy count range of normal floors (a floor that had enemies keeps at least one).</summary>
+        /// <summary>Added to the enemy count range of normal floors (a minimum of 1 or more stays at least 1; the maximum stays at least 1).</summary>
         public int ExtraEnemies;
         /// <summary>HP restored when the hero arrives on the next floor.</summary>
         public int FloorClearHeal;

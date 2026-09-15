@@ -56,6 +56,8 @@ namespace ClickDungeon.Unity.Screens
             public RectTransform HpFill;
             public string VisualKey;
             public GridPos Pos;
+            /// <summary>Incremented on every placement; a running move tween stops once it is no longer the latest.</summary>
+            public int MoveVersion;
         }
 
         readonly MonoBehaviour _host;
@@ -407,7 +409,9 @@ namespace ClickDungeon.Unity.Screens
 
             if (token.Pos != pos)
             {
-                if (animate) _host.StartCoroutine(Tween.MoveTo(token.Rect, CellPosition(pos), 0.14f));
+                // Each placement supersedes any move still running on this token, so the latest position always wins.
+                int move = ++token.MoveVersion;
+                if (animate) _host.StartCoroutine(Tween.MoveTo(token.Rect, CellPosition(pos), 0.14f, () => token.MoveVersion == move));
                 else token.Rect.anchoredPosition = CellPosition(pos);
                 token.Pos = pos;
             }

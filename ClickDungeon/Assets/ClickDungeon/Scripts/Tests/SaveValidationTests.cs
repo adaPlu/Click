@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using ClickDungeon.Application;
+using ClickDungeon.Content;
 using ClickDungeon.Domain;
 using ClickDungeon.Simulation;
 using Newtonsoft.Json.Linq;
@@ -81,6 +82,50 @@ namespace ClickDungeon.Tests
                 var json = Json(entry.Value);
                 Assert.Throws<FormatException>(() => SaveSerializer.FromJson(json), entry.Key);
             }
+        }
+
+        [Test]
+        public void EveryStateTheGameProducesPassesValidation()
+        {
+            // Saving verifies through FromJson, so a validation rule that rejects a real state would silently stop saves.
+            bool sawWon = false, sawLost = false, sawBoss = false;
+            foreach (var (tier, mistakes) in new[] { (Difficulty.Easy, 0.0), (Difficulty.Medium, 0.5), (Difficulty.Hardcore, 0.7) })
+            {
+                var catalog = ContentCatalog.CreateDefault(tier);
+                for (ulong seed = 1; seed <= 4; seed++)
+                {
+                    var run = RunFactory.NewRun(seed, catalog, new List<GameEvent>());
+                    var player = new AutoPlayer(mistakes);
+                    for (int i = 0; i < 400 && run.Status == RunStatus.InProgress; i++)
+                    {
+                        TurnResolver.Apply(run, player.Choose(run, catalog, seed * 13 + (ulong)i), catalog);
+                        sawBoss |= run.Floor.IsBossFloor;
+                        var json = SaveSerializer.ToJson(run);
+                        Assert.DoesNotThrow(() => SaveSerializer.FromJson(json), $"{tier} seed {seed} command {i} ({run.Status})");
+                    }
+                    sawWon |= run.Status == RunStatus.Won;
+                    sawLost |= run.Status == RunStatus.Lost;
+                }
+            }
+            Assert.That(sawWon && sawLost && sawBoss, Is.True, "The runs must reach a win, a loss and Blobert's floor.");
+        }
+
+        [Test]
+        public void DeleteThatFailsPartWayNeverLeavesAResumableRun()
+        {
+            Assume.That(Environment.OSVersion.Platform, Is.EqualTo(PlatformID.Win32NT), "Relies on Windows file locking.");
+            var store = new FileSaveStore(_dir);
+            var run = NewRun();
+            store.Save(run);
+            run.Status = RunStatus.Lost;
+            store.Save(run);   // the finished run is written first; the backup still holds the turn before the end
+
+            using (new FileStream(store.BackupPath, FileMode.Open, FileAccess.Read, FileShare.None))
+                Assert.That(() => store.Delete(), Throws.InstanceOf<IOException>());
+
+            Assert.That(store.TryLoad(out var left, out _), Is.True);
+            Assert.That(left.Status, Is.EqualTo(RunStatus.Lost), "The newest save remains, not the in-progress backup.");
+            Assert.That(new GameSession(Catalog, store).TryContinue(out _), Is.False);
         }
 
         [Test]
