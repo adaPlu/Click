@@ -142,9 +142,10 @@ namespace ClickDungeon.Unity.Ui
             Label(t, "KEY", 18, Palette.Gold, new Vector2(0f, -38f), new Vector2(100f, 24f));
         }
 
-        public static void Chest(Transform t, bool opened, float scale = 1f)
+        /// <param name="useArt">False for scenery: chest tile art includes its stone floor frame.</param>
+        public static void Chest(Transform t, bool opened, float scale = 1f, bool useArt = true)
         {
-            if (TryArt(t, opened ? ArtKeys.ChestOpen : ArtKeys.ChestClosed, TileSize * scale)) return;
+            if (useArt && TryArt(t, opened ? ArtKeys.ChestOpen : ArtKeys.ChestClosed, TileSize * scale)) return;
             var g = Group(t, Vector2.zero, 0f, scale);
             var wood = opened ? Palette.ChestWood.Dim(0.55f) : Palette.ChestWood;
             if (opened) Shape(g, Shapes.Rounded, wood.Dim(0.8f), new Vector2(0f, 34f), new Vector2(88f, 26f));

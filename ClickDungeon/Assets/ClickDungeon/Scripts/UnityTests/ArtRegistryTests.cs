@@ -89,6 +89,19 @@ namespace ClickDungeon.UnityTests
         }
 
         [Test]
+        public void ProductionArtWinsOverReferenceSlices()
+        {
+            const string slice = "Assets/ClickDungeon/Art/Runtime/Placeholders/Tiles/tile_key.png";
+            const string production = "Assets/ClickDungeon/Art/Runtime/Tiles/tile_key.png";
+
+            Assert.That(ArtCatalogBuilder.PreferCandidate(slice, production), Is.True);
+            Assert.That(ArtCatalogBuilder.PreferCandidate(production, slice), Is.False);
+            Assert.That(ArtCatalogBuilder.PreferCandidate(production, production), Is.False);
+            Assert.That(ArtCatalogBuilder.IsPlaceholder(slice), Is.True);
+            Assert.That(ArtCatalogBuilder.IsPlaceholder(production), Is.False);
+        }
+
+        [Test]
         public void FramesGroupByNumericSuffix()
         {
             var grouped = ArtCatalogBuilder.GroupFrames(new[]

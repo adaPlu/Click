@@ -19,6 +19,8 @@ namespace ClickDungeon.Unity.Ui
             public string Key;
             public Sprite[] Frames = Array.Empty<Sprite>();
             public float Fps = 10f;
+            /// <summary>True for reference slices in Art/Runtime/Placeholders (art brief D4), not production art.</summary>
+            public bool Placeholder;
         }
 
         [SerializeField] List<Entry> _entries = new List<Entry>();

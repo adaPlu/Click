@@ -244,14 +244,16 @@ The reward is committed the moment the chest is opened. Taps are presentation on
 
 ## 13. Decisions to confirm before production
 
-- D1. Reference elements for systems that don't exist yet (level, gold, gems, mana, crown, mail,
-  daily reward, hero select, inventory, talents, shop, notification badges).
-  Default: produce all of the art now; hide those elements in the build until each system exists.
+- D1. **DECIDED (2026-09-14): default.** Reference elements for systems that don't exist yet (level, gold,
+  gems, mana, crown, mail, daily reward, hero select, inventory, talents, shop, notification badges):
+  produce all of the art now; hide those elements in the build until each system exists.
 - D2. Side banners vs. the WHAT HAPPENED / INSPECT panels.
   Default: restyle the panels as the reference banners and keep their function.
 - D3. Mana bar. Default: none (the Knight uses cooldowns).
-- D4. Art source: commissioned artist, AI image generation with manual cleanup, or references
-  sliced into temporary placeholders. Must be decided.
+- D4. **DECIDED (2026-09-14): slice the reference images into temporary placeholders.** Placeholder
+  sprites live in `Art/Runtime/Placeholders/`; any production file with the same key elsewhere under
+  `Art/Runtime/` replaces its placeholder automatically. Reference slices are not final art (low
+  resolution, baked backgrounds, mixed perspective).
 - D5. Tile style where sets A and B differ. Default: set B.
 
 ## 14. Out of scope

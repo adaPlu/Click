@@ -1,0 +1,342 @@
+#!/usr/bin/env python3
+"""Slice ClickDungeon reference images into placeholder sprites.
+
+Art brief decision D4: until production art exists, crops of the concept references stand in for it.
+Slices are written to Assets/ClickDungeon/Art/Runtime/Placeholders/; a production file with the same key
+anywhere else under Art/Runtime automatically takes priority in the art catalog.
+
+Usage (from the repo root):
+  python tools/art-slicer/slice_references.py                    slice everything in slices.json
+  python tools/art-slicer/slice_references.py --only tile_key    slice selected keys
+  python tools/art-slicer/slice_references.py --detect ref4-tiles-b
+                                                                 print bright boxes to calibrate rects
+  python tools/art-slicer/slice_references.py --self-test        verify the tool on a synthetic sheet
+
+Rects in slices.json are in the reference's declared pixel size; they scale if the file is resized.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import sys
+import tempfile
+from collections import deque
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
+PROJECT = REPO / "ClickDungeon"
+DEFAULT_MANIFEST = HERE / "slices.json"
+DEFAULT_REFS = PROJECT / "Art" / "Source" / "References"
+DEFAULT_OUT = PROJECT / "Assets" / "ClickDungeon" / "Art" / "Runtime" / "Placeholders"
+DEFAULT_SHEET = PROJECT / "Art" / "Source" / "Slices" / "contact-sheet.png"
+EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
+ACTOR_BOTTOM_PADDING = 32 / 256  # art brief: token pivot at bottom-centre (128, 32)
+
+
+# ---------------------------------------------------------------------------------------------- geometry
+
+def find_source(refs: Path, stem: str, sources: dict | None = None) -> Path | None:
+    """Resolves a source id to a file: an explicit "file" in the manifest wins, else <stem>.<ext>."""
+    explicit = (sources or {}).get(stem, {}).get("file")
+    if explicit:
+        candidate = refs / explicit
+        return candidate if candidate.exists() else None
+    for ext in EXTENSIONS:
+        candidate = refs / f"{stem}{ext}"
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def scale_rect(rect, image_size, reference_size):
+    sx = image_size[0] / reference_size[0]
+    sy = image_size[1] / reference_size[1]
+    x, y, w, h = rect
+    return (round(x * sx), round(y * sy), round(w * sx), round(h * sy))
+
+
+def iou(a, b) -> float:
+    ax, ay, aw, ah = a
+    bx, by, bw, bh = b
+    ix = max(0, min(ax + aw, bx + bw) - max(ax, bx))
+    iy = max(0, min(ay + ah, by + bh) - max(ay, by))
+    inter = ix * iy
+    union = aw * ah + bw * bh - inter
+    return inter / union if union else 0.0
+
+
+def bright_boxes(image: Image.Image, threshold: int = 70, min_side: int = 60):
+    """Bounding boxes (full-res x, y, w, h) of bright connected regions, e.g. stone tiles on a dark sheet."""
+    factor = 2
+    small = image.convert("L").resize((max(1, image.width // factor), max(1, image.height // factor)))
+    w, h = small.size
+    pixels = small.load()
+    seen = bytearray(w * h)
+    boxes = []
+    for sy in range(h):
+        for sx in range(w):
+            if seen[sy * w + sx] or pixels[sx, sy] < threshold:
+                continue
+            seen[sy * w + sx] = 1
+            queue = deque([(sx, sy)])
+            x0 = x1 = sx
+            y0 = y1 = sy
+            while queue:
+                x, y = queue.popleft()
+                x0, x1, y0, y1 = min(x0, x), max(x1, x), min(y0, y), max(y1, y)
+                for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if 0 <= nx < w and 0 <= ny < h and not seen[ny * w + nx] and pixels[nx, ny] >= threshold:
+                        seen[ny * w + nx] = 1
+                        queue.append((nx, ny))
+            box = (x0 * factor, y0 * factor, (x1 - x0 + 1) * factor, (y1 - y0 + 1) * factor)
+            if box[2] >= min_side and box[3] >= min_side:
+                boxes.append(box)
+    return boxes
+
+
+def snap(rect, boxes, minimum: float = 0.45):
+    best = max(boxes, key=lambda b: iou(rect, b), default=None)
+    return best if best is not None and iou(rect, best) >= minimum else rect
+
+
+# ---------------------------------------------------------------------------------------------- pixels
+
+def remove_background(image: Image.Image, tolerance: int, local_tolerance: int = 10) -> Image.Image:
+    """Clears border-connected pixels that match the border colour (or smoothly continue it), then trims."""
+    rgba = image.convert("RGBA")
+    w, h = rgba.size
+    px = rgba.load()
+    border = [px[x, 0] for x in range(w)] + [px[x, h - 1] for x in range(w)]
+    border += [px[0, y] for y in range(h)] + [px[w - 1, y] for y in range(h)]
+    reference = tuple(sorted(c[i] for c in border)[len(border) // 2] for i in range(3))
+
+    def distance(a, b):
+        return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2)
+
+    seen = bytearray(w * h)
+    queue = deque()
+
+    def seed(x, y):
+        if not seen[y * w + x] and distance(px[x, y], reference) <= tolerance:
+            seen[y * w + x] = 1
+            queue.append((x, y))
+
+    for x in range(w):
+        seed(x, 0)
+        seed(x, h - 1)
+    for y in range(h):
+        seed(0, y)
+        seed(w - 1, y)
+
+    while queue:
+        x, y = queue.popleft()
+        colour = px[x, y]
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= nx < w and 0 <= ny < h and not seen[ny * w + nx]:
+                candidate = px[nx, ny]
+                if distance(candidate, reference) <= tolerance or distance(candidate, colour) <= local_tolerance:
+                    seen[ny * w + nx] = 1
+                    queue.append((nx, ny))
+        px[x, y] = (colour[0], colour[1], colour[2], 0)
+
+    bbox = rgba.getchannel("A").getbbox()
+    return rgba.crop(bbox) if bbox else rgba
+
+
+def cover(image: Image.Image, width: int, height: int) -> Image.Image:
+    scale = max(width / image.width, height / image.height)
+    resized = image.resize((max(1, round(image.width * scale)), max(1, round(image.height * scale))), Image.LANCZOS)
+    left = (resized.width - width) // 2
+    top = (resized.height - height) // 2
+    return resized.crop((left, top, left + width, top + height))
+
+
+def contain(image: Image.Image, size: int, anchor: str) -> Image.Image:
+    padding = round(size * ACTOR_BOTTOM_PADDING) if anchor == "bottom" else 0
+    available = size - padding
+    scale = min(size / image.width, available / image.height)
+    resized = image.convert("RGBA").resize((max(1, round(image.width * scale)), max(1, round(image.height * scale))), Image.LANCZOS)
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    x = (size - resized.width) // 2
+    y = size - padding - resized.height if anchor == "bottom" else (size - resized.height) // 2
+    canvas.paste(resized, (x, y), resized)
+    return canvas
+
+
+def render(crop: Image.Image, spec: dict) -> Image.Image:
+    mode = spec.get("mode", "tile")
+    size = int(spec.get("size", 256))
+    if mode in ("tile", "portrait"):
+        return cover(crop.convert("RGBA"), size, size)
+    if mode == "wide":
+        scale = size / crop.width
+        return crop.convert("RGBA").resize((size, max(1, round(crop.height * scale))), Image.LANCZOS)
+    if mode == "logo":
+        cleaned = remove_background(crop, int(spec.get("tolerance", 40)))
+        scale = size / cleaned.width
+        return cleaned.resize((size, max(1, round(cleaned.height * scale))), Image.LANCZOS)
+    if mode == "sprite":
+        cleaned = remove_background(crop, int(spec.get("tolerance", 40)))
+        return contain(cleaned, size, spec.get("anchor", "bottom"))
+    if mode == "icon":
+        source = remove_background(crop, int(spec["tolerance"])) if "tolerance" in spec else crop
+        return contain(source, size, "center")
+    raise ValueError(f"Unknown mode '{mode}' for {spec.get('key')}")
+
+
+# ---------------------------------------------------------------------------------------------- run
+
+def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=None) -> dict:
+    sources = manifest["sources"]
+    images, boxes = {}, {}
+    written, missing_sources, warnings, sheet_entries = [], set(), [], []
+
+    for spec in manifest["slices"]:
+        key = spec["key"]
+        if only and key not in only:
+            continue
+        stem = spec["source"]
+        if stem not in images:
+            path = find_source(refs, stem, sources)
+            images[stem] = Image.open(path).convert("RGB") if path else None
+            if path and stem in sources:
+                ref_w, ref_h = sources[stem]["size"]
+                image = images[stem]
+                if abs(image.width / image.height - ref_w / ref_h) > 0.02:
+                    warnings.append(f"{path.name} is {image.width}x{image.height}; slices assume a {ref_w}x{ref_h} layout.")
+        image = images[stem]
+        if image is None:
+            missing_sources.add(stem)
+            sheet_entries.append((key, None, spec.get("wired", False), f"missing {stem}"))
+            continue
+
+        reference_size = sources.get(stem, {}).get("size", [image.width, image.height])
+        rect = scale_rect(spec["rect"], image.size, reference_size)
+        if spec.get("snap"):
+            if stem not in boxes:
+                boxes[stem] = bright_boxes(image)
+            rect = snap(rect, boxes[stem])
+        x, y, w, h = rect
+        crop = image.crop((max(0, x), max(0, y), min(image.width, x + w), min(image.height, y + h)))
+        result = render(crop, spec)
+
+        target = out / spec.get("folder", "Misc") / f"{key}.png"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        result.save(target)
+        written.append(target)
+        sheet_entries.append((key, result, spec.get("wired", False), None))
+
+    if sheet_path is not None and sheet_entries:
+        write_contact_sheet(sheet_entries, sheet_path)
+    return {"written": written, "missing_sources": sorted(missing_sources), "warnings": warnings}
+
+
+def write_contact_sheet(entries, path: Path) -> None:
+    columns, cell, label = 8, 180, 34
+    rows = math.ceil(len(entries) / columns)
+    sheet = Image.new("RGB", (columns * cell, rows * (cell + label)), (28, 28, 34))
+    draw = ImageDraw.Draw(sheet)
+    for index, (key, image, wired, problem) in enumerate(entries):
+        cx, cy = (index % columns) * cell, (index // columns) * (cell + label)
+        for ty in range(0, cell - 10, 12):
+            for tx in range(0, cell - 10, 12):
+                shade = (70, 70, 78) if (tx + ty) // 12 % 2 == 0 else (52, 52, 60)
+                draw.rectangle([cx + 5 + tx, cy + 5 + ty, cx + 5 + min(tx + 11, cell - 11), cy + 5 + min(ty + 11, cell - 11)], fill=shade)
+        if image is not None:
+            thumb = image.copy()
+            thumb.thumbnail((cell - 14, cell - 14))
+            sheet.paste(thumb, (cx + (cell - thumb.width) // 2, cy + (cell - thumb.height) // 2), thumb)
+        colour = (240, 90, 80) if problem else (150, 220, 150) if wired else (170, 170, 180)
+        draw.text((cx + 6, cy + cell + 2), key[:30], fill=colour)
+        draw.text((cx + 6, cy + cell + 16), problem or ("wired" if wired else "not wired (D1/future)"), fill=colour)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    sheet.save(path)
+
+
+def detect(manifest: dict, refs: Path, stem: str) -> int:
+    path = find_source(refs, stem, manifest["sources"])
+    if path is None:
+        print(f"No reference named {stem} in {refs}")
+        return 1
+    image = Image.open(path).convert("RGB")
+    ref_w, ref_h = manifest["sources"].get(stem, {}).get("size", [image.width, image.height])
+    print(f"{path.name}: {image.width}x{image.height} (manifest layout {ref_w}x{ref_h})")
+    for box in sorted(bright_boxes(image), key=lambda b: (b[1] // 40, b[0])):
+        print("  rect in manifest coords:", list(scale_rect(box, (ref_w, ref_h), image.size)))
+    return 0
+
+
+def self_test() -> int:
+    with tempfile.TemporaryDirectory() as temp:
+        temp = Path(temp)
+        refs = temp / "refs"
+        refs.mkdir()
+        sheet = Image.new("RGB", (400, 200), (20, 24, 40))
+        draw = ImageDraw.Draw(sheet)
+        draw.rectangle([20, 30, 139, 149], fill=(130, 130, 135))
+        draw.ellipse([220, 40, 320, 150], fill=(200, 40, 40))
+        sheet.save(refs / "synthetic.png")
+
+        manifest = {
+            "sources": {"synthetic": {"size": [800, 400]}},
+            "slices": [
+                {"key": "tile_test", "source": "synthetic", "rect": [30, 70, 250, 230], "mode": "tile", "size": 64, "folder": "Tiles", "snap": True, "wired": True},
+                {"key": "actor_test_idle", "source": "synthetic", "rect": [420, 60, 240, 260], "mode": "sprite", "size": 64, "folder": "Actors", "tolerance": 30},
+                {"key": "tile_missing", "source": "nope", "rect": [0, 0, 10, 10], "mode": "tile", "size": 64, "folder": "Tiles"},
+            ],
+        }
+        out = temp / "out"
+        result = run(manifest, refs, out, temp / "sheet.png")
+
+        tile = Image.open(out / "Tiles" / "tile_test.png")
+        assert tile.size == (64, 64), tile.size
+        assert tile.getpixel((32, 32))[:3] == (130, 130, 135), tile.getpixel((32, 32))
+        assert bright_boxes(sheet)[0][:2] in ((20, 30), (20, 28), (18, 30), (18, 28)), bright_boxes(sheet)
+
+        actor = Image.open(out / "Actors" / "actor_test_idle.png")
+        assert actor.size == (64, 64), actor.size
+        assert actor.getpixel((0, 0))[3] == 0, "background should be transparent"
+        bottom_red = actor.getpixel((32, 64 - round(64 * ACTOR_BOTTOM_PADDING) - 6))
+        assert bottom_red[3] == 255 and bottom_red[0] > 150, bottom_red
+
+        assert result["missing_sources"] == ["nope"], result["missing_sources"]
+        assert len(result["written"]) == 2
+        assert (temp / "sheet.png").exists()
+    print("self-test passed")
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument("--refs", type=Path, default=DEFAULT_REFS)
+    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--sheet", type=Path, default=DEFAULT_SHEET)
+    parser.add_argument("--only", nargs="*")
+    parser.add_argument("--detect", metavar="SOURCE")
+    parser.add_argument("--self-test", action="store_true")
+    args = parser.parse_args()
+
+    if args.self_test:
+        return self_test()
+    manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
+    if args.detect:
+        return detect(manifest, args.refs, args.detect)
+
+    result = run(manifest, args.refs, args.out, args.sheet, set(args.only) if args.only else None)
+    for warning in result["warnings"]:
+        print("WARNING:", warning)
+    if result["missing_sources"]:
+        print(f"Missing references in {args.refs}: {', '.join(result['missing_sources'])}")
+    print(f"Wrote {len(result['written'])} slices to {args.out}")
+    if result["written"]:
+        print(f"Contact sheet: {args.sheet}")
+    return 0 if result["written"] else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

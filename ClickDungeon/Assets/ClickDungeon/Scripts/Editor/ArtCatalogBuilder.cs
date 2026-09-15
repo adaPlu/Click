@@ -13,7 +13,8 @@ namespace ClickDungeon.EditorTools
 {
     /// <summary>
     /// Builds the art catalog from files under Art/Runtime (decision D-016). The file name is the key;
-    /// numbered files <c>key_000</c>, <c>key_001</c>… become one animation.
+    /// numbered files <c>key_000</c>, <c>key_001</c>… become one animation. Production files win over reference
+    /// slices in Art/Runtime/Placeholders (art brief D4).
     /// </summary>
     public static class ArtCatalogBuilder
     {
@@ -21,6 +22,7 @@ namespace ClickDungeon.EditorTools
         public const string ResourcesFolder = "Assets/ClickDungeon/Art/Resources";
         public const string CatalogPath = ResourcesFolder + "/" + Art.CatalogResourceName + ".asset";
         public const string CoverageReportPath = "Art/art-coverage.md";
+        const string PlaceholderFolder = "/Placeholders/";
 
         static readonly Regex FramePattern = new Regex(@"^(?<key>.+)_(?<frame>\d{3,})$");
 
@@ -31,18 +33,28 @@ namespace ClickDungeon.EditorTools
             EnsureFolder(ResourcesFolder);
 
             var sprites = new Dictionary<string, Sprite>();
+            var paths = new Dictionary<string, string>();
             foreach (var guid in AssetDatabase.FindAssets("t:Sprite", new[] { RuntimeRoot }))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
                 if (sprite == null) continue;
                 var name = Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
-                if (sprites.ContainsKey(name))
+                if (paths.TryGetValue(name, out var existingPath))
                 {
-                    Debug.LogWarning($"[ClickDungeon] Duplicate art name '{name}' at {path}; keeping the first one.");
+                    if (PreferCandidate(existingPath, path))
+                    {
+                        sprites[name] = sprite;
+                        paths[name] = path;
+                    }
+                    else if (!PreferCandidate(path, existingPath))
+                    {
+                        Debug.LogWarning($"[ClickDungeon] Duplicate art name '{name}' at {path}; keeping {existingPath}.");
+                    }
                     continue;
                 }
                 sprites[name] = sprite;
+                paths[name] = path;
             }
 
             var catalog = AssetDatabase.LoadAssetAtPath<ArtCatalog>(CatalogPath);
@@ -65,13 +77,14 @@ namespace ClickDungeon.EditorTools
                     Key = group.Key,
                     Frames = group.Value.Select(name => sprites[name]).ToArray(),
                     Fps = previousFps.TryGetValue(group.Key, out var fps) ? fps : DefaultFps(group.Key),
+                    Placeholder = group.Value.All(name => IsPlaceholder(paths[name])),
                 });
             }
 
             catalog.SetEntries(entries);
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[ClickDungeon] Art catalog rebuilt: {entries.Count} keys ({entries.Count(e => e.Frames.Length > 1)} animated).");
+            Debug.Log($"[ClickDungeon] Art catalog rebuilt: {entries.Count} keys ({entries.Count(e => e.Placeholder)} reference slices, {entries.Count(e => e.Frames.Length > 1)} animated).");
         }
 
         [MenuItem("ClickDungeon/Art/Report Art Coverage")]
@@ -80,32 +93,55 @@ namespace ClickDungeon.EditorTools
             Rebuild();
             var catalog = AssetDatabase.LoadAssetAtPath<ArtCatalog>(CatalogPath);
             var wired = ArtKeys.Wired(ContentCatalog.CreateDefault());
-            var present = wired.Where(key => catalog.TryGet(key, out _)).ToList();
-            var notWired = catalog.Entries.Select(e => e.Key).Where(key => !wired.Contains(key)).OrderBy(key => key).ToList();
+            int production = 0, slices = 0, procedural = 0;
+            var rows = new StringBuilder();
+            foreach (var key in wired)
+            {
+                if (!catalog.TryGet(key, out var entry))
+                {
+                    procedural++;
+                    rows.AppendLine($"| `{key}` | procedural placeholder |");
+                    continue;
+                }
+                string frames = entry.Frames.Length > 1 ? $", {entry.Frames.Length} frames @ {entry.Fps} fps" : "";
+                if (entry.Placeholder)
+                {
+                    slices++;
+                    rows.AppendLine($"| `{key}` | reference slice (placeholder{frames}) |");
+                }
+                else
+                {
+                    production++;
+                    rows.AppendLine($"| `{key}` | production art{frames} |");
+                }
+            }
+            var notWired = catalog.Entries.Where(e => !wired.Contains(e.Key)).OrderBy(e => e.Key).ToList();
 
             var sb = new StringBuilder();
             sb.AppendLine("# ClickDungeon art coverage");
             sb.AppendLine();
-            sb.AppendLine($"Generated {DateTime.Now:yyyy-MM-dd HH:mm}. Wired keys with art: {present.Count} of {wired.Count}.");
-            sb.AppendLine("Keys without art keep drawing the placeholder. Naming and specs: docs/art-brief.md.");
+            sb.AppendLine($"Generated {DateTime.Now:yyyy-MM-dd HH:mm}. Wired keys: {wired.Count} — production art {production}, reference slices {slices}, procedural placeholders {procedural}.");
+            sb.AppendLine("Naming and specs: docs/art-brief.md.");
             sb.AppendLine();
             sb.AppendLine("| Key | Status |");
             sb.AppendLine("|---|---|");
-            foreach (var key in wired)
-            {
-                if (!catalog.TryGet(key, out var entry)) sb.AppendLine($"| `{key}` | placeholder |");
-                else sb.AppendLine($"| `{key}` | art ({(entry.Frames.Length > 1 ? $"{entry.Frames.Length} frames @ {entry.Fps} fps" : "static")}) |");
-            }
+            sb.Append(rows);
             sb.AppendLine();
             sb.AppendLine("## Art files not wired into the game yet");
             sb.AppendLine();
             if (notWired.Count == 0) sb.AppendLine("None.");
-            foreach (var key in notWired) sb.AppendLine($"- `{key}`");
+            foreach (var entry in notWired) sb.AppendLine($"- `{entry.Key}`{(entry.Placeholder ? " (reference slice)" : "")}");
 
             Directory.CreateDirectory(Path.GetDirectoryName(CoverageReportPath));
             File.WriteAllText(CoverageReportPath, sb.ToString());
-            Debug.Log($"[ClickDungeon] Art coverage: {present.Count}/{wired.Count} wired keys have art. Report: {Path.GetFullPath(CoverageReportPath)}");
+            Debug.Log($"[ClickDungeon] Art coverage: production {production}, reference slices {slices}, procedural {procedural} of {wired.Count} wired keys. Report: {Path.GetFullPath(CoverageReportPath)}");
         }
+
+        /// <summary>True when the candidate file should replace the existing one for the same key.</summary>
+        public static bool PreferCandidate(string existingPath, string candidatePath) =>
+            IsPlaceholder(existingPath) && !IsPlaceholder(candidatePath);
+
+        public static bool IsPlaceholder(string path) => path.Replace('\\', '/').Contains(PlaceholderFolder);
 
         /// <summary>Groups file names into keys; numbered frames are ordered numerically and win over a same-named single.</summary>
         public static SortedDictionary<string, List<string>> GroupFrames(IEnumerable<string> names)

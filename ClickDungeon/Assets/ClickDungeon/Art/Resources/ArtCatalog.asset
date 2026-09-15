@@ -12,4 +12,354 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f9eda58bd087dc4a834fe65de77e3f0, type: 3}
   m_Name: ArtCatalog
   m_EditorClassIdentifier: ClickDungeon.Unity::ClickDungeon.Unity.Ui.ArtCatalog
-  _entries: []
+  _entries:
+  - Key: actor_crowned_slime_idle
+    Frames:
+    - {fileID: 21300000, guid: 2e2e42a958edb9b4790ded878f5a4b8f, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_fire_imp_idle
+    Frames:
+    - {fileID: 21300000, guid: 9fbf97292cfd23741b34c816bdac7b32, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_goblin_idle
+    Frames:
+    - {fileID: 21300000, guid: 5fa3f0e04f200e743b1f0d927ba48d85, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_lord_blobert_boast
+    Frames:
+    - {fileID: 21300000, guid: 2bba1c1887e21b3428b8ca3db54a1f07, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_lord_blobert_deflated
+    Frames:
+    - {fileID: 21300000, guid: cdfe1b2a3570d834cbce26af544fd44e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_lord_blobert_idle
+    Frames:
+    - {fileID: 21300000, guid: d7cdbe429276f9d44a3141685712917a, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_lord_blobert_puffed
+    Frames:
+    - {fileID: 21300000, guid: 0e8090f08d6e1574fbc744531f77ab80, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_sir_clickington_idle
+    Frames:
+    - {fileID: 21300000, guid: 8f9123060c3315b43ba5c4c738a82f6a, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_slimelet_idle
+    Frames:
+    - {fileID: 21300000, guid: f71ee45578d47594499a2b82bb068bb5, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: fx_blobert_summon
+    Frames:
+    - {fileID: 21300000, guid: 5eb33f5f4ae8f554c93b1b4c0844f306, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: fx_chest_reward_anticipation
+    Frames:
+    - {fileID: 21300000, guid: d3d930dcf2ce23c4382a17740448dba7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: fx_chest_reward_burst
+    Frames:
+    - {fileID: 21300000, guid: 747f45241013d9e469e7676de83cf082, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: fx_chest_reward_heavy
+    Frames:
+    - {fileID: 21300000, guid: 764fd4407dcf5464084278b6bdd402db, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: fx_chest_reward_triumph
+    Frames:
+    - {fileID: 21300000, guid: 2d44411404bd1724c98b25d5de6cdeaa, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_ability_dash
+    Frames:
+    - {fileID: 21300000, guid: 1df1052a7e54de44dace4941efc3ed14, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_ability_move
+    Frames:
+    - {fileID: 21300000, guid: f3f59ec9e82c5854eb61796e4616dadd, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_ability_potion
+    Frames:
+    - {fileID: 21300000, guid: 683a9c45128176e4dac47b1ae5b5d068, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_ability_shield
+    Frames:
+    - {fileID: 21300000, guid: 80d694ec2a4198546963f9aa44198f92, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_ability_slash
+    Frames:
+    - {fileID: 21300000, guid: 5ac1dae382813334cb0ce5f07a3a3744, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: logo_clickdungeon
+    Frames:
+    - {fileID: 21300000, guid: fe2abc399562d9d4bab4fa48b0cfa9a3, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_sir_clickington_angry
+    Frames:
+    - {fileID: 21300000, guid: 18f8044af4bc0c24e8bc312bfac400be, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_sir_clickington_confident
+    Frames:
+    - {fileID: 21300000, guid: e4f373ef70d8abc49a0676c7c7c85812, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_sir_clickington_defeated
+    Frames:
+    - {fileID: 21300000, guid: 7ff78aa1ad5f67441a412550579370f5, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_sir_clickington_happy
+    Frames:
+    - {fileID: 21300000, guid: 6a0c5e5ea9d8dc24580dd5d720172ee4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_sir_clickington_neutral
+    Frames:
+    - {fileID: 21300000, guid: 745e29d2fe1e26a4f8d9eea5bf7c98ca, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_sir_clickington_shocked
+    Frames:
+    - {fileID: 21300000, guid: 8b8a3f2847f3202419678f343ee63126, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_sir_clickington_victorious
+    Frames:
+    - {fileID: 21300000, guid: af029d8cae416054fa1c608bf352499a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_sir_clickington_worried
+    Frames:
+    - {fileID: 21300000, guid: ef9b72a55d2d7014cab138c7e61822d4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_bomb
+    Frames:
+    - {fileID: 21300000, guid: aeb94c8b44ac95f4caaa4a6d11568b4b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_chest_closed
+    Frames:
+    - {fileID: 21300000, guid: 0c15c4429432c9b4189f539960902c24, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_chest_open
+    Frames:
+    - {fileID: 21300000, guid: ab4113891b7eb0c43b1dc3309e8e6b9d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_door_locked
+    Frames:
+    - {fileID: 21300000, guid: 6d3733a9b10a04a49ae0471b84722beb, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_door_open
+    Frames:
+    - {fileID: 21300000, guid: 92671cddd0afa234c9d70fed517f7321, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_exit_locked
+    Frames:
+    - {fileID: 21300000, guid: 2492dbdb4fcef3847bb7e1e72924ac4f, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_exit_open
+    Frames:
+    - {fileID: 21300000, guid: f6bc3f1b2a8cf87488793792934ad313, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_floor_cracked
+    Frames:
+    - {fileID: 21300000, guid: 0b70ae1e65aaf2d4ba6f35db2fdab91e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_floor_moss
+    Frames:
+    - {fileID: 21300000, guid: db61d7a0ca527464bb36a8e7e84d8d32, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_floor_stone
+    Frames:
+    - {fileID: 21300000, guid: 3e2c6e35e93122a4ab5034a2a1ce275a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_fountain_heal
+    Frames:
+    - {fileID: 21300000, guid: 62503ae9ca7659e449b78a898b1d593c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_key
+    Frames:
+    - {fileID: 21300000, guid: f96ebc6068fb41c4fa7b14100480a89e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_lava
+    Frames:
+    - {fileID: 21300000, guid: e5eed1c67f309664993fbfdf4bd9f097, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_pit
+    Frames:
+    - {fileID: 21300000, guid: 0a20d3d7191e3a743a42d3a1287d1819, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_potion
+    Frames:
+    - {fileID: 21300000, guid: 50b468daf5d16854a91db4a4417fb34e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_pressure_plate
+    Frames:
+    - {fileID: 21300000, guid: c352c595fddbce445a664834209c98e9, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_shadow
+    Frames:
+    - {fileID: 21300000, guid: 19735c45966dc754a84fb407564109a8, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_spikes
+    Frames:
+    - {fileID: 21300000, guid: 638734cc7d71c3a4a9a306dc40df41be, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_stair_up
+    Frames:
+    - {fileID: 21300000, guid: f917f8c3a933276449784cfb1dad4ea5, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_stair_up_locked
+    Frames:
+    - {fileID: 21300000, guid: b020102518717704f952261243774f66, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_teleport
+    Frames:
+    - {fileID: 21300000, guid: 5a7dbad19364eeb4297bb8d28c2ea3df, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_torch
+    Frames:
+    - {fileID: 21300000, guid: ed02c6d8c0bf8254491eee00cef8554e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_wall
+    Frames:
+    - {fileID: 21300000, guid: cafba34b9e2f2c0478c09b02d9218157, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_wall_corner
+    Frames:
+    - {fileID: 21300000, guid: 8905068e0fd139243a84f21f80836fd7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_water
+    Frames:
+    - {fileID: 21300000, guid: 51f8654fa7670ab42ba72b6c451d9fef, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_menu
+    Frames:
+    - {fileID: 21300000, guid: cd1f005236c2d7d4b892178a80f704d0, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_settings
+    Frames:
+    - {fileID: 21300000, guid: 07b7533ad88a31b4ea2e15069a36ea91, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_continue_preview
+    Frames:
+    - {fileID: 21300000, guid: f95c3113e1caa55439a7922dd2b29510, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_daily_reward_chest
+    Frames:
+    - {fileID: 21300000, guid: f43abfd5b542b7a4384df590d2cb0202, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_floor_plaque
+    Frames:
+    - {fileID: 21300000, guid: f210fc7ddc8093545afea8158d0d4ab2, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_crown
+    Frames:
+    - {fileID: 21300000, guid: e2ac304866945b5428ed64394da725e6, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_gem
+    Frames:
+    - {fileID: 21300000, guid: 7a2910d9656ff35488440c027e9cb6c5, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_gold
+    Frames:
+    - {fileID: 21300000, guid: 5ef8a1bfbfc7ea643809190488056585, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_heart
+    Frames:
+    - {fileID: 21300000, guid: 4dd3f593124542c4296d3683ce22b73c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_hero_select
+    Frames:
+    - {fileID: 21300000, guid: 5612589900ce9a14886c1fb48e7506a4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_inventory
+    Frames:
+    - {fileID: 21300000, guid: 885530b7c6229f345959452731940ad9, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_mail
+    Frames:
+    - {fileID: 21300000, guid: 921f8a0f5bd3d9a4e962f2021d8022ec, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_mana
+    Frames:
+    - {fileID: 21300000, guid: bc1cb7bb397a6124199c13505e6945f5, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_play
+    Frames:
+    - {fileID: 21300000, guid: 4769d22833b1ef047b43581dc4476dd9, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_quit
+    Frames:
+    - {fileID: 21300000, guid: 12b943e3d9ea23f44b997a624439b7ee, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_shop
+    Frames:
+    - {fileID: 21300000, guid: 9d79b566489e42c47bf8bde679980add, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_talents
+    Frames:
+    - {fileID: 21300000, guid: 001e9164323c4d74fbc59164141f5fe2, type: 3}
+    Fps: 12
+    Placeholder: 1

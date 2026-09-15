@@ -197,7 +197,7 @@ namespace ClickDungeon.Unity.Screens
             Icons.Shape(goblin, Shapes.Circle, Color.white, new Vector2(30f, 40f), new Vector2(40f, 44f));
             Icons.Shape(goblin, Shapes.Circle, Color.black, new Vector2(-26f, 36f), new Vector2(16f, 18f));
             Icons.Shape(goblin, Shapes.Circle, Color.black, new Vector2(34f, 36f), new Vector2(16f, 18f));
-            Icons.Chest(goblin, false, 2.2f);
+            Icons.Chest(goblin, false, 2.2f, useArt: false);
 
             // Sir Clickington under the arch.
             var knight = Icons.Group(Root, new Vector2(0f, -200f));

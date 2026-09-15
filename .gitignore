@@ -19,6 +19,14 @@ ClickDungeon/crashlytics-buildid.txt
 # Generated art coverage report (ClickDungeon -> Art -> Report Art Coverage)
 ClickDungeon/Art/art-coverage.md
 
+# Concept reference images (large, kept locally; see the README in that folder)
+ClickDungeon/Art/Source/References/*
+!ClickDungeon/Art/Source/References/README.md
+
+# Generated slicer review sheet (tools/art-slicer)
+ClickDungeon/Art/Source/Slices/
+tools/art-slicer/__pycache__/
+
 # dotnet
 Sim/**/bin/
 Sim/**/obj/

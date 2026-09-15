@@ -37,7 +37,11 @@ Evidence key: **T** = automated test (headless `dotnet test` + Unity EditMode), 
 ## Gate 3 prep — art pipeline (running alongside Gate 2)
 - [x] Art brief from the reference images: `docs/art-brief.md`.
 - [x] Art registry with placeholder fallback, import standards and coverage report (D-016).
-- [ ] Decide brief D1–D5 (unbuilt systems, side banners, mana bar, art source, tile set).
+- [x] D1 decided: default (make art for unbuilt systems, keep it hidden until each system exists).
+- [x] D4 decided: slice the reference images into temporary placeholders (`tools/art-slicer/`).
+- [ ] Save the reference images to `ClickDungeon/Art/Source/References/` and run the slicer.
+- [ ] Review the contact sheet, calibrate crops, and check both screens in the build.
+- [ ] Decide D2, D3, D5 (currently on their defaults: banner-styled panels, no mana bar, tile set B).
 - [ ] Style frame: one finished 5×5 board, approved before mass production.
 
 ## Deferred (by design)
