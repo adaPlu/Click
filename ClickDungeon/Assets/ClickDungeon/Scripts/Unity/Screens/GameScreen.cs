@@ -39,6 +39,7 @@ namespace ClickDungeon.Unity.Screens
         readonly BoardView _board;
         readonly ModalOverlay _modal;
         readonly ChestOverlay _chest;
+        readonly FloorBanner _floorBanner;
         readonly Dictionary<CommandKind, AbilityButton> _abilities = new Dictionary<CommandKind, AbilityButton>();
         readonly List<string> _log = new List<string>();
 
@@ -91,6 +92,8 @@ namespace ClickDungeon.Unity.Screens
             BuildAbilityBar();
             BuildSpeechStrip();
 
+            // Above the board, over the top HUD band, so it never hides board tiles.
+            _floorBanner = new FloorBanner(Root, app, new Vector2(0f, 482f));
             _chest = new ChestOverlay(Root, app);
             _modal = new ModalOverlay(Root, app);
         }
@@ -117,6 +120,7 @@ namespace ClickDungeon.Unity.Screens
                 _logText.text = "Run resumed.";
             }
             Refresh(false);
+            ShowFloorBanner();
 
             if (!_app.AutomationMode && !UserPrefs.SeenHelp)
             {
@@ -180,6 +184,8 @@ namespace ClickDungeon.Unity.Screens
                     _chest.Open(new RewardRecord { Kind = RewardKind.MaxHp, Amount = 2 }, null);
                     for (int i = 0; i < 3; i++) _chest.Tap();
                     break;
+                case "banner": ShowFloorBanner(); break;
+                case "bossbanner": _floorBanner.Show(Catalog.RunFloorCount, Catalog.ProfileFor(Catalog.RunFloorCount).Name, true); break;
                 case "victory":
                     _modal.Show(ModalStyle.Victory, "VICTORY!", "Screenshot preview of the victory panel.", () => { },
                         Menus.B("NEW RUN", Palette.PlayGreen, () => { }), Menus.B("TITLE", Palette.NavyLight, () => { }));
@@ -327,6 +333,7 @@ namespace ClickDungeon.Unity.Screens
             if (floorChanged && run.Status == RunStatus.InProgress)
             {
                 _hover = null;
+                ShowFloorBanner();
                 line = Lines.FloorStart(run.Floor);
                 face = run.Floor.IsBossFloor ? Expression.Shocked : Expression.Confident;
             }
@@ -369,6 +376,13 @@ namespace ClickDungeon.Unity.Screens
                     if (e.To.InBounds) _board.Popup(e.To, "OPEN!", Palette.Gold);
                     break;
             }
+        }
+
+        void ShowFloorBanner()
+        {
+            var floor = Run?.Floor;
+            if (floor == null) return;
+            _floorBanner.Show(floor.FloorIndex, Catalog.ProfileFor(floor.FloorIndex).Name, floor.IsBossFloor);
         }
 
         void CheckRunEnd()

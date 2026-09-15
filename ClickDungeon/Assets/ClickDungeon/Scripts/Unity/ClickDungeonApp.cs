@@ -54,7 +54,7 @@ namespace ClickDungeon.Unity
 
         /// <summary>
         /// Dev automation: -cdShot path.png [-cdScreen title|game] [-cdSeed n] [-cdTurns n] [-cdTelemetryDir dir] [-cdOverlay name].
-        /// Overlays: game pause|help|chest|chestburst|victory|defeat, title settings|rules.
+        /// Overlays: game pause|help|chest|chestburst|banner|bossbanner|victory|defeat, title settings|rules.
         /// Telemetry stays off in automation unless -cdTelemetryDir is given, so bot runs never mix with playtest logs.
         /// Plays random legal turns through the normal input path, captures a screenshot and quits.
         /// </summary>

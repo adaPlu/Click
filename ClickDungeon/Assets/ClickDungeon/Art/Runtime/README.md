@@ -38,6 +38,7 @@ reference slice or procedural placeholder.
 - Intent badges: `icon_intent_<attack|move|fire|rest|recover|summon|slam|puffup>` (badge text stays live)
 - Danger telegraphs: `ui_danger_<attack|fire|slam|blast|armed|summon>` (tile-sized overlay), `icon_danger_warning` (corner);
   the `-N` damage number and HIT/FIRE/SLAM/BOOM tag stay live text
+- Floor banner: `ui_banner_floor`, `ui_banner_floor_boss` (plate only; floor text stays live)
 - Board FX (numbered frames, played once): `fx_<spikes_trigger|explosion|key_collect|potion_collect|exit_unlock|enemy_wake>`
   (`fx_explosion` covers the 3×3 blast); `fx_bomb_fuse` loops over armed bombs
 - Underfoot badges: `icon_underfoot_<spikes|bomb|bomb_armed|exit_locked|exit_open>` (whole badge; armed bomb falls back to the bomb art in an orange ring)

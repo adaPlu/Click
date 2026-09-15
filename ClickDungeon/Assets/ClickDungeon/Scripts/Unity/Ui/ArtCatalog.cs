@@ -196,6 +196,9 @@ namespace ClickDungeon.Unity.Ui
         /// <summary>Looping fuse drawn over an armed bomb tile.</summary>
         public const string BombFuse = "fx_bomb_fuse";
 
+        public const string FloorBanner = "ui_banner_floor";
+        public const string FloorBannerBoss = "ui_banner_floor_boss";
+
         /// <summary>Sir Clickington's chest reactions, in order: overlay opens, burst, then two beats after it.</summary>
         public static readonly string[] ChestReactionSteps = { "anticipation", "reveal", "heavy", "triumph" };
 
@@ -343,6 +346,7 @@ namespace ClickDungeon.Unity.Ui
             foreach (var kind in RewardKinds) keys.Add(RewardIcon(kind));
             keys.AddRange(new[] { UnderfootSpikes, UnderfootBomb, UnderfootBombArmed, UnderfootExitLocked, UnderfootExitOpen });
             keys.AddRange(new[] { FxSpikesTrigger, FxExplosion, FxKeyCollect, FxPotionCollect, FxExitUnlock, FxEnemyWake, BombFuse });
+            keys.AddRange(new[] { FloorBanner, FloorBannerBoss });
             keys.Add(Actor(HeroId, "guard"));
             foreach (var animation in HeroAnimations) keys.Add(Actor(HeroId, animation));
             foreach (var enemy in catalog.Enemies.Values)
