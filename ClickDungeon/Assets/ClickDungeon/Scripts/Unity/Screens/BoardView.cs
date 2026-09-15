@@ -169,10 +169,21 @@ namespace ClickDungeon.Unity.Screens
 
                 bool isLegal = legal != null && legal.Contains(p);
                 bool isHover = hover.HasValue && hover.Value == p;
-                view.Highlight.enabled = isLegal || isHover;
-                view.Highlight.color = isHover
-                    ? Color.white
-                    : strongHighlight ? Palette.Legal : Palette.Legal.WithAlpha(0.45f);
+                bool showHighlight = isLegal || isHover;
+                view.Highlight.enabled = showHighlight;
+                if (showHighlight)
+                {
+                    string highlightKey = isHover ? ArtKeys.HighlightHover : strongHighlight ? ArtKeys.HighlightTarget : ArtKeys.HighlightLegal;
+                    if (!UiArt.Apply(view.Highlight, highlightKey))
+                    {
+                        view.Highlight.sprite = Shapes.Frame;
+                        view.Highlight.type = Image.Type.Sliced;
+                        view.Highlight.pixelsPerUnitMultiplier = 1.4f;
+                        view.Highlight.color = isHover
+                            ? Color.white
+                            : strongHighlight ? Palette.Legal : Palette.Legal.WithAlpha(0.45f);
+                    }
+                }
             }
 
             RenderTokens(run, catalog, animate);

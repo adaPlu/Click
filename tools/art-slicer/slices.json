@@ -68,13 +68,13 @@
 
     { "key": "logo_clickdungeon", "source": "ref3-tiles-a", "rect": [30, 22, 430, 80], "mode": "logo", "tolerance": 40, "size": 1024, "folder": "UI", "wired": true },
 
-    { "key": "ui_icon_heart", "source": "ref2-gameplay", "rect": [640, 18, 48, 42], "mode": "icon", "size": 128, "folder": "UI" },
+    { "key": "ui_icon_heart", "source": "ref2-gameplay", "rect": [640, 18, 48, 42], "mode": "icon", "tolerance": 45, "size": 128, "folder": "UI", "wired": true },
     { "key": "ui_icon_mana", "source": "ref2-gameplay", "rect": [640, 68, 45, 42], "mode": "icon", "size": 128, "folder": "UI" },
     { "key": "ui_icon_gold", "source": "ref2-gameplay", "rect": [993, 18, 40, 40], "mode": "icon", "size": 128, "folder": "UI" },
     { "key": "ui_icon_gem", "source": "ref2-gameplay", "rect": [990, 70, 40, 38], "mode": "icon", "size": 128, "folder": "UI" },
-    { "key": "ui_button_settings", "source": "ref2-gameplay", "rect": [1473, 15, 75, 75], "mode": "icon", "size": 128, "folder": "UI" },
+    { "key": "ui_button_settings", "source": "ref2-gameplay", "rect": [1473, 15, 75, 75], "mode": "icon", "size": 128, "folder": "UI", "wired": true },
     { "key": "ui_button_menu", "source": "ref2-gameplay", "rect": [1558, 15, 75, 75], "mode": "icon", "size": 128, "folder": "UI" },
-    { "key": "ui_floor_plaque", "source": "ref2-gameplay", "rect": [108, 100, 272, 75], "mode": "wide", "size": 512, "folder": "UI" },
+    { "key": "ui_floor_plaque", "source": "ref2-gameplay", "rect": [108, 100, 272, 75], "mode": "wide", "size": 512, "folder": "UI", "note": "baked sample text; the game looks up ui_plaque_floor instead" },
     { "key": "ui_icon_inventory", "source": "ref2-gameplay", "rect": [458, 858, 72, 62], "mode": "icon", "size": 128, "folder": "UI" },
     { "key": "ui_icon_talents", "source": "ref2-gameplay", "rect": [775, 852, 70, 68], "mode": "icon", "size": 128, "folder": "UI" },
     { "key": "ui_icon_shop", "source": "ref2-gameplay", "rect": [1058, 860, 72, 62], "mode": "icon", "size": 128, "folder": "UI" },

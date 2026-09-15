@@ -282,6 +282,10 @@ Decision D-016. Drop-in steps are also in `ClickDungeon/Assets/ClickDungeon/Art/
 
 Any key without art keeps drawing the current placeholder, so art can land piece by piece.
 
+Frames, panels and buttons: set 9-slice borders in the sprite importer. Art with borders draws sliced
+(at half its pixel size, since art is authored at 2×); art without borders stretches to fit. The reference slice
+`ui_floor_plaque` has baked sample text, so the floor plaque looks up `ui_plaque_floor` instead.
+
 ### Keys wired today
 
 | Area | Keys |
@@ -294,8 +298,11 @@ Any key without art keeps drawing the current placeholder, so art can land piece
 | Portraits | `portrait_sir_clickington_<neutral\|happy\|confident\|worried\|shocked\|angry\|victorious\|defeated>` |
 | Intent badges (icon at the left of the live badge text) | `icon_intent_<attack\|move\|fire\|rest\|recover\|summon\|slam\|puffup>` (128×128, readable at 26 px) |
 | Danger telegraphs (tile-sized; `-N` and HIT/FIRE/SLAM/BOOM stay live text) | `ui_danger_<attack\|fire\|slam\|blast\|armed\|summon>` (256×256, mostly transparent centre), `icon_danger_warning` (corner icon, readable at 32 px) |
+| Board highlights (tile-sized frames; keep the frame within the outer 8 px of 256, because highlights draw above tokens and an enemy's intent badge sits on the tile's top edge) | `ui_highlight_legal` (MOVE-mode steps), `ui_highlight_target` (SLASH/DASH targets), `ui_highlight_hover` |
+| HUD frames (frame and fill only; all text stays live) | `ui_frame_portrait`, `ui_hp_back`, `ui_hp_fill`, `ui_hp_frame`, `ui_icon_heart`, `ui_chip` (KEY/SLASH/TURN), `ui_plaque_floor`, `ui_panel` (WHAT HAPPENED / INSPECT), `ui_speech_strip`, `ui_badge_count` |
+| Gameplay buttons | `ui_button_ability_<move\|slash\|shield\|dash\|potion>` (falls back to `ui_button_ability`; icon, label and hotkey draw on top), `ui_button_ability_selected`, `ui_button_settings` (whole button, gear included), `ui_button_help` (frame only; "?" stays live) |
 | Screens | `logo_clickdungeon`, `bg_gameplay`, `bg_title` (a full `bg_title` composite also hides the placeholder arch, banners and characters) |
 
-Not wired yet (needs layout work when the art arrives): highlights,
-underfoot badges, HUD bars and frames, buttons and panels, modal frames, chest overlay art and
+Not wired yet (needs layout work when the art arrives):
+underfoot badges, title-screen and modal frames and buttons, chest overlay art and
 reward sequence, action animations (step, slash, hit…), FX, Priority B tiles.

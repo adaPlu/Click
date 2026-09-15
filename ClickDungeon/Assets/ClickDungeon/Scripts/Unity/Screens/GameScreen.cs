@@ -647,11 +647,15 @@ namespace ClickDungeon.Unity.Screens
             portrait.Place(TopLeft, TopLeft, new Vector2(470f, -10f), new Vector2(104f, 104f));
             _face = Icons.Portrait(portrait, 104f);
             _portraitArt = Icons.TryArtImage(portrait, ArtKeys.Portrait(ArtKeys.HeroId, "neutral"), 104f);
-            UiFactory.Image(portrait, "Frame", Palette.Gold, Shapes.Frame, true).rectTransform.Stretch();
+            var portraitFrame = UiFactory.Image(portrait, "Frame", Palette.Gold, Shapes.Frame, true);
+            portraitFrame.rectTransform.Stretch();
+            UiArt.Apply(portraitFrame, ArtKeys.PortraitFrame);
 
             var hp = UiFactory.Rect(Root, "Hp");
             hp.Place(TopLeft, TopLeft, new Vector2(592f, -28f), new Vector2(440f, 54f));
-            UiFactory.Image(hp, "Back", Palette.HpBack, Shapes.Rounded, true).rectTransform.Stretch();
+            var hpBack = UiFactory.Image(hp, "Back", Palette.HpBack, Shapes.Rounded, true);
+            hpBack.rectTransform.Stretch();
+            UiArt.Apply(hpBack, ArtKeys.HpBack);
             var fillArea = UiFactory.Rect(hp, "FillArea");
             fillArea.Stretch(40, 7, 7, 7);
             var fill = UiFactory.Image(fillArea, "Fill", Palette.Hp, Shapes.Rounded, true);
@@ -660,14 +664,20 @@ namespace ClickDungeon.Unity.Screens
             _hpFill.anchorMax = Vector2.one;
             _hpFill.offsetMin = Vector2.zero;
             _hpFill.offsetMax = Vector2.zero;
-            UiFactory.Image(hp, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch();
+            UiArt.Apply(fill, ArtKeys.HpFill);
+            var hpBorder = UiFactory.Image(hp, "Border", Palette.GoldDark, Shapes.Frame, true);
+            hpBorder.rectTransform.Stretch();
+            UiArt.Apply(hpBorder, ArtKeys.HpFrame);
 
             var heart = UiFactory.Rect(hp, "Heart");
             heart.Place(new Vector2(0f, 0.5f), Center, new Vector2(10f, 0f), new Vector2(64f, 64f));
-            var heartColor = Palette.Hp.Dim(1.2f);
-            Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(-10f, 6f), new Vector2(34f, 34f));
-            Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(10f, 6f), new Vector2(34f, 34f));
-            Icons.Shape(heart, Shapes.Triangle, heartColor, new Vector2(0f, -10f), new Vector2(50f, 36f), 180f);
+            if (!Icons.TryArt(heart, ArtKeys.Heart, 64f))
+            {
+                var heartColor = Palette.Hp.Dim(1.2f);
+                Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(-10f, 6f), new Vector2(34f, 34f));
+                Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(10f, 6f), new Vector2(34f, 34f));
+                Icons.Shape(heart, Shapes.Triangle, heartColor, new Vector2(0f, -10f), new Vector2(50f, 36f), 180f);
+            }
 
             _hpText = UiFactory.Text(hp, "Text", "", 32, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
             _hpText.rectTransform.Stretch(40, 0, 0, 0);
@@ -679,9 +689,13 @@ namespace ClickDungeon.Unity.Screens
 
             var plaque = UiFactory.Rect(Root, "FloorPlaque");
             plaque.Place(TopLeft, TopLeft, new Vector2(100f, -126f), new Vector2(380f, 104f));
-            UiFactory.Image(plaque, "Shadow", new Color(0f, 0f, 0f, 0.5f), Shapes.Rounded, true).rectTransform.Stretch(-4, 2, -8, -10);
-            UiFactory.Image(plaque, "Back", Palette.Parchment, Shapes.Rounded, true).rectTransform.Stretch();
-            UiFactory.Image(plaque, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch();
+            var plaqueShadow = UiFactory.Image(plaque, "Shadow", new Color(0f, 0f, 0f, 0.5f), Shapes.Rounded, true);
+            plaqueShadow.rectTransform.Stretch(-4, 2, -8, -10);
+            var plaqueBack = UiFactory.Image(plaque, "Back", Palette.Parchment, Shapes.Rounded, true);
+            plaqueBack.rectTransform.Stretch();
+            var plaqueBorder = UiFactory.Image(plaque, "Border", Palette.GoldDark, Shapes.Frame, true);
+            plaqueBorder.rectTransform.Stretch();
+            if (UiArt.ApplyPanel(plaqueBack, plaqueBorder, ArtKeys.FloorPlaque)) plaqueShadow.enabled = false;
             _floorTitle = UiFactory.Text(plaque, "Title", "", 42, Palette.Ink, TextAnchor.MiddleCenter, FontStyle.Bold);
             _floorTitle.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -6f), new Vector2(360f, 54f));
             _floorName = UiFactory.Text(plaque, "Name", "", 22, Palette.Ink, TextAnchor.MiddleCenter, FontStyle.Bold);
@@ -692,8 +706,11 @@ namespace ClickDungeon.Unity.Screens
         {
             var rt = UiFactory.Rect(Root, name);
             rt.Place(TopLeft, TopLeft, pos, new Vector2(width, 46f));
-            UiFactory.Image(rt, "Back", Palette.Navy, Shapes.Rounded, true).rectTransform.Stretch();
-            UiFactory.Image(rt, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch();
+            var back = UiFactory.Image(rt, "Back", Palette.Navy, Shapes.Rounded, true);
+            back.rectTransform.Stretch();
+            var border = UiFactory.Image(rt, "Border", Palette.GoldDark, Shapes.Frame, true);
+            border.rectTransform.Stretch();
+            UiArt.ApplyPanel(back, border, ArtKeys.Chip);
             var text = UiFactory.Text(rt, "Text", "", 24, Palette.TextLight, TextAnchor.MiddleCenter, FontStyle.Bold);
             text.rectTransform.Stretch(6, 2, 6, 2);
             return text;
@@ -703,21 +720,29 @@ namespace ClickDungeon.Unity.Screens
         {
             var pause = UiFactory.Button(Root, "Settings", "", Palette.Navy, 10, OpenPause);
             pause.Rect.Place(TopRight, TopRight, new Vector2(-28f, -16f), new Vector2(98f, 98f));
-            var gear = UiFactory.Rect(pause.Rect, "Gear");
-            gear.Place(Center, Center, Vector2.zero, new Vector2(80f, 80f));
-            Icons.Gear(gear, Palette.Gold, 66f);
+            // Settings art is the whole button (frame and gear); otherwise draw the procedural gear.
+            if (!UiArt.ApplyPanel(pause.Background, pause.Border, ArtKeys.SettingsButton))
+            {
+                var gear = UiFactory.Rect(pause.Rect, "Gear");
+                gear.Place(Center, Center, Vector2.zero, new Vector2(80f, 80f));
+                Icons.Gear(gear, Palette.Gold, 66f);
+            }
 
             var help = UiFactory.Button(Root, "Help", "?", Palette.Navy, 58, OpenHelp);
             help.Rect.Place(TopRight, TopRight, new Vector2(-140f, -16f), new Vector2(98f, 98f));
             help.Label.color = Palette.Gold;
+            UiArt.ApplyPanel(help.Background, help.Border, ArtKeys.HelpButton);
         }
 
         Text BuildPanel(string name, Vector2 anchor, Vector2 pos, string title, out Text titleText)
         {
             var rt = UiFactory.Rect(Root, name);
             rt.Place(anchor, anchor, pos, new Vector2(380f, 600f));
-            UiFactory.Image(rt, "Back", Palette.Navy.WithAlpha(0.95f), Shapes.Rounded, true).rectTransform.Stretch();
-            UiFactory.Image(rt, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch();
+            var back = UiFactory.Image(rt, "Back", Palette.Navy.WithAlpha(0.95f), Shapes.Rounded, true);
+            back.rectTransform.Stretch();
+            var border = UiFactory.Image(rt, "Border", Palette.GoldDark, Shapes.Frame, true);
+            border.rectTransform.Stretch();
+            UiArt.ApplyPanel(back, border, ArtKeys.Panel);
 
             titleText = UiFactory.Text(rt, "Title", title, 30, Palette.Gold, TextAnchor.MiddleCenter, FontStyle.Bold);
             titleText.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -14f), new Vector2(350f, 44f));
@@ -748,6 +773,8 @@ namespace ClickDungeon.Unity.Screens
                 parts.Rect.Place(Center, Center, new Vector2((i - 2) * 178f, 0f), new Vector2(162f, 144f));
                 parts.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(156f, 34f));
                 var group = parts.Rect.gameObject.AddComponent<CanvasGroup>();
+                // Button art is frame and fill only; icon, label, hotkey and badge still draw on top.
+                UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.AbilityButton(kind), ArtKeys.AbilityButtonDefault);
 
                 var icon = UiFactory.Rect(parts.Rect, "Icon");
                 icon.Place(Center, Center, new Vector2(0f, 18f), new Vector2(90f, 90f));
@@ -760,10 +787,13 @@ namespace ClickDungeon.Unity.Screens
                 selected.pixelsPerUnitMultiplier = 1f;
                 selected.rectTransform.Stretch(-7, -7, -7, -7);
                 selected.enabled = false;
+                UiArt.Apply(selected, ArtKeys.AbilitySelected);
 
                 var badgeBack = UiFactory.Image(parts.Rect, "Badge", Palette.Navy, Shapes.Circle);
                 badgeBack.rectTransform.Place(TopRight, Center, new Vector2(-12f, -12f), new Vector2(46f, 46f));
-                UiFactory.Image(badgeBack.rectTransform, "Ring", Palette.Gold, Shapes.Ring).rectTransform.Stretch();
+                var ring = UiFactory.Image(badgeBack.rectTransform, "Ring", Palette.Gold, Shapes.Ring);
+                ring.rectTransform.Stretch();
+                if (UiArt.Apply(badgeBack, ArtKeys.CountBadge)) ring.enabled = false;
                 var badge = UiFactory.Text(badgeBack.rectTransform, "Text", "", 26, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
                 badge.rectTransform.Stretch();
 
@@ -775,8 +805,11 @@ namespace ClickDungeon.Unity.Screens
         {
             var strip = UiFactory.Rect(Root, "Speech");
             strip.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(1060f, 80f));
-            UiFactory.Image(strip, "Back", Palette.Navy.WithAlpha(0.95f), Shapes.Rounded, true).rectTransform.Stretch();
-            UiFactory.Image(strip, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch();
+            var stripBack = UiFactory.Image(strip, "Back", Palette.Navy.WithAlpha(0.95f), Shapes.Rounded, true);
+            stripBack.rectTransform.Stretch();
+            var stripBorder = UiFactory.Image(strip, "Border", Palette.GoldDark, Shapes.Frame, true);
+            stripBorder.rectTransform.Stretch();
+            UiArt.ApplyPanel(stripBack, stripBorder, ArtKeys.SpeechStrip);
 
             var faceBack = UiFactory.Image(strip, "FaceBack", Palette.Parchment, Shapes.Circle);
             faceBack.rectTransform.Place(new Vector2(0f, 0.5f), Center, new Vector2(48f, 0f), new Vector2(64f, 64f));

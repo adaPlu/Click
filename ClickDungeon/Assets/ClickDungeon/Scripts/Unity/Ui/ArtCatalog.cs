@@ -128,6 +128,28 @@ namespace ClickDungeon.Unity.Ui
         public const string GameplayBackground = "bg_gameplay";
         public const string DangerWarning = "icon_danger_warning";
 
+        public const string HighlightLegal = "ui_highlight_legal";
+        public const string HighlightTarget = "ui_highlight_target";
+        public const string HighlightHover = "ui_highlight_hover";
+        public const string PortraitFrame = "ui_frame_portrait";
+        public const string HpBack = "ui_hp_back";
+        public const string HpFill = "ui_hp_fill";
+        public const string HpFrame = "ui_hp_frame";
+        public const string Heart = "ui_icon_heart";
+        public const string Chip = "ui_chip";
+        /// <summary>Not "ui_floor_plaque": that reference slice has baked sample text.</summary>
+        public const string FloorPlaque = "ui_plaque_floor";
+        public const string Panel = "ui_panel";
+        public const string SpeechStrip = "ui_speech_strip";
+        public const string AbilityButtonDefault = "ui_button_ability";
+        public const string AbilitySelected = "ui_button_ability_selected";
+        public const string CountBadge = "ui_badge_count";
+        public const string SettingsButton = "ui_button_settings";
+        public const string HelpButton = "ui_button_help";
+
+        public static readonly CommandKind[] AbilityKinds =
+            { CommandKind.Move, CommandKind.Slash, CommandKind.Shield, CommandKind.Dash, CommandKind.Potion };
+
         public static readonly IntentKind[] IntentKinds =
         {
             IntentKind.Attack, IntentKind.Move, IntentKind.Fire, IntentKind.Rest,
@@ -147,6 +169,9 @@ namespace ClickDungeon.Unity.Ui
         public static string ClueIcon(Clue flag) => $"icon_clue_{flag.ToString().ToLowerInvariant()}";
 
         public static string AbilityIcon(CommandKind kind) => $"icon_ability_{kind.ToString().ToLowerInvariant()}";
+
+        /// <summary>Ability button frame and fill (icon, label, hotkey and badge draw on top).</summary>
+        public static string AbilityButton(CommandKind kind) => $"ui_button_ability_{kind.ToString().ToLowerInvariant()}";
 
         public static string Portrait(string heroId, string expression) => $"portrait_{heroId}_{expression.ToLowerInvariant()}";
 
@@ -187,6 +212,13 @@ namespace ClickDungeon.Unity.Ui
             foreach (var kind in IntentKinds) keys.Add(IntentIcon(kind));
             foreach (var kind in ThreatKinds) keys.Add(DangerOverlay(kind));
             keys.Add(DangerWarning);
+            keys.AddRange(new[]
+            {
+                HighlightLegal, HighlightTarget, HighlightHover,
+                PortraitFrame, HpBack, HpFill, HpFrame, Heart, Chip, FloorPlaque, Panel, SpeechStrip,
+                AbilityButtonDefault, AbilitySelected, CountBadge, SettingsButton, HelpButton,
+            });
+            foreach (var kind in AbilityKinds) keys.Add(AbilityButton(kind));
             return keys;
         }
     }
