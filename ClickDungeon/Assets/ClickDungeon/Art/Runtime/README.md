@@ -31,6 +31,9 @@ reference slice or procedural placeholder.
   `tile_key`, `tile_chest_closed`, `tile_chest_open`, `tile_potion`, `tile_exit_locked`, `tile_exit_open`
 - Actors: `actor_<id>_idle` for `sir_clickington`, `goblin`, `crowned_slime`, `fire_imp`, `slimelet`,
   `lord_blobert`; also `actor_lord_blobert_puffed`, `actor_lord_blobert_deflated`
+- Action animations (numbered frames, played once): hero `actor_sir_clickington_<step|slash|shield|dash|hit|potion|victory|defeat>`
+  and `_guard` pose; enemies `actor_<id>_<wake|move|attack|hit|defeat>`; extras `actor_crowned_slime_rest`, `actor_fire_imp_fire`,
+  `actor_slimelet_spawn`, `actor_lord_blobert_<boast|slam|summon|puffup|immune|deflate>`
 - Icons: `icon_clue_<enemy|danger|objective|treasure|safe>`, `icon_ability_<move|slash|shield|dash|potion>`
 - Intent badges: `icon_intent_<attack|move|fire|rest|recover|summon|slam|puffup>` (badge text stays live)
 - Danger telegraphs: `ui_danger_<attack|fire|slam|blast|armed|summon>` (tile-sized overlay), `icon_danger_warning` (corner);

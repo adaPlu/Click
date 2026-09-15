@@ -192,6 +192,19 @@ namespace ClickDungeon.Unity.Ui
 
         public static readonly RewardKind[] RewardKinds = { RewardKind.Potion, RewardKind.MaxHp, RewardKind.SlashDamage };
 
+        /// <summary>One-shot action animations (art brief §8), keyed actor_&lt;id&gt;_&lt;name&gt; with numbered frames.</summary>
+        public static readonly string[] HeroAnimations = { "step", "slash", "shield", "dash", "hit", "potion", "victory", "defeat" };
+        public static readonly string[] EnemyAnimations = { "wake", "move", "attack", "hit", "defeat" };
+
+        /// <summary>Actor-specific poses and animations beyond the shared set.</summary>
+        public static readonly Dictionary<string, string[]> ActorExtras = new Dictionary<string, string[]>
+        {
+            ["crowned_slime"] = new[] { "rest" },
+            ["fire_imp"] = new[] { "fire" },
+            ["slimelet"] = new[] { "spawn" },
+            ["lord_blobert"] = new[] { "boast", "slam", "summon", "puffup", "immune", "deflate" },
+        };
+
         public static readonly CommandKind[] AbilityKinds =
             { CommandKind.Move, CommandKind.Slash, CommandKind.Shield, CommandKind.Dash, CommandKind.Potion };
 
@@ -320,6 +333,14 @@ namespace ClickDungeon.Unity.Ui
             foreach (var step in ChestReactionSteps) keys.Add(ChestReaction(step));
             foreach (var kind in RewardKinds) keys.Add(RewardIcon(kind));
             keys.AddRange(new[] { UnderfootSpikes, UnderfootBomb, UnderfootBombArmed, UnderfootExitLocked, UnderfootExitOpen });
+            keys.Add(Actor(HeroId, "guard"));
+            foreach (var animation in HeroAnimations) keys.Add(Actor(HeroId, animation));
+            foreach (var enemy in catalog.Enemies.Values)
+            {
+                foreach (var animation in EnemyAnimations) keys.Add(Actor(enemy.Id, animation));
+                if (ActorExtras.TryGetValue(enemy.Id, out var extras))
+                    foreach (var extra in extras) keys.Add(Actor(enemy.Id, extra));
+            }
             return keys;
         }
     }

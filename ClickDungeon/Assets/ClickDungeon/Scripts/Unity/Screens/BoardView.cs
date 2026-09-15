@@ -29,7 +29,7 @@ namespace ClickDungeon.Unity.Screens
         public const float CellSize = 136f;
         public const float Gap = 4f;
         public static readonly float FrameSize = BoardRules.Size * CellSize + (BoardRules.Size - 1) * Gap + 48f;
-        const int HeroTokenId = -1;
+        const int HeroTokenId = ActorAnimations.HeroToken;
         static readonly Color WallArtTint = new Color(0.5f, 0.4f, 0.33f);
         static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
 
@@ -48,6 +48,7 @@ namespace ClickDungeon.Unity.Screens
         {
             public RectTransform Rect;
             public RectTransform Body;
+            public Image Anim;
             public Image BadgeBack;
             public Image BadgeIcon;
             public Text Badge;
@@ -64,6 +65,8 @@ namespace ClickDungeon.Unity.Screens
         readonly RectTransform _fxLayer;
         readonly CellParts[] _cells = new CellParts[BoardRules.CellCount];
         readonly Dictionary<int, Token> _tokens = new Dictionary<int, Token>();
+        Dictionary<int, ActorAnimations.Cue> _pendingCues;
+        ContentCatalog _catalog;
 
         public BoardView(RectTransform parent, MonoBehaviour host, Vector2 position)
         {
@@ -137,9 +140,14 @@ namespace ClickDungeon.Unity.Screens
             return new CellParts { Rect = rt, Base = baseImage, Edge = edge, Icons = icons, Overlay = overlay, Labels = labels, Highlight = highlight };
         }
 
+        /// <summary>Action animations for the next Render, chosen from the events of the turn that just resolved.</summary>
+        public void QueueActorAnimations(RunState run, IReadOnlyList<GameEvent> events) =>
+            _pendingCues = ActorAnimations.Pick(run, events);
+
         public void Render(RunState run, ContentCatalog catalog, List<Threat> threats, HashSet<GridPos> legal, bool strongHighlight,
             GridPos? hover, bool animate)
         {
+            _catalog = catalog;
             var floor = run.Floor;
 
             var damage = new int[BoardRules.CellCount];
@@ -187,6 +195,7 @@ namespace ClickDungeon.Unity.Screens
             }
 
             RenderTokens(run, catalog, animate);
+            PlayPendingCues();
         }
 
         void DrawCell(CellParts view, FloorState floor, CellState cell, GridPos p)
@@ -327,8 +336,8 @@ namespace ClickDungeon.Unity.Screens
                 alive.Add(enemy.Id);
                 var def = catalog.Enemy(enemy.DefId);
                 var e = enemy;
-                UpsertToken(enemy.Id, def.Id + ":" + enemy.Mode, enemy.Pos, animate,
-                    body => Icons.Enemy(body, def, e.Mode), Lines.IntentBadge(enemy, def), ArtKeys.IntentIcon(enemy.Intent.Kind),
+                UpsertToken(enemy.Id, def.Id + ":" + enemy.Mode + ":" + ActorAnimations.Pose(enemy, def), enemy.Pos, animate,
+                    body => Icons.Enemy(body, def, e.Mode, e.Intent.Kind), Lines.IntentBadge(enemy, def), ArtKeys.IntentIcon(enemy.Intent.Kind),
                     BadgeColor(enemy.Intent.Kind), enemy.Hp, enemy.MaxHp);
             }
 
@@ -340,12 +349,17 @@ namespace ClickDungeon.Unity.Screens
                 var token = _tokens[id];
                 _tokens.Remove(id);
                 var group = token.Rect.gameObject.AddComponent<CanvasGroup>();
-                _host.StartCoroutine(FadeAndDestroy(token.Rect, group));
+                // A defeat animation plays out before the token fades.
+                float delay = 0f;
+                if (_pendingCues != null && _pendingCues.TryGetValue(id, out var cue) && cue.Animation == "defeat")
+                    delay = PlayCue(token, cue, true);
+                _host.StartCoroutine(FadeAndDestroy(token.Rect, group, delay));
             }
         }
 
-        static System.Collections.IEnumerator FadeAndDestroy(RectTransform rt, CanvasGroup group)
+        static System.Collections.IEnumerator FadeAndDestroy(RectTransform rt, CanvasGroup group, float delay)
         {
+            if (delay > 0f) yield return new WaitForSecondsRealtime(delay);
             for (float t = 0f; t < 0.35f; t += Time.unscaledDeltaTime)
             {
                 if (rt == null) yield break;
@@ -430,6 +444,53 @@ namespace ClickDungeon.Unity.Screens
             return new Token { Rect = rt, Body = body, BadgeBack = badgeBack, BadgeIcon = badgeIcon, Badge = badge, HpBack = hpBack.rectTransform, HpFill = hpFill.rectTransform };
         }
 
+        void PlayPendingCues()
+        {
+            if (_pendingCues == null) return;
+            var cues = _pendingCues;
+            _pendingCues = null;
+            foreach (var pair in cues)
+                if (_tokens.TryGetValue(pair.Key, out var token))
+                    PlayCue(token, pair.Value, ActorAnimations.Holds(pair.Key, pair.Value.Animation));
+        }
+
+        /// <summary>
+        /// Plays a one-shot action animation over the token when art exists and returns its length (0 = nothing played).
+        /// The token's standing art hides meanwhile and returns afterwards unless the pose holds.
+        /// </summary>
+        float PlayCue(Token token, ActorAnimations.Cue cue, bool hold)
+        {
+            if (token == null || token.Rect == null) return 0f;
+            if (UserPrefs.ReducedMotion && !hold) return 0f;
+
+            ArtCatalog.Entry entry = null;
+            foreach (var animation in ActorAnimations.Chain(cue.Animation))
+                if (Art.TryGet(ArtKeys.Actor(cue.ContentId, animation), out entry))
+                    break;
+            if (entry == null) return 0f;
+
+            StopCue(token);
+            bool boss = _catalog != null && _catalog.HasEnemy(cue.ContentId) && _catalog.Enemy(cue.ContentId).IsBoss;
+            float size = boss ? CellSize * 1.4f : CellSize;
+            var image = UiFactory.Image(token.Rect, "Anim " + entry.Key, Color.white, entry.Frames[0]);
+            image.preserveAspect = true;
+            image.rectTransform.Place(Center, Center, Vector2.zero, new Vector2(size, size));
+            image.transform.SetSiblingIndex(token.Body.GetSiblingIndex() + 1);
+            token.Body.gameObject.SetActive(false);
+            token.Anim = image;
+
+            var animator = image.gameObject.AddComponent<SpriteFrameAnimator>();
+            animator.PlayOnce(image, entry.Frames, entry.Fps, hold ? (Action)null : () => StopCue(token));
+            return entry.Frames.Length / Mathf.Max(1f, entry.Fps);
+        }
+
+        static void StopCue(Token token)
+        {
+            if (token.Anim != null) UiFactory.SafeDestroy(token.Anim.gameObject);
+            token.Anim = null;
+            if (token.Body != null) token.Body.gameObject.SetActive(true);
+        }
+
         static Color BadgeColor(IntentKind kind)
         {
             switch (kind)
@@ -489,7 +550,7 @@ namespace ClickDungeon.Unity.Screens
             {
                 var child = t.GetChild(i).gameObject;
                 child.SetActive(false);
-                UnityEngine.Object.Destroy(child);
+                UiFactory.SafeDestroy(child);
             }
         }
 
@@ -500,7 +561,7 @@ namespace ClickDungeon.Unity.Screens
                 var child = t.GetChild(i);
                 if (child == keep) continue;
                 child.gameObject.SetActive(false);
-                UnityEngine.Object.Destroy(child.gameObject);
+                UiFactory.SafeDestroy(child.gameObject);
             }
         }
     }

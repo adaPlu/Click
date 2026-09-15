@@ -266,7 +266,7 @@ namespace ClickDungeon.Unity.Ui
         public static void Hero(Transform t, bool guard)
         {
             if (guard) Shape(t, Shapes.Ring, Palette.Gold, Vector2.zero, new Vector2(128f, 128f));
-            if (TryArt(t, ArtKeys.Actor(ArtKeys.HeroId), TileSize)) return;
+            if (TryArtFirst(t, TileSize, guard ? ArtKeys.Actor(ArtKeys.HeroId, "guard") : ArtKeys.Actor(ArtKeys.HeroId), ArtKeys.Actor(ArtKeys.HeroId))) return;
             Shape(t, Shapes.Triangle, Palette.Hp, new Vector2(10f, 48f), new Vector2(36f, 32f), -15f);
             Shape(t, Shapes.Circle, Palette.Steel, Vector2.zero, new Vector2(98f, 98f));
             Shape(t, Shapes.Circle, Palette.Hero, new Vector2(0f, -4f), new Vector2(80f, 80f));
@@ -274,16 +274,19 @@ namespace ClickDungeon.Unity.Ui
             Label(t, "SC", 26, Color.white, new Vector2(0f, -16f), new Vector2(80f, 30f));
         }
 
-        public static void Enemy(Transform t, EnemyDefinition def, EnemyMode mode)
+        /// <param name="intent">Selects standing poses: Lord Blobert boasts while a slam is telegraphed, slimes rest.</param>
+        public static void Enemy(Transform t, EnemyDefinition def, EnemyMode mode, IntentKind intent = IntentKind.None)
         {
             if (def.IsBoss)
             {
                 // Immunity must stay readable without relying on the art: keep the steel ring.
                 if (mode == EnemyMode.Puffed) Shape(t, Shapes.Ring, Palette.Steel, Vector2.zero, new Vector2(134f, 134f));
-                string state = mode == EnemyMode.Puffed ? "puffed" : mode == EnemyMode.Deflated ? "deflated" : "idle";
+                string state = mode == EnemyMode.Puffed ? "puffed"
+                    : mode == EnemyMode.Deflated ? "deflated"
+                    : intent == IntentKind.Slam ? "boast" : "idle";
                 if (TryArtFirst(t, TileSize * 1.4f, ArtKeys.Actor(def.Id, state), ArtKeys.Actor(def.Id))) return;
             }
-            else if (TryArt(t, ArtKeys.Actor(def.Id), TileSize))
+            else if (TryArtFirst(t, TileSize, intent == IntentKind.Rest ? ArtKeys.Actor(def.Id, "rest") : ArtKeys.Actor(def.Id), ArtKeys.Actor(def.Id)))
             {
                 return;
             }

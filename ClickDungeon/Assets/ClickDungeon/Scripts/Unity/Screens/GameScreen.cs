@@ -333,6 +333,7 @@ namespace ClickDungeon.Unity.Screens
             if (line != null) Say(line, face);
             if (shake) _board.Shake();
 
+            if (!floorChanged) _board.QueueActorAnimations(run, result.Events);
             Refresh(!floorChanged);
 
             if (reward != null)

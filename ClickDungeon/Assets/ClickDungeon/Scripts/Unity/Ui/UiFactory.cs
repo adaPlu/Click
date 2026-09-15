@@ -11,6 +11,14 @@ namespace ClickDungeon.Unity.Ui
 
         public static Font Font => _font != null ? _font : _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
+        /// <summary>Destroy at runtime, DestroyImmediate in edit mode (tests and tools), so neither logs errors.</summary>
+        public static void SafeDestroy(GameObject go)
+        {
+            if (go == null) return;
+            if (UnityEngine.Application.isPlaying) UnityEngine.Object.Destroy(go);
+            else UnityEngine.Object.DestroyImmediate(go);
+        }
+
         public static RectTransform Rect(Transform parent, string name)
         {
             var go = new GameObject(name, typeof(RectTransform));

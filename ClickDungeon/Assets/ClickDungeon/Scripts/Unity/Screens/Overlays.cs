@@ -360,10 +360,7 @@ namespace ClickDungeon.Unity.Screens
         {
             for (int i = _chest.childCount - 1; i >= 0; i--)
             {
-                var child = _chest.GetChild(i).gameObject;
-                // DestroyImmediate outside play mode keeps edit-mode tests and tools from logging errors.
-                if (UnityEngine.Application.isPlaying) UnityEngine.Object.Destroy(child);
-                else UnityEngine.Object.DestroyImmediate(child);
+                UiFactory.SafeDestroy(_chest.GetChild(i).gameObject);
             }
             if (!Icons.TryArt(_chest, opened ? ArtKeys.ChestLargeOpen : ArtKeys.ChestLargeClosed, Icons.TileSize * 3.2f))
                 Icons.Chest(_chest, opened, 3.2f);
