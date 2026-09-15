@@ -30,6 +30,7 @@ namespace ClickDungeon.Unity.Screens
         public const float Gap = 4f;
         public static readonly float FrameSize = BoardRules.Size * CellSize + (BoardRules.Size - 1) * Gap + 48f;
         const int HeroTokenId = -1;
+        static readonly Color WallArtTint = new Color(0.5f, 0.4f, 0.33f);
         static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
 
         sealed class CellParts
@@ -180,7 +181,14 @@ namespace ClickDungeon.Unity.Screens
         {
             if (cell.Terrain == Terrain.Wall)
             {
-                if (ApplyTileArt(view, ArtKeys.Wall, Color.white)) return;
+                // Walls must read as blockers at a glance: darker and warmer than any floor state
+                // (unseen floors are dark but cool-grey), with a dark border.
+                if (ApplyTileArt(view, ArtKeys.Wall, WallArtTint))
+                {
+                    view.Edge.enabled = true;
+                    view.Edge.color = new Color(0f, 0f, 0f, 0.6f);
+                    return;
+                }
                 SetPlaceholderBase(view, Palette.Wall, Palette.WallEdge);
                 Icons.WallBricks(view.Icons);
                 return;
