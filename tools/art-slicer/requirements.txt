@@ -1,0 +1,2 @@
+# Pinned so regenerated placeholder slices stay byte-identical across machines.
+Pillow==12.2.0

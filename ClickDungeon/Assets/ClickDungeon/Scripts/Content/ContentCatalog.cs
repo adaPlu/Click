@@ -15,6 +15,10 @@ namespace ClickDungeon.Content
         public int Version = 1;
         public int RunFloorCount = 5;
         public HazardTuning Hazards = new HazardTuning();
+        /// <summary>The tier this catalog was built for. Every number in it already includes that tier's adjustments.</summary>
+        public Difficulty Difficulty = Difficulty.Medium;
+        /// <summary>HP restored when the hero arrives on the next floor.</summary>
+        public int FloorClearHeal;
 
         public readonly Dictionary<string, HeroClassDefinition> HeroClasses = new Dictionary<string, HeroClassDefinition>();
         public readonly Dictionary<string, HeroIdentityDefinition> HeroIdentities = new Dictionary<string, HeroIdentityDefinition>();
@@ -22,11 +26,28 @@ namespace ClickDungeon.Content
         public readonly List<TopologyTemplate> Templates = new List<TopologyTemplate>();
         public readonly List<FloorProfile> FloorProfiles = new List<FloorProfile>();
         public readonly List<RewardEntry> ChestRewards = new List<RewardEntry>();
+        public readonly Dictionary<Difficulty, DifficultyDefinition> Difficulties = new Dictionary<Difficulty, DifficultyDefinition>();
 
         public HeroClassDefinition HeroClass(string id) => Get(HeroClasses, id, "hero class");
         public HeroIdentityDefinition HeroIdentity(string id) => Get(HeroIdentities, id, "hero identity");
         public EnemyDefinition Enemy(string id) => Get(Enemies, id, "enemy");
         public bool HasEnemy(string id) => id != null && Enemies.ContainsKey(id);
+
+        public DifficultyDefinition DifficultyInfo(Difficulty id) =>
+            Difficulties.TryGetValue(id, out var info) ? info : throw new KeyNotFoundException($"Unknown difficulty '{id}'.");
+
+        /// <summary>
+        /// This catalog's content tuned for <paramref name="difficulty"/>, using this catalog's own tier table (so tuned catalogs stay
+        /// tuned); this catalog when it already matches.
+        /// </summary>
+        public ContentCatalog ForDifficulty(Difficulty difficulty)
+        {
+            if (difficulty == Difficulty) return this;
+            var c = BuildBase();
+            foreach (var tier in Difficulties) c.Difficulties[tier.Key] = tier.Value;
+            c.ApplyDifficulty(c.DifficultyInfo(difficulty));
+            return c;
+        }
 
         public FloorProfile ProfileFor(int floorIndex)
         {
@@ -45,7 +66,27 @@ namespace ClickDungeon.Content
             throw new KeyNotFoundException($"Unknown {kind} id '{id}'.");
         }
 
-        public static ContentCatalog CreateDefault()
+        public static ContentCatalog CreateDefault() => CreateDefault(Difficulty.Medium);
+
+        /// <summary>Default content tuned for one tier. Every call builds fresh definitions, so tiers never share state.</summary>
+        public static ContentCatalog CreateDefault(Difficulty difficulty)
+        {
+            var c = BuildBase();
+            c.ApplyDifficulty(c.DifficultyInfo(difficulty));
+            return c;
+        }
+
+        /// <summary>Default content with custom numbers for one tier, for balance sweeps. Other tiers keep their defaults.</summary>
+        public static ContentCatalog CreateTuned(DifficultyDefinition tuning)
+        {
+            var c = BuildBase();
+            c.Difficulties[tuning.Id] = tuning;
+            c.ApplyDifficulty(tuning);
+            return c;
+        }
+
+        /// <summary>Untuned base content with every tier registered.</summary>
+        static ContentCatalog BuildBase()
         {
             var c = new ContentCatalog();
 
@@ -210,7 +251,48 @@ namespace ClickDungeon.Content
             c.ChestRewards.Add(new RewardEntry { Kind = RewardKind.MaxHp, Amount = 2, Weight = 2 });
             c.ChestRewards.Add(new RewardEntry { Kind = RewardKind.SlashDamage, Amount = 1, Weight = 1 });
 
+            c.Difficulties[Difficulty.Easy] = new DifficultyDefinition
+            {
+                Id = Difficulty.Easy, DisplayName = "Squire's Stroll", Tagline = "More hearts, softer hits and a breather on every stair.",
+                HeroMaxHp = 4, StartingPotions = 1, EnemyDamage = -1, HazardDamage = -1, BossHp = -2, BossSlamDamage = -1, FloorClearHeal = 3,
+            };
+            c.Difficulties[Difficulty.Medium] = new DifficultyDefinition
+            {
+                Id = Difficulty.Medium, DisplayName = "Knight's Trial", Tagline = "The dungeon as designed. Read every tile.",
+            };
+            c.Difficulties[Difficulty.Hardcore] = new DifficultyDefinition
+            {
+                Id = Difficulty.Hardcore, DisplayName = "Blobert's Wrath", Tagline = "Tougher monsters, meaner traps, fewer potions. No mercy.",
+                StartingPotions = -1, EnemyHp = 1, EnemyDamage = 1, HazardDamage = 1, BossHp = 4, BossSlamDamage = 1, ExtraEnemies = 1,
+            };
             return c;
+        }
+
+        void ApplyDifficulty(DifficultyDefinition d)
+        {
+            Difficulty = d.Id;
+            FloorClearHeal = Math.Max(0, d.FloorClearHeal);
+
+            foreach (var hero in HeroClasses.Values)
+            {
+                hero.MaxHp = Math.Max(1, hero.MaxHp + d.HeroMaxHp);
+                hero.StartingPotions = Math.Max(0, hero.StartingPotions + d.StartingPotions);
+            }
+            foreach (var enemy in Enemies.Values)
+            {
+                enemy.MaxHp = Math.Max(1, enemy.MaxHp + (enemy.IsBoss ? d.BossHp : d.EnemyHp));
+                enemy.Damage = Math.Max(1, enemy.Damage + d.EnemyDamage);
+                if (enemy.IsBoss) enemy.SlamDamage = Math.Max(1, enemy.SlamDamage + d.BossSlamDamage);
+            }
+            Hazards.SpikeDamage = Math.Max(1, Hazards.SpikeDamage + d.HazardDamage);
+            Hazards.BombDamage = Math.Max(1, Hazards.BombDamage + d.HazardDamage);
+            foreach (var profile in FloorProfiles)
+            {
+                if (profile.IsBoss || profile.MaxEnemies <= 0) continue;
+                // A floor that had enemies keeps at least one, whatever its original minimum.
+                profile.MinEnemies = Math.Max(Math.Min(1, profile.MinEnemies), profile.MinEnemies + d.ExtraEnemies);
+                profile.MaxEnemies = Math.Max(Math.Max(1, profile.MinEnemies), profile.MaxEnemies + d.ExtraEnemies);
+            }
         }
 
         static void AddEnemy(ContentCatalog c, EnemyDefinition def) => c.Enemies.Add(def.Id, def);

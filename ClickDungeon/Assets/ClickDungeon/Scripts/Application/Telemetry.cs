@@ -98,7 +98,7 @@ namespace ClickDungeon.Application
         }
 
         readonly ITelemetrySink _sink;
-        readonly ContentCatalog _catalog;
+        ContentCatalog _catalog;
         readonly Func<DateTime> _clock;
         int _floorStartTurn = -1;
 
@@ -111,6 +111,13 @@ namespace ClickDungeon.Application
         }
 
         public string SessionId { get; }
+
+        /// <summary>Content the session plays with. The session swaps it when a run of another difficulty starts or resumes.</summary>
+        public ContentCatalog Catalog
+        {
+            get => _catalog;
+            set => _catalog = value ?? throw new ArgumentNullException(nameof(value));
+        }
 
         /// <summary>Number of telemetry calls that failed and were swallowed.</summary>
         public int Failures { get; private set; }
@@ -126,7 +133,8 @@ namespace ClickDungeon.Application
                     "ruleset", run.RulesetVersion,
                     "content", run.ContentCatalogVersion,
                     "generation", run.GenerationVersion,
-                    "floors", run.FloorCount));
+                    "floors", run.FloorCount,
+                    "difficulty", DifficultyId(run)));
                 MapEvents(run, events, null);
             });
         }
@@ -136,9 +144,15 @@ namespace ClickDungeon.Application
             Guard(() =>
             {
                 _floorStartTurn = -1;
-                Emit("run_resumed", run, run.Floor.FloorIndex, run.Turn, D("schema", SchemaVersion, "hero", HeroData(run.Hero)));
+                Emit("run_resumed", run, run.Floor.FloorIndex, run.Turn,
+                    D("schema", SchemaVersion, "hero", HeroData(run.Hero), "difficulty", DifficultyId(run)));
             });
         }
+
+        static string DifficultyId(RunState run) => run.Difficulty.ToString().ToLowerInvariant();
+
+        /// <summary>Timestamps are kept to the second: enough to order and pace a session, without finer device timing.</summary>
+        static DateTime WholeSeconds(DateTime time) => new DateTime(time.Ticks - time.Ticks % TimeSpan.TicksPerSecond, time.Kind);
 
         public void RunAbandoned(RunState run)
         {
@@ -251,7 +265,7 @@ namespace ClickDungeon.Application
                         break;
                     case GameEventKind.HeroHealed:
                         hp += e.Amount;
-                        Emit("healed", run, floor, turn, D("amount", e.Amount, "hp_after", hp));
+                        Emit("healed", run, floor, turn, D("amount", e.Amount, "source", e.Source ?? "potion", "hp_after", hp));
                         break;
                     case GameEventKind.EnemyWoke:
                         Emit("enemy_woke", run, floor, turn, D("enemy", e.Source, "cell", Cell(e.To)));
@@ -482,7 +496,7 @@ namespace ClickDungeon.Application
             if (_sink == null) return;
             _sink.Write(new TelemetryEvent
             {
-                Time = _clock().ToString("o"),
+                Time = WholeSeconds(_clock()).ToString("o"),
                 Session = SessionId,
                 Name = name,
                 Run = run.RunSeed,

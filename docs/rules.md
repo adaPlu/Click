@@ -183,7 +183,7 @@ Max HP 10. Slash damage 2. Starts each run with 2 potions.
 | Move      | 1 | – | Orthogonal step into an enterable cell. |
 | Wait      | 1 | – | Do nothing (tap Sir Clickington / Space). |
 | Slash     | 1 | – | Target orthogonally adjacent cell with an awake enemy (damage) or a bomb (arms it). |
-| Shield    | 1 | 3 | Gain **Guard** until end of this turn. Guard blocks all enemy attack and bomb damage. Melee attackers blocked by Guard become **Staggered** (next intent `Recover`). Spikes are not blocked. |
+| Shield    | 1 | 3 | Gain **Guard** until end of this turn. Guard blocks all enemy attack and bomb damage. Melee attackers blocked by Guard become **Staggered** (next intent `Recover`); Lord Blobert is never staggered. Spikes are not blocked. |
 | Dash      | 1 | 3 | Move exactly 2 cells in a straight line. The middle cell must be enterable-or-hazard and not an actor/closed chest/wall/pit; middle-cell hazards are **not** triggered. Landing cell must be enterable; landing triggers its hazard/pickups. Landing may be a Sensed cell; it may not be a cell with an ENEMY clue. |
 | Potion    | 1 | – | Heal 4 (not above max). Requires ≥ 1 potion. |
 | Interact  | 1 | – | Target orthogonally adjacent closed chest: opens it (see 7). |
@@ -232,6 +232,9 @@ Ordering is covered by automated tests.
 - **Key**: normal floors have exactly one key and a locked exit. Walking onto
   the key collects it. Walking onto the locked exit while holding the key
   unlocks it, consumes the key and completes the floor.
+  The exit tile is drawn open as soon as the key is held, since stepping on it
+  will open it. Blobert's sealed exit ignores keys. The exit only triggers when
+  entered: a hero already standing on it when Blobert falls steps off and back on.
 - **Chest**: `Interact` with an adjacent closed chest.
   - The **reward is decided and committed by the Interact command itself**
     (turn cost 1) and saved at the stable boundary of that turn.
@@ -278,3 +281,40 @@ A floor is valid only if:
   used to reconstruct a suspended floor.
 - Writes are atomic: temp file → validate by reading back → replace, keeping
   the previous save as `.bak`.
+
+---
+
+## 10. Difficulty tiers *(tune numbers)*
+
+Chosen when starting a run and stored in the run (decision D-017). Every tier uses the rules
+above; only numbers change. Knight's Trial is the base content described in §3–§8.
+
+| Setting                                | Squire's Stroll (easy) | Knight's Trial (medium) | Blobert's Wrath (hardcore) |
+|----------------------------------------|------------------------|-------------------------|----------------------------|
+| Hero max HP                            | 14 (+4)                | 10                      | 10                         |
+| Starting potions                       | 3 (+1)                 | 2                       | 1 (−1)                     |
+| Goblin / Slime / Imp / Slimelet HP     | 3 / 5 / 2 / 1          | 3 / 5 / 2 / 1           | 4 / 6 / 3 / 2 (+1)         |
+| Goblin / Slime / Imp / Slimelet damage | 1 / 2 / 1 / 1 (−1)     | 2 / 3 / 2 / 1           | 3 / 4 / 3 / 2 (+1)         |
+| Lord Blobert HP / Slam / puffed attack | 10 / 3 / 1             | 12 / 4 / 2              | 16 / 5 / 3                 |
+| Spikes / bomb damage                   | 1 / 3                  | 2 / 4                   | 3 / 5                      |
+| Enemies on normal floors               | profile                | profile                 | profile +1 (min and max)   |
+| HP restored on arriving at a new floor | 3                      | 0                       | 0                          |
+
+Damage and HP never drop below 1.
+
+### 10.1 Measured difficulty
+
+`BalanceReport` (explicit test) plays 200 seeds per tier with `AutoPlayer`, a one-turn look-ahead
+bot. "Mistakes" is the share of turns it spends on a random move that does not lose on the spot.
+
+| Player (mistakes) | Easy: reach F5 / win | Medium: reach F5 / win | Hardcore: reach F5 / win |
+|-------------------|----------------------|------------------------|--------------------------|
+| sharp (0%)        | 100% / 100%          | 100% / 100%            | 100% / 100%              |
+| casual (20%)      | 100% / 100%          | 100% / 100%            | 97% / 86%                |
+| novice (50%)      | 100% / 100%          | 99% / 75%              | 67% / 27%                |
+| flailing (70%)    | 100% / 78%           | 85% / 27%              | 47% / 8%                 |
+
+Most deaths happen at Lord Blobert. AutoPlayer can see hidden tiles, so people will do somewhat
+worse than these rows; the `difficulty` field in playtest telemetry is the real check.
+`BalanceTests` guard the targets: a novice beats Squire's Stroll, a novice reaches Blobert in
+Knight's Trial, and error-prone players win the tiers in order.

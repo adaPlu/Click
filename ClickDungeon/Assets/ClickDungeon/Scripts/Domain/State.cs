@@ -115,6 +115,7 @@ namespace ClickDungeon.Domain
         public int GenerationVersion = Versions.Generation;
         public ulong RunSeed;
         public int FloorCount;
+        public Difficulty Difficulty;
         public int Turn;
         public RunStatus Status;
         public HeroState Hero;

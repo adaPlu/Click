@@ -16,13 +16,17 @@ namespace ClickDungeon.Unity.Ui
                 yield break;
             }
             var from = rt.anchoredPosition;
+            var last = from;
             for (float t = 0f; t < duration; t += Time.unscaledDeltaTime)
             {
                 if (rt == null) yield break;
-                rt.anchoredPosition = Vector2.LerpUnclamped(from, to, Mathf.SmoothStep(0f, 1f, t / duration));
+                // Something else placed the target meanwhile (an instant render or a newer move): that position wins.
+                if (rt.anchoredPosition != last) yield break;
+                last = Vector2.LerpUnclamped(from, to, Mathf.SmoothStep(0f, 1f, t / duration));
+                rt.anchoredPosition = last;
                 yield return null;
             }
-            if (rt != null) rt.anchoredPosition = to;
+            if (rt != null && rt.anchoredPosition == last) rt.anchoredPosition = to;
         }
 
         public static IEnumerator Popup(RectTransform rt, Graphic graphic, float rise, float duration)

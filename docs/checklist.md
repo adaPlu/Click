@@ -24,10 +24,10 @@ Evidence key: **T** = automated test (headless `dotnet test` + Unity EditMode), 
 | Key unlock | ✅ | T `KeyUnlocksExitAndDescends` |
 | Chest reward cannot duplicate | ✅ | T `ChestCannotBeOpenedTwice`, `RewardSurvivesSaveAndCannotDuplicateAfterLoad` |
 | Exit advances floor | ✅ | T `KeyUnlocksExitAndDescends` |
-| Five-floor run can complete | ✅ | T `FinalExitWinsTheRun`, boss death unlocks exit; full bot clear not yet asserted |
+| Five-floor run can complete | ✅ | T `FinalExitWinsTheRun`, boss death unlocks exit; `BalanceTests` assert novice AutoPlayer runs beat Lord Blobert |
 | Death ends run cleanly | ✅ | T `DeathEndsTheRunAndRejectsFurtherCommands`, save cleared on death |
 | Save and resume | ✅ | T `ResumedRunContinuesIdentically`, atomic store + backup recovery |
-| Core rules have automated tests | ✅ | 89 tests, passing headless (`dotnet test`) and in Unity EditMode (89/89) |
+| Core rules have automated tests | ✅ | 135 headless tests (`dotnet test`); Unity EditMode 196 (193 passed, 3 explicit tuning tools skipped) |
 | Generation validation rejects illegal boards | ✅ | T validator tests + 2,000-floor fuzz |
 | Three enemy behaviours + boss | ✅ | Goblin, Crowned Slime, Fire Imp, Lord Blobert (Slam / Summon / Puff Up / Deflate) |
 | Windows build | ✅ | B `ClickDungeon/Builds/Windows/ClickDungeon.exe` via **ClickDungeon → Build Windows** |
@@ -65,3 +65,12 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 3. **Spikes as a flat HP tax.** Enemies avoid them, so there is no way to exploit them yet.
 4. **Sensing radius 2** may reveal too much on a 5×5. Try radius 1 sensing, plus a Rogue-style class that sees further.
 5. **Shield cooldown 3 vs. boss 6-turn cycle.** Shield is always ready for Slam; check that the boss still tests positioning.
+
+## Gate 2 tuning — difficulty tiers
+- [x] Three tiers chosen when starting a run: Squire's Stroll, Knight's Trial, Blobert's Wrath (D-017, rules §10).
+- [x] AutoPlayer balance tool: `BalanceReport` (explicit) plus `BalanceTests` guards; kit bot demo uses it (`-cdBot`).
+- [x] Floor 5 reachable: novice AutoPlayer reaches Blobert in 100% (easy) and 99% (medium) of runs.
+- [x] Exit tile reads open once the key is held.
+- [ ] Refine Knight's Trial and Blobert's Wrath numbers.
+- [ ] Check tiers against real playtest telemetry.
+

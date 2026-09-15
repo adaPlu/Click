@@ -65,6 +65,8 @@ namespace ClickDungeon.Unity.Screens
 
         public void Refresh()
         {
+            // A modal left open when a run started (for example CONTINUE INSTEAD) must not greet the player on return.
+            if (_modal.IsOpen) _modal.Hide();
             _flash.text = "";
             _saved = null;
             if (_app.Store.TryLoad(out var run, out _) && run.Status == RunStatus.InProgress) _saved = run;
@@ -84,6 +86,7 @@ namespace ClickDungeon.Unity.Screens
         {
             if (name == "settings") Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting);
             else if (name == "rules") _modal.Show("HOW TO PLAY", Menus.HelpText, _modal.Hide, Menus.B("GOT IT", Palette.PlayGreen, _modal.Hide));
+            else if (name == "difficulty") ChooseDifficulty(_modal.Hide);
         }
 
         public void Tick()
@@ -107,14 +110,21 @@ namespace ClickDungeon.Unity.Screens
         {
             if (_saved == null)
             {
-                _app.StartNewRun();
+                ChooseDifficulty(_modal.Hide);
                 return;
             }
             _modal.Show("START A NEW RUN?", $"Your run on floor {_saved.Floor.FloorIndex} will be lost.", _modal.Hide,
-                Menus.B("NEW RUN", Palette.QuitRed, _app.StartNewRun),
+                Menus.B("NEW RUN", Palette.QuitRed, () => ChooseDifficulty(Play)),
                 Menus.B("CONTINUE INSTEAD", Palette.PlayGreen, _app.ContinueRun),
                 Menus.B("CANCEL", Palette.NavyLight, _modal.Hide));
         }
+
+        void ChooseDifficulty(System.Action back) =>
+            Menus.OpenDifficulty(_modal, _app.Catalog, UserPrefs.LastDifficulty, tier =>
+            {
+                _modal.Hide();
+                _app.StartNewRun(tier);
+            }, back);
 
         // ------------------------------------------------------------------ layout
 

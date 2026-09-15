@@ -22,7 +22,8 @@ namespace ClickDungeon.Unity
         TitleScreen _title;
         GameScreen _game;
 
-        public ContentCatalog Catalog { get; private set; }
+        /// <summary>Content tuned for the current run's difficulty.</summary>
+        public ContentCatalog Catalog => Session.Catalog;
         public FileSaveStore Store { get; private set; }
         public GameSession Session { get; private set; }
         public RectTransform ScreenRoot { get; private set; }
@@ -35,9 +36,8 @@ namespace ClickDungeon.Unity
             UnityEngine.Application.targetFrameRate = 60;
             AutomationMode = ArgValue("-cdShot") != null;
             _automationTelemetryDir = AutomationMode ? ArgValue("-cdTelemetryDir") : null;
-            Catalog = ContentCatalog.CreateDefault();
             Store = new FileSaveStore(Path.Combine(UnityEngine.Application.persistentDataPath, AutomationMode ? "saves-automation" : "saves"));
-            Session = new GameSession(Catalog, Store);
+            Session = new GameSession(ContentCatalog.CreateDefault(), Store);
             ApplyTelemetrySetting();
 
             EnsureCamera();
@@ -49,14 +49,23 @@ namespace ClickDungeon.Unity
 
         void Start()
         {
-            if (AutomationMode) StartCoroutine(AutomationShot());
+            if (!AutomationMode) return;
+            // An exception would kill the automation coroutine before it quits and leave the caller waiting forever.
+            UnityEngine.Application.logMessageReceived += (message, stack, type) =>
+            {
+                if (type != LogType.Exception) return;
+                Debug.LogError("[ClickDungeon] Automation failed, quitting: " + message);
+                UnityEngine.Application.Quit(1);
+            };
+            StartCoroutine(AutomationShot());
         }
 
         /// <summary>
-        /// Dev automation: -cdShot path.png [-cdScreen title|game] [-cdSeed n] [-cdTurns n] [-cdTelemetryDir dir] [-cdOverlay name].
-        /// Overlays: game pause|help|chest|chestburst|banner|bossbanner|victory|defeat, title settings|rules.
+        /// Dev automation: -cdShot path.png [-cdScreen title|game] [-cdSeed n] [-cdTurns n] [-cdDifficulty easy|medium|hardcore]
+        /// [-cdBot smart|casual|random] [-cdTelemetryDir dir] [-cdOverlay name].
+        /// Overlays: game pause|help|chest|chestburst|banner|bossbanner|victory|defeat, title settings|rules|difficulty.
         /// Telemetry stays off in automation unless -cdTelemetryDir is given, so bot runs never mix with playtest logs.
-        /// Plays random legal turns through the normal input path, captures a screenshot and quits.
+        /// Plays turns through the normal input path (AutoPlayer by default, or random legal steps), captures a screenshot and quits.
         /// </summary>
         IEnumerator AutomationShot()
         {
@@ -66,16 +75,25 @@ namespace ClickDungeon.Unity
             {
                 Store.Delete();
                 ulong seed = ulong.TryParse(ArgValue("-cdSeed"), out var s) ? s : 20260914UL;
-                OpenGame(Session.StartNewRun(seed), null);
+                OpenGame(Session.StartNewRun(seed, LaunchOptions.ParseDifficulty(ArgValue("-cdDifficulty"))), null);
                 int turns = int.TryParse(ArgValue("-cdTurns"), out var t) ? t : 0;
+                bool randomBot = ArgValue("-cdBot") == "random";
                 var rng = new DeterministicRng(seed);
+                var bot = new AutoPlayer(ArgValue("-cdBot") == "casual" ? AutoPlayer.CasualMistakeRate : 0.0);
                 for (int i = 0; i < turns && Session.Run.Status == Domain.RunStatus.InProgress; i++)
                 {
-                    var moves = Commands.LegalTargets(Session.Run, Domain.CommandKind.Move, Catalog);
-                    var slashes = Commands.LegalTargets(Session.Run, Domain.CommandKind.Slash, Catalog);
-                    if (slashes.Count > 0) _game.AutomationSubmit(PlayerCommand.Slash(slashes[0]));
-                    else if (moves.Count > 0) _game.AutomationSubmit(PlayerCommand.Move(moves[rng.Next(moves.Count)]));
-                    else _game.AutomationSubmit(PlayerCommand.Wait());
+                    if (randomBot)
+                    {
+                        var moves = Commands.LegalTargets(Session.Run, Domain.CommandKind.Move, Catalog);
+                        var slashes = Commands.LegalTargets(Session.Run, Domain.CommandKind.Slash, Catalog);
+                        if (slashes.Count > 0) _game.AutomationSubmit(PlayerCommand.Slash(slashes[0]));
+                        else if (moves.Count > 0) _game.AutomationSubmit(PlayerCommand.Move(moves[rng.Next(moves.Count)]));
+                        else _game.AutomationSubmit(PlayerCommand.Wait());
+                    }
+                    else
+                    {
+                        _game.AutomationSubmit(bot.Choose(Session.Run, Catalog, seed * 7919UL + (ulong)i));
+                    }
                     for (int f = 0; f < 3; f++) yield return null;
                 }
             }
@@ -155,10 +173,13 @@ namespace ClickDungeon.Unity
             _title.Refresh();
         }
 
-        public void StartNewRun()
+        /// <summary>New run at the difficulty of the run just played (victory / defeat "NEW RUN").</summary>
+        public void StartNewRun() => StartNewRun(Session.Catalog.Difficulty);
+
+        public void StartNewRun(Domain.Difficulty difficulty)
         {
-            ulong seed = (ulong)System.DateTime.UtcNow.Ticks ^ ((ulong)(uint)System.Environment.TickCount << 32);
-            var events = Session.StartNewRun(seed);
+            UserPrefs.LastDifficulty = difficulty;
+            var events = Session.StartNewRun(LaunchOptions.NewRunSeed(), difficulty);
             OpenGame(events, null);
         }
 
@@ -287,6 +308,17 @@ namespace ClickDungeon.Unity
         {
             get => PlayerPrefs.GetInt("cd.seenHelp", 0) == 1;
             set => SetBool("cd.seenHelp", value);
+        }
+
+        /// <summary>Preselects the difficulty picker (Squire's Stroll for new players). Each run stores its own tier.</summary>
+        public static Domain.Difficulty LastDifficulty
+        {
+            get => (Domain.Difficulty)PlayerPrefs.GetInt("cd.lastDifficulty", (int)Domain.Difficulty.Easy);
+            set
+            {
+                PlayerPrefs.SetInt("cd.lastDifficulty", (int)value);
+                PlayerPrefs.Save();
+            }
         }
 
         static void SetBool(string key, bool value)

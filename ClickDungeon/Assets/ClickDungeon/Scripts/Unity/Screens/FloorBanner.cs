@@ -76,18 +76,21 @@ namespace ClickDungeon.Unity.Screens
 
         IEnumerator Run()
         {
+            // The coroutine runs on the app, which outlives the game screen: stop quietly once the banner is destroyed.
             // Reduced Motion: no fade or scale, just show and hide.
             bool reduced = UserPrefs.ReducedMotion;
             if (!reduced)
             {
                 for (float t = 0f; t < FadeSeconds; t += Time.unscaledDeltaTime)
                 {
+                    if (_root == null) yield break;
                     float k = t / FadeSeconds;
                     _group.alpha = k;
                     _root.localScale = Vector3.one * Mathf.Lerp(1.08f, 1f, k);
                     yield return null;
                 }
             }
+            if (_root == null) yield break;
             _group.alpha = 1f;
             _root.localScale = Vector3.one;
 
@@ -97,10 +100,12 @@ namespace ClickDungeon.Unity.Screens
             {
                 for (float t = 0f; t < FadeSeconds; t += Time.unscaledDeltaTime)
                 {
+                    if (_root == null) yield break;
                     _group.alpha = 1f - t / FadeSeconds;
                     yield return null;
                 }
             }
+            if (_root == null) yield break;
             _root.gameObject.SetActive(false);
             _running = null;
         }

@@ -16,6 +16,11 @@ Thanks for playing! We're testing the game, not you. There is no wrong way to pl
 -------
 Play at least 3 runs. A run ends when Sir Clickington falls or beats Lord Blobert on floor 5.
 
+When you press PLAY, pick a difficulty:
+- SQUIRE'S STROLL (easy): start here if this is your first time.
+- KNIGHT'S TRIAL (medium): the dungeon as designed.
+- BLOBERT'S WRATH (hardcore): for when you've already beaten Lord Blobert.
+
 Goal on each floor: find the KEY, then reach the EXIT.
 
 Controls
@@ -37,14 +42,15 @@ Tips the game will also show you
 ---------------
 While you play, the game writes a small log of your moves to help us improve it.
 - It stays on your computer. Nothing is sent over the internet.
-- It contains no personal information: just moves, turns and what happened.
+- It contains no personal information: just moves, turns, what happened and the time of each move (to the second).
 - You can switch it off in Settings > PLAYTEST LOG.
 
 
 4. WHEN YOU'RE DONE
 -------------------
-Double-click collect-logs.bat in this folder.
+Close the game, then double-click collect-logs.bat in this folder.
 It creates ClickDungeon-playtest-logs.zip right here, next to the game.
+The zip also holds the game's error log (Player.log), with your Windows user folder name removed.
 Send that zip back to the person who gave you the game.
 
 Prefer to do it by hand? The logs are in:

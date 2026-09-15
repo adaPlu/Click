@@ -30,6 +30,13 @@ namespace ClickDungeon.Simulation
         public static bool EnemyCanEnter(RunState run, GridPos p) =>
             EnemyPathable(run.Floor, p) && run.Floor.EnemyAt(p) == null && run.Hero.Pos != p;
 
+        /// <summary>
+        /// Whether the exit should look open: it is unlocked, or the hero holds a normal floor's key, so stepping
+        /// on it will open it. Blobert's sealed exit ignores keys.
+        /// </summary>
+        public static bool ExitReadsOpen(RunState run) =>
+            run.Floor.ExitUnlocked || (!run.Floor.IsBossFloor && run.Hero.HasKey);
+
         /// <summary>Truthful clue set for a cell (rules §2.4).</summary>
         public static Clue ClueAt(FloorState floor, GridPos p)
         {

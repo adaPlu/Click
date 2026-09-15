@@ -170,7 +170,12 @@ namespace ClickDungeon.Unity.Screens
         }
 
         /// <summary>Automation hook (screenshots/smoke runs): same path as a player tap.</summary>
-        public void AutomationSubmit(PlayerCommand command) => Submit(command);
+        /// <summary>Automation hook: submits through the normal input path, first tapping through any open chest reveal.</summary>
+        public void AutomationSubmit(PlayerCommand command)
+        {
+            for (int i = 0; i < 4 && _chest.IsOpen; i++) _chest.Tap();
+            Submit(command);
+        }
 
         /// <summary>Automation hook (screenshots): opens an overlay without changing gameplay state.</summary>
         public void AutomationOverlay(string name)
@@ -312,6 +317,7 @@ namespace ClickDungeon.Unity.Screens
             string line = null;
             var face = Expression.Neutral;
             bool shake = false;
+            _board.BeginPopupBatch();
             foreach (var e in result.Events)
             {
                 int priority = Lines.React(e, run, Catalog, out var candidate, out var candidateFace);
@@ -327,7 +333,8 @@ namespace ClickDungeon.Unity.Screens
                     shake = true;
                 }
                 if (e.Kind == GameEventKind.ChestOpened) reward = e.Reward;
-                if (!floorChanged) ShowPopup(e);
+                // The stairs heal lands on the new floor's start, so it still gets its popup when the floor changes.
+                if (!floorChanged || (e.Kind == GameEventKind.HeroHealed && e.Source == "stairs")) ShowPopup(e);
             }
 
             if (floorChanged && run.Status == RunStatus.InProgress)
@@ -378,6 +385,8 @@ namespace ClickDungeon.Unity.Screens
             }
         }
 
+        string DifficultyName(RunState run) => Catalog.DifficultyInfo(run.Difficulty).DisplayName;
+
         void ShowFloorBanner()
         {
             var floor = Run?.Floor;
@@ -394,7 +403,7 @@ namespace ClickDungeon.Unity.Screens
             if (run.Status == RunStatus.Won)
             {
                 _modal.Show(ModalStyle.Victory, "VICTORY!",
-                    $"Lord Blobert is defeated. Again.\n\nTurns taken: {run.Turn}\nChests opened: {run.Rewards.Count}\n\nSir Clickington: \"Victory! Snacks for everyone!\"",
+                    $"Lord Blobert is defeated. Again.\n\nDifficulty: {DifficultyName(run)}\nTurns taken: {run.Turn}\nChests opened: {run.Rewards.Count}\n\nSir Clickington: \"Victory! Snacks for everyone!\"",
                     () => { },
                     Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
                     Menus.B("TITLE", Palette.NavyLight, _app.ShowTitle));
@@ -402,7 +411,7 @@ namespace ClickDungeon.Unity.Screens
             else
             {
                 _modal.Show(ModalStyle.Defeat, "DEFEATED",
-                    $"Fell on floor {run.Floor.FloorIndex}: {floorName}\nFinal blow: {Lines.SourceName(_lastDamageSource ?? "?", Catalog)}\nTurns survived: {run.Turn}\n\nThe WHAT HAPPENED log shows every hit.\n\nSir Clickington: \"Tell my horse... wait. I don't have a horse.\"",
+                    $"Fell on floor {run.Floor.FloorIndex}: {floorName}\nFinal blow: {Lines.SourceName(_lastDamageSource ?? "?", Catalog)}\nDifficulty: {DifficultyName(run)}\nTurns survived: {run.Turn}\n\nThe WHAT HAPPENED log shows every hit.\n\nSir Clickington: \"Tell my horse... wait. I don't have a horse.\"",
                     () => { },
                     Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
                     Menus.B("TITLE", Palette.NavyLight, _app.ShowTitle));
@@ -416,7 +425,7 @@ namespace ClickDungeon.Unity.Screens
             if (_chest.IsOpen || Run == null) return;
             var run = Run;
             _modal.Show("PAUSED",
-                $"Floor {run.Floor.FloorIndex}: {Catalog.ProfileFor(run.Floor.FloorIndex).Name}\nTurn {run.Turn + 1}    Seed {run.RunSeed}\nYour run is saved after every turn.{(_app.TelemetryActive ? "\nPlaytest log is on (saved on this device only)." : "")}",
+                $"Floor {run.Floor.FloorIndex}: {Catalog.ProfileFor(run.Floor.FloorIndex).Name}\nDifficulty: {DifficultyName(run)}\nTurn {run.Turn + 1}    Seed {run.RunSeed}\nYour run is saved after every turn.{(_app.TelemetryActive ? "\nPlaytest log is on (saved on this device only)." : "")}",
                 _modal.Hide,
                 Menus.B("RESUME", Palette.PlayGreen, _modal.Hide),
                 Menus.B("HOW TO PLAY", Palette.NavyLight, OpenHelp),
@@ -469,10 +478,24 @@ namespace ClickDungeon.Unity.Screens
             _logText.text = string.Join("\n", _log);
         }
 
+        /// <summary>Tells the player once when saving stops working. Play continues in memory; the run may not resume later.</summary>
+        void WarnIfSaveFailed()
+        {
+            var error = _app.Session.SaveError;
+            if (error == _saveWarning) return;
+            _saveWarning = error;
+            if (error == null) return;
+            _log.Insert(0, $"<color=#FF9A2E>Couldn't save your run ({error}). You can keep playing, but it may not resume later.</color>");
+            _logText.text = string.Join("\n", _log);
+        }
+
+        string _saveWarning;
+
         void Refresh(bool animate)
         {
             var run = Run;
             if (run == null) return;
+            WarnIfSaveFailed();
             var hero = run.Hero;
 
             _hpText.text = $"{hero.Hp} / {hero.MaxHp}";
@@ -496,11 +519,21 @@ namespace ClickDungeon.Unity.Screens
             RenderBoard(animate);
         }
 
+        /// <summary>Hover handler: only the highlights and inspector change, so the tiles are not rebuilt.</summary>
         void RefreshBoardOnly()
         {
             if (Run == null) return;
-            RenderBoard(false);
+            if (_legal == null)
+            {
+                RenderBoard(false);
+                return;
+            }
+            _board.RenderHighlights(_legal, _mode != TargetMode.Move, _hover);
+            UpdateInspector();
         }
+
+        /// <summary>Legal tiles from the last full render; state and mode changes always re-render before hover reuses them.</summary>
+        HashSet<GridPos> _legal;
 
         void RenderBoard(bool animate)
         {
@@ -525,6 +558,7 @@ namespace ClickDungeon.Unity.Screens
                         break;
                 }
             }
+            _legal = legal;
             _board.Render(run, Catalog, _threats, legal, _mode != TargetMode.Move, _hover, animate);
             UpdateInspector();
         }
@@ -576,7 +610,7 @@ namespace ClickDungeon.Unity.Screens
                 sb.AppendLine(hero.ShieldCooldown > 0 ? $"Shield recharging: {hero.ShieldCooldown}" : "Shield ready.");
                 sb.AppendLine(hero.DashCooldown > 0 ? $"Dash recharging: {hero.DashCooldown}" : "Dash ready.");
                 sb.AppendLine("Tap him to wait a turn.");
-                var underfoot = UnderfootText(cell, floor);
+                var underfoot = UnderfootText(cell, floor, Board.ExitReadsOpen(run));
                 if (underfoot != null) sb.AppendLine(underfoot);
             }
             else if (enemy != null && enemy.Awake)
@@ -585,7 +619,7 @@ namespace ClickDungeon.Unity.Screens
                 title = def.DisplayName.ToUpperInvariant();
                 sb.AppendLine($"HP {enemy.Hp}/{enemy.MaxHp}");
                 sb.AppendLine(Lines.IntentExplain(enemy, def));
-                var underfoot = UnderfootText(cell, floor);
+                var underfoot = UnderfootText(cell, floor, Board.ExitReadsOpen(run));
                 if (underfoot != null) sb.AppendLine(underfoot);
             }
             else if (cell.Terrain == Terrain.Wall)
@@ -617,7 +651,7 @@ namespace ClickDungeon.Unity.Screens
                     title = "EXIT";
                     sb.AppendLine(floor.ExitUnlocked ? "Open. Step on it to descend."
                         : floor.IsBossFloor ? "Sealed until Lord Blobert falls."
-                        : run.Hero.HasKey ? "Locked. You have the key: step on it!" : "Locked. Find the key first.");
+                        : run.Hero.HasKey ? "Your key fits. Step on it to descend." : "Locked. Find the key first.");
                 }
                 if (cell.Hazard == HazardKind.Spikes)
                 {
@@ -656,7 +690,7 @@ namespace ClickDungeon.Unity.Screens
             _inspectBody.text = sb.ToString();
         }
 
-        static string UnderfootText(CellState cell, FloorState floor)
+        static string UnderfootText(CellState cell, FloorState floor, bool exitOpen)
         {
             if (cell.Knowledge != Knowledge.Revealed) return null;
             if (cell.Hazard == HazardKind.Spikes) return "Standing on spikes. They only hurt when stepped onto.";
@@ -665,7 +699,8 @@ namespace ClickDungeon.Unity.Screens
                     ? "<color=#FF9A2E>Standing on an armed bomb: it explodes after the next action!</color>"
                     : "<color=#FF9A2E>Standing on an armed bomb: it explodes in two turns.</color>";
             if (cell.IsExit)
-                return floor.ExitUnlocked ? "Standing on the open exit."
+                // The exit only triggers when entered, so a hero already on it (Blobert fell meanwhile) must step off and back on.
+                return exitOpen ? "Standing on the open exit. Step off and back on to leave."
                     : floor.IsBossFloor ? "Standing on the sealed exit." : "Standing on the locked exit.";
             return null;
         }
@@ -875,6 +910,25 @@ namespace ClickDungeon.Unity.Screens
             "Keys: WASD / arrows, Space = wait, 1-5 = abilities, Esc = menu, H = help.";
 
         public static (string label, Color color, Action action) B(string label, Color color, Action action) => (label, color, action);
+
+        public static readonly Difficulty[] DifficultyOrder = { Difficulty.Easy, Difficulty.Medium, Difficulty.Hardcore };
+
+        /// <summary>Difficulty picker. Names and descriptions come from content, so the menu always matches the rules.</summary>
+        public static void OpenDifficulty(ModalOverlay modal, ContentCatalog catalog, Difficulty preselected, Action<Difficulty> choose, Action back)
+        {
+            var body = new StringBuilder();
+            var buttons = new List<(string label, Color color, Action action)>();
+            foreach (var tier in DifficultyOrder)
+            {
+                var info = catalog.DifficultyInfo(tier);
+                if (body.Length > 0) body.Append("\n\n");
+                body.Append($"<b>{info.DisplayName.ToUpperInvariant()}</b>\n{info.Tagline}");
+                var color = tier == preselected ? Palette.PlayGreen : tier == Difficulty.Hardcore ? Palette.QuitRed : Palette.NavyLight;
+                buttons.Add(B(info.DisplayName.ToUpperInvariant(), color, () => choose(tier)));
+            }
+            buttons.Add(B("CANCEL", Palette.NavyLight, back));
+            modal.Show("CHOOSE YOUR FATE", body.ToString(), back, buttons.ToArray());
+        }
 
         public static void OpenSettings(ModalOverlay modal, Action back, Action changed = null)
         {

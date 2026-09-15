@@ -146,6 +146,14 @@ namespace ClickDungeon.Simulation
                 return true;
             }
             RunFactory.BeginFloor(run, floor.FloorIndex + 1, catalog, events);
+
+            // Difficulty breather: heal on arrival, never above max.
+            int heal = Math.Min(catalog.FloorClearHeal, hero.MaxHp - hero.Hp);
+            if (heal > 0)
+            {
+                hero.Hp += heal;
+                events.Add(GameEvent.Of(GameEventKind.HeroHealed, to: hero.Pos, amount: heal, source: "stairs"));
+            }
             return true;
         }
     }

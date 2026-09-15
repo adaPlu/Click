@@ -163,6 +163,7 @@ namespace ClickDungeon.Unity.Screens
                 (threatKinds[i] ?? (threatKinds[i] = new List<ThreatKind>())).Add(threat.Kind);
             }
 
+            bool exitOpen = Board.ExitReadsOpen(run);
             foreach (var p in Board.AllCells)
             {
                 var cell = floor[p];
@@ -171,31 +172,15 @@ namespace ClickDungeon.Unity.Screens
                 Clear(view.Overlay);
                 ClearExcept(view.Labels, view.Highlight.transform);
 
-                DrawCell(view, floor, cell, p);
+                DrawCell(view, floor, cell, p, exitOpen);
                 DrawThreats(view, threatKinds[p.Index], damage[p.Index], floor.EnemyAt(p)?.Awake == true);
 
                 // A token hides the tile art beneath it, so repeat a hazard or exit underfoot as a badge above the token.
                 bool occupied = run.Hero.Pos == p || floor.EnemyAt(p)?.Awake == true;
                 if (occupied && cell.Knowledge == Knowledge.Revealed && (cell.Hazard != HazardKind.None || cell.IsExit))
-                    Icons.Underfoot(Icons.Group(view.Labels, new Vector2(-CellSize * 0.5f + 22f, 0f)), cell, floor.ExitUnlocked);
+                    Icons.Underfoot(Icons.Group(view.Labels, new Vector2(-CellSize * 0.5f + 22f, 0f)), cell, exitOpen);
 
-                bool isLegal = legal != null && legal.Contains(p);
-                bool isHover = hover.HasValue && hover.Value == p;
-                bool showHighlight = isLegal || isHover;
-                view.Highlight.enabled = showHighlight;
-                if (showHighlight)
-                {
-                    string highlightKey = isHover ? ArtKeys.HighlightHover : strongHighlight ? ArtKeys.HighlightTarget : ArtKeys.HighlightLegal;
-                    if (!UiArt.Apply(view.Highlight, highlightKey))
-                    {
-                        view.Highlight.sprite = Shapes.Frame;
-                        view.Highlight.type = Image.Type.Sliced;
-                        view.Highlight.pixelsPerUnitMultiplier = 1.4f;
-                        view.Highlight.color = isHover
-                            ? Color.white
-                            : strongHighlight ? Palette.Legal : Palette.Legal.WithAlpha(0.45f);
-                    }
-                }
+                ApplyHighlight(view, p, legal, strongHighlight, hover);
             }
 
             RenderTokens(run, catalog, animate);
@@ -203,7 +188,34 @@ namespace ClickDungeon.Unity.Screens
             PlayPendingFx();
         }
 
-        void DrawCell(CellParts view, FloorState floor, CellState cell, GridPos p)
+        /// <summary>
+        /// Redraws only the legal-target and hover frames. Hovering changes nothing else on the board, so it skips the full
+        /// rebuild of every tile.
+        /// </summary>
+        public void RenderHighlights(HashSet<GridPos> legal, bool strongHighlight, GridPos? hover)
+        {
+            foreach (var p in Board.AllCells) ApplyHighlight(_cells[p.Index], p, legal, strongHighlight, hover);
+        }
+
+        static void ApplyHighlight(CellParts view, GridPos p, HashSet<GridPos> legal, bool strongHighlight, GridPos? hover)
+        {
+            bool isLegal = legal != null && legal.Contains(p);
+            bool isHover = hover.HasValue && hover.Value == p;
+            bool showHighlight = isLegal || isHover;
+            view.Highlight.enabled = showHighlight;
+            if (!showHighlight) return;
+
+            string highlightKey = isHover ? ArtKeys.HighlightHover : strongHighlight ? ArtKeys.HighlightTarget : ArtKeys.HighlightLegal;
+            if (UiArt.Apply(view.Highlight, highlightKey)) return;
+            view.Highlight.sprite = Shapes.Frame;
+            view.Highlight.type = Image.Type.Sliced;
+            view.Highlight.pixelsPerUnitMultiplier = 1.4f;
+            view.Highlight.color = isHover
+                ? Color.white
+                : strongHighlight ? Palette.Legal : Palette.Legal.WithAlpha(0.45f);
+        }
+
+        void DrawCell(CellParts view, FloorState floor, CellState cell, GridPos p, bool exitOpen)
         {
             if (cell.Terrain == Terrain.Wall)
             {
@@ -232,7 +244,7 @@ namespace ClickDungeon.Unity.Screens
                 case Knowledge.Revealed:
                     if (!ApplyTileArt(view, ArtKeys.FloorStone, Color.white))
                         SetPlaceholderBase(view, Palette.FloorRevealed, Palette.StoneLight.Dim(1.2f));
-                    if (cell.IsExit) Icons.Exit(view.Icons, floor.ExitUnlocked);
+                    if (cell.IsExit) Icons.Exit(view.Icons, exitOpen);
                     if (cell.Hazard == HazardKind.Spikes) Icons.Spikes(view.Icons);
                     else if (cell.Hazard == HazardKind.Bomb) Icons.Bomb(view.Icons, cell.BombArmed, cell.BombFuse);
                     if (cell.Content == ContentKind.Key) Icons.Key(view.Icons);
@@ -538,6 +550,19 @@ namespace ClickDungeon.Unity.Screens
             }
         }
 
+        /// <summary>Vertical gap between popups that land on the same tile in one turn.</summary>
+        public const float PopupSpacing = 46f;
+
+        int _popupFrame = -1;
+        readonly Dictionary<int, int> _popupsPerCell = new Dictionary<int, int>();
+
+        /// <summary>Starts fresh popup stacks. Called once per turn, so popups from different turns never stack together.</summary>
+        public void BeginPopupBatch()
+        {
+            _popupFrame = Time.frameCount;
+            _popupsPerCell.Clear();
+        }
+
         public void Popup(GridPos p, string text, Color color)
         {
             const float height = 60f;
@@ -552,7 +577,22 @@ namespace ClickDungeon.Unity.Screens
             // Keep the whole float path inside the board frame so popups never drift over the HUD
             // (top row) or the side panels (edge columns).
             var start = CellPosition(p) + new Vector2(0f, 24f);
-            start.y = Mathf.Min(start.y, halfFrame - height * 0.5f - rise);
+            float top = halfFrame - height * 0.5f - rise;
+            float bottom = -halfFrame + height * 0.5f;
+            start.y = Mathf.Min(start.y, top);
+            // Several popups on one tile in one turn (DAZED, -2, BLOCK!) stack instead of printing on top of each other:
+            // downward while there is room, then upward above the first, so bottom-row tiles stay readable too.
+            if (_popupFrame != Time.frameCount)
+            {
+                _popupFrame = Time.frameCount;
+                _popupsPerCell.Clear();
+            }
+            _popupsPerCell.TryGetValue(p.Index, out int stacked);
+            _popupsPerCell[p.Index] = stacked + 1;
+            int roomBelow = Mathf.FloorToInt((start.y - bottom) / PopupSpacing);
+            start.y = stacked <= roomBelow
+                ? start.y - stacked * PopupSpacing
+                : Mathf.Min(start.y + (stacked - roomBelow) * PopupSpacing, top);
             float maxX = halfFrame - width * 0.5f;
             start.x = Mathf.Clamp(start.x, -maxX, maxX);
 

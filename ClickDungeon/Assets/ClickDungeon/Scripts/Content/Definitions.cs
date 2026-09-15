@@ -96,6 +96,31 @@ namespace ClickDungeon.Content
         public int MinExitDistance = 4;
     }
 
+    /// <summary>
+    /// A difficulty tier: its name plus adjustments added to the base content when a catalog is built for it.
+    /// Results are clamped so nothing drops below 1 damage or 1 HP.
+    /// </summary>
+    public sealed class DifficultyDefinition
+    {
+        public Difficulty Id;
+        public string DisplayName;
+        public string Tagline;
+        public int HeroMaxHp;
+        public int StartingPotions;
+        /// <summary>Added to normal enemies' max HP.</summary>
+        public int EnemyHp;
+        /// <summary>Added to every enemy's melee and fire damage, including the boss's puffed attack.</summary>
+        public int EnemyDamage;
+        public int BossHp;
+        public int BossSlamDamage;
+        /// <summary>Added to spike and bomb damage.</summary>
+        public int HazardDamage;
+        /// <summary>Added to the enemy count range of normal floors (a floor that had enemies keeps at least one).</summary>
+        public int ExtraEnemies;
+        /// <summary>HP restored when the hero arrives on the next floor.</summary>
+        public int FloorClearHeal;
+    }
+
     public sealed class RewardEntry
     {
         public RewardKind Kind;

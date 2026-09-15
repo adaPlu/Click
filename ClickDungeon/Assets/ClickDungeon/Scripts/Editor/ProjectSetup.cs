@@ -51,10 +51,20 @@ namespace ClickDungeon.EditorTools
             PlayerSettings.runInBackground = true;
         }
 
+        /// <summary>Written next to the player; make-kit reads it to label the kit with the code the player was built from.</summary>
+        public const string BuildStampFile = "BUILD-VERSION.txt";
+
         [MenuItem("ClickDungeon/Build Windows")]
         public static void BuildWindows()
         {
             if (!File.Exists(ScenePath)) CreateMainScene();
+            // The playtest log folder (and collect-logs) depends on the company and product names set here.
+            ApplyPlayerSettings();
+
+            // Start from an empty folder, so a failed build can never leave an older player behind to be packaged.
+            var buildDir = Path.GetDirectoryName(WindowsBuildPath);
+            if (Directory.Exists(buildDir)) Directory.Delete(buildDir, true);
+
             var options = new BuildPlayerOptions
             {
                 scenes = new[] { ScenePath },
@@ -63,8 +73,42 @@ namespace ClickDungeon.EditorTools
                 options = BuildOptions.None,
             };
             var report = BuildPipeline.BuildPlayer(options);
+            bool succeeded = report.summary.result == BuildResult.Succeeded;
+            if (succeeded) File.WriteAllText(Path.Combine(buildDir, BuildStampFile), GitVersion() + "\n");
             Debug.Log($"[ClickDungeon] Windows build {report.summary.result}: {report.summary.totalErrors} errors -> {WindowsBuildPath}");
-            if (UnityEngine.Application.isBatchMode) EditorApplication.Exit(report.summary.result == BuildResult.Succeeded ? 0 : 1);
+            if (UnityEngine.Application.isBatchMode) EditorApplication.Exit(succeeded ? 0 : 1);
+        }
+
+        /// <summary>git describe of the working tree, marked -dirty for uncommitted or untracked files; "unknown" without git.</summary>
+        static string GitVersion()
+        {
+            try
+            {
+                string version = Git("describe --always --dirty");
+                if (version.Length == 0) return "unknown";
+                if (!version.EndsWith("-dirty") && Git("status --porcelain --untracked-files=normal").Length > 0) version += "-dirty";
+                return version;
+            }
+            catch (System.Exception)
+            {
+                return "unknown";
+            }
+        }
+
+        static string Git(string arguments)
+        {
+            var start = new System.Diagnostics.ProcessStartInfo("git", arguments)
+            {
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            using (var process = System.Diagnostics.Process.Start(start))
+            {
+                string output = process.StandardOutput.ReadToEnd().Trim();
+                process.WaitForExit();
+                return process.ExitCode == 0 ? output : "";
+            }
         }
     }
 }

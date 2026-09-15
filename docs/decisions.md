@@ -126,3 +126,19 @@ Rules referenced here live in `docs/rules.md`.
   reportable.
 - **DEPENDENCIES**: presentation layer only (`Icons`, `BoardView`, screens). Simulation is untouched.
 - **REVERSIBILITY**: high. Keys are the contract; storage (Resources, Addressables) can change later.
+
+## D-017 Difficulty tiers as tuned content catalogs
+- **DECISION**: Three tiers: Squire's Stroll (easy), Knight's Trial (medium) and Blobert's Wrath (hardcore). A tier
+  is a `DifficultyDefinition` of additive adjustments: hero HP and potions, enemy HP and damage, boss HP and slam,
+  hazard damage, enemy count, and HP restored when arriving on a new floor. `ContentCatalog.CreateDefault(tier)`
+  builds fresh content with those adjustments applied. The run stores its tier, and `GameSession` switches to the
+  matching catalog whenever a run starts or resumes, so rules, threat previews, inspector text and telemetry all
+  read the same numbers. `Difficulty.Medium` is enum value 0, so saves from before tiers load as Medium. Ruleset 2
+  adds the arrival heal.
+- **WHY**: bot measurement showed floor 5 was out of reach for most runs. Keeping tuning in content, rather than
+  multipliers spread through the rules, keeps every displayed number truthful and every tier testable headless.
+- **HOW IT IS TUNED**: `AutoPlayer` (Application layer) is a deterministic one-turn look-ahead bot. The explicit
+  `BalanceReport` test plays 200 seeds per tier; `BalanceTests` guard the targets on every test run. The kit bot
+  demo uses the same player (`-cdBot smart`, the default).
+- **DEPENDENCIES**: `ContentCatalog`, `RunState.Difficulty`, `GameSession`, the title difficulty picker.
+- **REVERSIBILITY**: high. The numbers live in one table, and another tier is one more dictionary entry.

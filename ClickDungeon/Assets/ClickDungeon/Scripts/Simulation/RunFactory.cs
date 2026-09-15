@@ -29,6 +29,7 @@ namespace ClickDungeon.Simulation
             {
                 RunSeed = seed,
                 FloorCount = catalog.RunFloorCount,
+                Difficulty = catalog.Difficulty,
                 ContentCatalogVersion = catalog.Version,
                 Hero = CreateHero(catalog, identityId),
             };

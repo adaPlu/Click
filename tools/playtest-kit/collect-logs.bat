@@ -1,27 +1,26 @@
 @echo off
 setlocal
 rem Zips ClickDungeon playtest logs next to this script so testers can send them back.
+rem The work happens in collect-logs.ps1 (it also works while the game is still open).
 set "LOGS=%USERPROFILE%\AppData\LocalLow\Clickd\ClickDungeon\telemetry"
-set "OUT=%~dp0ClickDungeon-playtest-logs.zip"
 
-if not exist "%LOGS%\*.jsonl" (
-  echo No ClickDungeon playtest logs were found in:
-  echo   "%LOGS%"
-  echo Play at least one run first, then run this again.
-  pause
-  exit /b 1
-)
-
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Compress-Archive -Path (Join-Path $env:LOGS '*.jsonl') -DestinationPath $env:OUT -Force"
-if errorlevel 1 (
-  echo Could not create the zip. Please copy the log folder above by hand.
-  pause
-  exit /b 1
-)
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0collect-logs.ps1" -LogsDir "%LOGS%"
+if errorlevel 3 goto failed
+if errorlevel 2 goto nologs
+if errorlevel 1 goto failed
 
 echo.
-echo Created: "%OUT%"
-echo Please send that file back. Thank you for playing!
-if not defined CD_NO_EXPLORER explorer /select,"%OUT%"
+echo Please send ClickDungeon-playtest-logs.zip (next to this file) back. Thank you for playing!
+if not defined CD_NO_EXPLORER explorer /select,"%~dp0ClickDungeon-playtest-logs.zip"
 pause
 exit /b 0
+
+:nologs
+pause
+exit /b 1
+
+:failed
+echo Could not create the zip. Please close the game, then copy this folder by hand:
+echo   "%LOGS%"
+pause
+exit /b 1

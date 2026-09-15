@@ -132,7 +132,9 @@ namespace ClickDungeon.Unity.Screens
                 case GameEventKind.HeroBlocked:
                     return $"<color=#F2C94C>Shield blocked {e.Amount}</color> from {SourceName(e.Source, catalog)}.";
                 case GameEventKind.HeroHealed:
-                    return $"<color=#9FD8A0>Healed {e.Amount}.</color>";
+                    return e.Source == "stairs"
+                        ? $"<color=#9FD8A0>Caught your breath on the stairs: healed {e.Amount}.</color>"
+                        : $"<color=#9FD8A0>Healed {e.Amount}.</color>";
                 case GameEventKind.EnemyMissed:
                     return $"{SourceName(e.Source, catalog)} hit an empty tile.";
                 case GameEventKind.EnemyFired:

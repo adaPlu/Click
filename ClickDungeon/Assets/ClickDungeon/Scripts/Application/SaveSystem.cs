@@ -18,20 +18,78 @@ namespace ClickDungeon.Application
             Formatting = Formatting.Indented,
             ObjectCreationHandling = ObjectCreationHandling.Replace,
             MissingMemberHandling = MissingMemberHandling.Ignore,
-            Converters = { new StringEnumConverter() },
+            // Enums are saved by name; numbers such as "Difficulty": 7 are rejected instead of loading an undefined value.
+            Converters = { new StringEnumConverter { AllowIntegerValues = false } },
         };
 
         public static string ToJson(RunState run) => JsonConvert.SerializeObject(run, Settings);
 
+        /// <summary>
+        /// Loads and validates a save. Anything that could crash or corrupt play later is rejected here as a FormatException,
+        /// so the store can fall back to the backup.
+        /// </summary>
         public static RunState FromJson(string json)
         {
-            var run = JsonConvert.DeserializeObject<RunState>(json, Settings);
+            RunState run;
+            try
+            {
+                run = JsonConvert.DeserializeObject<RunState>(json, Settings);
+            }
+            catch (JsonException ex)
+            {
+                throw new FormatException("Save is not readable: " + ex.Message, ex);
+            }
             if (run == null) throw new FormatException("Save is empty.");
             if (run.SaveSchemaVersion != Versions.SaveSchema)
                 throw new FormatException($"Unsupported save schema {run.SaveSchemaVersion} (expected {Versions.SaveSchema}).");
             if (run.Hero == null || run.Floor == null || run.Floor.Cells == null || run.Floor.Cells.Length != BoardRules.CellCount)
                 throw new FormatException("Save is incomplete.");
+            if (run.RulesetVersion > Versions.Ruleset)
+                throw new FormatException($"Save was made by a newer version of the rules ({run.RulesetVersion}).");
+            // Floors are generated from the current generation version, so a save from another one would diverge.
+            if (run.GenerationVersion != Versions.Generation)
+                throw new FormatException($"Save uses floor generation {run.GenerationVersion} (expected {Versions.Generation}).");
+            Validate(run);
+            // Older rulesets only lack additions (ruleset 2 added the arrival heal), so the run continues under current rules.
+            run.RulesetVersion = Versions.Ruleset;
             return run;
+        }
+
+        static void Validate(RunState run)
+        {
+            var hero = run.Hero;
+            var floor = run.Floor;
+            Require(Enum.IsDefined(typeof(Difficulty), run.Difficulty), "unknown difficulty");
+            Require(Enum.IsDefined(typeof(RunStatus), run.Status), "unknown run status");
+            Require(floor.Enemies != null && run.Rewards != null, "missing enemy or reward list");
+            Require(run.FloorCount >= 1 && floor.FloorIndex >= 1 && floor.FloorIndex <= run.FloorCount, "floor number out of range");
+            Require(!string.IsNullOrEmpty(hero.ClassId) && !string.IsNullOrEmpty(hero.IdentityId), "hero has no class");
+            Require(hero.MaxHp > 0 && hero.Hp >= 0 && hero.Hp <= hero.MaxHp, "hero health out of range");
+            Require(hero.Pos.InBounds, "hero off the board");
+            // Hand-built boards may have no exit (Invalid); anything else must be a real tile.
+            Require(floor.Exit == GridPos.Invalid || floor.Exit.InBounds, "exit off the board");
+
+            foreach (var cell in floor.Cells)
+            {
+                Require(cell != null, "missing tile");
+                Require(Enum.IsDefined(typeof(Terrain), cell.Terrain) && Enum.IsDefined(typeof(HazardKind), cell.Hazard)
+                        && Enum.IsDefined(typeof(ContentKind), cell.Content) && Enum.IsDefined(typeof(Knowledge), cell.Knowledge),
+                    "unknown tile value");
+            }
+            Require(floor[hero.Pos].Terrain == Terrain.Floor, "hero inside a wall or pit");
+
+            foreach (var enemy in floor.Enemies)
+            {
+                Require(enemy != null && !string.IsNullOrEmpty(enemy.DefId), "enemy without a type");
+                Require(enemy.Pos.InBounds, "enemy off the board");
+                Require(Enum.IsDefined(typeof(EnemyMode), enemy.Mode) && Enum.IsDefined(typeof(IntentKind), enemy.Intent.Kind), "unknown enemy state");
+            }
+            foreach (var reward in run.Rewards) Require(reward != null, "missing reward record");
+        }
+
+        static void Require(bool ok, string problem)
+        {
+            if (!ok) throw new FormatException($"Save is invalid: {problem}.");
         }
     }
 

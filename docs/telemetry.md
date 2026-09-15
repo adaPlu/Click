@@ -27,20 +27,22 @@ alongside observation and interviews. See decision D-015.
 {"time":"2026-09-14T12:00:00.0000000Z","session":"a1b2c3d4e5f6","event":"damage_taken","run":42,"floor":2,"turn":17,"data":{"amount":2,"source":"goblin","hp_after":6,"cell":"1,3"}}
 ```
 
+`time` is UTC, kept to whole seconds. `run` is the run seed, drawn at random so it reveals nothing about the device.
 `turn` is the turn in which the event happened. Cells are `"x,y"`, with (0,0) bottom-left.
-`run_started` carries `schema` (currently 1) and the ruleset, content and generation versions.
+`run_started` carries `schema` (currently 1), the ruleset, content and generation versions, and `difficulty`
+(`easy`, `medium` or `hardcore`). `run_resumed` repeats `difficulty`.
 
 ## Events
 
 | Event | When | Key data |
 |---|---|---|
-| `run_started` / `run_resumed` / `run_abandoned` | session lifecycle | versions, hero |
+| `run_started` / `run_resumed` / `run_abandoned` | session lifecycle | versions, hero, difficulty |
 | `floor_started` | floor generated | template, transform, enemies, hazards, chests |
 | `tile_sensed` / `tile_revealed` | knowledge changes | clue set / actual contents |
 | `tile_choice` | every accepted Move or Dash | options, chosen, `consequential`, hero, nearby intents |
 | `player_move` | Move / Dash | from, to, via |
 | `ability_used` | every non-Move command | ability, target, `threat_here`, hero, intents |
-| `damage_taken` / `damage_blocked` / `healed` | HP changes | amount, source, hp_after |
+| `damage_taken` / `damage_blocked` / `healed` | HP changes | amount, source (`healed`: `potion` or `stairs`), hp_after |
 | `enemy_woke` / `enemy_defeated` | enemies | enemy, cell, killing source |
 | `trap_armed` / `trap_triggered` | spikes, bombs | trap, cell, cause (step / slash / blast) |
 | `pickup_collected` / `chest_opened` | rewards | item / reward kind |

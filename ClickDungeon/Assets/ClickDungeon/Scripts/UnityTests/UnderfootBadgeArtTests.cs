@@ -110,6 +110,38 @@ namespace ClickDungeon.UnityTests
         }
 
         [Test]
+        public void ExitTileShowsOpenArtOnceTheKeyIsHeld()
+        {
+            var locked = MakeSprite("locked");
+            var open = MakeSprite("open");
+            UseArt((ArtKeys.ExitLocked, locked), (ArtKeys.ExitOpen, open));
+
+            var floor = FloorState.CreateEmpty();
+            floor.FloorIndex = 1;
+            floor.Start = new GridPos(0, 0);
+            floor.Exit = new GridPos(1, 0);
+            floor[floor.Exit].IsExit = true;
+            var run = new RunState
+            {
+                RunSeed = 1,
+                FloorCount = Catalog.RunFloorCount,
+                Hero = RunFactory.CreateHero(Catalog, ContentCatalog.DefaultHeroId),
+                Floor = floor,
+            };
+            RunFactory.SetupFloor(run, Catalog, new List<GameEvent>());
+            var board = new BoardView((RectTransform)_root.transform, _root.AddComponent<SpriteFrameAnimator>(), Vector2.zero);
+
+            board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
+            Assert.That(Images().Any(i => i.sprite == locked), Is.True);
+            Assert.That(Images().Any(i => i.sprite == open), Is.False);
+
+            run.Hero.HasKey = true;
+            board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
+            Assert.That(Images().Any(i => i.sprite == open), Is.True, "Holding the key shows the exit as open.");
+            Assert.That(Images().Any(i => i.sprite == locked), Is.False);
+        }
+
+        [Test]
         public void HeroStandingOnSpikesShowsTheBadgeArt()
         {
             var spikes = MakeSprite("spikes");

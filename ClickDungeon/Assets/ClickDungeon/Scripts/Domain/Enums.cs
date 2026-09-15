@@ -11,7 +11,7 @@ namespace ClickDungeon.Domain
     public static class Versions
     {
         public const int SaveSchema = 1;
-        public const int Ruleset = 1;
+        public const int Ruleset = 2;
         public const int Generation = 1;
     }
 
@@ -40,6 +40,9 @@ namespace ClickDungeon.Domain
     public enum EnemyMode { Normal = 0, Puffed, Deflated }
 
     public enum RunStatus { InProgress = 0, Won, Lost }
+
+    /// <summary>Run difficulty tier. Medium is 0 so saves made before tiers existed load unchanged.</summary>
+    public enum Difficulty { Medium = 0, Easy = 1, Hardcore = 2 }
 
     public enum CommandKind { Move = 0, Wait, Slash, Shield, Dash, Potion, Interact }
 
