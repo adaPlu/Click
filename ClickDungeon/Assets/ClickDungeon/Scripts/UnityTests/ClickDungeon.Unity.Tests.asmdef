@@ -4,6 +4,7 @@
     "references": [
         "ClickDungeon.Domain",
         "ClickDungeon.Content",
+        "ClickDungeon.Simulation",
         "ClickDungeon.Unity",
         "ClickDungeon.Editor",
         "UnityEngine.UI",

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using ClickDungeon.Content;
 using ClickDungeon.Domain;
+using ClickDungeon.Simulation;
 using UnityEngine;
 
 namespace ClickDungeon.Unity.Ui
@@ -125,6 +126,18 @@ namespace ClickDungeon.Unity.Ui
         public const string Logo = "logo_clickdungeon";
         public const string TitleBackground = "bg_title";
         public const string GameplayBackground = "bg_gameplay";
+        public const string DangerWarning = "icon_danger_warning";
+
+        public static readonly IntentKind[] IntentKinds =
+        {
+            IntentKind.Attack, IntentKind.Move, IntentKind.Fire, IntentKind.Rest,
+            IntentKind.Recover, IntentKind.Summon, IntentKind.Slam, IntentKind.PuffUp,
+        };
+
+        public static readonly ThreatKind[] ThreatKinds =
+        {
+            ThreatKind.Attack, ThreatKind.Fire, ThreatKind.Slam, ThreatKind.BombBlast, ThreatKind.BombArmed, ThreatKind.Summon,
+        };
 
         public static readonly string[] Expressions =
             { "neutral", "happy", "confident", "worried", "shocked", "angry", "victorious", "defeated" };
@@ -136,6 +149,20 @@ namespace ClickDungeon.Unity.Ui
         public static string AbilityIcon(CommandKind kind) => $"icon_ability_{kind.ToString().ToLowerInvariant()}";
 
         public static string Portrait(string heroId, string expression) => $"portrait_{heroId}_{expression.ToLowerInvariant()}";
+
+        /// <summary>Icon shown at the left of an enemy intent badge, e.g. icon_intent_attack, icon_intent_puffup.</summary>
+        public static string IntentIcon(IntentKind kind) => kind == IntentKind.None ? null : $"icon_intent_{kind.ToString().ToLowerInvariant()}";
+
+        /// <summary>Tile-sized telegraph overlay, e.g. ui_danger_attack, ui_danger_blast.</summary>
+        public static string DangerOverlay(ThreatKind kind)
+        {
+            switch (kind)
+            {
+                case ThreatKind.BombBlast: return "ui_danger_blast";
+                case ThreatKind.BombArmed: return "ui_danger_armed";
+                default: return $"ui_danger_{kind.ToString().ToLowerInvariant()}";
+            }
+        }
 
         /// <summary>Every key the game currently looks up (used by the coverage report).</summary>
         public static List<string> Wired(ContentCatalog catalog)
@@ -157,6 +184,9 @@ namespace ClickDungeon.Unity.Ui
             foreach (var kind in new[] { CommandKind.Move, CommandKind.Slash, CommandKind.Shield, CommandKind.Dash, CommandKind.Potion })
                 keys.Add(AbilityIcon(kind));
             foreach (var expression in Expressions) keys.Add(Portrait(HeroId, expression));
+            foreach (var kind in IntentKinds) keys.Add(IntentIcon(kind));
+            foreach (var kind in ThreatKinds) keys.Add(DangerOverlay(kind));
+            keys.Add(DangerWarning);
             return keys;
         }
     }

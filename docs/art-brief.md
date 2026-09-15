@@ -292,8 +292,10 @@ Any key without art keeps drawing the current placeholder, so art can land piece
 | Clue icons | `icon_clue_enemy`, `icon_clue_danger`, `icon_clue_objective`, `icon_clue_treasure`, `icon_clue_safe` |
 | Ability icons | `icon_ability_move`, `icon_ability_slash`, `icon_ability_shield`, `icon_ability_dash`, `icon_ability_potion` |
 | Portraits | `portrait_sir_clickington_<neutral\|happy\|confident\|worried\|shocked\|angry\|victorious\|defeated>` |
+| Intent badges (icon at the left of the live badge text) | `icon_intent_<attack\|move\|fire\|rest\|recover\|summon\|slam\|puffup>` (128×128, readable at 26 px) |
+| Danger telegraphs (tile-sized; `-N` and HIT/FIRE/SLAM/BOOM stay live text) | `ui_danger_<attack\|fire\|slam\|blast\|armed\|summon>` (256×256, mostly transparent centre), `icon_danger_warning` (corner icon, readable at 32 px) |
 | Screens | `logo_clickdungeon`, `bg_gameplay`, `bg_title` (a full `bg_title` composite also hides the placeholder arch, banners and characters) |
 
-Not wired yet (needs layout work when the art arrives): intent badges, danger overlays, highlights,
+Not wired yet (needs layout work when the art arrives): highlights,
 underfoot badges, HUD bars and frames, buttons and panels, modal frames, chest overlay art and
 reward sequence, action animations (step, slash, hit…), FX, Priority B tiles.

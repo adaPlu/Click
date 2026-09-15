@@ -32,5 +32,8 @@ reference slice or procedural placeholder.
 - Actors: `actor_<id>_idle` for `sir_clickington`, `goblin`, `crowned_slime`, `fire_imp`, `slimelet`,
   `lord_blobert`; also `actor_lord_blobert_puffed`, `actor_lord_blobert_deflated`
 - Icons: `icon_clue_<enemy|danger|objective|treasure|safe>`, `icon_ability_<move|slash|shield|dash|potion>`
+- Intent badges: `icon_intent_<attack|move|fire|rest|recover|summon|slam|puffup>` (badge text stays live)
+- Danger telegraphs: `ui_danger_<attack|fire|slam|blast|armed|summon>` (tile-sized overlay), `icon_danger_warning` (corner);
+  the `-N` damage number and HIT/FIRE/SLAM/BOOM tag stay live text
 - Portraits: `portrait_sir_clickington_<neutral|happy|confident|worried|shocked|angry|victorious|defeated>`
 - Screens: `logo_clickdungeon`, `bg_gameplay`, `bg_title`

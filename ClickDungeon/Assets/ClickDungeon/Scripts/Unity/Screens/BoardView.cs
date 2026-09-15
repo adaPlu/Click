@@ -49,6 +49,7 @@ namespace ClickDungeon.Unity.Screens
             public RectTransform Rect;
             public RectTransform Body;
             public Image BadgeBack;
+            public Image BadgeIcon;
             public Text Badge;
             public RectTransform HpBack;
             public RectTransform HpFill;
@@ -159,7 +160,7 @@ namespace ClickDungeon.Unity.Screens
                 ClearExcept(view.Labels, view.Highlight.transform);
 
                 DrawCell(view, floor, cell, p);
-                DrawThreats(view, threatKinds[p.Index], damage[p.Index]);
+                DrawThreats(view, threatKinds[p.Index], damage[p.Index], floor.EnemyAt(p)?.Awake == true);
 
                 // A token hides the tile art beneath it, so repeat a hazard or exit underfoot as a badge above the token.
                 bool occupied = run.Hero.Pos == p || floor.EnemyAt(p)?.Awake == true;
@@ -245,7 +246,7 @@ namespace ClickDungeon.Unity.Screens
             view.Edge.color = edge;
         }
 
-        void DrawThreats(CellParts view, List<ThreatKind> kinds, int damage)
+        void DrawThreats(CellParts view, List<ThreatKind> kinds, int damage, bool enemyHere)
         {
             if (kinds == null) return;
             bool slam = kinds.Contains(ThreatKind.Slam);
@@ -257,26 +258,42 @@ namespace ClickDungeon.Unity.Screens
 
             if (damage > 0)
             {
+                var primary = slam ? ThreatKind.Slam : attack ? ThreatKind.Attack : fire ? ThreatKind.Fire : ThreatKind.BombBlast;
                 var fill = slam ? Palette.Slam : attack ? Palette.Danger : fire ? Palette.FireLane : Palette.Fuse;
-                Icons.Shape(view.Overlay, Shapes.Rounded, fill.WithAlpha(0.32f), Vector2.zero, new Vector2(CellSize - 6f, CellSize - 6f));
-                var frame = Icons.Shape(view.Overlay, Shapes.Frame, fill, Vector2.zero, new Vector2(CellSize - 2f, CellSize - 2f));
-                frame.type = Image.Type.Sliced;
-                frame.pixelsPerUnitMultiplier = 1.2f;
+                if (Icons.TryArtImage(view.Overlay, ArtKeys.DangerOverlay(primary), CellSize) == null)
+                {
+                    Icons.Shape(view.Overlay, Shapes.Rounded, fill.WithAlpha(0.32f), Vector2.zero, new Vector2(CellSize - 6f, CellSize - 6f));
+                    var frame = Icons.Shape(view.Overlay, Shapes.Frame, fill, Vector2.zero, new Vector2(CellSize - 2f, CellSize - 2f));
+                    frame.type = Image.Type.Sliced;
+                    frame.pixelsPerUnitMultiplier = 1.2f;
+                }
 
-                // Shape cue independent of colour: warning triangle in the corner.
-                var corner = new Vector2(-CellSize * 0.5f + 20f, CellSize * 0.5f - 20f);
-                Icons.Shape(view.Labels, Shapes.Triangle, fill, corner, new Vector2(30f, 28f));
-                Icons.Label(view.Labels, "!", 18, Color.white, corner + new Vector2(0f, -3f), new Vector2(20f, 20f));
-                Icons.Label(view.Labels, $"-{damage}", 28, Color.white, new Vector2(CellSize * 0.5f - 26f, CellSize * 0.5f - 20f), new Vector2(60f, 30f));
+                // Telegraph labels sit in the tile's top band: the bottom edge is covered by the intent badge of an
+                // enemy on the tile below. When an enemy stands here, drop the band below its own badge.
+                float labelY = enemyHere ? CellSize * 0.5f - 38f : CellSize * 0.5f - 24f;
+
+                // Shape cue independent of colour: warning icon in the corner.
+                var corner = new Vector2(-CellSize * 0.5f + 20f, labelY);
+                if (!Icons.TryArt(view.Labels, ArtKeys.DangerWarning, 32f, corner))
+                {
+                    Icons.Shape(view.Labels, Shapes.Triangle, fill, corner, new Vector2(30f, 28f));
+                    Icons.Label(view.Labels, "!", 18, Color.white, corner + new Vector2(0f, -3f), new Vector2(20f, 20f));
+                }
+
+                // Damage and threat type stay live text with or without art.
                 string tag = slam ? "SLAM" : blast ? "BOOM" : fire ? "FIRE" : "HIT";
-                Icons.Label(view.Labels, tag, 16, fill.Dim(1.4f), new Vector2(0f, -CellSize * 0.5f + 14f), new Vector2(CellSize, 20f));
+                string tagColor = ColorUtility.ToHtmlStringRGB(fill.Dim(1.4f));
+                var threatLabel = Icons.Label(view.Labels, $"<color=#{tagColor}>{tag}</color> -{damage}", 22, Color.white,
+                    new Vector2(12f, labelY), new Vector2(96f, 30f));
+                threatLabel.alignment = TextAnchor.MiddleRight;
             }
             else if (armed)
             {
-                Icons.Shape(view.Overlay, Shapes.Rounded, Palette.Fuse.WithAlpha(0.14f), Vector2.zero, new Vector2(CellSize - 6f, CellSize - 6f));
+                if (Icons.TryArtImage(view.Overlay, ArtKeys.DangerOverlay(ThreatKind.BombArmed), CellSize) == null)
+                    Icons.Shape(view.Overlay, Shapes.Rounded, Palette.Fuse.WithAlpha(0.14f), Vector2.zero, new Vector2(CellSize - 6f, CellSize - 6f));
             }
 
-            if (summon)
+            if (summon && Icons.TryArtImage(view.Overlay, ArtKeys.DangerOverlay(ThreatKind.Summon), CellSize) == null)
             {
                 Icons.Shape(view.Overlay, Shapes.Ring, Palette.Summon, Vector2.zero, new Vector2(CellSize - 20f, CellSize - 20f));
                 Icons.Label(view.Labels, "+", 40, Palette.Summon, Vector2.zero, new Vector2(40f, 40f));
@@ -287,7 +304,7 @@ namespace ClickDungeon.Unity.Screens
         {
             var alive = new HashSet<int> { HeroTokenId };
             UpsertToken(HeroTokenId, "hero:" + run.Hero.Guard, run.Hero.Pos, animate,
-                body => Icons.Hero(body, run.Hero.Guard), null, null, 0, 0);
+                body => Icons.Hero(body, run.Hero.Guard), null, null, null, 0, 0);
 
             foreach (var enemy in run.Floor.Enemies)
             {
@@ -296,7 +313,8 @@ namespace ClickDungeon.Unity.Screens
                 var def = catalog.Enemy(enemy.DefId);
                 var e = enemy;
                 UpsertToken(enemy.Id, def.Id + ":" + enemy.Mode, enemy.Pos, animate,
-                    body => Icons.Enemy(body, def, e.Mode), Lines.IntentBadge(enemy, def), BadgeColor(enemy.Intent.Kind), enemy.Hp, enemy.MaxHp);
+                    body => Icons.Enemy(body, def, e.Mode), Lines.IntentBadge(enemy, def), ArtKeys.IntentIcon(enemy.Intent.Kind),
+                    BadgeColor(enemy.Intent.Kind), enemy.Hp, enemy.MaxHp);
             }
 
             var dead = new List<int>();
@@ -324,7 +342,7 @@ namespace ClickDungeon.Unity.Screens
         }
 
         void UpsertToken(int id, string visualKey, GridPos pos, bool animate, Action<RectTransform> draw,
-            string badge, Color? badgeColor, int hp, int maxHp)
+            string badge, string badgeIconKey, Color? badgeColor, int hp, int maxHp)
         {
             if (!_tokens.TryGetValue(id, out var token))
             {
@@ -354,6 +372,13 @@ namespace ClickDungeon.Unity.Screens
             {
                 token.Badge.text = badge;
                 token.BadgeBack.color = badgeColor ?? Palette.NavyLight;
+
+                // Intent icon art sits at the left of the pill; the text stays so the badge never relies on the icon alone.
+                bool hasIcon = Art.TryGetSprite(badgeIconKey, out var iconSprite);
+                token.BadgeIcon.gameObject.SetActive(hasIcon);
+                if (hasIcon) token.BadgeIcon.sprite = iconSprite;
+                token.BadgeBack.rectTransform.sizeDelta = new Vector2(hasIcon ? 128f : 104f, 30f);
+                token.Badge.rectTransform.Stretch(hasIcon ? 30f : 0f, 0f, hasIcon ? 6f : 0f, 0f);
             }
 
             token.HpBack.gameObject.SetActive(maxHp > 0);
@@ -374,6 +399,10 @@ namespace ClickDungeon.Unity.Screens
             badge.rectTransform.Stretch();
             badge.horizontalOverflow = HorizontalWrapMode.Overflow;
             UiFactory.Outline(badge, new Color(0f, 0f, 0f, 0.7f), 1f);
+            var badgeIcon = UiFactory.Image(badgeBack.rectTransform, "Icon", Color.white, null);
+            badgeIcon.preserveAspect = true;
+            badgeIcon.rectTransform.Place(new Vector2(0f, 0.5f), Center, new Vector2(17f, 0f), new Vector2(26f, 26f));
+            badgeIcon.gameObject.SetActive(false);
 
             var hpBack = UiFactory.Image(rt, "HpBack", Palette.HpBack, null);
             hpBack.rectTransform.Place(Center, Center, new Vector2(0f, -CellSize * 0.5f + 12f), new Vector2(84f, 10f));
@@ -383,7 +412,7 @@ namespace ClickDungeon.Unity.Screens
             hpFill.rectTransform.offsetMin = Vector2.zero;
             hpFill.rectTransform.offsetMax = Vector2.zero;
 
-            return new Token { Rect = rt, Body = body, BadgeBack = badgeBack, Badge = badge, HpBack = hpBack.rectTransform, HpFill = hpFill.rectTransform };
+            return new Token { Rect = rt, Body = body, BadgeBack = badgeBack, BadgeIcon = badgeIcon, Badge = badge, HpBack = hpBack.rectTransform, HpFill = hpFill.rectTransform };
         }
 
         static Color BadgeColor(IntentKind kind)
