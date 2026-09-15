@@ -535,6 +535,8 @@ namespace ClickDungeon.Unity.Screens
                 sb.AppendLine(hero.ShieldCooldown > 0 ? $"Shield recharging: {hero.ShieldCooldown}" : "Shield ready.");
                 sb.AppendLine(hero.DashCooldown > 0 ? $"Dash recharging: {hero.DashCooldown}" : "Dash ready.");
                 sb.AppendLine("Tap him to wait a turn.");
+                var underfoot = UnderfootText(cell, floor);
+                if (underfoot != null) sb.AppendLine(underfoot);
             }
             else if (enemy != null && enemy.Awake)
             {
@@ -542,6 +544,8 @@ namespace ClickDungeon.Unity.Screens
                 title = def.DisplayName.ToUpperInvariant();
                 sb.AppendLine($"HP {enemy.Hp}/{enemy.MaxHp}");
                 sb.AppendLine(Lines.IntentExplain(enemy, def));
+                var underfoot = UnderfootText(cell, floor);
+                if (underfoot != null) sb.AppendLine(underfoot);
             }
             else if (cell.Terrain == Terrain.Wall)
             {
@@ -609,6 +613,20 @@ namespace ClickDungeon.Unity.Screens
 
             _inspectTitle.text = title;
             _inspectBody.text = sb.ToString();
+        }
+
+        static string UnderfootText(CellState cell, FloorState floor)
+        {
+            if (cell.Knowledge != Knowledge.Revealed) return null;
+            if (cell.Hazard == HazardKind.Spikes) return "Standing on spikes. They only hurt when stepped onto.";
+            if (cell.BombArmed)
+                return cell.BombFuse == 0
+                    ? "<color=#FF9A2E>Standing on an armed bomb: it explodes after the next action!</color>"
+                    : "<color=#FF9A2E>Standing on an armed bomb: it explodes in two turns.</color>";
+            if (cell.IsExit)
+                return floor.ExitUnlocked ? "Standing on the open exit."
+                    : floor.IsBossFloor ? "Standing on the sealed exit." : "Standing on the locked exit.";
+            return null;
         }
 
         // ------------------------------------------------------------------ layout

@@ -160,6 +160,11 @@ namespace ClickDungeon.Unity.Screens
                 DrawCell(view, floor, cell, p);
                 DrawThreats(view, threatKinds[p.Index], damage[p.Index]);
 
+                // A token hides the tile art beneath it, so repeat a hazard or exit underfoot as a badge above the token.
+                bool occupied = run.Hero.Pos == p || floor.EnemyAt(p)?.Awake == true;
+                if (occupied && cell.Knowledge == Knowledge.Revealed && (cell.Hazard != HazardKind.None || cell.IsExit))
+                    Icons.Underfoot(Icons.Group(view.Labels, new Vector2(-CellSize * 0.5f + 22f, 0f)), cell, floor.ExitUnlocked);
+
                 bool isLegal = legal != null && legal.Contains(p);
                 bool isHover = hover.HasValue && hover.Value == p;
                 view.Highlight.enabled = isLegal || isHover;

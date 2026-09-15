@@ -135,6 +135,32 @@ namespace ClickDungeon.Unity.Ui
             }
         }
 
+        /// <summary>Small badge for a hazard or exit that an actor's token is covering.</summary>
+        public static void Underfoot(Transform t, CellState cell, bool exitUnlocked)
+        {
+            var ring = cell.BombArmed ? Palette.Fuse : Palette.GoldDark;
+            Shape(t, Shapes.Circle, Palette.Navy, Vector2.zero, new Vector2(42f, 42f));
+            Shape(t, Shapes.Ring, ring, Vector2.zero, new Vector2(44f, 44f));
+
+            if (cell.Hazard == HazardKind.Spikes)
+            {
+                Shape(t, Shapes.Triangle, Palette.Steel, new Vector2(-9f, -4f), new Vector2(11f, 18f));
+                Shape(t, Shapes.Triangle, Palette.Steel, new Vector2(0f, 3f), new Vector2(11f, 20f));
+                Shape(t, Shapes.Triangle, Palette.Steel, new Vector2(9f, -4f), new Vector2(11f, 18f));
+            }
+            else if (cell.Hazard == HazardKind.Bomb)
+            {
+                Shape(t, Shapes.Circle, Palette.Bomb, new Vector2(-2f, -3f), new Vector2(22f, 22f));
+                Shape(t, Shapes.Circle, Palette.Fuse, new Vector2(8f, 9f), new Vector2(8f, 8f));
+            }
+            else if (cell.IsExit)
+            {
+                for (int i = 0; i < 3; i++)
+                    Shape(t, Shapes.Square, Palette.StoneLight, new Vector2(-2f, 7f - i * 7f), new Vector2(22f - i * 5f, 4f));
+                if (!exitUnlocked) Shape(t, Shapes.Rounded, Palette.Gold, new Vector2(9f, -8f), new Vector2(12f, 11f));
+            }
+        }
+
         public static void Clues(Transform t, Clue clue)
         {
             var marks = new List<(Sprite sprite, Color color, string glyph)>();
