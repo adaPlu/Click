@@ -187,6 +187,15 @@ namespace ClickDungeon.Unity.Ui
         public const string UnderfootExitLocked = "icon_underfoot_exit_locked";
         public const string UnderfootExitOpen = "icon_underfoot_exit_open";
 
+        public const string FxSpikesTrigger = "fx_spikes_trigger";
+        public const string FxExplosion = "fx_explosion";
+        public const string FxKeyCollect = "fx_key_collect";
+        public const string FxPotionCollect = "fx_potion_collect";
+        public const string FxExitUnlock = "fx_exit_unlock";
+        public const string FxEnemyWake = "fx_enemy_wake";
+        /// <summary>Looping fuse drawn over an armed bomb tile.</summary>
+        public const string BombFuse = "fx_bomb_fuse";
+
         /// <summary>Sir Clickington's chest reactions, in order: overlay opens, burst, then two beats after it.</summary>
         public static readonly string[] ChestReactionSteps = { "anticipation", "reveal", "heavy", "triumph" };
 
@@ -333,6 +342,7 @@ namespace ClickDungeon.Unity.Ui
             foreach (var step in ChestReactionSteps) keys.Add(ChestReaction(step));
             foreach (var kind in RewardKinds) keys.Add(RewardIcon(kind));
             keys.AddRange(new[] { UnderfootSpikes, UnderfootBomb, UnderfootBombArmed, UnderfootExitLocked, UnderfootExitOpen });
+            keys.AddRange(new[] { FxSpikesTrigger, FxExplosion, FxKeyCollect, FxPotionCollect, FxExitUnlock, FxEnemyWake, BombFuse });
             keys.Add(Actor(HeroId, "guard"));
             foreach (var animation in HeroAnimations) keys.Add(Actor(HeroId, animation));
             foreach (var enemy in catalog.Enemies.Values)

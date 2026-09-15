@@ -66,6 +66,7 @@ namespace ClickDungeon.Unity.Screens
         readonly CellParts[] _cells = new CellParts[BoardRules.CellCount];
         readonly Dictionary<int, Token> _tokens = new Dictionary<int, Token>();
         Dictionary<int, ActorAnimations.Cue> _pendingCues;
+        List<BoardFx.Effect> _pendingFx;
         ContentCatalog _catalog;
 
         public BoardView(RectTransform parent, MonoBehaviour host, Vector2 position)
@@ -140,9 +141,12 @@ namespace ClickDungeon.Unity.Screens
             return new CellParts { Rect = rt, Base = baseImage, Edge = edge, Icons = icons, Overlay = overlay, Labels = labels, Highlight = highlight };
         }
 
-        /// <summary>Action animations for the next Render, chosen from the events of the turn that just resolved.</summary>
-        public void QueueActorAnimations(RunState run, IReadOnlyList<GameEvent> events) =>
+        /// <summary>Action animations and board effects for the next Render, chosen from the turn that just resolved.</summary>
+        public void QueueActorAnimations(RunState run, IReadOnlyList<GameEvent> events)
+        {
             _pendingCues = ActorAnimations.Pick(run, events);
+            _pendingFx = BoardFx.Pick(events);
+        }
 
         public void Render(RunState run, ContentCatalog catalog, List<Threat> threats, HashSet<GridPos> legal, bool strongHighlight,
             GridPos? hover, bool animate)
@@ -196,6 +200,7 @@ namespace ClickDungeon.Unity.Screens
 
             RenderTokens(run, catalog, animate);
             PlayPendingCues();
+            PlayPendingFx();
         }
 
         void DrawCell(CellParts view, FloorState floor, CellState cell, GridPos p)
@@ -482,6 +487,30 @@ namespace ClickDungeon.Unity.Screens
             var animator = image.gameObject.AddComponent<SpriteFrameAnimator>();
             animator.PlayOnce(image, entry.Frames, entry.Fps, hold ? (Action)null : () => StopCue(token));
             return entry.Frames.Length / Mathf.Max(1f, entry.Fps);
+        }
+
+        void PlayPendingFx()
+        {
+            if (_pendingFx == null) return;
+            var effects = _pendingFx;
+            _pendingFx = null;
+            foreach (var effect in effects) PlayFx(effect);
+        }
+
+        /// <summary>
+        /// One-shot board effect on the FX layer, below popups, when art exists. Reduced Motion skips effects:
+        /// popups and the log still say what happened.
+        /// </summary>
+        void PlayFx(BoardFx.Effect effect)
+        {
+            if (UserPrefs.ReducedMotion || !effect.Cell.InBounds || !Art.TryGet(effect.Key, out var entry)) return;
+            float size = effect.Tiles * CellSize + (effect.Tiles - 1) * Gap;
+            var image = UiFactory.Image(_fxLayer, "FX " + entry.Key, Color.white, entry.Frames[0]);
+            image.preserveAspect = true;
+            image.rectTransform.Place(Center, Center, CellPosition(effect.Cell), new Vector2(size, size));
+            image.transform.SetAsFirstSibling();
+            var animator = image.gameObject.AddComponent<SpriteFrameAnimator>();
+            animator.PlayOnce(image, entry.Frames, entry.Fps, () => UiFactory.SafeDestroy(image.gameObject));
         }
 
         static void StopCue(Token token)

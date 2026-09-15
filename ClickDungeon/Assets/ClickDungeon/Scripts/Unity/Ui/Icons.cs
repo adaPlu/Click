@@ -128,6 +128,7 @@ namespace ClickDungeon.Unity.Ui
                 Shape(t, Shapes.Square, Palette.StoneLight, new Vector2(20f, 28f), new Vector2(10f, 20f), -35f);
                 Shape(t, Shapes.Circle, Palette.Fuse, new Vector2(28f, 40f), new Vector2(18f, 18f));
             }
+            if (armed) TryArt(t, ArtKeys.BombFuse, TileSize);
             // The fuse state is gameplay information, so it stays as live text even with art.
             if (armed) Label(t, fuse <= 0 ? "BOOM!" : "ARMED", 20, Palette.Fuse, new Vector2(0f, -50f), new Vector2(120f, 24f));
         }
