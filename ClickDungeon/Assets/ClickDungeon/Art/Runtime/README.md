@@ -44,5 +44,7 @@ reference slice or procedural placeholder.
 - Chest overlay: `ui_chest_large_<closed|open>`, `fx_chest_glow`, `ui_chest_progress_<back|fill>`, `ui_chest_reward_card`
 - Title: `ui_title_<hero_card|tagline_plank|banner|continue_panel|howto_panel|hero|blobert|goblin>`, `ui_continue_preview`,
   `ui_button_<play|title_settings|quit>`, `ui_icon_<play|settings|quit>`
+- Chest reward sequence: `ui_chest_reaction_<anticipation|reveal|heavy|triumph>`, `icon_reward_<potion|maxhp|slashdamage>`,
+  `fx_chest_<rays|coin|gem|shimmer>`
 - Portraits: `portrait_sir_clickington_<neutral|happy|confident|worried|shocked|angry|victorious|defeated>`
 - Screens: `logo_clickdungeon`, `bg_gameplay`, `bg_title`

@@ -176,6 +176,16 @@ namespace ClickDungeon.Unity.Ui
 
         public static readonly string[] ModalStyles = { "victory", "defeat" };
 
+        public const string ChestRays = "fx_chest_rays";
+        public const string ChestCoin = "fx_chest_coin";
+        public const string ChestGem = "fx_chest_gem";
+        public const string ChestShimmer = "fx_chest_shimmer";
+
+        /// <summary>Sir Clickington's chest reactions, in order: overlay opens, burst, then two beats after it.</summary>
+        public static readonly string[] ChestReactionSteps = { "anticipation", "reveal", "heavy", "triumph" };
+
+        public static readonly RewardKind[] RewardKinds = { RewardKind.Potion, RewardKind.MaxHp, RewardKind.SlashDamage };
+
         public static readonly CommandKind[] AbilityKinds =
             { CommandKind.Move, CommandKind.Slash, CommandKind.Shield, CommandKind.Dash, CommandKind.Potion };
 
@@ -198,6 +208,34 @@ namespace ClickDungeon.Unity.Ui
         public static string ClueIcon(Clue flag) => $"icon_clue_{flag.ToString().ToLowerInvariant()}";
 
         public static string AbilityIcon(CommandKind kind) => $"icon_ability_{kind.ToString().ToLowerInvariant()}";
+
+        public static string ChestReaction(string step) => $"ui_chest_reaction_{step}";
+
+        /// <summary>Portrait expression shown in a frame when a reaction pose has no art.</summary>
+        public static string ChestReactionFallback(string step)
+        {
+            switch (step)
+            {
+                case "anticipation": return "confident";
+                case "reveal": return "shocked";
+                case "heavy": return "worried";
+                default: return "victorious";
+            }
+        }
+
+        /// <summary>Reward card icon, e.g. icon_reward_maxhp.</summary>
+        public static string RewardIcon(RewardKind kind) => $"icon_reward_{kind.ToString().ToLowerInvariant()}";
+
+        /// <summary>Existing art to use when a reward has no icon of its own.</summary>
+        public static string RewardIconFallback(RewardKind kind)
+        {
+            switch (kind)
+            {
+                case RewardKind.Potion: return Potion;
+                case RewardKind.MaxHp: return Heart;
+                default: return AbilityIcon(CommandKind.Slash);
+            }
+        }
 
         /// <summary>Styled modal panel, e.g. ui_modal_panel_victory; falls back to ui_modal_panel.</summary>
         public static string ModalPanelStyle(string style) => $"ui_modal_panel_{style.ToLowerInvariant()}";
@@ -263,6 +301,9 @@ namespace ClickDungeon.Unity.Ui
                 TitleHero, TitleBlobert, TitleGoblin, ButtonPlay, ButtonTitleSettings, ButtonQuit, PlayIcon, SettingsIcon, QuitIcon,
             });
             foreach (var style in ModalStyles) keys.Add(ModalPanelStyle(style));
+            keys.AddRange(new[] { ChestRays, ChestCoin, ChestGem, ChestShimmer });
+            foreach (var step in ChestReactionSteps) keys.Add(ChestReaction(step));
+            foreach (var kind in RewardKinds) keys.Add(RewardIcon(kind));
             return keys;
         }
     }

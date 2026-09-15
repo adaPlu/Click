@@ -176,6 +176,10 @@ namespace ClickDungeon.Unity.Screens
                 case "pause": OpenPause(); break;
                 case "help": OpenHelp(); break;
                 case "chest": _chest.Open(new RewardRecord { Kind = RewardKind.Potion, Amount = 1 }, null); break;
+                case "chestburst":
+                    _chest.Open(new RewardRecord { Kind = RewardKind.MaxHp, Amount = 2 }, null);
+                    for (int i = 0; i < 3; i++) _chest.Tap();
+                    break;
                 case "victory":
                     _modal.Show(ModalStyle.Victory, "VICTORY!", "Screenshot preview of the victory panel.", () => { },
                         Menus.B("NEW RUN", Palette.PlayGreen, () => { }), Menus.B("TITLE", Palette.NavyLight, () => { }));

@@ -222,7 +222,11 @@ namespace ClickDungeon.Unity.Screens
                     if (cell.Hazard == HazardKind.Spikes) Icons.Spikes(view.Icons);
                     else if (cell.Hazard == HazardKind.Bomb) Icons.Bomb(view.Icons, cell.BombArmed, cell.BombFuse);
                     if (cell.Content == ContentKind.Key) Icons.Key(view.Icons);
-                    else if (cell.Content == ContentKind.Chest) Icons.Chest(view.Icons, cell.ChestOpened);
+                    else if (cell.Content == ContentKind.Chest)
+                    {
+                        Icons.Chest(view.Icons, cell.ChestOpened);
+                        if (!cell.ChestOpened) Icons.TryArt(view.Icons, ArtKeys.ChestShimmer, CellSize);
+                    }
                     else if (cell.Content == ContentKind.Potion) Icons.Potion(view.Icons);
                     break;
                 case Knowledge.Sensed:

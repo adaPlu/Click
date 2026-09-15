@@ -68,7 +68,7 @@
 
     { "key": "logo_clickdungeon", "source": "ref3-tiles-a", "rect": [30, 22, 430, 80], "mode": "logo", "tolerance": 40, "size": 1024, "folder": "UI", "wired": true },
 
-    { "key": "ui_icon_heart", "source": "ref2-gameplay", "rect": [640, 18, 48, 42], "mode": "icon", "tolerance": 45, "size": 128, "folder": "UI", "wired": true },
+    { "key": "ui_icon_heart", "source": "ref2-gameplay", "rect": [640, 18, 42, 42], "mode": "icon", "tolerance": 45, "largest_only": true, "size": 128, "folder": "UI", "wired": true },
     { "key": "ui_icon_mana", "source": "ref2-gameplay", "rect": [640, 68, 45, 42], "mode": "icon", "size": 128, "folder": "UI" },
     { "key": "ui_icon_gold", "source": "ref2-gameplay", "rect": [993, 18, 40, 40], "mode": "icon", "size": 128, "folder": "UI" },
     { "key": "ui_icon_gem", "source": "ref2-gameplay", "rect": [990, 70, 40, 38], "mode": "icon", "size": 128, "folder": "UI" },

@@ -147,6 +147,12 @@ namespace ClickDungeon.Unity.Screens
         readonly RectTransform _rewardCard;
         readonly Text _rewardText;
         readonly RectTransform _sparkles;
+        readonly Image _rays;
+        readonly RectTransform _reaction;
+        readonly Image _reactionImage;
+        readonly Image _reactionFrame;
+        readonly Image _rewardIcon;
+        Coroutine _sequence;
         int _taps;
         bool _burst;
         Action _onClosed;
@@ -168,11 +174,24 @@ namespace ClickDungeon.Unity.Screens
             glow.rectTransform.Place(Center, Center, new Vector2(0f, 60f), new Vector2(620f, 620f));
             UiArt.Apply(glow, ArtKeys.ChestGlow);
 
+            _rays = UiFactory.Image(_root, "Rays", Color.white, null);
+            _rays.rectTransform.Place(Center, Center, new Vector2(0f, 60f), new Vector2(760f, 760f));
+            _rays.gameObject.SetActive(false);
+
             _sparkles = UiFactory.Rect(_root, "Sparkles");
             _sparkles.Place(Center, Center, new Vector2(0f, 60f), new Vector2(10f, 10f));
 
             _chest = UiFactory.Rect(_root, "Chest");
             _chest.Place(Center, Center, new Vector2(0f, 60f), new Vector2(10f, 10f));
+
+            // Sir Clickington reacts beside the chest (art brief §9); a framed portrait stands in for missing poses.
+            _reaction = UiFactory.Rect(_root, "Reaction");
+            _reaction.Place(Center, Center, new Vector2(400f, 70f), new Vector2(260f, 260f));
+            _reactionImage = UiFactory.Image(_reaction, "Pose", Color.white, null);
+            _reactionImage.rectTransform.Stretch();
+            _reactionFrame = UiFactory.Image(_reaction, "Frame", Palette.Gold, Shapes.Frame, true);
+            _reactionFrame.rectTransform.Stretch(-6, -6, -6, -6);
+            _reaction.gameObject.SetActive(false);
 
             var progressBack = UiFactory.Image(_root, "ProgressBack", Palette.StoneDark, Shapes.Rounded, true);
             UiArt.Apply(progressBack, ArtKeys.ChestProgressBack);
@@ -197,6 +216,9 @@ namespace ClickDungeon.Unity.Screens
             _rewardText = UiFactory.Text(_rewardCard, "Text", "", 52, Palette.Gold, TextAnchor.MiddleCenter, FontStyle.Bold);
             _rewardText.rectTransform.Stretch();
             UiFactory.Shadow(_rewardText, new Color(0f, 0f, 0f, 0.8f), 3f);
+            _rewardIcon = UiFactory.Image(_rewardCard, "Icon", Color.white, null);
+            _rewardIcon.rectTransform.Place(new Vector2(0f, 0.5f), Center, new Vector2(70f, 0f), new Vector2(96f, 96f));
+            _rewardIcon.gameObject.SetActive(false);
 
             _prompt = UiFactory.Text(_root, "Prompt", "", 38, Palette.TextLight, TextAnchor.MiddleCenter, FontStyle.Bold);
             _prompt.rectTransform.Place(Center, Center, new Vector2(0f, -320f), new Vector2(900f, 60f));
@@ -217,6 +239,9 @@ namespace ClickDungeon.Unity.Screens
             _progressBack.gameObject.SetActive(true);
             _progressFill.anchorMax = new Vector2(0f, 1f);
             _rewardCard.gameObject.SetActive(false);
+            _rays.gameObject.SetActive(false);
+            StopSequence();
+            ShowReaction("anticipation");
             _prompt.text = $"TAP TO OPEN  (0/{RequiredTaps})";
             _root.SetAsLastSibling();
             _root.gameObject.SetActive(true);
@@ -227,6 +252,7 @@ namespace ClickDungeon.Unity.Screens
             if (!IsOpen) return;
             if (_burst)
             {
+                StopSequence();
                 _root.gameObject.SetActive(false);
                 var closed = _onClosed;
                 _onClosed = null;
@@ -247,26 +273,98 @@ namespace ClickDungeon.Unity.Screens
             DrawChest(true);
             _progressBack.gameObject.SetActive(false);
             _rewardText.text = Lines.RewardText(_reward);
+            bool hasIcon = TryRewardIcon(_reward, out var rewardIcon);
+            _rewardIcon.gameObject.SetActive(hasIcon);
+            if (hasIcon) SetSprite(_rewardIcon, rewardIcon);
+            _rewardText.rectTransform.Stretch(hasIcon ? 120f : 0f, 0f, 0f, 0f);
             _rewardCard.gameObject.SetActive(true);
             _host.StartCoroutine(Tween.FadeScale(_rewardCard, _rewardCard.GetComponent<CanvasGroup>(), 0.6f, 0.22f));
             _prompt.text = "TAP TO COLLECT";
 
-            if (UserPrefs.ReducedMotion) return;
+            if (Art.TryGetSprite(ArtKeys.ChestRays, out var rays))
+            {
+                SetSprite(_rays, rays);
+                _rays.gameObject.SetActive(true);
+            }
+
+            if (UserPrefs.ReducedMotion)
+            {
+                ShowReaction("triumph");
+                return;
+            }
+            ShowReaction("reveal");
+            _sequence = _host.StartCoroutine(RewardReactions());
             var rng = new System.Random();
             for (int i = 0; i < 14; i++)
             {
                 float angle = i / 14f * Mathf.PI * 2f;
-                var sprite = i % 3 == 0 ? Shapes.Diamond : Shapes.Circle;
+                bool gem = i % 3 == 0;
+                var sprite = gem ? Shapes.Diamond : Shapes.Circle;
                 var color = i % 4 == 0 ? Palette.Summon : Palette.Gold;
                 var spark = Icons.Shape(_sparkles, sprite, color, Vector2.zero, new Vector2(26f, 26f));
+                if (Art.TryGetSprite(gem ? ArtKeys.ChestGem : ArtKeys.ChestCoin, out var particle))
+                {
+                    SetSprite(spark, particle);
+                    spark.rectTransform.sizeDelta = new Vector2(40f, 40f);
+                }
                 var offset = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * (220f + (float)rng.NextDouble() * 120f);
                 _host.StartCoroutine(Tween.FlyOut(spark.rectTransform, offset, 0.7f));
             }
         }
 
+        System.Collections.IEnumerator RewardReactions()
+        {
+            yield return new WaitForSecondsRealtime(0.45f);
+            if (!IsOpen || !_burst) yield break;
+            ShowReaction("heavy");
+            yield return new WaitForSecondsRealtime(0.45f);
+            if (!IsOpen || !_burst) yield break;
+            ShowReaction("triumph");
+            _sequence = null;
+        }
+
+        void StopSequence()
+        {
+            if (_sequence == null) return;
+            _host.StopCoroutine(_sequence);
+            _sequence = null;
+        }
+
+        void ShowReaction(string step)
+        {
+            bool pose = Art.TryGetSprite(ArtKeys.ChestReaction(step), out var sprite);
+            bool portrait = !pose && Art.TryGetSprite(ArtKeys.Portrait(ArtKeys.HeroId, ArtKeys.ChestReactionFallback(step)), out sprite);
+            _reaction.gameObject.SetActive(pose || portrait);
+            if (!pose && !portrait) return;
+            SetSprite(_reactionImage, sprite);
+            _reactionFrame.enabled = portrait;
+        }
+
+        static bool TryRewardIcon(RewardRecord reward, out Sprite icon)
+        {
+            icon = null;
+            if (reward == null) return false;
+            return Art.TryGetSprite(ArtKeys.RewardIcon(reward.Kind), out icon)
+                   || Art.TryGetSprite(ArtKeys.RewardIconFallback(reward.Kind), out icon);
+        }
+
+        static void SetSprite(Image image, Sprite sprite)
+        {
+            image.sprite = sprite;
+            image.color = Color.white;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
+        }
+
         void DrawChest(bool opened)
         {
-            foreach (Transform child in _chest) UnityEngine.Object.Destroy(child.gameObject);
+            for (int i = _chest.childCount - 1; i >= 0; i--)
+            {
+                var child = _chest.GetChild(i).gameObject;
+                // DestroyImmediate outside play mode keeps edit-mode tests and tools from logging errors.
+                if (UnityEngine.Application.isPlaying) UnityEngine.Object.Destroy(child);
+                else UnityEngine.Object.DestroyImmediate(child);
+            }
             if (!Icons.TryArt(_chest, opened ? ArtKeys.ChestLargeOpen : ArtKeys.ChestLargeClosed, Icons.TileSize * 3.2f))
                 Icons.Chest(_chest, opened, 3.2f);
         }

@@ -147,6 +147,40 @@ def remove_background(image: Image.Image, tolerance: int, local_tolerance: int =
     return rgba.crop(bbox) if bbox else rgba
 
 
+def keep_largest_component(image: Image.Image, alpha_threshold: int = 16) -> Image.Image:
+    """Clears every opaque island except the largest one (stray specks beside a cut-out), then trims."""
+    rgba = image.convert("RGBA")
+    w, h = rgba.size
+    px = rgba.load()
+    label = [0] * (w * h)
+    sizes = [0]
+    for y in range(h):
+        for x in range(w):
+            if label[y * w + x] or px[x, y][3] <= alpha_threshold:
+                continue
+            current = len(sizes)
+            sizes.append(0)
+            label[y * w + x] = current
+            queue = deque([(x, y)])
+            while queue:
+                cx, cy = queue.popleft()
+                sizes[current] += 1
+                for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+                    if 0 <= nx < w and 0 <= ny < h and not label[ny * w + nx] and px[nx, ny][3] > alpha_threshold:
+                        label[ny * w + nx] = current
+                        queue.append((nx, ny))
+    if len(sizes) <= 2:
+        return rgba
+    keep = max(range(1, len(sizes)), key=lambda i: sizes[i])
+    for y in range(h):
+        for x in range(w):
+            if label[y * w + x] not in (0, keep):
+                r, g, b, _ = px[x, y]
+                px[x, y] = (r, g, b, 0)
+    bbox = rgba.getchannel("A").getbbox()
+    return rgba.crop(bbox) if bbox else rgba
+
+
 def cover(image: Image.Image, width: int, height: int) -> Image.Image:
     scale = max(width / image.width, height / image.height)
     resized = image.resize((max(1, round(image.width * scale)), max(1, round(image.height * scale))), Image.LANCZOS)
@@ -184,6 +218,8 @@ def render(crop: Image.Image, spec: dict) -> Image.Image:
         return contain(cleaned, size, spec.get("anchor", "bottom"))
     if mode == "icon":
         source = remove_background(crop, int(spec["tolerance"])) if "tolerance" in spec else crop
+        if spec.get("largest_only"):
+            source = keep_largest_component(source)
         return contain(source, size, "center")
     raise ValueError(f"Unknown mode '{mode}' for {spec.get('key')}")
 
@@ -306,6 +342,12 @@ def self_test() -> int:
         assert result["missing_sources"] == ["nope"], result["missing_sources"]
         assert len(result["written"]) == 2
         assert (temp / "sheet.png").exists()
+
+        speck = Image.new("RGBA", (40, 40), (0, 0, 0, 0))
+        ImageDraw.Draw(speck).ellipse([2, 2, 30, 30], fill=(255, 0, 0, 255))
+        speck.putpixel((37, 37), (120, 0, 0, 255))
+        cleaned = keep_largest_component(speck)
+        assert cleaned.size == (29, 29), cleaned.size
     print("self-test passed")
     return 0
 
