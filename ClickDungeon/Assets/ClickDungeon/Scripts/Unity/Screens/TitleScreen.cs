@@ -79,6 +79,13 @@ namespace ClickDungeon.Unity.Screens
 
         public void Flash(string message) => _flash.text = message;
 
+        /// <summary>Automation hook (screenshots): opens a title overlay without changing any state.</summary>
+        public void AutomationOverlay(string name)
+        {
+            if (name == "settings") Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting);
+            else if (name == "rules") _modal.Show("HOW TO PLAY", Menus.HelpText, _modal.Hide, Menus.B("GOT IT", Palette.PlayGreen, _modal.Hide));
+        }
+
         public void Tick()
         {
             if (!Root.gameObject.activeInHierarchy) return;
@@ -111,27 +118,50 @@ namespace ClickDungeon.Unity.Screens
 
         // ------------------------------------------------------------------ layout
 
+        static Image Panel(RectTransform rt, Color fill, Color edge, string artKey)
+        {
+            var back = UiFactory.Image(rt, "Back", fill, Shapes.Rounded, true);
+            back.rectTransform.Stretch();
+            var border = UiFactory.Image(rt, "Border", edge, Shapes.Frame, true);
+            border.rectTransform.Stretch();
+            UiArt.ApplyPanel(back, border, artKey);
+            return back;
+        }
+
+        /// <summary>Places the first key that has art at pos; false means the caller draws its placeholder.</summary>
+        static bool ArtAt(Transform parent, Vector2 pos, float size, params string[] keys)
+        {
+            foreach (var key in keys)
+                if (Icons.TryArtImage(parent, key, size, pos) != null)
+                    return true;
+            return false;
+        }
+
         void Banner(Vector2 pos, string text)
         {
             var rt = UiFactory.Rect(Root, "Banner");
             rt.Place(Center, Center, pos, new Vector2(180f, 540f));
-            UiFactory.Image(rt, "Back", Palette.Navy, Shapes.Rounded, true).rectTransform.Stretch(0, 0, 0, 40);
-            UiFactory.Image(rt, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch(0, 0, 0, 40);
-            var tail = Icons.Shape(rt, Shapes.Triangle, Palette.Navy, new Vector2(0f, -230f), new Vector2(180f, 80f), 180f);
-            tail.rectTransform.SetAsFirstSibling();
-            Icons.Shape(rt, Shapes.Square, Palette.GoldDark, new Vector2(0f, 236f), new Vector2(210f, 12f));
+            // Banner art is the cloth, rod and emblem; the slogan stays live text.
+            bool art = Icons.TryArtImage(rt, ArtKeys.TitleBanner, 540f) != null;
+            if (!art)
+            {
+                UiFactory.Image(rt, "Back", Palette.Navy, Shapes.Rounded, true).rectTransform.Stretch(0, 0, 0, 40);
+                UiFactory.Image(rt, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch(0, 0, 0, 40);
+                var tail = Icons.Shape(rt, Shapes.Triangle, Palette.Navy, new Vector2(0f, -230f), new Vector2(180f, 80f), 180f);
+                tail.rectTransform.SetAsFirstSibling();
+                Icons.Shape(rt, Shapes.Square, Palette.GoldDark, new Vector2(0f, 236f), new Vector2(210f, 12f));
+            }
             var label = UiFactory.Text(rt, "Text", text, 24, Palette.Gold.Dim(0.9f), TextAnchor.MiddleCenter, FontStyle.Bold);
             label.horizontalOverflow = HorizontalWrapMode.Overflow;
             label.rectTransform.Stretch(8, 20, 8, 80);
-            Icons.Crown(rt, new Vector2(0f, -170f), 0.9f);
+            if (!art) Icons.Crown(rt, new Vector2(0f, -170f), 0.9f);
         }
 
         void BuildHeroCard()
         {
             var card = UiFactory.Rect(Root, "HeroCard");
             card.Place(TopLeft, TopLeft, new Vector2(28f, -22f), new Vector2(430f, 136f));
-            UiFactory.Image(card, "Back", Palette.Navy.WithAlpha(0.95f), Shapes.Rounded, true).rectTransform.Stretch();
-            UiFactory.Image(card, "Border", Palette.GoldDark, Shapes.Frame, true).rectTransform.Stretch();
+            Panel(card, Palette.Navy.WithAlpha(0.95f), Palette.GoldDark, ArtKeys.TitleHeroCard);
 
             var portrait = UiFactory.Rect(card, "Portrait");
             portrait.Place(new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(14f, 0f), new Vector2(108f, 108f));
@@ -162,8 +192,7 @@ namespace ClickDungeon.Unity.Screens
 
             var plank = UiFactory.Rect(Root, "Tagline");
             plank.Place(TopCenter, TopCenter, new Vector2(40f, -250f), new Vector2(860f, 76f));
-            UiFactory.Image(plank, "Back", Palette.Stone, Shapes.Rounded, true).rectTransform.Stretch();
-            UiFactory.Image(plank, "Border", Palette.StoneLight, Shapes.Frame, true).rectTransform.Stretch();
+            Panel(plank, Palette.Stone, Palette.StoneLight, ArtKeys.TitlePlank);
             var text = UiFactory.Text(plank, "Text", "EXPLORE.   SURVIVE.   LOOT.   REPEAT.", 36, Palette.Parchment, TextAnchor.MiddleCenter, FontStyle.Bold);
             text.rectTransform.Stretch();
             UiFactory.Shadow(text, Color.black, 2f);
@@ -173,6 +202,7 @@ namespace ClickDungeon.Unity.Screens
         {
             // Lord Blobert lounging on his gold.
             var blob = Icons.Group(Root, new Vector2(-470f, -300f));
+            if (ArtAt(Root, new Vector2(-470f, -290f), 420f, ArtKeys.TitleBlobert, ArtKeys.Actor("lord_blobert"))) blob.gameObject.SetActive(false);
             for (int i = 0; i < 7; i++)
                 Icons.Shape(blob, Shapes.Circle, Palette.Gold.Dim(0.8f + i * 0.04f), new Vector2(-120f + i * 40f, -120f + (i % 2) * 8f), new Vector2(46f, 26f));
             Icons.Shape(blob, Shapes.Circle, Palette.Boss, Vector2.zero, new Vector2(300f, 240f));
@@ -190,6 +220,7 @@ namespace ClickDungeon.Unity.Screens
 
             // A goblin peeking over a chest.
             var goblin = Icons.Group(Root, new Vector2(640f, -330f));
+            if (ArtAt(Root, new Vector2(640f, -330f), 320f, ArtKeys.TitleGoblin)) goblin.gameObject.SetActive(false);
             Icons.Shape(goblin, Shapes.Triangle, Palette.Goblin.Dim(0.8f), new Vector2(-80f, 40f), new Vector2(70f, 50f), 70f);
             Icons.Shape(goblin, Shapes.Triangle, Palette.Goblin.Dim(0.8f), new Vector2(80f, 40f), new Vector2(70f, 50f), -70f);
             Icons.Shape(goblin, Shapes.Circle, Palette.Goblin, new Vector2(0f, 20f), new Vector2(150f, 140f));
@@ -201,6 +232,7 @@ namespace ClickDungeon.Unity.Screens
 
             // Sir Clickington under the arch.
             var knight = Icons.Group(Root, new Vector2(0f, -200f));
+            if (ArtAt(Root, new Vector2(0f, -190f), 600f, ArtKeys.TitleHero, ArtKeys.Actor(ArtKeys.HeroId))) knight.gameObject.SetActive(false);
             Icons.Shape(knight, Shapes.Rounded, Palette.Hp.Dim(0.8f), new Vector2(-30f, -60f), new Vector2(300f, 320f), 8f);
             Icons.Shape(knight, Shapes.Rounded, Palette.Steel, new Vector2(0f, -80f), new Vector2(210f, 230f));
             Icons.Shape(knight, Shapes.Rounded, Palette.Hp, new Vector2(0f, 10f), new Vector2(190f, 40f));
@@ -235,21 +267,23 @@ namespace ClickDungeon.Unity.Screens
         {
             var panel = UiFactory.Rect(Root, "Continue");
             panel.Place(Center, Center, new Vector2(-560f, 150f), new Vector2(400f, 340f));
-            UiFactory.Image(panel, "Back", Palette.Navy.WithAlpha(0.96f), Shapes.Rounded, true).rectTransform.Stretch();
-            UiFactory.Image(panel, "Border", Palette.Gold, Shapes.Frame, true).rectTransform.Stretch();
+            var back = Panel(panel, Palette.Navy.WithAlpha(0.96f), Palette.Gold, ArtKeys.TitleContinuePanel);
             var button = panel.gameObject.AddComponent<Button>();
-            button.targetGraphic = panel.GetComponentInChildren<Image>();
+            button.targetGraphic = back;
             button.onClick.AddListener(() => _app.ContinueRun());
 
             var title = UiFactory.Text(panel, "Title", "CONTINUE", 44, Palette.TextLight, TextAnchor.MiddleCenter, FontStyle.Bold);
             title.rectTransform.Place(TopCenter, TopCenter, new Vector2(0f, -12f), new Vector2(380f, 60f));
             UiFactory.Shadow(title, Color.black, 2f);
 
-            var doorway = Icons.Group(panel, new Vector2(0f, 20f));
-            Icons.Shape(doorway, Shapes.Rounded, Palette.Stone, Vector2.zero, new Vector2(340f, 150f));
-            Icons.Shape(doorway, Shapes.Rounded, Palette.Pit, new Vector2(0f, -10f), new Vector2(110f, 120f));
-            Backdrop.Torch(doorway, new Vector2(-100f, 0f));
-            Backdrop.Torch(doorway, new Vector2(100f, 0f));
+            if (!ArtAt(panel, new Vector2(0f, 20f), 340f, ArtKeys.ContinuePreview))
+            {
+                var doorway = Icons.Group(panel, new Vector2(0f, 20f));
+                Icons.Shape(doorway, Shapes.Rounded, Palette.Stone, Vector2.zero, new Vector2(340f, 150f));
+                Icons.Shape(doorway, Shapes.Rounded, Palette.Pit, new Vector2(0f, -10f), new Vector2(110f, 120f));
+                Backdrop.Torch(doorway, new Vector2(-100f, 0f));
+                Backdrop.Torch(doorway, new Vector2(100f, 0f));
+            }
 
             floor = UiFactory.Text(panel, "Floor", "", 38, Palette.Gold, TextAnchor.MiddleCenter, FontStyle.Bold);
             floor.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-10f, 50f), new Vector2(320f, 46f));
@@ -263,8 +297,7 @@ namespace ClickDungeon.Unity.Screens
         {
             var panel = UiFactory.Rect(Root, "HowTo");
             panel.Place(Center, Center, new Vector2(760f, 150f), new Vector2(340f, 380f));
-            UiFactory.Image(panel, "Back", Palette.Navy.WithAlpha(0.96f), Shapes.Rounded, true).rectTransform.Stretch();
-            UiFactory.Image(panel, "Border", Palette.Gold, Shapes.Frame, true).rectTransform.Stretch();
+            Panel(panel, Palette.Navy.WithAlpha(0.96f), Palette.Gold, ArtKeys.TitleHowToPanel);
             var title = UiFactory.Text(panel, "Title", "HOW TO PLAY", 36, Palette.Gold, TextAnchor.MiddleCenter, FontStyle.Bold);
             title.rectTransform.Place(TopCenter, TopCenter, new Vector2(0f, -12f), new Vector2(320f, 52f));
             var body = UiFactory.Text(panel, "Body",
@@ -275,6 +308,7 @@ namespace ClickDungeon.Unity.Screens
             var more = UiFactory.Button(panel, "More", "FULL RULES", Palette.NavyLight, 26,
                 () => _modal.Show("HOW TO PLAY", Menus.HelpText, _modal.Hide, Menus.B("GOT IT", Palette.PlayGreen, _modal.Hide)));
             more.Rect.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 18f), new Vector2(260f, 56f));
+            UiArt.ApplyPanel(more.Background, more.Border, ArtKeys.ButtonSecondary);
         }
 
         void BuildBottomBar()
@@ -282,21 +316,28 @@ namespace ClickDungeon.Unity.Screens
             var play = UiFactory.Button(Root, "Play", "PLAY", Palette.PlayGreen, 60, Play);
             play.Rect.Place(Vector2.zero, Vector2.zero, new Vector2(60f, 28f), new Vector2(320f, 136f));
             play.Border.color = Palette.Gold;
+            UiArt.ApplyPanel(play.Background, play.Border, ArtKeys.ButtonPlay);
             var swords = UiFactory.Rect(play.Rect, "Swords");
             swords.Place(new Vector2(0f, 0.5f), Center, new Vector2(54f, 0f), new Vector2(60f, 60f));
-            Icons.Ability(Icons.Group(swords, Vector2.zero, 0f, 0.8f), CommandKind.Slash);
+            if (!ArtAt(swords, Vector2.zero, 64f, ArtKeys.PlayIcon))
+                Icons.Ability(Icons.Group(swords, Vector2.zero, 0f, 0.8f), CommandKind.Slash);
             play.Label.rectTransform.Stretch(80, 4, 8, 4);
 
             var settings = UiFactory.Button(Root, "Settings", "SETTINGS", Palette.Navy, 34, () => Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting));
             settings.Rect.Place(new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-356f, 28f), new Vector2(280f, 136f));
             settings.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(270f, 44f));
+            UiArt.ApplyPanel(settings.Background, settings.Border, ArtKeys.ButtonTitleSettings);
             var gear = UiFactory.Rect(settings.Rect, "Gear");
             gear.Place(Center, Center, new Vector2(0f, 22f), new Vector2(70f, 70f));
-            Icons.Gear(gear, Palette.Steel, 64f);
+            if (!ArtAt(gear, Vector2.zero, 70f, ArtKeys.SettingsIcon)) Icons.Gear(gear, Palette.Steel, 64f);
 
 #if !UNITY_IOS
             var quit = UiFactory.Button(Root, "Quit", "QUIT", Palette.QuitRed, 40, _app.Quit);
             quit.Rect.Place(new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-60f, 28f), new Vector2(280f, 136f));
+            UiArt.ApplyPanel(quit.Background, quit.Border, ArtKeys.ButtonQuit);
+            // With an icon, QUIT matches SETTINGS: icon above, label along the bottom.
+            if (ArtAt(quit.Rect, new Vector2(0f, 22f), 70f, ArtKeys.QuitIcon))
+                quit.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(270f, 44f));
 #endif
         }
     }

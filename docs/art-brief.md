@@ -301,8 +301,11 @@ Frames, panels and buttons: set 9-slice borders in the sprite importer. Art with
 | Board highlights (tile-sized frames; keep the frame within the outer 8 px of 256, because highlights draw above tokens and an enemy's intent badge sits on the tile's top edge) | `ui_highlight_legal` (MOVE-mode steps), `ui_highlight_target` (SLASH/DASH targets), `ui_highlight_hover` |
 | HUD frames (frame and fill only; all text stays live) | `ui_frame_portrait`, `ui_hp_back`, `ui_hp_fill`, `ui_hp_frame`, `ui_icon_heart`, `ui_chip` (KEY/SLASH/TURN), `ui_plaque_floor`, `ui_panel` (WHAT HAPPENED / INSPECT), `ui_speech_strip`, `ui_badge_count` |
 | Gameplay buttons | `ui_button_ability_<move\|slash\|shield\|dash\|potion>` (falls back to `ui_button_ability`; icon, label and hotkey draw on top), `ui_button_ability_selected`, `ui_button_settings` (whole button, gear included), `ui_button_help` (frame only; "?" stays live) |
+| Modals (pause, settings, help, victory, defeat; title, body and button labels stay live) | `ui_modal_panel`, `ui_modal_panel_victory`, `ui_modal_panel_defeat` (fall back to `ui_modal_panel`); buttons by role: `ui_button_primary` (green), `ui_button_secondary`, `ui_button_danger` (red) |
+| Chest overlay | `ui_chest_large_closed`, `ui_chest_large_open` (fall back to the tile chest), `fx_chest_glow`, `ui_chest_progress_back`, `ui_chest_progress_fill`, `ui_chest_reward_card` (reward text live) |
+| Title screen | `ui_title_hero_card`, `ui_title_tagline_plank`, `ui_title_banner` (slogan live), `ui_title_continue_panel`, `ui_continue_preview`, `ui_title_howto_panel`, `ui_title_hero` (falls back to `actor_sir_clickington_idle`), `ui_title_blobert` (falls back to `actor_lord_blobert_idle`), `ui_title_goblin`, `ui_button_play`, `ui_button_title_settings`, `ui_button_quit`, `ui_icon_play`, `ui_icon_settings`, `ui_icon_quit`. A full `bg_title` still hides the arch, banners and characters |
 | Screens | `logo_clickdungeon`, `bg_gameplay`, `bg_title` (a full `bg_title` composite also hides the placeholder arch, banners and characters) |
 
 Not wired yet (needs layout work when the art arrives):
-underfoot badges, title-screen and modal frames and buttons, chest overlay art and
+underfoot badges, the floor-transition banner, D1 systems (gold, gems, shop, mail…), chest reward-sequence poses and
 reward sequence, action animations (step, slash, hit…), FX, Priority B tiles.

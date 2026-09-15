@@ -168,6 +168,25 @@ namespace ClickDungeon.Unity.Screens
         /// <summary>Automation hook (screenshots/smoke runs): same path as a player tap.</summary>
         public void AutomationSubmit(PlayerCommand command) => Submit(command);
 
+        /// <summary>Automation hook (screenshots): opens an overlay without changing gameplay state.</summary>
+        public void AutomationOverlay(string name)
+        {
+            switch (name)
+            {
+                case "pause": OpenPause(); break;
+                case "help": OpenHelp(); break;
+                case "chest": _chest.Open(new RewardRecord { Kind = RewardKind.Potion, Amount = 1 }, null); break;
+                case "victory":
+                    _modal.Show(ModalStyle.Victory, "VICTORY!", "Screenshot preview of the victory panel.", () => { },
+                        Menus.B("NEW RUN", Palette.PlayGreen, () => { }), Menus.B("TITLE", Palette.NavyLight, () => { }));
+                    break;
+                case "defeat":
+                    _modal.Show(ModalStyle.Defeat, "DEFEATED", "Screenshot preview of the defeat panel.", () => { },
+                        Menus.B("NEW RUN", Palette.PlayGreen, () => { }), Menus.B("ABANDON RUN", Palette.QuitRed, () => { }));
+                    break;
+            }
+        }
+
         // ------------------------------------------------------------------ input → commands
 
         void Directional(Direction dir)
@@ -355,7 +374,7 @@ namespace ClickDungeon.Unity.Screens
             var floorName = Catalog.ProfileFor(run.Floor.FloorIndex).Name;
             if (run.Status == RunStatus.Won)
             {
-                _modal.Show("VICTORY!",
+                _modal.Show(ModalStyle.Victory, "VICTORY!",
                     $"Lord Blobert is defeated. Again.\n\nTurns taken: {run.Turn}\nChests opened: {run.Rewards.Count}\n\nSir Clickington: \"Victory! Snacks for everyone!\"",
                     () => { },
                     Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
@@ -363,7 +382,7 @@ namespace ClickDungeon.Unity.Screens
             }
             else
             {
-                _modal.Show("DEFEATED",
+                _modal.Show(ModalStyle.Defeat, "DEFEATED",
                     $"Fell on floor {run.Floor.FloorIndex}: {floorName}\nFinal blow: {Lines.SourceName(_lastDamageSource ?? "?", Catalog)}\nTurns survived: {run.Turn}\n\nThe WHAT HAPPENED log shows every hit.\n\nSir Clickington: \"Tell my horse... wait. I don't have a horse.\"",
                     () => { },
                     Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),

@@ -40,5 +40,9 @@ reference slice or procedural placeholder.
   `ui_panel`, `ui_speech_strip`, `ui_badge_count` (set 9-slice borders in the importer for frames)
 - Buttons: `ui_button_ability_<move|slash|shield|dash|potion>` or `ui_button_ability`, `ui_button_ability_selected`,
   `ui_button_settings` (whole button), `ui_button_help` (frame only)
+- Modals: `ui_modal_panel`, `ui_modal_panel_<victory|defeat>`; buttons `ui_button_<primary|secondary|danger>`
+- Chest overlay: `ui_chest_large_<closed|open>`, `fx_chest_glow`, `ui_chest_progress_<back|fill>`, `ui_chest_reward_card`
+- Title: `ui_title_<hero_card|tagline_plank|banner|continue_panel|howto_panel|hero|blobert|goblin>`, `ui_continue_preview`,
+  `ui_button_<play|title_settings|quit>`, `ui_icon_<play|settings|quit>`
 - Portraits: `portrait_sir_clickington_<neutral|happy|confident|worried|shocked|angry|victorious|defeated>`
 - Screens: `logo_clickdungeon`, `bg_gameplay`, `bg_title`

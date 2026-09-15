@@ -147,6 +147,35 @@ namespace ClickDungeon.Unity.Ui
         public const string SettingsButton = "ui_button_settings";
         public const string HelpButton = "ui_button_help";
 
+        public const string ModalPanel = "ui_modal_panel";
+        public const string ButtonPrimary = "ui_button_primary";
+        public const string ButtonSecondary = "ui_button_secondary";
+        public const string ButtonDanger = "ui_button_danger";
+        public const string ChestLargeClosed = "ui_chest_large_closed";
+        public const string ChestLargeOpen = "ui_chest_large_open";
+        public const string ChestGlow = "fx_chest_glow";
+        public const string ChestProgressBack = "ui_chest_progress_back";
+        public const string ChestProgressFill = "ui_chest_progress_fill";
+        public const string ChestRewardCard = "ui_chest_reward_card";
+
+        public const string TitleHeroCard = "ui_title_hero_card";
+        public const string TitlePlank = "ui_title_tagline_plank";
+        public const string TitleBanner = "ui_title_banner";
+        public const string TitleContinuePanel = "ui_title_continue_panel";
+        public const string ContinuePreview = "ui_continue_preview";
+        public const string TitleHowToPanel = "ui_title_howto_panel";
+        public const string TitleHero = "ui_title_hero";
+        public const string TitleBlobert = "ui_title_blobert";
+        public const string TitleGoblin = "ui_title_goblin";
+        public const string ButtonPlay = "ui_button_play";
+        public const string ButtonTitleSettings = "ui_button_title_settings";
+        public const string ButtonQuit = "ui_button_quit";
+        public const string PlayIcon = "ui_icon_play";
+        public const string SettingsIcon = "ui_icon_settings";
+        public const string QuitIcon = "ui_icon_quit";
+
+        public static readonly string[] ModalStyles = { "victory", "defeat" };
+
         public static readonly CommandKind[] AbilityKinds =
             { CommandKind.Move, CommandKind.Slash, CommandKind.Shield, CommandKind.Dash, CommandKind.Potion };
 
@@ -169,6 +198,13 @@ namespace ClickDungeon.Unity.Ui
         public static string ClueIcon(Clue flag) => $"icon_clue_{flag.ToString().ToLowerInvariant()}";
 
         public static string AbilityIcon(CommandKind kind) => $"icon_ability_{kind.ToString().ToLowerInvariant()}";
+
+        /// <summary>Styled modal panel, e.g. ui_modal_panel_victory; falls back to ui_modal_panel.</summary>
+        public static string ModalPanelStyle(string style) => $"ui_modal_panel_{style.ToLowerInvariant()}";
+
+        /// <summary>Modal buttons pick art by role from their fill colour: green = primary, red = danger, else secondary.</summary>
+        public static string ModalButton(Color fill) =>
+            fill == Palette.PlayGreen ? ButtonPrimary : fill == Palette.QuitRed ? ButtonDanger : ButtonSecondary;
 
         /// <summary>Ability button frame and fill (icon, label, hotkey and badge draw on top).</summary>
         public static string AbilityButton(CommandKind kind) => $"ui_button_ability_{kind.ToString().ToLowerInvariant()}";
@@ -219,6 +255,14 @@ namespace ClickDungeon.Unity.Ui
                 AbilityButtonDefault, AbilitySelected, CountBadge, SettingsButton, HelpButton,
             });
             foreach (var kind in AbilityKinds) keys.Add(AbilityButton(kind));
+            keys.AddRange(new[]
+            {
+                ModalPanel, ButtonPrimary, ButtonSecondary, ButtonDanger,
+                ChestLargeClosed, ChestLargeOpen, ChestGlow, ChestProgressBack, ChestProgressFill, ChestRewardCard,
+                TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleHowToPanel,
+                TitleHero, TitleBlobert, TitleGoblin, ButtonPlay, ButtonTitleSettings, ButtonQuit, PlayIcon, SettingsIcon, QuitIcon,
+            });
+            foreach (var style in ModalStyles) keys.Add(ModalPanelStyle(style));
             return keys;
         }
     }

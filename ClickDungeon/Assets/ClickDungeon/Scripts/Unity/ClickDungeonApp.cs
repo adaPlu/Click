@@ -53,7 +53,8 @@ namespace ClickDungeon.Unity
         }
 
         /// <summary>
-        /// Dev automation: -cdShot path.png [-cdScreen title|game] [-cdSeed n] [-cdTurns n] [-cdTelemetryDir dir].
+        /// Dev automation: -cdShot path.png [-cdScreen title|game] [-cdSeed n] [-cdTurns n] [-cdTelemetryDir dir] [-cdOverlay name].
+        /// Overlays: game pause|help|chest|victory|defeat, title settings|rules.
         /// Telemetry stays off in automation unless -cdTelemetryDir is given, so bot runs never mix with playtest logs.
         /// Plays random legal turns through the normal input path, captures a screenshot and quits.
         /// </summary>
@@ -77,6 +78,12 @@ namespace ClickDungeon.Unity
                     else _game.AutomationSubmit(PlayerCommand.Wait());
                     for (int f = 0; f < 3; f++) yield return null;
                 }
+            }
+            var overlay = ArgValue("-cdOverlay");
+            if (overlay != null)
+            {
+                if (_game != null) _game.AutomationOverlay(overlay);
+                else _title.AutomationOverlay(overlay);
             }
             for (int i = 0; i < 40; i++) yield return null;
             ScreenCapture.CaptureScreenshot(path);

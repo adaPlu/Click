@@ -7,6 +7,9 @@ using UnityEngine.UI;
 
 namespace ClickDungeon.Unity.Screens
 {
+    /// <summary>Modal panel variants; each can have its own panel art (ui_modal_panel_victory / _defeat).</summary>
+    public enum ModalStyle { Default, Victory, Defeat }
+
     /// <summary>Full-screen dimmed modal with a title, body and a column of buttons.</summary>
     public sealed class ModalOverlay
     {
@@ -17,6 +20,8 @@ namespace ClickDungeon.Unity.Screens
         readonly Text _title;
         readonly Text _body;
         readonly RectTransform _buttons;
+        readonly Image _panelBack;
+        readonly Image _panelBorder;
         readonly MonoBehaviour _host;
         Action _back;
 
@@ -32,8 +37,10 @@ namespace ClickDungeon.Unity.Screens
             _panel = UiFactory.Rect(_root, "Panel");
             _panel.Place(Center, Center, Vector2.zero, new Vector2(760f, 640f));
             _panel.gameObject.AddComponent<CanvasGroup>();
-            UiFactory.Image(_panel, "Back", Palette.Navy, Shapes.Rounded, true).rectTransform.Stretch();
-            UiFactory.Image(_panel, "Border", Palette.Gold, Shapes.Frame, true).rectTransform.Stretch();
+            _panelBack = UiFactory.Image(_panel, "Back", Palette.Navy, Shapes.Rounded, true);
+            _panelBack.rectTransform.Stretch();
+            _panelBorder = UiFactory.Image(_panel, "Border", Palette.Gold, Shapes.Frame, true);
+            _panelBorder.rectTransform.Stretch();
 
             _title = UiFactory.Text(_panel, "Title", "", 54, Palette.Gold, TextAnchor.UpperCenter, FontStyle.Bold);
             _title.rectTransform.Stretch(30, 30, 30, 0);
@@ -52,8 +59,12 @@ namespace ClickDungeon.Unity.Screens
 
         public bool IsOpen => _root.gameObject.activeSelf;
 
-        public void Show(string title, string body, Action back, params (string label, Color color, Action action)[] buttons)
+        public void Show(string title, string body, Action back, params (string label, Color color, Action action)[] buttons) =>
+            Show(ModalStyle.Default, title, body, back, buttons);
+
+        public void Show(ModalStyle style, string title, string body, Action back, params (string label, Color color, Action action)[] buttons)
         {
+            ApplyPanelArt(style);
             _back = back;
             _title.text = title;
             _body.text = body;
@@ -86,12 +97,27 @@ namespace ClickDungeon.Unity.Screens
             {
                 var (label, color, action) = buttons[i];
                 var parts = UiFactory.Button(_buttons, label, label, color, 32, action);
+                UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.ModalButton(color));
                 parts.Rect.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -i * (buttonHeight + spacing)), new Vector2(520f, buttonHeight));
             }
 
             _root.SetAsLastSibling();
             _root.gameObject.SetActive(true);
             _host.StartCoroutine(Tween.FadeScale(_panel, _panel.GetComponent<CanvasGroup>(), 0.92f, 0.16f));
+        }
+
+        /// <summary>The panel is reused across modals, so a style without art must restore the procedural look.</summary>
+        void ApplyPanelArt(ModalStyle style)
+        {
+            var keys = style == ModalStyle.Default
+                ? new[] { ArtKeys.ModalPanel }
+                : new[] { ArtKeys.ModalPanelStyle(style.ToString()), ArtKeys.ModalPanel };
+            if (UiArt.ApplyPanel(_panelBack, _panelBorder, keys)) return;
+            _panelBack.sprite = Shapes.Rounded;
+            _panelBack.type = Image.Type.Sliced;
+            _panelBack.pixelsPerUnitMultiplier = 2f;
+            _panelBack.color = Palette.Navy;
+            _panelBorder.enabled = true;
         }
 
         public void Hide() => _root.gameObject.SetActive(false);
@@ -140,6 +166,7 @@ namespace ClickDungeon.Unity.Screens
 
             var glow = UiFactory.Image(_root, "Glow", Palette.Gold.WithAlpha(0.12f), Shapes.Circle);
             glow.rectTransform.Place(Center, Center, new Vector2(0f, 60f), new Vector2(620f, 620f));
+            UiArt.Apply(glow, ArtKeys.ChestGlow);
 
             _sparkles = UiFactory.Rect(_root, "Sparkles");
             _sparkles.Place(Center, Center, new Vector2(0f, 60f), new Vector2(10f, 10f));
@@ -147,9 +174,12 @@ namespace ClickDungeon.Unity.Screens
             _chest = UiFactory.Rect(_root, "Chest");
             _chest.Place(Center, Center, new Vector2(0f, 60f), new Vector2(10f, 10f));
 
-            _progressBack = UiFactory.Image(_root, "ProgressBack", Palette.StoneDark, Shapes.Rounded, true).rectTransform;
+            var progressBack = UiFactory.Image(_root, "ProgressBack", Palette.StoneDark, Shapes.Rounded, true);
+            UiArt.Apply(progressBack, ArtKeys.ChestProgressBack);
+            _progressBack = progressBack.rectTransform;
             _progressBack.Place(Center, Center, new Vector2(0f, -190f), new Vector2(420f, 34f));
             var fill = UiFactory.Image(_progressBack, "Fill", Palette.Gold, Shapes.Rounded, true);
+            UiArt.Apply(fill, ArtKeys.ChestProgressFill);
             _progressFill = fill.rectTransform;
             _progressFill.anchorMin = Vector2.zero;
             _progressFill.anchorMax = new Vector2(0f, 1f);
@@ -159,8 +189,11 @@ namespace ClickDungeon.Unity.Screens
             _rewardCard = UiFactory.Rect(_root, "RewardCard");
             _rewardCard.Place(Center, Center, new Vector2(0f, -200f), new Vector2(620f, 120f));
             _rewardCard.gameObject.AddComponent<CanvasGroup>();
-            UiFactory.Image(_rewardCard, "Back", Palette.Navy, Shapes.Rounded, true).rectTransform.Stretch();
-            UiFactory.Image(_rewardCard, "Border", Palette.Gold, Shapes.Frame, true).rectTransform.Stretch();
+            var cardBack = UiFactory.Image(_rewardCard, "Back", Palette.Navy, Shapes.Rounded, true);
+            cardBack.rectTransform.Stretch();
+            var cardBorder = UiFactory.Image(_rewardCard, "Border", Palette.Gold, Shapes.Frame, true);
+            cardBorder.rectTransform.Stretch();
+            UiArt.ApplyPanel(cardBack, cardBorder, ArtKeys.ChestRewardCard);
             _rewardText = UiFactory.Text(_rewardCard, "Text", "", 52, Palette.Gold, TextAnchor.MiddleCenter, FontStyle.Bold);
             _rewardText.rectTransform.Stretch();
             UiFactory.Shadow(_rewardText, new Color(0f, 0f, 0f, 0.8f), 3f);
@@ -234,7 +267,8 @@ namespace ClickDungeon.Unity.Screens
         void DrawChest(bool opened)
         {
             foreach (Transform child in _chest) UnityEngine.Object.Destroy(child.gameObject);
-            Icons.Chest(_chest, opened, 3.2f);
+            if (!Icons.TryArt(_chest, opened ? ArtKeys.ChestLargeOpen : ArtKeys.ChestLargeClosed, Icons.TileSize * 3.2f))
+                Icons.Chest(_chest, opened, 3.2f);
         }
     }
 }
