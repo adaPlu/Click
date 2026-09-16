@@ -106,6 +106,26 @@ namespace ClickDungeon.Unity.Screens
                     line = "Click. Open.";
                     face = Expression.Confident;
                     return 35;
+                case GameEventKind.VaultEntered:
+                    line = "Treasure! Probably guarded. Definitely treasure.";
+                    face = Expression.Confident;
+                    return 44;
+                case GameEventKind.DoorsOpened:
+                    line = "Something heavy just swung open.";
+                    face = Expression.Shocked;
+                    return 38;
+                case GameEventKind.Teleported:
+                    line = "Every atom, accounted for.";
+                    face = Expression.Shocked;
+                    return 36;
+                case GameEventKind.LavaBurned:
+                    line = "Hot! Hot! Hot!";
+                    face = Expression.Worried;
+                    return 46;
+                case GameEventKind.FellThroughPit:
+                    line = "Shortcut! Ow. Shortcut.";
+                    face = Expression.Shocked;
+                    return 48;
                 case GameEventKind.EnemyDied:
                     line = "Sir Clickington: 1. Dungeon: 0.";
                     face = Expression.Confident;
@@ -163,6 +183,22 @@ namespace ClickDungeon.Unity.Screens
                     return "<color=#FF9A2E>BOOM!</color>";
                 case GameEventKind.SpikesTriggered:
                     return "You stepped on spikes.";
+                case GameEventKind.LavaBurned:
+                    return "<color=#FF9A2E>You waded through lava.</color>";
+                case GameEventKind.FellThroughPit:
+                    return $"<color=#FF9A2E>You drop through the pit and land hard ({e.Amount}).</color>";
+                case GameEventKind.DoorsOpened:
+                    return e.Amount > 0
+                        ? $"<color=#F2C94C>The plate clicks: {(e.Amount == 1 ? "a door opens" : e.Amount + " doors open")}.</color>"
+                        : "The plate clicks. Nothing else happens.";
+                case GameEventKind.VaultEntered:
+                    return "<color=#F2C94C>Into the vault.</color>";
+                case GameEventKind.VaultLeft:
+                    return "Back out through the door.";
+                case GameEventKind.Teleported:
+                    return "<color=#B084F5>The pad hums and moves you.</color>";
+                case GameEventKind.FountainUsed:
+                    return e.Amount > 0 ? null : "The fountain is spent.";
                 case GameEventKind.KeyCollected:
                     return "<color=#F2C94C>Picked up the key.</color>";
                 case GameEventKind.PotionCollected:

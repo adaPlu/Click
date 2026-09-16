@@ -35,9 +35,8 @@ namespace ClickDungeon.Tests
         }
 
         [TestCase('#')]
-        [TestCase('o')]
         [TestCase('C')]
-        public void WallsPitsAndClosedChestsBlockMovement(char blocker)
+        public void WallsAndClosedChestsBlockMovement(char blocker)
         {
             var run = Run(
                 ".....",
@@ -46,6 +45,27 @@ namespace ClickDungeon.Tests
                 ".....",
                 ".....");
             Assert.That(Do(run, PlayerCommand.Move(P(3, 3))).Accepted, Is.False);
+        }
+
+        [Test]
+        public void PitsBlockOnlyWhereThereIsNothingBelow()
+        {
+            // Stepping into a pit is a fall to the next floor (rules §4), so it is blocked only on the last floor.
+            var lastFloor = Run(Scenario.Catalog.RunFloorCount, 1234UL,
+                ".....",
+                "...o.",
+                "...H.",
+                ".....",
+                ".....");
+            Assert.That(Do(lastFloor, PlayerCommand.Move(P(3, 3))).Accepted, Is.False);
+
+            var earlyFloor = Run(1, 1234UL,
+                ".....",
+                "...o.",
+                "...H.",
+                ".....",
+                ".....");
+            Assert.That(Do(earlyFloor, PlayerCommand.Move(P(3, 3))).Accepted, Is.True);
         }
 
         [Test]

@@ -18,14 +18,28 @@ namespace ClickDungeon.Simulation
             return cells;
         }
 
-        public static bool BlocksMovement(CellState cell) => cell.Terrain != Terrain.Floor || cell.IsClosedChest;
+        /// <summary>Walls, pits and locked doors block. An open door is walkable: stepping into it enters the vault (D-018).</summary>
+        public static bool BlocksMovement(CellState cell) =>
+            cell.Terrain == Terrain.Wall || cell.Terrain == Terrain.Pit || cell.IsLockedDoor || cell.IsClosedChest;
 
+        /// <summary>Walls and door frames stop fire; pits and floors do not.</summary>
+        public static bool BlocksFire(CellState cell) => cell.Terrain == Terrain.Wall || cell.Terrain == Terrain.Door;
+
+        /// <summary>
+        /// The hero may also step into a pit: that is a fall to the next floor (rules §4). Enemies never can, and on the last
+        /// floor or inside a vault there is nowhere to fall, so pits stay solid there.
+        /// </summary>
         public static bool HeroCanEnter(RunState run, GridPos p) =>
-            p.InBounds && !BlocksMovement(run.Floor[p]) && run.Floor.EnemyAt(p) == null;
+            p.InBounds
+            && (!BlocksMovement(run.Floor[p]) || (run.Floor[p].Terrain == Terrain.Pit && CanFallThrough(run)))
+            && run.Floor.EnemyAt(p) == null;
+
+        public static bool CanFallThrough(RunState run) =>
+            !run.Floor.IsVault && run.Floor.FloorIndex < run.FloorCount;
 
         /// <summary>Cells enemy AI will path through, ignoring actors. Enemies avoid live hazards.</summary>
         public static bool EnemyPathable(FloorState floor, GridPos p) =>
-            p.InBounds && !BlocksMovement(floor[p]) && floor[p].Hazard == HazardKind.None;
+            p.InBounds && !BlocksMovement(floor[p]) && floor[p].Hazard == HazardKind.None && floor[p].Terrain != Terrain.Door;
 
         public static bool EnemyCanEnter(RunState run, GridPos p) =>
             EnemyPathable(run.Floor, p) && run.Floor.EnemyAt(p) == null && run.Hero.Pos != p;
@@ -47,6 +61,9 @@ namespace ClickDungeon.Simulation
             if (cell.Hazard != HazardKind.None) clue |= Clue.Danger;
             if (cell.Content == ContentKind.Key) clue |= Clue.Objective;
             if (cell.IsClosedChest || cell.Content == ContentKind.Potion) clue |= Clue.Treasure;
+            if (cell.Content == ContentKind.Fountain && !cell.Used) clue |= Clue.Treasure;
+            if (cell.Terrain == Terrain.Door || cell.Content == ContentKind.PressurePlate || cell.Content == ContentKind.Teleport)
+                clue |= Clue.Objective;
             return clue == Clue.None ? Clue.Safe : clue;
         }
 
@@ -56,7 +73,7 @@ namespace ClickDungeon.Simulation
             for (int i = 1; i <= range; i++)
             {
                 var p = from.Step(dir, i);
-                if (!p.InBounds || run.Floor[p].Terrain == Terrain.Wall) break;
+                if (!p.InBounds || BlocksFire(run.Floor[p])) break;
                 if (run.Hero.Pos == p || run.Floor.EnemyAt(p) != null)
                 {
                     hitCell = p;
@@ -91,7 +108,7 @@ namespace ClickDungeon.Simulation
             for (int i = 1; i <= range; i++)
             {
                 var p = from.Step(dir, i);
-                if (!p.InBounds || run.Floor[p].Terrain == Terrain.Wall) break;
+                if (!p.InBounds || BlocksFire(run.Floor[p])) break;
                 cells.Add(p);
                 if (run.Floor.EnemyAt(p) != null) break;
             }

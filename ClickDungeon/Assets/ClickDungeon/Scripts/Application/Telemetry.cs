@@ -282,6 +282,27 @@ namespace ClickDungeon.Application
                     case GameEventKind.SpikesTriggered:
                         Emit("trap_triggered", run, floor, turn, D("trap", "spikes", "cell", Cell(e.To), "damage", e.Amount));
                         break;
+                    case GameEventKind.FellThroughPit:
+                        Emit("fell_through_pit", run, floor, turn, D("cell", Cell(e.To), "damage", e.Amount));
+                        break;
+                    case GameEventKind.LavaBurned:
+                        Emit("trap_triggered", run, floor, turn, D("trap", "lava", "cell", Cell(e.To), "damage", e.Amount));
+                        break;
+                    case GameEventKind.DoorsOpened:
+                        Emit("doors_opened", run, floor, turn, D("cell", Cell(e.To), "doors", e.Amount));
+                        break;
+                    case GameEventKind.VaultEntered:
+                        Emit("vault_entered", run, floor, turn, D("door", Cell(e.From)));
+                        break;
+                    case GameEventKind.VaultLeft:
+                        Emit("vault_left", run, floor, turn, D("cell", Cell(e.To)));
+                        break;
+                    case GameEventKind.Teleported:
+                        Emit("teleported", run, floor, turn, D("from", Cell(e.From), "to", Cell(e.To)));
+                        break;
+                    case GameEventKind.FountainUsed:
+                        Emit("fountain_used", run, floor, turn, D("cell", Cell(e.To), "healed", e.Amount));
+                        break;
                     case GameEventKind.BombExploded:
                         Emit("trap_triggered", run, floor, turn, D("trap", "bomb", "cell", Cell(e.To), "damage", e.Amount));
                         break;

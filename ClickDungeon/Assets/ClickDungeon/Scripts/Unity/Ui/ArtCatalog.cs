@@ -123,6 +123,26 @@ namespace ClickDungeon.Unity.Ui
         public const string Potion = "tile_potion";
         public const string ExitLocked = "tile_exit_locked";
         public const string ExitOpen = "tile_exit_open";
+        // Production tile set (rules §11). The sheets name the exit "stair down", so both spellings are accepted.
+        public const string StairDownLocked = "tile_stair_down_locked";
+        public const string StairDown = "tile_stair_down";
+        public const string StairUp = "tile_stair_up";
+        public const string TrapPit = "tile_trap_pit";
+        public const string TrapSpike = "tile_trap_spike";
+        public const string TrapBomb = "tile_trap_bomb";
+        public const string Lava = "tile_lava";
+        public const string Water = "tile_water";
+        /// <summary>The second swirl in the tile sheets: another teleport pad, not an unseen tile.</summary>
+        public const string Shadow = "tile_shadow";
+        public const string FloorCracked = "tile_floor_cracked";
+        public const string FloorMoss = "tile_floor_moss";
+        public const string WallCorner = "tile_wall_corner";
+        public const string TorchWall = "tile_torch";
+        public const string DoorLocked = "tile_door_locked";
+        public const string DoorOpen = "tile_door_open";
+        public const string PressurePlate = "tile_pressure_plate";
+        public const string Teleport = "tile_teleport";
+        public const string FountainHeal = "tile_fountain_heal";
         public const string Logo = "logo_clickdungeon";
         public const string TitleBackground = "bg_title";
         public const string GameplayBackground = "bg_gameplay";
@@ -309,6 +329,8 @@ namespace ClickDungeon.Unity.Ui
             var keys = new List<string>
             {
                 FloorStone, Wall, Pit, Spikes, Bomb, BombArmed, Key, ChestClosed, ChestOpen, Potion, ExitLocked, ExitOpen,
+                StairDownLocked, StairDown, StairUp, TrapPit, TrapSpike, TrapBomb, Lava, Water, Shadow, FloorCracked, FloorMoss,
+                WallCorner, TorchWall, DoorLocked, DoorOpen, PressurePlate, Teleport, FountainHeal,
                 Logo, TitleBackground, GameplayBackground,
                 Actor(HeroId),
             };

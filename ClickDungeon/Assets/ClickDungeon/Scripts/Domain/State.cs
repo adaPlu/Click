@@ -16,10 +16,16 @@ namespace ClickDungeon.Domain
         public int BombFuse = -1;
         public ContentKind Content;
         public bool ChestOpened;
+        /// <summary>Vault chest: one Interact grants three rewards (D-018).</summary>
+        public bool GreatChest;
+        /// <summary>Set once a door has been opened by a pressure plate, or a fountain or teleport pad has been used.</summary>
+        public bool Used;
         public Knowledge Knowledge;
 
         public bool BombArmed => Hazard == HazardKind.Bomb && BombFuse >= 0;
         public bool IsClosedChest => Content == ContentKind.Chest && !ChestOpened;
+        public bool IsOpenDoor => Terrain == Terrain.Door && Used;
+        public bool IsLockedDoor => Terrain == Terrain.Door && !Used;
     }
 
     [Serializable]
@@ -62,6 +68,8 @@ namespace ClickDungeon.Domain
     {
         public int FloorIndex;
         public bool IsBossFloor;
+        /// <summary>A vault room behind a door: its exit leads back to the floor the hero came from (D-018).</summary>
+        public bool IsVault;
         public string TemplateId;
         public int Transform;
         public int AttemptIndex;
@@ -120,6 +128,10 @@ namespace ClickDungeon.Domain
         public RunStatus Status;
         public HeroState Hero;
         public FloorState Floor;
+        /// <summary>While inside a vault: the floor to return to, kept exactly as it was left (D-018).</summary>
+        public FloorState OuterFloor;
+        /// <summary>The door cell the hero stepped through, where they come back out.</summary>
+        public GridPos ReturnPos = GridPos.Invalid;
         public List<RewardRecord> Rewards = new List<RewardRecord>();
 
         public bool HasReward(string transactionId)

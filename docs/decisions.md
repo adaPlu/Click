@@ -142,3 +142,39 @@ Rules referenced here live in `docs/rules.md`.
   demo uses the same player (`-cdBot smart`, the default).
 - **DEPENDENCIES**: `ContentCatalog`, `RunState.Difficulty`, `GameSession`, the title difficulty picker.
 - **REVERSIBILITY**: high. The numbers live in one table, and another tier is one more dictionary entry.
+
+## D-018 Vault rooms behind doors
+- **DECISION**: Normal floors may hold a **locked door** and a **pressure plate**. Stepping on the plate opens every door on
+  that floor (the plate stays pressed). Stepping into an open door enters a **vault room**: its own 5×5 floor generated from
+  `hash(runSeed, floorIndex, doorCell)`, holding 2–3 awake enemies and either one **great chest** (three rewards at once) or
+  two to three ordinary chests. The vault's stair leads back to the floor the hero came from, restored exactly as it was, with
+  the hero back on the tile they stepped in from (nobody ever stands in a doorway, so every hero position is floor terrain). Vaults are optional: the key, the exit and the floor count are unaffected.
+- **WHY**: the tile sheets add doors, plates and chests; a risk-for-loot side room is the smallest rule that makes all three
+  meaningful, and it fits the "informed choice" pillar — the player sees the enemies and the reward before stepping in.
+- **DEPENDENCIES**: `FloorState`, `RunState` gains the outer floor to return to (additive save field), `Chests`, generation.
+- **REVERSIBILITY**: medium. The save gains a nested floor; a run without vaults is unchanged.
+
+## D-019 Floor features from the production tile set
+- **DECISION**: The tile sheets map to rules as follows. Real mechanics: **lava** (permanent hazard, entering costs 3 HP,
+  never expires), **teleport pads** (a pair per floor; entering one places the hero on the other, no extra turn),
+  **healing fountain** (entering heals 3 once, then it is spent), **pressure plate** and **doors** (D-018), plus the tiles
+  already in the game (stone floor, pit, bomb, spikes, key, chests, wall, locked and open stairs). Decoration only, chosen
+  deterministically from the cell so it never lies about state: **cracked** and **mossy** floor variants, **wall corner**,
+  **torch** walls, **water** (drawn for pits) and **stair up** (the floor entrance). Both swirl tiles (`tile_teleport`, `tile_shadow`) are teleport pads.
+- **WHY**: every tile in the sheet gets a use, but only where it can carry a truthful rule. Anything without a rule is drawn
+  as a variant of a tile that already has one, so the board never shows a feature the simulation does not implement.
+- **DEPENDENCIES**: `Terrain`/`HazardKind`/`ContentKind`, `FloorGenerator`, art registry keys, `docs/rules.md` §11.
+- **REVERSIBILITY**: high per feature; each is a separate generator entry and can be dropped from the floor profiles.
+
+## D-020 Covered tiles and falling pits
+- **DECISION**: Two changes to what the board shows and what a pit does.
+  (a) **Covers**: every tile the hero has not revealed is drawn as a plain stone cover, terrain included. Sensing still
+  shows the tile's clue on the cover; walls and pits are discovered the same way as hazards and content. Rules §2.1.
+  (b) **Falling**: stepping into a pit costs `FallDamage` HP and lands the hero on the next floor, skipping that floor's
+  key, chests and exit. On the last floor and inside a vault there is nothing below, so pits stay solid. Rules §4.
+- **WHY**: covers make exploration the point of every click rather than reading a pre-drawn map, and a pit that drops you
+  turns dead space into a real choice: pay HP and lose the floor's loot to save turns.
+- **DEPENDENCIES**: `Board.HeroCanEnter`/`CanFallThrough`, `TurnResolver.TryFall`, `BoardView` cover rendering, generation
+  (pits already exist in templates), telemetry `fell_through_pit`.
+- **REVERSIBILITY**: high for (a), presentation only. Medium for (b): it changes pacing and the value of every floor's loot,
+  and the balance guards measure it.

@@ -74,3 +74,19 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 - [ ] Refine Knight's Trial and Blobert's Wrath numbers.
 - [ ] Check tiers against real playtest telemetry.
 
+
+## Production tile set (D-018, D-019, rules §11)
+- [x] Every tile in both sheets has a rule or an explicit decoration role.
+- [x] New mechanics: lava, teleport pads, healing fountains, pressure plates, vault doors, great chests.
+- [x] Vault rooms behind doors: awake guards, one great chest or several ordinary ones, the way back is the door you came in by.
+- [x] Decoration only: cracked and mossy floors, wall corners, torches, water (pits), stair up (entrance).
+- [x] Simulation, generation, saves and telemetry for all of it, with tests.
+- [ ] Production PNGs: drop the sheets into `ClickDungeon/Art/Source/References/` to slice placeholders, or the final tiles into `Art/Runtime/Tiles/`.
+- [ ] Tune how often vaults appear once real playtest data exists.
+
+## Covered tiles and falling pits (D-020, rules §2.1 and §4)
+- [x] Unknown tiles are drawn as stone covers, terrain included; sensing still shows the clue on the cover.
+- [x] Stepping into a pit falls to the next floor for HP, skipping that floor's key, chests and exit.
+- [x] Pits stay solid on the last floor and inside vaults; a fatal fall never leaves a hero inside a pit.
+- [x] Tests: fall damage and landing, fatal fall, pit blocking, occupied teleport pad.
+- [ ] Re-tune once playtest data shows how often players take the fall.

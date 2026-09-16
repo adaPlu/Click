@@ -217,13 +217,56 @@ namespace ClickDungeon.Unity.Screens
                 : strongHighlight ? Palette.Legal : Palette.Legal.WithAlpha(0.45f);
         }
 
+        /// <summary>
+        /// Decoration variants (rules §11) are picked from the cell itself, so a tile never changes look between renders and
+        /// never implies a state the rules do not have.
+        /// </summary>
+        static string FloorVariant(GridPos p)
+        {
+            switch (Hash.Of((ulong)p.Index, 0x5FL) % 5)
+            {
+                case 0: return ArtKeys.FloorCracked;
+                case 1: return ArtKeys.FloorMoss;
+                default: return ArtKeys.FloorStone;
+            }
+        }
+
+        static string WallVariant(FloorState floor, GridPos p)
+        {
+            int neighbours = 0;
+            foreach (var d in Directions.All)
+            {
+                var n = p.Step(d);
+                if (!n.InBounds || floor[n].Terrain == Terrain.Wall) neighbours++;
+            }
+            if (neighbours >= 3) return ArtKeys.WallCorner;
+            return Hash.Of((ulong)p.Index, 0x70UL) % 4 == 0 ? ArtKeys.TorchWall : ArtKeys.Wall;
+        }
+
+        /// <summary>Cover stones sit lighter and cooler than a revealed wall, so the two never read as the same tile.</summary>
+        static readonly Color CoverTint = new Color(0.78f, 0.80f, 0.88f);
+
         void DrawCell(CellParts view, FloorState floor, CellState cell, GridPos p, bool exitOpen)
         {
+            // Everything is covered until the hero learns it: walls and pits included. Sensing shows a clue on the cover.
+            if (cell.Knowledge != Knowledge.Revealed)
+            {
+                if (!ApplyTileArt(view, ArtKeys.Wall, CoverTint))
+                    SetPlaceholderBase(view, cell.Knowledge == Knowledge.Sensed ? Palette.FloorSensed : Palette.FloorUnseen, Palette.StoneDark);
+                if (cell.Knowledge == Knowledge.Sensed) Icons.Clues(view.Icons, Board.ClueAt(floor, p));
+                return;
+            }
+            if (cell.Terrain == Terrain.Door)
+            {
+                if (!ApplyTileArt(view, ArtKeys.FloorStone, Color.white)) SetPlaceholderBase(view, Palette.Stone, Palette.StoneDark);
+                Icons.Door(view.Icons, cell.IsOpenDoor);
+                return;
+            }
             if (cell.Terrain == Terrain.Wall)
             {
                 // Walls must read as blockers at a glance: darker and warmer than any floor state
                 // (unseen floors are dark but cool-grey), with a dark border.
-                if (ApplyTileArt(view, ArtKeys.Wall, WallArtTint))
+                if (ApplyTileArt(view, WallVariant(floor, p), WallArtTint) || ApplyTileArt(view, ArtKeys.Wall, WallArtTint))
                 {
                     view.Edge.enabled = true;
                     view.Edge.color = new Color(0f, 0f, 0f, 0.6f);
@@ -235,38 +278,31 @@ namespace ClickDungeon.Unity.Screens
             }
             if (cell.Terrain == Terrain.Pit)
             {
-                if (ApplyTileArt(view, ArtKeys.Pit, Color.white)) return;
+                // Water is the sheet's second look for a pit: nobody crosses either.
+                if (ApplyTileArt(view, ArtKeys.Pit, Color.white) || ApplyTileArt(view, ArtKeys.TrapPit, Color.white)
+                    || ApplyTileArt(view, ArtKeys.Water, Color.white)) return;
                 SetPlaceholderBase(view, Palette.Stone, Palette.StoneDark);
                 Icons.Pit(view.Icons);
                 return;
             }
 
-            switch (cell.Knowledge)
+            if (!ApplyTileArt(view, FloorVariant(p), Color.white) && !ApplyTileArt(view, ArtKeys.FloorStone, Color.white))
+                SetPlaceholderBase(view, Palette.FloorRevealed, Palette.StoneLight.Dim(1.2f));
+            if (cell.IsExit) Icons.Exit(view.Icons, exitOpen);
+            else if (p == floor.Start && !floor.IsVault) Icons.TryArt(view.Icons, ArtKeys.StairUp, CellSize);
+            if (cell.Hazard == HazardKind.Spikes) Icons.Spikes(view.Icons);
+            else if (cell.Hazard == HazardKind.Bomb) Icons.Bomb(view.Icons, cell.BombArmed, cell.BombFuse);
+            else if (cell.Hazard == HazardKind.Lava) Icons.Lava(view.Icons);
+            if (cell.Content == ContentKind.Fountain) Icons.Fountain(view.Icons, cell.Used);
+            else if (cell.Content == ContentKind.Teleport) Icons.Teleport(view.Icons);
+            else if (cell.Content == ContentKind.PressurePlate) Icons.PressurePlate(view.Icons, cell.Used);
+            else if (cell.Content == ContentKind.Key) Icons.Key(view.Icons);
+            else if (cell.Content == ContentKind.Chest)
             {
-                case Knowledge.Revealed:
-                    if (!ApplyTileArt(view, ArtKeys.FloorStone, Color.white))
-                        SetPlaceholderBase(view, Palette.FloorRevealed, Palette.StoneLight.Dim(1.2f));
-                    if (cell.IsExit) Icons.Exit(view.Icons, exitOpen);
-                    if (cell.Hazard == HazardKind.Spikes) Icons.Spikes(view.Icons);
-                    else if (cell.Hazard == HazardKind.Bomb) Icons.Bomb(view.Icons, cell.BombArmed, cell.BombFuse);
-                    if (cell.Content == ContentKind.Key) Icons.Key(view.Icons);
-                    else if (cell.Content == ContentKind.Chest)
-                    {
-                        Icons.Chest(view.Icons, cell.ChestOpened);
-                        if (!cell.ChestOpened) Icons.TryArt(view.Icons, ArtKeys.ChestShimmer, CellSize);
-                    }
-                    else if (cell.Content == ContentKind.Potion) Icons.Potion(view.Icons);
-                    break;
-                case Knowledge.Sensed:
-                    if (!ApplyTileArt(view, ArtKeys.FloorStone, new Color(0.55f, 0.55f, 0.6f)))
-                        SetPlaceholderBase(view, Palette.FloorSensed, Palette.Stone);
-                    Icons.Clues(view.Icons, Board.ClueAt(floor, p));
-                    break;
-                default:
-                    if (!ApplyTileArt(view, ArtKeys.FloorStone, new Color(0.3f, 0.3f, 0.34f)))
-                        SetPlaceholderBase(view, Palette.FloorUnseen, Palette.StoneDark.Dim(1.3f));
-                    break;
+                Icons.Chest(view.Icons, cell.ChestOpened);
+                if (!cell.ChestOpened) Icons.TryArt(view.Icons, ArtKeys.ChestShimmer, CellSize);
             }
+            else if (cell.Content == ContentKind.Potion) Icons.Potion(view.Icons);
         }
 
         /// <summary>Uses tile art for the cell base when the catalog has it (tinted for knowledge state).</summary>

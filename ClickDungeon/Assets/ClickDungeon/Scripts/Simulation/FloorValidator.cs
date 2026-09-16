@@ -79,6 +79,11 @@ namespace ClickDungeon.Simulation
                 if (bosses != 1) errors.Add($"Boss floor needs exactly one boss, found {bosses}.");
                 if (keys != 0) errors.Add("Boss floors have no key.");
             }
+            else if (floor.IsVault)
+            {
+                if (bosses != 0) errors.Add("Vaults cannot contain a boss.");
+                if (keys != 0) errors.Add("Vaults have no key.");
+            }
             else
             {
                 if (bosses != 0) errors.Add("Normal floors cannot contain a boss.");
@@ -93,7 +98,13 @@ namespace ClickDungeon.Simulation
                     return c.Terrain == Terrain.Floor && c.Hazard == HazardKind.None && !c.IsClosedChest;
                 };
                 var fromStart = Pathfinding.DistanceField(new[] { floor.Start }, safe);
-                if (floor.IsBossFloor)
+                // `safe` excludes doors, so the key and the exit are always reachable without opening a vault.
+                if (floor.IsVault)
+                {
+                    if (fromStart[floor.Exit.Index] == Pathfinding.Unreachable)
+                        errors.Add("Vault exit is unreachable from its entrance.");
+                }
+                else if (floor.IsBossFloor)
                 {
                     if (fromStart[floor.Exit.Index] == Pathfinding.Unreachable)
                         errors.Add("Exit is unreachable from the start without crossing hazards.");

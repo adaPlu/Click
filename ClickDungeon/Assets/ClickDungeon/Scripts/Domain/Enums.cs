@@ -11,15 +11,18 @@ namespace ClickDungeon.Domain
     public static class Versions
     {
         public const int SaveSchema = 1;
-        public const int Ruleset = 2;
-        public const int Generation = 1;
+        public const int Ruleset = 3;
+        // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
+        public const int Generation = 2;
     }
 
-    public enum Terrain { Floor = 0, Wall = 1, Pit = 2 }
+    /// <summary>Door blocks movement until it is opened; an open door leads into a vault room (D-018).</summary>
+    public enum Terrain { Floor = 0, Wall = 1, Pit = 2, Door = 3 }
 
-    public enum HazardKind { None = 0, Spikes = 1, Bomb = 2 }
+    public enum HazardKind { None = 0, Spikes = 1, Bomb = 2, Lava = 3 }
 
-    public enum ContentKind { None = 0, Key = 1, Chest = 2, Potion = 3 }
+    /// <summary>Things standing on a floor tile (rules §11).</summary>
+    public enum ContentKind { None = 0, Key = 1, Chest = 2, Potion = 3, Fountain = 4, Teleport = 5, PressurePlate = 6 }
 
     /// <summary>Player knowledge of a cell. Never goes backwards within a floor.</summary>
     public enum Knowledge { Unseen = 0, Sensed = 1, Revealed = 2 }

@@ -85,6 +85,15 @@ namespace ClickDungeon.Application
                 Require(Enum.IsDefined(typeof(EnemyMode), enemy.Mode) && Enum.IsDefined(typeof(IntentKind), enemy.Intent.Kind), "unknown enemy state");
             }
             foreach (var reward in run.Rewards) Require(reward != null, "missing reward record");
+
+            // Inside a vault, the floor to return to travels with the save (D-018).
+            if (run.OuterFloor != null)
+            {
+                Require(run.OuterFloor.Cells != null && run.OuterFloor.Cells.Length == BoardRules.CellCount, "outer floor is incomplete");
+                Require(run.OuterFloor.Enemies != null, "outer floor has no enemy list");
+                Require(run.ReturnPos.InBounds, "return position off the board");
+                foreach (var cell in run.OuterFloor.Cells) Require(cell != null, "missing tile on the outer floor");
+            }
         }
 
         static void Require(bool ok, string problem)

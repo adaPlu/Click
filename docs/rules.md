@@ -22,10 +22,10 @@ Each cell has independent layers:
 
 | Layer     | Gate 1 values                               |
 |-----------|---------------------------------------------|
-| Terrain   | `Floor`, `Wall`, `Pit`                      |
+| Terrain   | `Floor`, `Wall`, `Pit`, `Door` (vault, D-018) |
 | Structure | `None`, `Exit` (locked or unlocked)         |
-| Hazard    | `None`, `Spikes`, `Bomb`                    |
-| Content   | `None`, `Key`, `Chest`, `Potion`            |
+| Hazard    | `None`, `Spikes`, `Bomb`, `Lava`            |
+| Content   | `None`, `Key`, `Chest`, `Potion`, `Fountain`, `Teleport`, `PressurePlate` |
 | Actor     | hero or enemy (tracked on the actor, not the cell) |
 
 Gate 1 placement rule: a cell holds **at most one** of {Exit, Hazard, Content}.
@@ -38,7 +38,8 @@ on dangerous terrain) needs no model change.
 |--------------|----------------|-----------------|--------------------|
 | Floor        | yes            | yes             | no                 |
 | Wall         | no             | no              | **yes**            |
-| Pit          | no             | no              | no                 |
+| Pit          | **yes: falls to the next floor** | no | no                 |
+| Door (locked / open) | no / yes (vault) | no | **yes** |
 | Closed chest | no             | no              | no                 |
 | Opened chest | yes            | yes             | no                 |
 | Any actor    | no             | no              | **yes**            |
@@ -50,11 +51,11 @@ on dangerous terrain) needs no model change.
 
 ### 2.1 What is always known
 
-- **Terrain** (walls, pits, floor) of the whole board is visible from the
-  start of a floor. The player can always read the room's shape.
 - The **Exit** cell is Revealed from the start (you always know where you are
   going; you may not yet know how to open it).
-- Everything else (hazards, content, dormant enemies) is concealed.
+- **Everything else is covered**, terrain included: an unknown tile is drawn as
+  a plain stone cover, and only sensing (its clue) or revealing tells the player
+  what is under it. Walls and pits are found the same way as hazards and content.
 
 ### 2.2 Per-cell knowledge states
 
@@ -170,6 +171,12 @@ Then back to 1. The encounter is won when Blobert dies (minions vanish).
   the environment step of the **following** turn, dealing 4 damage to every
   actor in the 3×3 (enemies included), then is Detonated. The player always
   gets one action between arming and explosion.
+- **Lava**: any actor that *enters* the cell takes 3 damage. Lava is permanent and
+  Guard does not stop it. Enemies path around it.
+- **Pit**: stepping into a pit is a **fall**: 3 damage and you land on the next
+  floor, leaving this floor's key, chests and exit behind. There is nothing below
+  the last floor, and a vault hangs off a floor rather than above one, so pits are
+  solid in both. Enemies never enter pits, and fire flies over them.
 - AI pathing treats un-detonated hazard cells as blocked.
 
 ---
@@ -318,3 +325,31 @@ Most deaths happen at Lord Blobert. AutoPlayer can see hidden tiles, so people w
 worse than these rows; the `difficulty` field in playtest telemetry is the real check.
 `BalanceTests` guard the targets: a novice beats Squire's Stroll, a novice reaches Blobert in
 Knight's Trial, and error-prone players win the tiers in order.
+
+---
+
+## 11. Tile catalogue *(production tile set)*
+
+Every tile in the production sheets, and what it means. "Decor" means the tile is a picture of a state that already exists;
+the board never shows a feature the rules do not implement.
+
+| Tile key | Meaning | Rule |
+|---|---|---|
+| `tile_floor_stone` | floor | walkable |
+| `tile_floor_cracked`, `tile_floor_moss` | floor (decor) | variants picked from the cell position, no rule of their own |
+| `tile_wall`, `tile_wall_corner`, `tile_torch` | wall (decor variants) | blocks movement and fire |
+| `tile_trap_pit`, `tile_water` | pit (water is decor for a pit) | nobody crosses; fire flies over |
+| `tile_trap_spike` | spikes | entering on foot costs 2 HP (tier-tuned); permanent |
+| `tile_trap_bomb` | bomb | arms on entry or slash, explodes next environment step in 3×3 |
+| `tile_lava` | lava | entering costs 3 HP; permanent, never expires; enemies avoid it |
+| `tile_pressure_plate` | pressure plate | stepping on it opens every door on the floor; stays pressed |
+| `tile_door_locked`, `tile_door_open` | vault door | blocks movement while locked; entering an open door enters the vault (D-018) |
+| `tile_teleport`, `tile_shadow` | teleport pad | one pair per floor; entering one places the hero on the other, no extra turn |
+| `tile_fountain_heal` | healing fountain | entering heals 3 once, then it is spent |
+| `tile_key` | key | walking over it collects it |
+| `tile_chest_closed`, `tile_chest_open` | chest | Interact from an adjacent tile; vault chests hold three rewards |
+| `tile_stair_down_locked`, `tile_stair_down` | floor exit | locked until the key is held; open exits descend (also the vault's way back) |
+| `tile_stair_up` | floor entrance (decor) | marks the start tile |
+
+Sheet one uses shorter names (`floor_stone.png`); the registry uses the `tile_*` names above.
+

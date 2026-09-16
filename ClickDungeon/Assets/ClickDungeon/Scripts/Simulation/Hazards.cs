@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using ClickDungeon.Content;
 using ClickDungeon.Domain;
@@ -31,6 +32,12 @@ namespace ClickDungeon.Simulation
             {
                 Arm(run.Floor, p, tuning, events);
             }
+            else if (cell.Hazard == HazardKind.Lava)
+            {
+                // Lava is permanent, like spikes, but hotter: enemies path around it and Guard does not help.
+                events.Add(GameEvent.Of(GameEventKind.LavaBurned, to: p, amount: tuning.LavaDamage));
+                Combat.DamageHero(run, tuning.LavaDamage, "lava", events, blockable: false);
+            }
 
             if (cell.Content == ContentKind.Key)
             {
@@ -43,6 +50,44 @@ namespace ClickDungeon.Simulation
                 cell.Content = ContentKind.None;
                 run.Hero.Potions++;
                 events.Add(GameEvent.Of(GameEventKind.PotionCollected, to: p, amount: 1));
+            }
+            else if (cell.Content == ContentKind.Fountain && !cell.Used)
+            {
+                cell.Used = true;
+                int healed = Math.Min(tuning.FountainHeal, run.Hero.MaxHp - run.Hero.Hp);
+                if (healed > 0)
+                {
+                    run.Hero.Hp += healed;
+                    events.Add(GameEvent.Of(GameEventKind.HeroHealed, to: p, amount: healed, source: "fountain"));
+                }
+                events.Add(GameEvent.Of(GameEventKind.FountainUsed, to: p, amount: healed));
+            }
+            else if (cell.Content == ContentKind.PressurePlate && !cell.Used)
+            {
+                cell.Used = true;
+                int opened = 0;
+                foreach (var q in Board.AllCells)
+                {
+                    var other = run.Floor[q];
+                    if (!other.IsLockedDoor) continue;
+                    other.Used = true;
+                    other.Knowledge = Knowledge.Revealed;
+                    opened++;
+                }
+                events.Add(GameEvent.Of(GameEventKind.DoorsOpened, to: p, amount: opened));
+            }
+            else if (cell.Content == ContentKind.Teleport)
+            {
+                // Pads come in pairs. Arriving on the far pad does not fire it again, so the hop always ends there.
+                // An occupied far pad means nobody arrives: two actors may never share a tile.
+                foreach (var q in Board.AllCells)
+                {
+                    if (q == p || run.Floor[q].Content != ContentKind.Teleport) continue;
+                    if (run.Floor.EnemyAt(q) != null) break;
+                    run.Hero.Pos = q;
+                    events.Add(GameEvent.Of(GameEventKind.Teleported, from: p, to: q));
+                    break;
+                }
             }
         }
 

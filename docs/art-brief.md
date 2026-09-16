@@ -314,3 +314,28 @@ Frames, panels and buttons: set 9-slice borders in the sprite importer. Art with
 Not wired yet (needs layout work when the art arrives):
 D1 systems (gold, gems, shop, mail…), the reward fly-to-HUD step, chest opening frames,
 Priority B tiles.
+
+## Appendix: production tile set keys (rules §11)
+
+Drop PNGs into `Assets/ClickDungeon/Art/Runtime/Tiles/`; the file name is the key. Both sheet spellings are accepted for the
+tiles that already existed, so either naming works:
+
+| Feature | Key | Also accepted |
+|---|---|---|
+| Stone floor | `tile_floor_stone` | — |
+| Floor variants (decor) | `tile_floor_cracked`, `tile_floor_moss` | — |
+| Wall, corner, torch (decor) | `tile_wall`, `tile_wall_corner`, `tile_torch` | — |
+| Pit / water (decor) | `tile_pit` | `tile_trap_pit`, `tile_water` |
+| Spikes | `tile_spikes` | `tile_trap_spike` |
+| Bomb | `tile_bomb`, `tile_bomb_armed` | `tile_trap_bomb` |
+| Lava | `tile_lava` | — |
+| Vault door | `tile_door_locked`, `tile_door_open` | — |
+| Pressure plate | `tile_pressure_plate` | — |
+| Teleport pad | `tile_teleport` | `tile_shadow` (the second swirl) |
+| Healing fountain | `tile_fountain_heal` | — |
+| Key, chests | `tile_key`, `tile_chest_closed`, `tile_chest_open` | — |
+| Exit (stair down) | `tile_exit_locked`, `tile_exit_open` | `tile_stair_down_locked`, `tile_stair_down` |
+| Floor entrance (decor) | `tile_stair_up` | — |
+
+The sheets' "locked stair up" has no rule in this game and is not wired: the way back out of a vault is its own stair, and
+floor entrances are never locked.

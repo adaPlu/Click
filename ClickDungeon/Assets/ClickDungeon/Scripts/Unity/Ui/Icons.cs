@@ -176,9 +176,67 @@ namespace ClickDungeon.Unity.Ui
             Label(g, "+", 30, Color.white, new Vector2(0f, -10f), new Vector2(40f, 40f));
         }
 
+        /// <summary>Permanent fire (rules §11). Entering costs HP, so it stays loud even without art.</summary>
+        public static void Lava(Transform t)
+        {
+            if (TryArt(t, ArtKeys.Lava, TileSize)) return;
+            Shape(t, Shapes.Rounded, new Color(0.42f, 0.11f, 0.06f), Vector2.zero, new Vector2(112f, 112f));
+            Shape(t, Shapes.Rounded, new Color(0.85f, 0.29f, 0.08f), new Vector2(-8f, 10f), new Vector2(70f, 30f), 12f);
+            Shape(t, Shapes.Rounded, new Color(0.98f, 0.55f, 0.12f), new Vector2(14f, -14f), new Vector2(54f, 22f), -8f);
+            Shape(t, Shapes.Circle, new Color(1f, 0.78f, 0.3f), new Vector2(-18f, -22f), new Vector2(16f, 16f));
+            Label(t, "LAVA", 18, new Color(1f, 0.82f, 0.45f), new Vector2(0f, -44f), new Vector2(110f, 22f));
+        }
+
+        /// <summary>Vault door (D-018): locked until a pressure plate opens it, then walk in.</summary>
+        public static void Door(Transform t, bool open)
+        {
+            if (TryArt(t, open ? ArtKeys.DoorOpen : ArtKeys.DoorLocked, TileSize)) return;
+            Shape(t, Shapes.Rounded, Palette.StoneDark, Vector2.zero, new Vector2(116f, 116f));
+            Shape(t, Shapes.Rounded, open ? Palette.Ink : Palette.ChestWood, new Vector2(0f, -4f), new Vector2(80f, 96f));
+            if (open)
+            {
+                Shape(t, Shapes.Triangle, Palette.Gold, new Vector2(0f, -34f), new Vector2(30f, 24f), 180f);
+                Label(t, "VAULT", 18, Palette.Gold, new Vector2(0f, 40f), new Vector2(110f, 22f));
+            }
+            else
+            {
+                Shape(t, Shapes.Square, Palette.GoldDark, new Vector2(0f, 6f), new Vector2(84f, 8f));
+                Shape(t, Shapes.Rounded, Palette.Gold, new Vector2(0f, -10f), new Vector2(34f, 28f));
+                Shape(t, Shapes.Circle, Palette.Ink, new Vector2(0f, -8f), new Vector2(10f, 10f));
+                Label(t, "LOCKED", 16, Palette.Gold, new Vector2(0f, 42f), new Vector2(110f, 20f));
+            }
+        }
+
+        public static void PressurePlate(Transform t, bool pressed)
+        {
+            if (TryArt(t, ArtKeys.PressurePlate, TileSize)) return;
+            Shape(t, Shapes.Rounded, Palette.StoneDark, Vector2.zero, new Vector2(104f, 104f));
+            Shape(t, Shapes.Rounded, pressed ? Palette.Stone.Dim(0.8f) : Palette.StoneLight, Vector2.zero, new Vector2(72f, 72f));
+            Label(t, pressed ? "PRESSED" : "PLATE", 16, pressed ? Palette.TextDim : Palette.Gold, new Vector2(0f, -46f), new Vector2(110f, 20f));
+        }
+
+        public static void Teleport(Transform t)
+        {
+            // Both swirls in the tile sheets are teleport pads.
+            if (TryArtFirst(t, TileSize, ArtKeys.Teleport, ArtKeys.Shadow)) return;
+            Shape(t, Shapes.Circle, Palette.Summon.Dim(0.5f), Vector2.zero, new Vector2(100f, 100f));
+            Shape(t, Shapes.Ring, Palette.Summon, Vector2.zero, new Vector2(78f, 78f));
+            Shape(t, Shapes.Ring, Palette.Summon.Dim(1.3f), Vector2.zero, new Vector2(44f, 44f));
+            Label(t, "WARP", 16, Palette.Summon.Dim(1.4f), new Vector2(0f, -46f), new Vector2(110f, 20f));
+        }
+
+        public static void Fountain(Transform t, bool used)
+        {
+            if (TryArt(t, ArtKeys.FountainHeal, TileSize)) return;
+            Shape(t, Shapes.Circle, Palette.StoneLight, Vector2.zero, new Vector2(100f, 100f));
+            Shape(t, Shapes.Circle, used ? Palette.Stone.Dim(0.7f) : Palette.Potion.Dim(1.2f), Vector2.zero, new Vector2(62f, 62f));
+            if (!used) Shape(t, Shapes.Circle, Color.white.WithAlpha(0.4f), new Vector2(-12f, 10f), new Vector2(16f, 16f));
+            Label(t, used ? "SPENT" : "FOUNTAIN", 16, used ? Palette.TextDim : Palette.Safe, new Vector2(0f, -46f), new Vector2(110f, 20f));
+        }
+
         public static void Exit(Transform t, bool unlocked)
         {
-            if (TryArt(t, unlocked ? ArtKeys.ExitOpen : ArtKeys.ExitLocked, TileSize)) return;
+            if (TryArtFirst(t, TileSize, unlocked ? ArtKeys.ExitOpen : ArtKeys.ExitLocked, unlocked ? ArtKeys.StairDown : ArtKeys.StairDownLocked)) return;
             Shape(t, Shapes.Rounded, Palette.StoneDark, Vector2.zero, new Vector2(112f, 112f));
             for (int i = 0; i < 3; i++)
                 Shape(t, Shapes.Square, Palette.StoneLight.Dim(1f - i * 0.22f), new Vector2(0f, 28f - i * 22f), new Vector2(86f - i * 14f, 14f));

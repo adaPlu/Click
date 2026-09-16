@@ -511,7 +511,9 @@ namespace ClickDungeon.Unity.Screens
             _slashChip.text = $"SLASH {hero.SlashDamage}";
             _turnChip.text = $"TURN {run.Turn + 1}";
             _floorTitle.text = $"FLOOR {run.Floor.FloorIndex}";
-            _floorName.text = (Catalog.ProfileFor(run.Floor.FloorIndex).Name ?? "").ToUpperInvariant();
+            _floorName.text = run.Floor.IsVault
+                ? "THE VAULT"
+                : (Catalog.ProfileFor(run.Floor.FloorIndex).Name ?? "").ToUpperInvariant();
 
             bool live = run.Status == RunStatus.InProgress;
             SetAbility(CommandKind.Move, _mode == TargetMode.Move, live, null);
@@ -636,7 +638,16 @@ namespace ClickDungeon.Unity.Screens
             else if (cell.Terrain == Terrain.Pit)
             {
                 title = "PIT";
-                sb.AppendLine("Nobody crosses. Fire flies right over it.");
+                sb.AppendLine(Board.CanFallThrough(run)
+                    ? $"Step in to drop to the next floor for {Catalog.Hazards.FallDamage} HP. You leave this floor's key and loot behind."
+                    : "Nothing below this one. Nobody crosses, and fire flies right over it.");
+            }
+            else if (cell.Terrain == Terrain.Door)
+            {
+                title = "VAULT DOOR";
+                sb.AppendLine(cell.IsOpenDoor
+                    ? "Open. Step in for the treasure room: guards inside, and the way back is this door."
+                    : "Locked. Find the pressure plate on this floor to open it.");
             }
             else if (cell.Knowledge == Knowledge.Unseen)
             {
@@ -664,6 +675,11 @@ namespace ClickDungeon.Unity.Screens
                     title = "SPIKES";
                     sb.AppendLine($"Stepping on costs {Catalog.Hazards.SpikeDamage} HP. Dash jumps over. Enemies avoid spikes.");
                 }
+                else if (cell.Hazard == HazardKind.Lava)
+                {
+                    title = "LAVA";
+                    sb.AppendLine($"Wading through costs {Catalog.Hazards.LavaDamage} HP, every time. Shield does not help. Dash jumps over.");
+                }
                 else if (cell.Hazard == HazardKind.Bomb)
                 {
                     title = cell.BombArmed ? "ARMED BOMB" : "BOMB";
@@ -685,6 +701,21 @@ namespace ClickDungeon.Unity.Screens
                 {
                     title = "POTION";
                     sb.AppendLine("Walk over it to pick it up.");
+                }
+                else if (cell.Content == ContentKind.Fountain)
+                {
+                    title = "HEALING FOUNTAIN";
+                    sb.AppendLine(cell.Used ? "Already drained." : $"Walk over it to heal {Catalog.Hazards.FountainHeal}. It only works once.");
+                }
+                else if (cell.Content == ContentKind.Teleport)
+                {
+                    title = "TELEPORT PAD";
+                    sb.AppendLine("Walk onto it to appear on the other pad. Free, and it costs no extra turn.");
+                }
+                else if (cell.Content == ContentKind.PressurePlate)
+                {
+                    title = "PRESSURE PLATE";
+                    sb.AppendLine(cell.Used ? "Already pressed. The vault door is open." : "Step on it to open the vault door on this floor.");
                 }
                 if (sb.Length == 0) sb.AppendLine("Nothing here.");
             }

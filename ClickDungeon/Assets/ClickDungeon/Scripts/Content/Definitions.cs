@@ -51,6 +51,11 @@ namespace ClickDungeon.Content
     {
         public int SpikeDamage = 2;
         public int BombDamage = 4;
+        /// <summary>Lava is permanent and never expires, so entering one costs more than spikes.</summary>
+        public int LavaDamage = 3;
+        public int FountainHeal = 3;
+        /// <summary>Dropping through a pit to the next floor (rules §4).</summary>
+        public int FallDamage = 3;
         /// <summary>Fuse set on arming. 1 = explodes in the environment step of the following turn.</summary>
         public int BombFuse = 1;
         public int BombRadius = 1;
@@ -94,6 +99,13 @@ namespace ClickDungeon.Content
         public int MinPotions;
         public int MaxPotions;
         public int MinExitDistance = 4;
+        public int MinLava;
+        public int MaxLava;
+        /// <summary>Teleport pads are placed as a pair, or not at all.</summary>
+        public bool Teleports;
+        public int Fountains;
+        /// <summary>A vault door plus the pressure plate that opens it (D-018).</summary>
+        public bool Vault;
     }
 
     /// <summary>
@@ -119,6 +131,17 @@ namespace ClickDungeon.Content
         public int ExtraEnemies;
         /// <summary>HP restored when the hero arrives on the next floor.</summary>
         public int FloorClearHeal;
+    }
+
+    /// <summary>What a vault room holds (D-018): either one great chest or a handful of ordinary ones.</summary>
+    public sealed class VaultTuning
+    {
+        public int MinEnemies = 2;
+        public int MaxEnemies = 3;
+        /// <summary>Rewards granted at once by a great chest.</summary>
+        public int GreatChestRewards = 3;
+        public int MinChests = 2;
+        public int MaxChests = 3;
     }
 
     public sealed class RewardEntry

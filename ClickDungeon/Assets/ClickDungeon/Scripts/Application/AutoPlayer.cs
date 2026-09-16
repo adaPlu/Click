@@ -192,6 +192,8 @@ namespace ClickDungeon.Application
                 Status = run.Status,
                 Hero = Copy(run.Hero),
                 Floor = Copy(run.Floor),
+                OuterFloor = run.OuterFloor == null ? null : Copy(run.OuterFloor),
+                ReturnPos = run.ReturnPos,
                 // Reward records are never changed after they are granted.
                 Rewards = new List<RewardRecord>(run.Rewards),
             };
@@ -207,7 +209,7 @@ namespace ClickDungeon.Application
         {
             var copy = new FloorState
             {
-                FloorIndex = f.FloorIndex, IsBossFloor = f.IsBossFloor, TemplateId = f.TemplateId, Transform = f.Transform,
+                FloorIndex = f.FloorIndex, IsBossFloor = f.IsBossFloor, IsVault = f.IsVault, TemplateId = f.TemplateId, Transform = f.Transform,
                 AttemptIndex = f.AttemptIndex, Start = f.Start, Exit = f.Exit, ExitUnlocked = f.ExitUnlocked, NextActorId = f.NextActorId,
                 Cells = new CellState[f.Cells.Length],
             };
@@ -217,7 +219,7 @@ namespace ClickDungeon.Application
                 copy.Cells[i] = new CellState
                 {
                     Terrain = c.Terrain, IsExit = c.IsExit, Hazard = c.Hazard, BombFuse = c.BombFuse, Content = c.Content,
-                    ChestOpened = c.ChestOpened, Knowledge = c.Knowledge,
+                    ChestOpened = c.ChestOpened, GreatChest = c.GreatChest, Used = c.Used, Knowledge = c.Knowledge,
                 };
             }
             foreach (var e in f.Enemies)

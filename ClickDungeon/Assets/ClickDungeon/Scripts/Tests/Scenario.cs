@@ -9,7 +9,8 @@ namespace ClickDungeon.Tests
     /// <summary>
     /// Builds hand-drawn boards for rule tests. Rows are top row first.
     /// Legend: '#' wall, 'o' pit, '.' floor, 'H' hero/start, 'X' locked exit, 'x' unlocked exit,
-    /// 'K' key, 'C' chest, 'P' potion, '^' spikes, 'b' bomb,
+    /// 'K' key, 'C' chest, 'W' great chest, 'P' potion, '^' spikes, 'b' bomb, 'L' lava,
+    /// 'D' locked door, 'd' open door, 'p' pressure plate, 't' teleport pad, 'f' healing fountain,
     /// 'g' 's' 'i' dormant goblin/slime/imp, 'G' 'S' 'I' awake, 'B' Lord Blobert (awake, boss floor).
     /// </summary>
     public static class Scenario
@@ -41,6 +42,19 @@ namespace ClickDungeon.Tests
                         case 'x': cell.IsExit = true; floor.Exit = p; floor.ExitUnlocked = true; break;
                         case 'K': cell.Content = ContentKind.Key; break;
                         case 'C': cell.Content = ContentKind.Chest; break;
+                        case 'W':
+                            cell.Content = ContentKind.Chest;
+                            cell.GreatChest = true;
+                            break;
+                        case 'L': cell.Hazard = HazardKind.Lava; break;
+                        case 'D': cell.Terrain = Terrain.Door; break;
+                        case 'd':
+                            cell.Terrain = Terrain.Door;
+                            cell.Used = true;
+                            break;
+                        case 'p': cell.Content = ContentKind.PressurePlate; break;
+                        case 't': cell.Content = ContentKind.Teleport; break;
+                        case 'f': cell.Content = ContentKind.Fountain; break;
                         case 'P': cell.Content = ContentKind.Potion; break;
                         case '^': cell.Hazard = HazardKind.Spikes; break;
                         case 'b': cell.Hazard = HazardKind.Bomb; break;

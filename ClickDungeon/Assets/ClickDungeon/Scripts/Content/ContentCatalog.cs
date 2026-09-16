@@ -11,10 +11,14 @@ namespace ClickDungeon.Content
     public sealed class ContentCatalog
     {
         public const string DefaultHeroId = "sir_clickington";
+        /// <summary>Guard used for a vault on a floor whose profile has no enemy pool of its own.</summary>
+        public const string DefaultVaultEnemyId = "goblin";
 
         public int Version = 1;
         public int RunFloorCount = 5;
         public HazardTuning Hazards = new HazardTuning();
+        /// <summary>What a vault room behind a door holds (D-018).</summary>
+        public VaultTuning Vault = new VaultTuning();
         /// <summary>The tier this catalog was built for. Every number in it already includes that tier's adjustments.</summary>
         public Difficulty Difficulty = Difficulty.Medium;
         /// <summary>HP restored when the hero arrives on the next floor.</summary>
@@ -231,16 +235,19 @@ namespace ClickDungeon.Content
             {
                 FloorIndex = 2, Name = "The Damp Cellars", EnemyPool = new[] { "goblin", "goblin", "crowned_slime" }, MinEnemies = 2, MaxEnemies = 2,
                 MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 0, MaxPotions = 1,
+                Vault = true, Fountains = 1,
             });
             c.FloorProfiles.Add(new FloorProfile
             {
                 FloorIndex = 3, Name = "The Ember Vaults", EnemyPool = new[] { "goblin", "fire_imp", "crowned_slime" }, MinEnemies = 2, MaxEnemies = 3,
                 MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 0, MaxPotions = 1,
+                Vault = true, MinLava = 1, MaxLava = 2, Teleports = true,
             });
             c.FloorProfiles.Add(new FloorProfile
             {
                 FloorIndex = 4, Name = "The Locked Depths", EnemyPool = new[] { "goblin", "fire_imp", "fire_imp", "crowned_slime" }, MinEnemies = 3, MaxEnemies = 3,
                 MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 2, Chests = 1, MinPotions = 1, MaxPotions = 1,
+                Vault = true, MinLava = 1, MaxLava = 2, Teleports = true, Fountains = 1,
             });
             c.FloorProfiles.Add(new FloorProfile
             {
@@ -286,6 +293,7 @@ namespace ClickDungeon.Content
             }
             Hazards.SpikeDamage = Math.Max(1, Hazards.SpikeDamage + d.HazardDamage);
             Hazards.BombDamage = Math.Max(1, Hazards.BombDamage + d.HazardDamage);
+            Hazards.LavaDamage = Math.Max(1, Hazards.LavaDamage + d.HazardDamage);
             foreach (var profile in FloorProfiles)
             {
                 if (profile.IsBoss || profile.MaxEnemies <= 0) continue;
