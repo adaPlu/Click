@@ -162,6 +162,8 @@
     { "key": "ui_enemy_hp_back", "source": "ref-core-ui", "rect": [1306, 658, 38, 38], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
     { "key": "ui_enemy_hp_fill", "source": "ref-core-ui", "rect": [1182, 668, 96, 20], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
     { "key": "portrait_goblin", "source": "ref-monster-pack", "rect": [400, 190, 118, 106], "mode": "icon", "size": 192, "folder": "Portraits", "wired": true },
-    { "key": "portrait_slimelet", "source": "ref-monster-pack", "rect": [1096, 608, 120, 102], "mode": "icon", "size": 192, "folder": "Portraits", "wired": true }
+    { "key": "portrait_slimelet", "source": "ref-monster-pack", "rect": [1096, 608, 120, 102], "mode": "icon", "size": 192, "folder": "Portraits", "wired": true },
+    { "key": "ui_hp_fill", "source": "ref2-gameplay", "rect": [676, 26, 58, 32], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
+    { "key": "ui_hp_back", "source": "ref2-gameplay", "rect": [898, 24, 36, 40], "mode": "wide", "size": 256, "folder": "UI", "wired": true }
   ]
 }

@@ -673,6 +673,16 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 1e0f9d8bc4685f44fb915d27f1d4158f, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: ui_hp_back
+    Frames:
+    - {fileID: 21300000, guid: 270ddb1581ac9114d9e9c1396628e9e5, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_hp_fill
+    Frames:
+    - {fileID: 21300000, guid: 2aff7eb353c557143802243503f0204c, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: ui_icon_crown
     Frames:
     - {fileID: 21300000, guid: e2ac304866945b5428ed64394da725e6, type: 3}
