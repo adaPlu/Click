@@ -391,3 +391,18 @@ it keeps the portrait fallback. Two attempts were reverted after seeing them in 
 the Fire Imp standing inside every blast, and the title characters could not be cut from the title screen's painted
 background without carrying a block of it along, which read worse than the fallback art.
 
+### Frames and 9-slice (the frames job)
+
+A frame (panel, modal, button, plaque, HP bar, portrait) can only come from art whose middle can stretch. The reference
+sheets bake text and pictures into every one of theirs, so the slicer grew a `frame` mode: it keeps an outer band of
+`band` source pixels, replaces the middle with the median colour of that middle (or clears it, with `clear`, when
+something else draws inside), and records the 9-slice border in
+`Assets/ClickDungeon/Art/Runtime/Placeholders/borders.json`. `ArtImportPostprocessor` applies that border on import,
+since a border cannot be stored in a PNG. Production frame art should use this path: give the key a `frame` entry, or
+set the border by hand in the importer.
+
+Tried on the reference sheets and reverted after seeing it in the game: their frames are drawn for their own proportions
+and lighting, so flattening the middle produced a beige floor plaque with pale text, buttons whose icon and label no
+longer read, panels flatter than the procedural ones, and an HP bar that lost its shape at our width. The keys stay
+procedural until frame art exists that is drawn to stretch.
+

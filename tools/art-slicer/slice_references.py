@@ -218,9 +218,38 @@ def hollow(image: Image.Image, spec: dict) -> Image.Image:
     return image
 
 
+def frame(crop: Image.Image, spec: dict) -> tuple:
+    """
+    A 9-slice frame built from artwork that has text or a picture baked into it: the border is kept, the middle is
+    replaced by the colour just inside it, so the middle can stretch to any size. Returns the image and its border in
+    output pixels (left, bottom, right, top) for the sprite importer.
+    """
+    band = float(spec["band"])
+    size = int(spec.get("size", 128))
+    rgba = crop.convert("RGBA")
+    scale = size / min(rgba.width, rgba.height)
+    out = rgba.resize((max(1, round(rgba.width * scale)), max(1, round(rgba.height * scale))), Image.LANCZOS)
+    border = max(2, round(band * scale))
+    border = min(border, (min(out.size) - 2) // 2)
+    px = out.load()
+    # The fill is the median of the whole interior, so baked text or a picture cannot drag the colour off the panel's own.
+    ring = []
+    for y in range(border + 1, out.height - border, 2):
+        ring += [px[x, y] for x in range(border + 1, out.width - border, 2)]
+    # "clear" is for a frame that something else draws inside it (a portrait, an HP fill): its middle is see-through.
+    fill = (0, 0, 0, 0) if spec.get("clear") else (
+        tuple(sorted(c[i] for c in ring)[len(ring) // 2] for i in range(4)) if ring else (0, 0, 0, 255))
+    for y in range(border, out.height - border):
+        for x in range(border, out.width - border):
+            px[x, y] = fill
+    return out, border
+
+
 def render(crop: Image.Image, spec: dict) -> Image.Image:
     mode = spec.get("mode", "tile")
     size = int(spec.get("size", 256))
+    if mode == "frame":
+        return frame(crop, spec)[0]
     if mode in ("tile", "portrait"):
         return cover(crop.convert("RGBA"), size, size)
     if mode == "wide":
@@ -249,6 +278,7 @@ def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=Non
     sources = manifest["sources"]
     images, boxes = {}, {}
     written, missing_sources, warnings, sheet_entries = [], set(), [], []
+    borders = {}
 
     for spec in manifest["slices"]:
         key = spec["key"]
@@ -279,6 +309,8 @@ def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=Non
         crop = image.crop((max(0, x), max(0, y), min(image.width, x + w), min(image.height, y + h)))
         result = render(crop, spec)
 
+        if spec.get("mode") == "frame":
+            borders[key] = frame(crop, spec)[1]
         target = out / spec.get("folder", "Misc") / f"{key}.png"
         target.parent.mkdir(parents=True, exist_ok=True)
         result.save(target)
@@ -287,7 +319,26 @@ def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=Non
 
     if sheet_path is not None and sheet_entries:
         write_contact_sheet(sheet_entries, sheet_path)
+    write_borders(out, borders, only)
     return {"written": written, "missing_sources": sorted(missing_sources), "warnings": warnings}
+
+
+def write_borders(out: Path, borders: dict, only) -> None:
+    """
+    Records each frame's 9-slice border for the Unity sprite importer (it cannot be stored in a PNG). Slicing a subset
+    updates only those keys.
+    """
+    path = out / "borders.json"
+    known = {}
+    if path.exists():
+        known = json.loads(path.read_text(encoding="utf-8")).get("borders", {})
+    if only:
+        known.update(borders)
+    else:
+        known = borders
+    payload = {"comment": "key -> 9-slice border in pixels, written by slice_references.py",
+               "borders": dict(sorted(known.items()))}
+    path.write_text(json.dumps(payload, indent=2) + chr(10), encoding="utf-8")
 
 
 def write_contact_sheet(entries, path: Path) -> None:

@@ -228,4 +228,7 @@ question is which one it may cover for ~1.3 s.
 - [ ] Remaining 81 are mostly things the sheets cannot supply as-is: intent badges, danger telegraphs, HUD and modal
       frames and title panels (their text is painted in, so they need frames synthesised from the art plus 9-slice
       borders), backgrounds, most FX, and the walk/attack poses the character sheets never drew.
+- [x] Frames: slicer `frame` mode plus importer-applied 9-slice borders, ready for frame art that is drawn to stretch.
+      The reference sheets' own frames were tried and reverted: flattening their baked-in middles read worse in the game
+      than the procedural panels.
 
