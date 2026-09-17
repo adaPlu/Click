@@ -147,8 +147,9 @@ def remove_background(image: Image.Image, tolerance: int, local_tolerance: int =
     return rgba.crop(bbox) if bbox else rgba
 
 
-def keep_largest_component(image: Image.Image, alpha_threshold: int = 16) -> Image.Image:
-    """Clears every opaque island except the largest one (stray specks beside a cut-out), then trims."""
+def keep_largest_component(image: Image.Image, alpha_threshold: int = 16, min_fraction: float = 1.0) -> Image.Image:
+    """Clears opaque islands smaller than min_fraction of the largest one (stray specks and panel dividers beside a
+    cut-out), then trims. The default keeps only the largest island."""
     rgba = image.convert("RGBA")
     w, h = rgba.size
     px = rgba.load()
@@ -171,10 +172,11 @@ def keep_largest_component(image: Image.Image, alpha_threshold: int = 16) -> Ima
                         queue.append((nx, ny))
     if len(sizes) <= 2:
         return rgba
-    keep = max(range(1, len(sizes)), key=lambda i: sizes[i])
+    largest = max(sizes[1:])
+    keep = {i for i in range(1, len(sizes)) if sizes[i] >= largest * min_fraction}
     for y in range(h):
         for x in range(w):
-            if label[y * w + x] not in (0, keep):
+            if label[y * w + x] and label[y * w + x] not in keep:
                 r, g, b, _ = px[x, y]
                 px[x, y] = (r, g, b, 0)
     bbox = rgba.getchannel("A").getbbox()
@@ -214,7 +216,9 @@ def render(crop: Image.Image, spec: dict) -> Image.Image:
         scale = size / cleaned.width
         return cleaned.resize((size, max(1, round(cleaned.height * scale))), Image.LANCZOS)
     if mode == "sprite":
-        cleaned = remove_background(crop, int(spec.get("tolerance", 40)))
+        cleaned = remove_background(crop, int(spec.get("tolerance", 40)), int(spec.get("local_tolerance", 10)))
+        if "min_island" in spec:
+            cleaned = keep_largest_component(cleaned, min_fraction=float(spec["min_island"]))
         return contain(cleaned, size, spec.get("anchor", "bottom"))
     if mode == "icon":
         source = remove_background(crop, int(spec["tolerance"])) if "tolerance" in spec else crop

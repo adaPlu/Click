@@ -13,24 +13,89 @@ MonoBehaviour:
   m_Name: ArtCatalog
   m_EditorClassIdentifier: ClickDungeon.Unity::ClickDungeon.Unity.Ui.ArtCatalog
   _entries:
+  - Key: actor_crowned_slime_attack
+    Frames:
+    - {fileID: 21300000, guid: 5927c0ba5750e054980487553ae66451, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_crowned_slime_defeat
+    Frames:
+    - {fileID: 21300000, guid: c25ec00b8fe8c7d4b8d4d82d2e04db64, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_crowned_slime_hit
+    Frames:
+    - {fileID: 21300000, guid: 6efa7b69ed649cf468f88e7d691b03da, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_crowned_slime_idle
     Frames:
     - {fileID: 21300000, guid: 2e2e42a958edb9b4790ded878f5a4b8f, type: 3}
     Fps: 8
+    Placeholder: 1
+  - Key: actor_crowned_slime_wake
+    Frames:
+    - {fileID: 21300000, guid: 48ffd28a340ade14483b942ec7af38dd, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_fire_imp_attack
+    Frames:
+    - {fileID: 21300000, guid: dbbc13a39e6db8b42a270b155c1cc255, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_fire_imp_defeat
+    Frames:
+    - {fileID: 21300000, guid: 364a697a11a4d894aa2d90c1f92f8ebb, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_fire_imp_hit
+    Frames:
+    - {fileID: 21300000, guid: e4fbfc1d0ff40ba41ab166ff29f40252, type: 3}
+    Fps: 12
     Placeholder: 1
   - Key: actor_fire_imp_idle
     Frames:
     - {fileID: 21300000, guid: 9fbf97292cfd23741b34c816bdac7b32, type: 3}
     Fps: 8
     Placeholder: 1
+  - Key: actor_fire_imp_wake
+    Frames:
+    - {fileID: 21300000, guid: a488511144741b7488922180732fa124, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_attack
+    Frames:
+    - {fileID: 21300000, guid: f60e8564fc2b8304eb49eac1c75457ac, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_defeat
+    Frames:
+    - {fileID: 21300000, guid: f513515462a0994428b1c2a7b02009f7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_hit
+    Frames:
+    - {fileID: 21300000, guid: 5508dbcd5131f5141accd4fadc1ec41d, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_goblin_idle
     Frames:
     - {fileID: 21300000, guid: 5fa3f0e04f200e743b1f0d927ba48d85, type: 3}
     Fps: 8
     Placeholder: 1
+  - Key: actor_goblin_wake
+    Frames:
+    - {fileID: 21300000, guid: a511cb3329ba7d24abf551e59c431b0a, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_lord_blobert_boast
     Frames:
     - {fileID: 21300000, guid: 2bba1c1887e21b3428b8ca3db54a1f07, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_lord_blobert_defeat
+    Frames:
+    - {fileID: 21300000, guid: 89e97ea1f4c70ef44ad92b3b4346e73a, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: actor_lord_blobert_deflated
@@ -48,15 +113,65 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 0e8090f08d6e1574fbc744531f77ab80, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: actor_lord_blobert_puffup
+    Frames:
+    - {fileID: 21300000, guid: f2e73abf78bcf4946b4b1ab38b0d4ba1, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_lord_blobert_summon
+    Frames:
+    - {fileID: 21300000, guid: bc0ea2a2d912cfa41a80f3bf095ec17e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_sir_clickington_defeat
+    Frames:
+    - {fileID: 21300000, guid: 2c4d4212a07ade6469d9506c6b170c42, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_sir_clickington_hit
+    Frames:
+    - {fileID: 21300000, guid: 2894f35313f0cde41b2ca015080c2081, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_sir_clickington_idle
     Frames:
     - {fileID: 21300000, guid: 8f9123060c3315b43ba5c4c738a82f6a, type: 3}
     Fps: 8
     Placeholder: 1
+  - Key: actor_sir_clickington_slash
+    Frames:
+    - {fileID: 21300000, guid: b9d750a3dde813d498f6162477669ac3, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_sir_clickington_victory
+    Frames:
+    - {fileID: 21300000, guid: 864cdaf97ecf5034cb1bec3bdeb0f088, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_slimelet_attack
+    Frames:
+    - {fileID: 21300000, guid: 638e9a73e4ed14049acec198fe0910a8, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_slimelet_defeat
+    Frames:
+    - {fileID: 21300000, guid: 7b3721a87a0d89c44829873872181a19, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_slimelet_hit
+    Frames:
+    - {fileID: 21300000, guid: 7d800e12bf72f864aa51c3554cda79c4, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_slimelet_idle
     Frames:
     - {fileID: 21300000, guid: f71ee45578d47594499a2b82bb068bb5, type: 3}
     Fps: 8
+    Placeholder: 1
+  - Key: actor_slimelet_wake
+    Frames:
+    - {fileID: 21300000, guid: 24639e8f4b5b735409784325a7f7b7cd, type: 3}
+    Fps: 12
     Placeholder: 1
   - Key: fx_blobert_summon
     Frames:
@@ -83,6 +198,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 2d44411404bd1724c98b25d5de6cdeaa, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: fx_enemy_wake
+    Frames:
+    - {fileID: 21300000, guid: 248deacd6d536ef4a89c8e943db1b705, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_ability_dash
     Frames:
     - {fileID: 21300000, guid: 1df1052a7e54de44dace4941efc3ed14, type: 3}
@@ -106,6 +226,16 @@ MonoBehaviour:
   - Key: icon_ability_slash
     Frames:
     - {fileID: 21300000, guid: 5ac1dae382813334cb0ce5f07a3a3744, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_danger_warning
+    Frames:
+    - {fileID: 21300000, guid: 7a22e3c0d8c52e540898cca7f3fa9958, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_underfoot_exit_locked
+    Frames:
+    - {fileID: 21300000, guid: baa90f1a51ce8b24cb2d402b6e8dc30d, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: logo_clickdungeon
