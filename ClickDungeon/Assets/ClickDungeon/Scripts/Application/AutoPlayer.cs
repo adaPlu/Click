@@ -277,8 +277,10 @@ namespace ClickDungeon.Application
                 cell.GreatChest = false;
                 cell.Quality = ChestQuality.Common;
                 cell.ChestTaps = 0;
+                cell.Used = false;
             }
-            floor.Enemies.RemoveAll(e => floor[e.Pos].Knowledge != Knowledge.Revealed);
+            // A sleeping monster is part of its cover; an awake one is drawn wherever it stands, so the player sees it.
+            floor.Enemies.RemoveAll(e => !e.Awake && floor[e.Pos].Knowledge != Knowledge.Revealed);
             return copy;
         }
 

@@ -248,11 +248,11 @@ namespace ClickDungeon.Unity.Screens
 
         void DrawCell(CellParts view, FloorState floor, CellState cell, GridPos p, bool exitOpen)
         {
-            // Everything is covered until the hero learns it: walls and pits included. Sensing shows a clue on the cover.
+            // Everything is covered until the hero clicks it, and every cover is drawn exactly alike whatever is under it,
+            // the exit included (D-023 amendment). Step by Step's sensing adds its clue marker on top; the cover itself never changes.
             if (cell.Knowledge != Knowledge.Revealed)
             {
-                if (!ApplyTileArt(view, ArtKeys.Wall, CoverTint))
-                    SetPlaceholderBase(view, cell.Knowledge == Knowledge.Sensed ? Palette.FloorSensed : Palette.FloorUnseen, Palette.StoneDark);
+                if (!ApplyTileArt(view, ArtKeys.Wall, CoverTint)) SetPlaceholderBase(view, Palette.FloorUnseen, Palette.StoneDark);
                 if (cell.Knowledge == Knowledge.Sensed) Icons.Clues(view.Icons, Board.ClueAt(floor, p));
                 return;
             }

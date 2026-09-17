@@ -111,7 +111,7 @@ namespace ClickDungeon.Unity.Screens
             _log.Clear();
             if (events != null)
             {
-                AppendLog(events);
+                AppendLog(events, Discovery.Before(Run));
                 Say(Lines.FloorStart(Run.Floor), Run.Floor.IsBossFloor ? Expression.Shocked : Expression.Confident);
             }
             else
@@ -299,6 +299,8 @@ namespace ClickDungeon.Unity.Screens
             if (Blocked) return;
             var run = Run;
             int floorBefore = run.Floor.FloorIndex;
+            // Nothing that happens under a cover may be pointed at (D-023 amendment).
+            var discovery = Discovery.Before(run);
 
             var result = _app.Session.Submit(command);
             if (!result.Accepted)
@@ -310,7 +312,7 @@ namespace ClickDungeon.Unity.Screens
 
             _mode = TargetMode.Move;
             bool floorChanged = run.Floor.FloorIndex != floorBefore;
-            AppendLog(result.Events);
+            AppendLog(result.Events, discovery);
 
             var rewards = new List<RewardRecord>();
             int bestPriority = 0;
@@ -320,6 +322,7 @@ namespace ClickDungeon.Unity.Screens
             _board.BeginPopupBatch();
             foreach (var e in result.Events)
             {
+                if (!discovery.CanMention(run, e)) continue;
                 int priority = Lines.React(e, run, Catalog, out var candidate, out var candidateFace);
                 if (candidate != null && priority > bestPriority)
                 {
@@ -335,7 +338,8 @@ namespace ClickDungeon.Unity.Screens
                 // A chest grants one reward per tap (D-022), so the reveal collects every one of them.
                 if (e.Kind == GameEventKind.ChestOpened && e.Reward != null) rewards.Add(e.Reward);
                 // The stairs heal lands on the new floor's start, so it still gets its popup when the floor changes.
-                if (!floorChanged || (e.Kind == GameEventKind.HeroHealed && e.Source == "stairs")) ShowPopup(e);
+                bool popupAllowed = !floorChanged || (e.Kind == GameEventKind.HeroHealed && e.Source == "stairs");
+                if (popupAllowed && discovery.CanMark(run, e)) ShowPopup(e);
             }
 
             if (floorChanged && run.Status == RunStatus.InProgress)
@@ -348,7 +352,7 @@ namespace ClickDungeon.Unity.Screens
             if (line != null) Say(line, face);
             if (shake) _board.Shake();
 
-            if (!floorChanged) _board.QueueActorAnimations(run, result.Events);
+            if (!floorChanged) _board.QueueActorAnimations(run, discovery.Markable(run, result.Events));
             Refresh(!floorChanged);
 
             if (rewards.Count > 0)
@@ -462,11 +466,12 @@ namespace ClickDungeon.Unity.Screens
                 _portraitArt.sprite = portrait;
         }
 
-        void AppendLog(List<GameEvent> events)
+        void AppendLog(List<GameEvent> events, Discovery discovery)
         {
             var lines = new List<string>();
             foreach (var e in events)
             {
+                if (!discovery.CanMention(Run, e)) continue;
                 var text = Lines.Describe(e, Run, Catalog);
                 if (text != null) lines.Add(text);
             }

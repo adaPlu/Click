@@ -195,4 +195,25 @@ question is which one it may cover for ~1.3 s.
 - [x] Hover: the Inspect panel checked terrain before knowledge, so hovering a covered tile named a pit, vault door or wall.
       Covered tiles now read UNKNOWN whatever is under them ("Covered. Click it to find out what is here." in Free Roam);
       Step by Step keeps its sensed clues. Test: `InspectTileTests` (`GameScreen.InspectTile`).
-- [ ] Step by Step's OBJECTIVE clue uses one "K" mark for keys, doors, pressure plates and teleport pads, which reads as "key".
+- [x] Step by Step clues split: "K" is only the key, a green "E" is the exit, a purple "+" is a door, plate or teleport pad.
+
+## Art conversion from the newer sheets (D4 placeholders, D1 holds)
+- [x] Action poses from the character sheets, played as one-frame one-shots: Sir Clickington slash / hit / victory / defeat;
+      Crowned Slime and Fire Imp wake (spawn) / attack / hit / defeat; Lord Blobert boast / summon / puffup / defeat.
+- [x] Common encounter monster pack: Goblin Raider is the goblin and Slime Minion the slimelet (idle, wake from the alert
+      frame, attack, hit, defeat); `enemy_alert` is the wake effect.
+- [x] Core UI pack: the framed small icons are the ability icons; heart, lock (locked exit badge) and alert (danger corner icon).
+- [x] Slicer: `min_island` drops panel dividers and specks around cut-outs, and `local_tolerance` keeps dark bodies whole
+      (Lord Blobert's idle, puffed and deflated art had holes). Coverage is 80 reference slices, up from 54.
+- [ ] Not converted, with reasons: `tile_highlight` is a 20 px glow (highlights must stay in the outer 8 px); the large
+      `btn_*` buttons have baked labels (the game draws live labels); `ui_tap_progress` has the chest and hand baked in;
+      `enemy_health_bar` has no enemy HP bar to wire to. Intent badges, danger telegraphs, HUD frames and most FX have no
+      source art on disk and stay procedural.
+
+## Every cover is identical (D-023 amendment)
+- [x] Free Roam: nothing drawn, said or answered for a covered tile depends on what is under it; the exit stairs above all.
+- [x] Leaks fixed: exit-unlock popup and effect on a covered exit, blast news about sleeping monsters, plates uncovering
+      doors, tapping a covered chest, the cover placeholder colour following sensing.
+- [x] Regression tests: `HiddenTileArtTests` (Unity), `HiddenTileTests`, `InspectTileTests`.
+- [ ] Step by Step still shows sensing markers, and monsters that start awake stay visible (user decision to keep both).
+

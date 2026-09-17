@@ -62,6 +62,19 @@ Nothing on the board stops the hero except a locked vault door and a tile someon
 - In **Free Roam** there is **no sensing at all**: a covered tile shows nothing —
   no clue, no hint — until it is clicked (§2.3, §12). The exit is
   covered too.
+- **Every cover is identical** (D-023 amendment). Before a tile is clicked, nothing about
+  it depends on what is under it: not its art, tint, border, highlight, hover text, what a
+  click on it does, or any popup, effect or log line pointing at it. Empty floor, a sleeping
+  monster, a chest, loot, a trap, a pit, a door, a plate, a pad and the exit stairs all look
+  and answer the same. Concretely:
+  - Opening the exit (key taken, Blobert defeated) is told in the log, but nothing marks a
+    covered exit tile.
+  - A blast that hits a monster still under its cover says nothing about it.
+  - A pressure plate opens its door where it stands; a covered door stays covered.
+  - A covered chest is tapped like any cover: the tap uncovers it. Tapping to open needs it uncovered.
+  - Exceptions: monsters that start awake (vault guards, Lord Blobert) and monsters that
+    woke earlier are drawn wherever they stand. Step by Step's sensing markers (§2.3) sit on
+    top of the cover; the cover itself never changes.
 
 ### 2.2 Per-cell knowledge states
 

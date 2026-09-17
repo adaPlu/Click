@@ -50,6 +50,25 @@ namespace ClickDungeon.UnityTests
         }
 
         [Test]
+        public void HoveringACoveredExitReadsLikeAnyOtherCover()
+        {
+            // D-023 amendment: the stairs down are found only by clicking them.
+            var run = CoveredBoard(MovementMode.Free);
+            var exit = new GridPos(3, 0);
+            run.Floor[exit].IsExit = true;
+            run.Floor.Exit = exit;
+            var empty = new GridPos(1, 0);
+            foreach (bool keyHeld in new[] { false, true })
+            {
+                run.Hero.HasKey = keyHeld;
+                var exitText = GameScreen.InspectTile(run, exit, Catalog, out var exitTitle);
+                var emptyText = GameScreen.InspectTile(run, empty, Catalog, out var emptyTitle);
+                Assert.That(exitTitle, Is.EqualTo(emptyTitle));
+                Assert.That(exitText, Is.EqualTo(emptyText));
+            }
+        }
+
+        [Test]
         public void UncoveredTilesSayWhatTheyAre()
         {
             var run = CoveredBoard(MovementMode.Free);

@@ -131,6 +131,8 @@ namespace ClickDungeon.Tests
         public static CommandResult OpenChest(RunState run, GridPos cell)
         {
             CommandResult result = null;
+            // A covered chest is only a cover (D-023 amendment); these tests start from a chest the hero has already uncovered.
+            run.Floor[cell].Knowledge = Knowledge.Revealed;
             for (int i = 0, taps = Chests.TapsToOpen(run.Floor[cell].Quality); i < taps; i++)
                 result = DoOk(run, PlayerCommand.Interact(cell));
             return result;

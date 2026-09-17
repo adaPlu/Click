@@ -60,7 +60,9 @@ namespace ClickDungeon.Simulation
                     // Chests do not block, so the hero may be standing on the one they open.
                     if (!target.InBounds || (target != hero.Pos && !hero.Pos.IsAdjacent(target)))
                         return Fail(out reason, "Stand next to it first.");
-                    if (!floor[target].IsClosedChest) return Fail(out reason, "Nothing to open there.");
+                    // A covered chest is just a cover: tapping it uncovers it like any other tile (D-023 amendment).
+                    if (!floor[target].IsClosedChest || floor[target].Knowledge != Knowledge.Revealed)
+                        return Fail(out reason, "Nothing to open there.");
                     return true;
             }
 
@@ -140,7 +142,7 @@ namespace ClickDungeon.Simulation
             if (hero.Pos.IsAdjacent(cell))
             {
                 if (enemy != null && enemy.Awake) command = PlayerCommand.Slash(cell);
-                else if (run.Floor[cell].IsClosedChest) command = PlayerCommand.Interact(cell);
+                else if (run.Floor[cell].IsClosedChest && run.Floor[cell].Knowledge == Knowledge.Revealed) command = PlayerCommand.Interact(cell);
                 else command = PlayerCommand.Move(cell);
                 return true;
             }

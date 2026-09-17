@@ -138,6 +138,9 @@ namespace ClickDungeon.Tests
             Assert.That(self.Kind, Is.EqualTo(CommandKind.Wait));
             Commands.TryContextual(run, P(2, 3), out var enemy);
             Assert.That(enemy.Kind, Is.EqualTo(CommandKind.Slash));
+            Commands.TryContextual(run, P(1, 2), out var coveredChest);
+            Assert.That(coveredChest.Kind, Is.EqualTo(CommandKind.Move), "A covered chest is just a cover: tapping uncovers it.");
+            run.Floor[P(1, 2)].Knowledge = Knowledge.Revealed;
             Commands.TryContextual(run, P(1, 2), out var chest);
             Assert.That(chest.Kind, Is.EqualTo(CommandKind.Interact));
             Commands.TryContextual(run, P(3, 2), out var step);

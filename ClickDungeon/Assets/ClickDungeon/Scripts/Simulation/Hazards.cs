@@ -71,7 +71,7 @@ namespace ClickDungeon.Simulation
                     var other = run.Floor[q];
                     if (!other.IsLockedDoor) continue;
                     other.Used = true;
-                    other.Knowledge = Knowledge.Revealed;
+                    // The door opens where it stands; a covered door stays covered until it is clicked (D-023 amendment).
                     opened++;
                 }
                 events.Add(GameEvent.Of(GameEventKind.DoorsOpened, to: p, amount: opened));

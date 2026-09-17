@@ -310,3 +310,23 @@ Rules referenced here live in `docs/rules.md`.
 - **WHY**: design direction — nothing on the board is known in advance.
 - **MEASURED**: blind novice wins 39 / 21 / 10 of 40 (was 36 / 25 / 8); Knight's Trial runs ~24 turns longer. Tiers stay
   ordered, so no retune; the Knight's Trial reach guard was re-based from 24 to 21 of 30.
+
+### D-023 amendment: every cover is identical
+- **DECISION**: In Free Roam, every unrevealed tile looks and behaves exactly alike until it is clicked, the exit stairs
+  above all. Presentation is gated by `Simulation.Discovery`: popups and board effects only mark uncovered tiles (or an awake
+  monster's own tile), and nothing is said about a monster still hidden under its cover. The cover placeholder no longer
+  varies with sensing. A pressure plate opens its doors without uncovering them. Tapping a covered chest uncovers it
+  instead of opening it, so the tap command no longer reveals that a chest is there. The blind AutoPlayer now also sees
+  awake monsters standing on covers (the player does) and no longer sees whether a covered door was opened.
+- **KEPT** (user decision): Step by Step keeps its sensing markers on top of the cover. Monsters that start awake (vault
+  guards, Lord Blobert) stay visible from the start.
+- **LEAKS FIXED**: when Blobert fell, "OPEN!" and the exit-unlock effect played on the covered exit tile, showing where it
+  was. A bomb blast popped damage numbers and log lines for sleeping monsters under covers. A pressure plate uncovered
+  every vault door on the floor.
+- **TESTS**: `HiddenTileArtTests` (Unity) compares everything drawn for each covered tile against the exit's cover, both
+  with catalog art and with placeholders, with and without the key, once the exit is unlocked, and while hovering. It
+  fails on a 1% tint difference. `HiddenTileTests` checks that every command and tap on a cover gets the same answer
+  whatever is under it, that the bot's view of every cover is alike, that the exit is uncovered only by clicking it, the
+  `Discovery` rules, plates, and that no pits are generated on the last floor. `InspectTileTests` checks hover text.
+- **REVERSIBILITY**: easy; presentation filters and two small rule changes.
+

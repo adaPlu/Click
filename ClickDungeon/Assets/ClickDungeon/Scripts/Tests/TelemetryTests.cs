@@ -144,6 +144,7 @@ namespace ClickDungeon.Tests
                 ".....");
             // One chest_opened event per reward granted.
             chestRun.Floor[P(2, 2)].Quality = ChestQuality.Common;
+            chestRun.Floor[P(2, 2)].Knowledge = Knowledge.Revealed; // uncovered by an earlier click (D-023)
             var sink = new MemoryTelemetrySink();
             var chestRecorder = Recorder(sink);
             for (int i = 0, taps = Chests.TapsToOpen(chestRun.Floor[P(2, 2)].Quality); i < taps; i++)
