@@ -189,3 +189,10 @@ question is which one it may cover for ~1.3 s.
 - [x] AutoPlayer no longer circles vaults; the casual bot's stall bug is gone (0 stalls in every sweep).
 - [x] Tiers retuned: blind novice wins 36 / 25 / 8 of 40 (rules §10.2).
 - [x] Help, hint and log text: "Something was lurking there!" / "Something blocks the way."
+
+## No hints in Free Roam (D-021, D-023)
+- [x] Board: Free Roam draws no clue markers (no "K", danger, treasure or safe marks); they come only from Step by Step sensing.
+- [x] Hover: the Inspect panel checked terrain before knowledge, so hovering a covered tile named a pit, vault door or wall.
+      Covered tiles now read UNKNOWN whatever is under them ("Covered. Click it to find out what is here." in Free Roam);
+      Step by Step keeps its sensed clues. Test: `InspectTileTests` (`GameScreen.InspectTile`).
+- [ ] Step by Step's OBJECTIVE clue uses one "K" mark for keys, doors, pressure plates and teleport pads, which reads as "key".

@@ -612,9 +612,25 @@ namespace ClickDungeon.Unity.Screens
             }
 
             var p = _hover.Value;
+            sb.Append(InspectTile(run, p, Catalog, out var title));
+
+            int damage = Threats.DamageAt(_threats, p);
+            if (damage > 0) sb.AppendLine($"\n<color=#FF6B5E>Danger: -{damage} next turn to whoever stands here.</color>");
+
+            _inspectTitle.text = title;
+            _inspectBody.text = sb.ToString();
+        }
+
+        /// <summary>
+        /// Inspect text for one hovered tile. A tile the player has not uncovered only ever reads as unknown, or as its sensed
+        /// clue in Step by Step: terrain, content and sleeping monsters under a cover must not leak through hovering.
+        /// </summary>
+        public static string InspectTile(RunState run, GridPos p, ContentCatalog catalog, out string title)
+        {
+            var floor = run.Floor;
+            var sb = new StringBuilder();
             var cell = floor[p];
             var enemy = floor.EnemyAt(p);
-            string title;
 
             if (p == run.Hero.Pos)
             {
@@ -629,12 +645,26 @@ namespace ClickDungeon.Unity.Screens
             }
             else if (enemy != null && enemy.Awake)
             {
-                var def = Catalog.Enemy(enemy.DefId);
+                var def = catalog.Enemy(enemy.DefId);
                 title = def.DisplayName.ToUpperInvariant();
                 sb.AppendLine($"HP {enemy.Hp}/{enemy.MaxHp}");
                 sb.AppendLine(Lines.IntentExplain(enemy, def));
                 var underfoot = UnderfootText(cell, floor, Board.ExitReadsOpen(run));
                 if (underfoot != null) sb.AppendLine(underfoot);
+            }
+            // Nothing under a cover may leak through hovering: not terrain, content or a sleeping monster (D-021, D-023).
+            else if (cell.Knowledge == Knowledge.Unseen)
+            {
+                title = "UNKNOWN";
+                sb.AppendLine(run.Movement == MovementMode.Step
+                    ? "Get within two steps to sense what is here."
+                    : "Covered. Click it to find out what is here.");
+            }
+            else if (cell.Knowledge == Knowledge.Sensed)
+            {
+                title = "SENSED";
+                sb.AppendLine(Lines.ClueExplain(Board.ClueAt(floor, p)));
+                sb.AppendLine("Click it to uncover it.");
             }
             else if (cell.Terrain == Terrain.Wall)
             {
@@ -645,7 +675,7 @@ namespace ClickDungeon.Unity.Screens
             {
                 title = "PIT";
                 sb.AppendLine(Board.CanFallThrough(run)
-                    ? $"Step in to drop to the next floor for {Catalog.Hazards.FallDamage} HP. You leave this floor's key and loot behind."
+                    ? $"Step in to drop to the next floor for {catalog.Hazards.FallDamage} HP. You leave this floor's key and loot behind."
                     : "Nothing below this one. Nobody crosses, and fire flies right over it.");
             }
             else if (cell.Terrain == Terrain.Door)
@@ -654,17 +684,6 @@ namespace ClickDungeon.Unity.Screens
                 sb.AppendLine(cell.IsOpenDoor
                     ? "Open. Step in for the treasure room: guards inside, and the way back is this door."
                     : "Locked. Find the pressure plate on this floor to open it.");
-            }
-            else if (cell.Knowledge == Knowledge.Unseen)
-            {
-                title = "UNKNOWN";
-                sb.AppendLine("Get within two steps to sense what is here.");
-            }
-            else if (cell.Knowledge == Knowledge.Sensed)
-            {
-                title = "SENSED";
-                sb.AppendLine(Lines.ClueExplain(Board.ClueAt(floor, p)));
-                sb.AppendLine("Step next to it to reveal it.");
             }
             else
             {
@@ -679,18 +698,18 @@ namespace ClickDungeon.Unity.Screens
                 if (cell.Hazard == HazardKind.Spikes)
                 {
                     title = "SPIKES";
-                    sb.AppendLine($"Stepping on costs {Catalog.Hazards.SpikeDamage} HP. Dash jumps over. Enemies avoid spikes.");
+                    sb.AppendLine($"Stepping on costs {catalog.Hazards.SpikeDamage} HP. Dash jumps over. Enemies avoid spikes.");
                 }
                 else if (cell.Hazard == HazardKind.Lava)
                 {
                     title = "LAVA";
-                    sb.AppendLine($"Wading through costs {Catalog.Hazards.LavaDamage} HP, every time. Shield does not help. Dash jumps over.");
+                    sb.AppendLine($"Wading through costs {catalog.Hazards.LavaDamage} HP, every time. Shield does not help. Dash jumps over.");
                 }
                 else if (cell.Hazard == HazardKind.Bomb)
                 {
                     title = cell.BombArmed ? "ARMED BOMB" : "BOMB";
                     sb.AppendLine(!cell.BombArmed
-                        ? $"Step on it or slash it to arm it. It explodes after your next action, hitting everything in a 3x3 for {Catalog.Hazards.BombDamage}."
+                        ? $"Step on it or slash it to arm it. It explodes after your next action, hitting everything in a 3x3 for {catalog.Hazards.BombDamage}."
                         : cell.BombFuse == 0 ? "Explodes after your next action! Get two tiles away or Shield." : "Explodes in two turns.");
                 }
                 if (cell.Content == ContentKind.Key)
@@ -701,7 +720,9 @@ namespace ClickDungeon.Unity.Screens
                 else if (cell.Content == ContentKind.Chest)
                 {
                     title = "CHEST";
-                    sb.AppendLine(cell.ChestOpened ? "Already opened." : "Stand next to it and tap it to open (1 turn).");
+                    sb.AppendLine(cell.ChestOpened
+                        ? "Already opened."
+                        : $"Tap it from its tile or beside it: {Chests.TapsToOpen(cell.Quality) - cell.ChestTaps} more tap(s), each a turn.");
                 }
                 else if (cell.Content == ContentKind.Potion)
                 {
@@ -711,7 +732,7 @@ namespace ClickDungeon.Unity.Screens
                 else if (cell.Content == ContentKind.Fountain)
                 {
                     title = "HEALING FOUNTAIN";
-                    sb.AppendLine(cell.Used ? "Already drained." : $"Walk over it to heal {Catalog.Hazards.FountainHeal}. It only works once.");
+                    sb.AppendLine(cell.Used ? "Already drained." : $"Walk over it to heal {catalog.Hazards.FountainHeal}. It only works once.");
                 }
                 else if (cell.Content == ContentKind.Teleport)
                 {
@@ -726,11 +747,7 @@ namespace ClickDungeon.Unity.Screens
                 if (sb.Length == 0) sb.AppendLine("Nothing here.");
             }
 
-            int damage = Threats.DamageAt(_threats, p);
-            if (damage > 0) sb.AppendLine($"\n<color=#FF6B5E>Danger: -{damage} next turn to whoever stands here.</color>");
-
-            _inspectTitle.text = title;
-            _inspectBody.text = sb.ToString();
+            return sb.ToString();
         }
 
         static string UnderfootText(CellState cell, FloorState floor, bool exitOpen)
