@@ -34,9 +34,14 @@ namespace ClickDungeon.Domain
         None = 0,
         Enemy = 1,
         Danger = 2,
+        /// <summary>The floor's key.</summary>
         Objective = 4,
         Treasure = 8,
         Safe = 16,
+        /// <summary>The exit (the stairs down).</summary>
+        Exit = 32,
+        /// <summary>Something to use: a vault door, a pressure plate or a teleport pad.</summary>
+        Feature = 64,
     }
 
     public enum IntentKind { None = 0, Attack, Move, Fire, Rest, Recover, Summon, Slam, PuffUp }

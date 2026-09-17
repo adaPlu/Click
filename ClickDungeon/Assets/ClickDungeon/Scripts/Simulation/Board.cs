@@ -73,11 +73,13 @@ namespace ClickDungeon.Simulation
             var enemy = floor.EnemyAt(p);
             if (enemy != null && !enemy.Awake) clue |= Clue.Enemy;
             if (cell.Hazard != HazardKind.None) clue |= Clue.Danger;
+            // Step by Step only (Free Roam senses nothing). Each thing worth finding has its own mark, so "K" means the key.
             if (cell.Content == ContentKind.Key) clue |= Clue.Objective;
+            if (cell.IsExit) clue |= Clue.Exit;
             if (cell.IsClosedChest || cell.Content == ContentKind.Potion) clue |= Clue.Treasure;
             if (cell.Content == ContentKind.Fountain && !cell.Used) clue |= Clue.Treasure;
             if (cell.Terrain == Terrain.Door || cell.Content == ContentKind.PressurePlate || cell.Content == ContentKind.Teleport)
-                clue |= Clue.Objective;
+                clue |= Clue.Feature;
             return clue == Clue.None ? Clue.Safe : clue;
         }
 

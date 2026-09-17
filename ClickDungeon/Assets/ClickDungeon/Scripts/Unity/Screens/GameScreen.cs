@@ -963,7 +963,7 @@ namespace ClickDungeon.Unity.Screens
     {
         public const string HelpText =
             "- Tiles are uncovered only by clicking them. FREE ROAM: tap any tile to go there; if a monster or a shut door is hiding under it, you stay put and it is revealed.\n" +
-            "- STEP BY STEP: step to a lit tile next to you. Tiles two steps away are SENSED: red diamond ! = enemy, orange triangle ! = trap, K = key, $ = treasure, dot = safe.\n" +
+            "- STEP BY STEP: step to a lit tile next to you. Tiles two steps away are SENSED: red diamond ! = enemy, orange triangle ! = trap, K = key, E = exit, purple + = door, plate or teleport, $ = treasure, dot = safe.\n" +
             "- Tap an enemy beside you to SLASH, a chest to open it (2-4 taps, each a turn), or Sir Clickington to wait.\n" +
             "- Uncovering an enemy wakes it. It shows its intent and only acts on the NEXT turn. Most must stand next to you to hit; Fire Imps shoot along a line and Lord Blobert slams from anywhere.\n" +
             "- Tiles marked -N will be hit next turn. Step off, SHIELD to block (staggers attackers), or DASH one or two tiles over traps.\n" +

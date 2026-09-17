@@ -237,6 +237,23 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
+        public void TheExitAndUsableTilesHaveTheirOwnClues()
+        {
+            // Step by Step: "K" is only ever the key; the exit and doors, plates and pads each read differently.
+            var run = StepRun(
+                ".....",
+                "..X..",
+                ".tHp.",
+                "..K..",
+                ".....");
+            var floor = run.Floor;
+            Assert.That(Board.ClueAt(floor, P(2, 3)), Is.EqualTo(Clue.Exit), "A covered exit is not 'safe'.");
+            Assert.That(Board.ClueAt(floor, P(2, 1)), Is.EqualTo(Clue.Objective));
+            Assert.That(Board.ClueAt(floor, P(1, 2)), Is.EqualTo(Clue.Feature));
+            Assert.That(Board.ClueAt(floor, P(3, 2)), Is.EqualTo(Clue.Feature));
+        }
+
+        [Test]
         public void KnowledgeNeverGoesBackwards()
         {
             var run = StepRun(

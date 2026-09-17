@@ -562,7 +562,7 @@ namespace ClickDungeon.Application
         static List<string> ClueNames(Clue clue)
         {
             var names = new List<string>();
-            foreach (var flag in new[] { Clue.Enemy, Clue.Danger, Clue.Objective, Clue.Treasure, Clue.Safe })
+            foreach (var flag in new[] { Clue.Enemy, Clue.Danger, Clue.Objective, Clue.Treasure, Clue.Safe, Clue.Exit, Clue.Feature })
                 if ((clue & flag) != 0) names.Add(Lower(flag));
             return names;
         }

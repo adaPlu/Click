@@ -319,6 +319,8 @@ namespace ClickDungeon.Unity.Ui
             if ((clue & Clue.Enemy) != 0) marks.Add((Clue.Enemy, Shapes.Diamond, Palette.Danger, "!"));
             if ((clue & Clue.Danger) != 0) marks.Add((Clue.Danger, Shapes.Triangle, Palette.Fuse, "!"));
             if ((clue & Clue.Objective) != 0) marks.Add((Clue.Objective, Shapes.Ring, Palette.Gold, "K"));
+            if ((clue & Clue.Exit) != 0) marks.Add((Clue.Exit, Shapes.Rounded, Palette.Safe, "E"));
+            if ((clue & Clue.Feature) != 0) marks.Add((Clue.Feature, Shapes.Circle, Palette.Summon, "+"));
             if ((clue & Clue.Treasure) != 0) marks.Add((Clue.Treasure, Shapes.Diamond, Palette.Gold, "$"));
 
             if (marks.Count == 0)
@@ -335,7 +337,8 @@ namespace ClickDungeon.Unity.Ui
                 var pos = new Vector2(x0 + i * spacing, 0f);
                 if (TryArt(t, ArtKeys.ClueIcon(marks[i].flag), 44f, pos)) continue;
                 Shape(t, marks[i].sprite, marks[i].color, pos, new Vector2(44f, 44f));
-                Label(t, marks[i].glyph, 22, Color.white, pos + new Vector2(0f, -2f), new Vector2(40f, 40f));
+                // "+" is a thin glyph, so it is drawn larger to read as clearly as the letters.
+                Label(t, marks[i].glyph, marks[i].glyph == "+" ? 34 : 22, Color.white, pos + new Vector2(0f, -2f), new Vector2(40f, 40f));
             }
         }
 

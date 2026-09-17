@@ -99,7 +99,9 @@ A Sensed cell shows every category present (flags, not one value):
 |-----------|----------------------------------|--------------------------------|
 | ENEMY     | a dormant enemy                  | claw marks                     |
 | DANGER    | spikes or bomb                   | warning triangle               |
-| OBJECTIVE | key                              | keyhole                        |
+| OBJECTIVE | key                              | "K" ring                       |
+| EXIT      | the exit (stairs down)           | "E" tile                       |
+| FEATURE   | vault door, pressure plate, teleport pad | "+" purple disc        |
 | TREASURE  | chest or potion                  | sparkle                        |
 | SAFE      | none of the above                | small dot                      |
 

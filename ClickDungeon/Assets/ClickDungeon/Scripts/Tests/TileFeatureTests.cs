@@ -164,7 +164,8 @@ namespace ClickDungeon.Tests
                 ".....");
             var door = P(2, 2);
             Assert.That(Board.BlocksMovement(run.Floor[door]), Is.True, "A locked door blocks.");
-            Assert.That(Board.ClueAt(run.Floor, door).HasFlag(Clue.Objective), Is.True, "Sensing a door says 'objective'.");
+            Assert.That(Board.ClueAt(run.Floor, door).HasFlag(Clue.Feature), Is.True, "Sensing a door says 'something to use'.");
+            Assert.That(Board.ClueAt(run.Floor, door).HasFlag(Clue.Objective), Is.False, "Only the key reads as the key.");
 
             var result = DoOk(run, PlayerCommand.Move(P(1, 2)));
             Assert.That(Has(result, GameEventKind.DoorsOpened), Is.True);

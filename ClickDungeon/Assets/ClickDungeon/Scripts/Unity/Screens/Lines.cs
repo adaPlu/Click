@@ -272,9 +272,11 @@ namespace ClickDungeon.Unity.Screens
         {
             if (clue == Clue.Safe) return "Sensed: seems safe.";
             var text = "Sensed:";
-            if ((clue & Clue.Enemy) != 0) text += "\n- Something lurks here. Stepping next to it wakes it.";
+            if ((clue & Clue.Enemy) != 0) text += "\n- Something lurks here. Clicking it wakes it.";
             if ((clue & Clue.Danger) != 0) text += "\n- A trap.";
-            if ((clue & Clue.Objective) != 0) text += "\n- Something important. The key?";
+            if ((clue & Clue.Objective) != 0) text += "\n- The key.";
+            if ((clue & Clue.Exit) != 0) text += "\n- The way down.";
+            if ((clue & Clue.Feature) != 0) text += "\n- Something to use: a door, a pressure plate or a teleport pad.";
             if ((clue & Clue.Treasure) != 0) text += "\n- Treasure.";
             return text;
         }

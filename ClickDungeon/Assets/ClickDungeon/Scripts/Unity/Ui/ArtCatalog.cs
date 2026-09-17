@@ -341,7 +341,7 @@ namespace ClickDungeon.Unity.Ui
                 keys.Add(Actor(enemy.Id, "puffed"));
                 keys.Add(Actor(enemy.Id, "deflated"));
             }
-            foreach (var clue in new[] { Clue.Enemy, Clue.Danger, Clue.Objective, Clue.Treasure, Clue.Safe }) keys.Add(ClueIcon(clue));
+            foreach (var clue in new[] { Clue.Enemy, Clue.Danger, Clue.Objective, Clue.Treasure, Clue.Safe, Clue.Exit, Clue.Feature }) keys.Add(ClueIcon(clue));
             foreach (var kind in new[] { CommandKind.Move, CommandKind.Slash, CommandKind.Shield, CommandKind.Dash, CommandKind.Potion })
                 keys.Add(AbilityIcon(kind));
             foreach (var expression in Expressions) keys.Add(Portrait(HeroId, expression));
