@@ -384,3 +384,10 @@ the reward burst (`fx_chest_rays`, `fx_chest_gem` from `vfx_reward_burst`) and `
 `tile_highlight`, hollowed out by the slicer so only its glowing border is left. `fx_chest_coin` stays unwired: a coin
 implies a currency this game does not have (D1).
 
+A third pass added the reward card icons, Sir Clickington's guard pose, the Crowned Slime's resting variant, the
+slimelet's spawn, the Fire Imp's fire attack, the armed bomb, the alias tile spellings, and the chest reactions
+(anticipation, heavy, triumph) cut from the reward sequence's knight. The reveal reaction has no knight in that panel, so
+it keeps the portrait fallback. Two attempts were reverted after seeing them in the game: the sheets' explosion art has
+the Fire Imp standing inside every blast, and the title characters could not be cut from the title screen's painted
+background without carrying a block of it along, which read worse than the fallback art.
+

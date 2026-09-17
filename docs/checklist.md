@@ -223,4 +223,9 @@ question is which one it may cover for ~1.3 s.
 - [x] Slicer: a `hollow` setting clears the middle of a frame, so a tile highlight keeps only its glow.
 - [ ] Still procedural, with no source art on the sheets: intent badges, danger telegraphs, HUD frames and panels,
       modal panels, title-screen panels and buttons (their labels are baked in), backgrounds, and most FX.
+- [x] Third pass: reward icons, guard/rest/spawn/fire poses, armed bomb, alias tiles, chest reactions. Coverage is 112
+      reference slices and 81 procedural placeholders.
+- [ ] Remaining 81 are mostly things the sheets cannot supply as-is: intent badges, danger telegraphs, HUD and modal
+      frames and title panels (their text is painted in, so they need frames synthesised from the art plus 9-slice
+      borders), backgrounds, most FX, and the walk/attack poses the character sheets never drew.
 

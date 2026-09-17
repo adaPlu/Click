@@ -144,6 +144,9 @@
     { "key": "actor_slimelet_spawn", "source": "ref-slime-sheet", "rect": [25, 840, 160, 135], "mode": "sprite", "tolerance": 50, "min_island": 0.02, "size": 256, "folder": "Actors", "wired": true },
     { "key": "actor_fire_imp_fire", "source": "ref-imp-sheet", "rect": [395, 820, 190, 110], "mode": "sprite", "tolerance": 50, "min_island": 0.02, "size": 256, "folder": "Actors", "wired": true },
     { "key": "actor_sir_clickington_guard", "source": "ref-knight-sheet", "rect": [258, 302, 366, 448], "mode": "sprite", "tolerance": 24, "local_tolerance": 5, "min_island": 0.05, "size": 256, "folder": "Actors", "wired": true },
-    { "key": "ui_icon_settings", "source": "ref2-gameplay", "rect": [1473, 15, 75, 75], "mode": "icon", "tolerance": 55, "largest_only": true, "size": 128, "folder": "UI", "wired": true }
+    { "key": "ui_icon_settings", "source": "ref2-gameplay", "rect": [1473, 15, 75, 75], "mode": "icon", "tolerance": 55, "largest_only": true, "size": 128, "folder": "UI", "wired": true },
+    { "key": "ui_chest_reaction_anticipation", "source": "ref6-vertical-slice", "rect": [148, 912, 95, 128], "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "UI", "wired": true },
+    { "key": "ui_chest_reaction_heavy", "source": "ref6-vertical-slice", "rect": [762, 915, 100, 128], "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "UI", "wired": true },
+    { "key": "ui_chest_reaction_triumph", "source": "ref6-vertical-slice", "rect": [1102, 912, 105, 130], "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "UI", "wired": true }
   ]
 }
