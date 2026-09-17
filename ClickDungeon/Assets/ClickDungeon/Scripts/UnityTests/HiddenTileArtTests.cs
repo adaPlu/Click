@@ -171,6 +171,22 @@ namespace ClickDungeon.UnityTests
         }
 
         [Test]
+        public void ANewFloorKeepsNoPopupsFromTheFloorBefore()
+        {
+            // A popup left floating over a new floor's covers ("KEY!", "-2") would read as a hint.
+            UsePlaceholders();
+            var run = EverythingHidden();
+            var board = Render(run);
+            board.Popup(new GridPos(1, 1), "KEY!", Color.white);
+            var fx = _root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Effects");
+            Assert.That(fx.childCount, Is.GreaterThan(0), "Test setup: a popup is floating.");
+
+            board.ClearEffects();
+            Assert.That(fx.Cast<Transform>().Count(t => !t.gameObject.name.StartsWith("Destroyed")), Is.EqualTo(0),
+                "Arriving on a new floor drops them.");
+        }
+
+        [Test]
         public void ClickingTheExitIsWhatUncoversIt()
         {
             UsePlaceholders();

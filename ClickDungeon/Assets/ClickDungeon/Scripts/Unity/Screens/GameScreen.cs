@@ -344,6 +344,7 @@ namespace ClickDungeon.Unity.Screens
 
             if (floorChanged && run.Status == RunStatus.InProgress)
             {
+                _board.ClearEffects();
                 _hover = null;
                 ShowFloorBanner();
                 line = Lines.FloorStart(run.Floor);

@@ -647,6 +647,16 @@ namespace ClickDungeon.Unity.Screens
             _host.StartCoroutine(Tween.Popup(label.rectTransform, label, rise, 1.0f));
         }
 
+        /// <summary>
+        /// Drops every popup and effect still floating. A new floor is all covers, so a popup left over from the floor
+        /// before it ("KEY!", "-2") would hang over a covered tile and read as a hint (D-023 amendment).
+        /// </summary>
+        public void ClearEffects()
+        {
+            for (int i = _fxLayer.childCount - 1; i >= 0; i--) UiFactory.SafeDestroy(_fxLayer.GetChild(i).gameObject);
+            _popupsPerCell.Clear();
+        }
+
         public void Shake()
         {
             if (!UserPrefs.ScreenShake || UserPrefs.ReducedMotion) return;
