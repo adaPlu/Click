@@ -75,9 +75,29 @@ namespace ClickDungeon.Tests
             return floor;
         }
 
-        public static RunState Run(params string[] rows) => Run(1, 1234UL, rows);
+        public static RunState Run(params string[] rows) => Build(1, 1234UL, MovementMode.Free, rows);
 
-        public static RunState Run(int floorIndex, ulong seed, params string[] rows)
+        public static RunState Run(int floorIndex, ulong seed, params string[] rows) => Build(floorIndex, seed, MovementMode.Free, rows);
+
+        /// <summary>
+        /// A Step by Step board (D-021): the hero moves one tile at a time and nearby tiles are hinted. Enemies behave the
+        /// same in both modes.
+        /// </summary>
+        public static RunState StepRun(params string[] rows) => Build(1, 1234UL, MovementMode.Step, rows);
+
+        public static RunState StepRun(int floorIndex, ulong seed, params string[] rows) => Build(floorIndex, seed, MovementMode.Step, rows);
+
+        /// <summary>
+        /// Switches an already-built board to Step by Step. Enemies keep the intent they declared during setup, so this is
+        /// only for checking what a command validates to; use <see cref="StepRun"/> to test how enemies behave.
+        /// </summary>
+        public static RunState Step(RunState run)
+        {
+            run.Movement = MovementMode.Step;
+            return run;
+        }
+
+        static RunState Build(int floorIndex, ulong seed, MovementMode movement, string[] rows)
         {
             var floor = Floor(rows);
             floor.FloorIndex = floorIndex;
@@ -88,6 +108,8 @@ namespace ClickDungeon.Tests
                 ContentCatalogVersion = Catalog.Version,
                 Hero = RunFactory.CreateHero(Catalog, ContentCatalog.DefaultHeroId),
                 Floor = floor,
+                // Set before the floor is set up: enemies declare their first intent there, and the two modes declare differently.
+                Movement = movement,
             };
             RunFactory.SetupFloor(run, Catalog, new List<GameEvent>());
             return run;
@@ -99,6 +121,18 @@ namespace ClickDungeon.Tests
         {
             var result = Do(run, command);
             Assert.That(result.Accepted, Is.True, $"{command} was rejected: {result.RejectReason}");
+            return result;
+        }
+
+        /// <summary>
+        /// Taps a chest until it opens (D-022): Common 2, Rare 3, Epic 4, each tap a full turn. Returns the result of the
+        /// tap that opened it.
+        /// </summary>
+        public static CommandResult OpenChest(RunState run, GridPos cell)
+        {
+            CommandResult result = null;
+            for (int i = 0, taps = Chests.TapsToOpen(run.Floor[cell].Quality); i < taps; i++)
+                result = DoOk(run, PlayerCommand.Interact(cell));
             return result;
         }
 

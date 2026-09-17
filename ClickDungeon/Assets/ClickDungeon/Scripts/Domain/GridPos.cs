@@ -2,6 +2,7 @@ using System;
 
 namespace ClickDungeon.Domain
 {
+    /// <summary>The four straight directions, used by fire lanes and dashes.</summary>
     public enum Direction { Up = 0, Right = 1, Down = 2, Left = 3 }
 
     public static class Directions
@@ -18,6 +19,24 @@ namespace ClickDungeon.Domain
                 case Direction.Down: return new GridPos(0, -1);
                 default: return new GridPos(-1, 0);
             }
+        }
+
+        /// <summary>
+        /// The eight neighbouring offsets, in a fixed order so AI tie-breaks stay deterministic: up, then clockwise.
+        /// Used for movement and melee reach; fire lanes and bomb blasts keep their own shapes.
+        /// </summary>
+        public static readonly GridPos[] Around =
+        {
+            new GridPos(0, 1), new GridPos(1, 1), new GridPos(1, 0), new GridPos(1, -1),
+            new GridPos(0, -1), new GridPos(-1, -1), new GridPos(-1, 0), new GridPos(-1, 1),
+        };
+
+        /// <summary>A straight step of one tile in any of the eight directions, or false for anything else.</summary>
+        public static bool TryStepFromDelta(int dx, int dy, out GridPos step)
+        {
+            step = new GridPos(Math.Sign(dx), Math.Sign(dy));
+            if (dx == 0 && dy == 0) return false;
+            return Math.Abs(dx) == Math.Abs(dy) || dx == 0 || dy == 0;
         }
 
         public static bool TryFromDelta(int dx, int dy, out Direction dir)
@@ -57,6 +76,11 @@ namespace ClickDungeon.Domain
         public int Chebyshev(GridPos other) => Math.Max(Math.Abs(X - other.X), Math.Abs(Y - other.Y));
 
         public bool IsOrthogonallyAdjacent(GridPos other) => Manhattan(other) == 1;
+
+        /// <summary>Touching, diagonals included (rules §1). Melee reach and one step of movement.</summary>
+        public bool IsAdjacent(GridPos other) => this != other && Chebyshev(other) == 1;
+
+        public GridPos Offset(GridPos step) => new GridPos(X + step.X, Y + step.Y);
 
         public GridPos Step(Direction dir, int count = 1)
         {

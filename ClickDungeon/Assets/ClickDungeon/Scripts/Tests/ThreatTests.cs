@@ -25,7 +25,7 @@ namespace ClickDungeon.Tests
         [Test]
         public void FireLanePreviewExtendsPastTheHero()
         {
-            var run = Run(
+            var run = StepRun(
                 ".....",
                 ".....",
                 ".H.I.",

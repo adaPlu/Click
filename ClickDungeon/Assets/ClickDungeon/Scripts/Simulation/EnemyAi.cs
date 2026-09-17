@@ -54,13 +54,19 @@ namespace ClickDungeon.Simulation
             }
         }
 
+        /// <summary>
+        /// Melee enemies must stand on a tile next to the hero to attack; otherwise they step closer. Reach is the same in
+        /// both movement modes (D-021): only ranged enemies (the imp's fire lane) and the boss (slam, summon) act from a
+        /// distance.
+        /// </summary>
         static Intent ChaseIntent(RunState run, EnemyState enemy) =>
-            enemy.Pos.IsOrthogonallyAdjacent(run.Hero.Pos) ? Intent.Attack(run.Hero.Pos) : Intent.Move();
+            enemy.Pos.IsAdjacent(run.Hero.Pos) ? Intent.Attack(run.Hero.Pos) : Intent.Move();
 
         static Intent LaneIntent(RunState run, EnemyState enemy, EnemyDefinition def)
         {
+            // Reload after every shot.
             if (enemy.Intent.Kind == IntentKind.Fire) return Intent.Rest();
-            if (enemy.Pos.IsOrthogonallyAdjacent(run.Hero.Pos) && TryStepAway(run, enemy, out _)) return Intent.Move();
+            if (enemy.Pos.IsAdjacent(run.Hero.Pos) && TryStepAway(run, enemy, out _)) return Intent.Move();
             if (Board.HeroInLane(run, enemy.Pos, def.Range, out var dir)) return Intent.Fire(dir);
             return Intent.Move();
         }
@@ -92,11 +98,8 @@ namespace ClickDungeon.Simulation
                 case 0:
                     return Intent.Slam(run.Hero.Pos);
                 case 1:
-                    foreach (var d in Directions.All)
-                    {
-                        var cell = boss.Pos.Step(d);
+                    foreach (var cell in Board.Neighbours(boss.Pos))
                         if (Board.EnemyCanEnter(run, cell)) return Intent.Summon(cell);
-                    }
                     return Intent.Slam(run.Hero.Pos);
                 default:
                     return Intent.PuffUp();
@@ -110,7 +113,8 @@ namespace ClickDungeon.Simulation
             switch (intent.Kind)
             {
                 case IntentKind.Attack:
-                    if (enemy.Pos.IsOrthogonallyAdjacent(intent.Target) && run.Hero.Pos == intent.Target)
+                    // A melee blow only lands from a neighbouring tile, on a hero still standing where it was aimed.
+                    if (enemy.Pos.IsAdjacent(intent.Target) && run.Hero.Pos == intent.Target)
                     {
                         events.Add(GameEvent.Of(GameEventKind.EnemyAttacked, enemy.Id, enemy.Pos, intent.Target, def.Damage, def.Id));
                         bool blocked = Combat.DamageHero(run, def.Damage, def.Id, events);
@@ -187,14 +191,14 @@ namespace ClickDungeon.Simulation
         static bool TryChaseStep(RunState run, EnemyState enemy, out GridPos step)
         {
             step = enemy.Pos;
-            if (enemy.Pos.IsOrthogonallyAdjacent(run.Hero.Pos)) return false;
-            var field = Pathfinding.DistanceField(new[] { run.Hero.Pos }, p => Board.EnemyPathable(run.Floor, p));
+            if (enemy.Pos.IsAdjacent(run.Hero.Pos)) return false;
+            var field = Pathfinding.DistanceField(new[] { run.Hero.Pos }, p => Board.EnemyPathable(run.Floor, p), diagonal: true);
             return TryDescend(run, enemy, field, out step);
         }
 
         static bool TryLaneStep(RunState run, EnemyState enemy, EnemyDefinition def, out GridPos step)
         {
-            if (enemy.Pos.IsOrthogonallyAdjacent(run.Hero.Pos)) return TryStepAway(run, enemy, out step);
+            if (enemy.Pos.IsAdjacent(run.Hero.Pos)) return TryStepAway(run, enemy, out step);
 
             var targets = new List<GridPos>();
             foreach (var d in Directions.All)
@@ -212,7 +216,7 @@ namespace ClickDungeon.Simulation
             step = enemy.Pos;
             if (targets.Contains(enemy.Pos)) return false;
             if (targets.Count == 0) return TryChaseStep(run, enemy, out step);
-            var field = Pathfinding.DistanceField(targets, p => Board.EnemyPathable(run.Floor, p));
+            var field = Pathfinding.DistanceField(targets, p => Board.EnemyPathable(run.Floor, p), diagonal: true);
             return TryDescend(run, enemy, field, out step);
         }
 
@@ -221,10 +225,9 @@ namespace ClickDungeon.Simulation
             step = enemy.Pos;
             int best = field[enemy.Pos.Index];
             bool found = false;
-            foreach (var d in Directions.All)
+            foreach (var n in Board.Neighbours(enemy.Pos))
             {
-                var n = enemy.Pos.Step(d);
-                if (!n.InBounds || !Board.EnemyCanEnter(run, n)) continue;
+                if (!Board.EnemyCanEnter(run, n)) continue;
                 if (field[n.Index] < best)
                 {
                     best = field[n.Index];
@@ -238,13 +241,12 @@ namespace ClickDungeon.Simulation
         static bool TryStepAway(RunState run, EnemyState enemy, out GridPos step)
         {
             step = enemy.Pos;
-            int best = enemy.Pos.Manhattan(run.Hero.Pos);
+            int best = enemy.Pos.Chebyshev(run.Hero.Pos);
             bool found = false;
-            foreach (var d in Directions.All)
+            foreach (var n in Board.Neighbours(enemy.Pos))
             {
-                var n = enemy.Pos.Step(d);
-                if (!n.InBounds || !Board.EnemyCanEnter(run, n)) continue;
-                int distance = n.Manhattan(run.Hero.Pos);
+                if (!Board.EnemyCanEnter(run, n)) continue;
+                int distance = n.Chebyshev(run.Hero.Pos);
                 if (distance > best)
                 {
                     best = distance;

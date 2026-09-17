@@ -62,7 +62,9 @@ namespace ClickDungeon.Unity
 
         /// <summary>
         /// Dev automation: -cdShot path.png [-cdScreen title|game] [-cdSeed n] [-cdTurns n] [-cdDifficulty easy|medium|hardcore]
-        /// [-cdBot smart|casual|random] [-cdTelemetryDir dir] [-cdOverlay name].
+        /// [-cdBot smart|casual|random] [-cdBlind 1] [-cdTelemetryDir dir] [-cdOverlay name].
+        /// -cdBlind makes the bot decide on what the player can see, so a demo run explores instead of walking
+        /// straight to a key it should not know about (D-021). It takes a value, so pass "-cdBlind 1".
         /// Overlays: game pause|help|chest|chestburst|banner|bossbanner|victory|defeat, title settings|rules|difficulty.
         /// Telemetry stays off in automation unless -cdTelemetryDir is given, so bot runs never mix with playtest logs.
         /// Plays turns through the normal input path (AutoPlayer by default, or random legal steps), captures a screenshot and quits.
@@ -79,7 +81,8 @@ namespace ClickDungeon.Unity
                 int turns = int.TryParse(ArgValue("-cdTurns"), out var t) ? t : 0;
                 bool randomBot = ArgValue("-cdBot") == "random";
                 var rng = new DeterministicRng(seed);
-                var bot = new AutoPlayer(ArgValue("-cdBot") == "casual" ? AutoPlayer.CasualMistakeRate : 0.0);
+                var bot = new AutoPlayer(ArgValue("-cdBot") == "casual" ? AutoPlayer.CasualMistakeRate : 0.0,
+                    ArgValue("-cdBlind") != null);
                 for (int i = 0; i < turns && Session.Run.Status == Domain.RunStatus.InProgress; i++)
                 {
                     if (randomBot)

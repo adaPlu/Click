@@ -300,7 +300,11 @@ namespace ClickDungeon.Unity.Screens
             else if (cell.Content == ContentKind.Chest)
             {
                 Icons.Chest(view.Icons, cell.ChestOpened);
-                if (!cell.ChestOpened) Icons.TryArt(view.Icons, ArtKeys.ChestShimmer, CellSize);
+                if (!cell.ChestOpened)
+                {
+                    Icons.TryArt(view.Icons, ArtKeys.ChestShimmer, CellSize);
+                    Icons.ChestProgress(view.Icons, cell.ChestTaps, ClickDungeon.Simulation.Chests.TapsToOpen(cell.Quality));
+                }
             }
             else if (cell.Content == ContentKind.Potion) Icons.Potion(view.Icons);
         }

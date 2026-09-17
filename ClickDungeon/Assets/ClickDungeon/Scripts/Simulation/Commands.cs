@@ -25,14 +25,16 @@ namespace ClickDungeon.Simulation
                     return true;
 
                 case CommandKind.Move:
-                    if (!target.InBounds || !hero.Pos.IsOrthogonallyAdjacent(target))
+                    if (!target.InBounds || target == hero.Pos) return Fail(out reason, "Pick another tile.");
+                    // Free Roam reaches the whole board; Step by Step is one tile at a time, diagonals included (D-021).
+                    if (run.Movement == MovementMode.Step && !hero.Pos.IsAdjacent(target))
                         return Fail(out reason, "Sir Clickington can only step to a neighbouring tile.");
                     if (!Board.HeroCanEnter(run, target)) return Fail(out reason, "That way is blocked.");
                     return true;
 
                 case CommandKind.Slash:
                 {
-                    if (!target.InBounds || !hero.Pos.IsOrthogonallyAdjacent(target))
+                    if (!target.InBounds || !hero.Pos.IsAdjacent(target))
                         return Fail(out reason, "Slash only reaches neighbouring tiles.");
                     var enemy = floor.EnemyAt(target);
                     if (enemy != null && enemy.Awake) return true;
@@ -54,7 +56,8 @@ namespace ClickDungeon.Simulation
                     return true;
 
                 case CommandKind.Interact:
-                    if (!target.InBounds || !hero.Pos.IsOrthogonallyAdjacent(target))
+                    // Chests do not block, so the hero may be standing on the one they open.
+                    if (!target.InBounds || (target != hero.Pos && !hero.Pos.IsAdjacent(target)))
                         return Fail(out reason, "Stand next to it first.");
                     if (!floor[target].IsClosedChest) return Fail(out reason, "Nothing to open there.");
                     return true;
@@ -67,21 +70,25 @@ namespace ClickDungeon.Simulation
         {
             var hero = run.Hero;
             if (hero.DashCooldown > 0) return Fail(out reason, $"Dash is recharging ({hero.DashCooldown}).");
+            int distance = hero.Pos.Chebyshev(target);
+            // One or two tiles in a straight line, diagonals included (rules §5).
             if (!target.InBounds
-                || !Directions.TryFromDelta(target.X - hero.Pos.X, target.Y - hero.Pos.Y, out var dir)
-                || hero.Pos.Manhattan(target) != heroClass.DashDistance)
-                return Fail(out reason, $"Dash moves exactly {heroClass.DashDistance} tiles in a straight line.");
+                || !Directions.TryStepFromDelta(target.X - hero.Pos.X, target.Y - hero.Pos.Y, out var step)
+                || distance < 1 || distance > heroClass.DashDistance)
+                return Fail(out reason, $"Dash moves one or {heroClass.DashDistance} tiles in a straight line.");
 
-            for (int i = 1; i < heroClass.DashDistance; i++)
+            for (int i = 1; i < distance; i++)
             {
-                var middle = hero.Pos.Step(dir, i);
+                var middle = hero.Pos.Offset(new GridPos(step.X * i, step.Y * i));
                 var cell = run.Floor[middle];
                 if (cell.Terrain != Terrain.Floor || cell.IsClosedChest || run.Floor.EnemyAt(middle) != null)
                     return Fail(out reason, "Something blocks the dash.");
             }
 
             var landing = run.Floor[target];
-            if (landing.Knowledge == Knowledge.Unseen) return Fail(out reason, "Can't dash into the unknown.");
+            // Free Roam has no sensing, so every distant tile is unknown; a blind dash is no worse than a blind step.
+            if (run.Movement == MovementMode.Step && landing.Knowledge == Knowledge.Unseen)
+                return Fail(out reason, "Can't dash into the unknown.");
             var occupant = run.Floor.EnemyAt(target);
             if (occupant != null) return Fail(out reason, occupant.Awake ? "An enemy stands there." : "Something lurks there.");
             if (!Board.HeroCanEnter(run, target)) return Fail(out reason, "Can't land there.");
@@ -106,15 +113,22 @@ namespace ClickDungeon.Simulation
             command = default;
             if (cell == hero.Pos)
             {
-                command = PlayerCommand.Wait();
+                command = run.Floor[cell].IsClosedChest ? PlayerCommand.Interact(cell) : PlayerCommand.Wait();
                 return true;
             }
-            if (!cell.InBounds || !hero.Pos.IsOrthogonallyAdjacent(cell)) return false;
+            if (!cell.InBounds) return false;
 
             var enemy = run.Floor.EnemyAt(cell);
-            if (enemy != null && enemy.Awake) command = PlayerCommand.Slash(cell);
-            else if (run.Floor[cell].IsClosedChest) command = PlayerCommand.Interact(cell);
-            else command = PlayerCommand.Move(cell);
+            if (hero.Pos.IsAdjacent(cell))
+            {
+                if (enemy != null && enemy.Awake) command = PlayerCommand.Slash(cell);
+                else if (run.Floor[cell].IsClosedChest) command = PlayerCommand.Interact(cell);
+                else command = PlayerCommand.Move(cell);
+                return true;
+            }
+            // Free Roam: a tap anywhere on the board is a move, as long as the tile can be entered.
+            if (run.Movement != MovementMode.Free) return false;
+            command = PlayerCommand.Move(cell);
             return true;
         }
 

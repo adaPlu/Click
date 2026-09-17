@@ -89,12 +89,18 @@ namespace ClickDungeon.Tests
         {
             // Saving verifies through FromJson, so a validation rule that rejects a real state would silently stop saves.
             bool sawWon = false, sawLost = false, sawBoss = false;
-            foreach (var (tier, mistakes) in new[] { (Difficulty.Easy, 0.0), (Difficulty.Medium, 0.5), (Difficulty.Hardcore, 0.7) })
+            // Both movement modes, because they produce different states: Free Roam crosses the board, Step by Step chases (D-021).
+            foreach (var (tier, mistakes, movement) in new[]
+            {
+                (Difficulty.Easy, 0.0, MovementMode.Free),
+                (Difficulty.Medium, 0.5, MovementMode.Free),
+                (Difficulty.Hardcore, 0.7, MovementMode.Step),
+            })
             {
                 var catalog = ContentCatalog.CreateDefault(tier);
                 for (ulong seed = 1; seed <= 4; seed++)
                 {
-                    var run = RunFactory.NewRun(seed, catalog, new List<GameEvent>());
+                    var run = RunFactory.NewRun(seed, catalog, new List<GameEvent>(), ContentCatalog.DefaultHeroId, movement);
                     var player = new AutoPlayer(mistakes);
                     for (int i = 0; i < 400 && run.Status == RunStatus.InProgress; i++)
                     {

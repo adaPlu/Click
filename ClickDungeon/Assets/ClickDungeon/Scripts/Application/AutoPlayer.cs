@@ -23,9 +23,9 @@ namespace ClickDungeon.Application
     /// <summary>
     /// Deterministic one-turn look-ahead player for balance reports and bot demos. It tries every legal command on a
     /// copy of the run, scores the result and plays the best one. It starts careful and grows bolder while it makes no
-    /// progress, the way a player eventually pushes past a sleeping enemy or a trap. The copy includes hidden cells, so
-    /// it plays a little better than a careful human who can only read clues. Commands still go through the normal
-    /// rules. Use one instance per run.
+    /// progress, the way a player eventually pushes past a sleeping enemy or a trap. By default the copy includes hidden
+    /// cells, so it plays better than a human who can only read what is revealed; construct it <c>blind</c> to decide on
+    /// a redacted board instead. Commands still go through the normal rules. Use one instance per run.
     /// </summary>
     public sealed class AutoPlayer
     {
@@ -35,13 +35,20 @@ namespace ClickDungeon.Application
         /// <summary>Mistake rate used for balance targets: roughly a first-time player who mostly reads the telegraphs.</summary>
         public const double CasualMistakeRate = 0.2;
 
-        public AutoPlayer(double mistakeRate = 0)
+        public AutoPlayer(double mistakeRate = 0, bool blind = false)
         {
             MistakeRate = Math.Max(0, Math.Min(1, mistakeRate));
+            Blind = blind;
         }
 
         /// <summary>Share of turns on which the player picks a random command that does not lose on the spot.</summary>
         public double MistakeRate { get; }
+
+        /// <summary>
+        /// True when the bot only knows what the player knows. It decides on a redacted board with every unrevealed tile
+        /// blanked, so it can neither read hidden content nor discover a trap by simulating a step onto it.
+        /// </summary>
+        public bool Blind { get; }
 
         static readonly CommandKind[] TargetedKinds = { CommandKind.Move, CommandKind.Slash, CommandKind.Dash, CommandKind.Interact };
         static readonly CommandKind[] UntargetedKinds = { CommandKind.Shield, CommandKind.Potion, CommandKind.Wait };
@@ -66,7 +73,9 @@ namespace ClickDungeon.Application
         /// <summary>Best command this turn. <paramref name="seed"/> only breaks near-ties, so equal inputs give equal choices.</summary>
         public PlayerCommand Choose(RunState run, ContentCatalog catalog, ulong seed)
         {
-            TrackProgress(run, catalog);
+            // A blind player reasons about the board they can see; a sighted one about all of it.
+            var view = Blind ? Redact(run) : run;
+            TrackProgress(view, catalog);
             // Caution drops from 1 to 0.15 as the player runs out of patience.
             double caution = 1.0 - 0.85 * Math.Min(1.0, _turnsWithoutProgress / (double)PatienceTurns);
 
@@ -75,12 +84,14 @@ namespace ClickDungeon.Application
             var best = PlayerCommand.Wait();
             double bestScore = double.NegativeInfinity;
             var survivable = new List<PlayerCommand>();
-            foreach (var command in LegalCommands(run, catalog))
+            foreach (var command in LegalCommands(view, catalog))
             {
-                var copy = Copy(run);
+                // Believing a move is legal is not enough: the real board still refuses it, exactly as it would a player.
+                if (Blind && !Commands.Validate(run, command, catalog, out _)) continue;
+                var copy = Copy(view);
                 if (!TurnResolver.Apply(copy, command, catalog).Accepted) continue;
                 if (copy.Status != RunStatus.Lost) survivable.Add(command);
-                double score = Score(copy, catalog, caution) + rng.Next(8);
+                double score = Score(copy, catalog, caution, Blind) + rng.Next(8);
                 if (score > bestScore)
                 {
                     bestScore = score;
@@ -91,10 +102,11 @@ namespace ClickDungeon.Application
         }
 
         /// <summary>Plays a whole run headless, stopping after <paramref name="maxCommands"/> commands.</summary>
-        public static AutoRunResult PlayRun(ContentCatalog catalog, ulong seed, int maxCommands, double mistakeRate = 0)
+        public static AutoRunResult PlayRun(ContentCatalog catalog, ulong seed, int maxCommands, double mistakeRate = 0,
+            MovementMode movement = MovementMode.Free, bool blind = false)
         {
-            var player = new AutoPlayer(mistakeRate);
-            var run = RunFactory.NewRun(seed, catalog, new List<GameEvent>());
+            var player = new AutoPlayer(mistakeRate, blind);
+            var run = RunFactory.NewRun(seed, catalog, new List<GameEvent>(), ContentCatalog.DefaultHeroId, movement);
             for (int i = 0; i < maxCommands && run.Status == RunStatus.InProgress; i++)
                 TurnResolver.Apply(run, player.Choose(run, catalog, seed * 7919UL + (ulong)i), catalog);
             return new AutoRunResult
@@ -108,6 +120,8 @@ namespace ClickDungeon.Application
         {
             long progress = run.Floor.FloorIndex * 1_000_000L
                             + (run.Hero.HasKey || run.Floor.ExitUnlocked ? 100_000L : 0L)
+                            // Uncovering the board is progress when it is the only way to find anything.
+                            + (Blind ? RevealedCells(run.Floor) * 500L : 0L)
                             - EnemyHp(run) * 1_000L
                             - GoalDistance(run, catalog);
             if (progress > _bestProgress)
@@ -121,7 +135,7 @@ namespace ClickDungeon.Application
             }
         }
 
-        static double Score(RunState run, ContentCatalog catalog, double caution)
+        static double Score(RunState run, ContentCatalog catalog, double caution, bool blind)
         {
             if (run.Status == RunStatus.Won) return 1e9;
             if (run.Status == RunStatus.Lost) return -1e9;
@@ -141,8 +155,45 @@ namespace ClickDungeon.Application
             foreach (var enemy in floor.Enemies)
                 score -= enemy.Hp * (catalog.Enemy(enemy.DefId).IsBoss ? 90 : 35);
 
+            // Without hints, uncovering tiles is the only way to find the key, so a blind player values it directly.
+            if (blind) score += RevealedCells(floor) * 40;
+
             score -= GoalDistance(run, catalog) * 60;
             return score;
+        }
+
+        static int RevealedCells(FloorState floor)
+        {
+            int count = 0;
+            foreach (var p in Board.AllCells)
+                if (floor[p].Knowledge == Knowledge.Revealed) count++;
+            return count;
+        }
+
+        /// <summary>
+        /// What the player can actually see: a copy with every unrevealed tile blanked and the enemies hiding on those
+        /// tiles removed. Look-ahead runs on this, so a blind bot cannot find a trap by simulating a step onto it.
+        /// </summary>
+        public static RunState Redact(RunState run)
+        {
+            var copy = Copy(run);
+            var floor = copy.Floor;
+            foreach (var p in Board.AllCells)
+            {
+                var cell = floor[p];
+                if (cell.Knowledge == Knowledge.Revealed) continue;
+                // The exit is known from the start (rules §2.1); everything else under a cover is simply unknown.
+                cell.Terrain = Terrain.Floor;
+                cell.Hazard = HazardKind.None;
+                cell.BombFuse = -1;
+                cell.Content = ContentKind.None;
+                cell.ChestOpened = false;
+                cell.GreatChest = false;
+                cell.Quality = ChestQuality.Common;
+                cell.ChestTaps = 0;
+            }
+            floor.Enemies.RemoveAll(e => floor[e.Pos].Knowledge != Knowledge.Revealed);
+            return copy;
         }
 
         static int EnemyHp(RunState run)
@@ -166,10 +217,17 @@ namespace ClickDungeon.Application
             {
                 foreach (var p in Board.AllCells)
                     if (floor[p].Content == ContentKind.Key) goals.Add(p);
+                // No key in sight: the only lead a blind player has is the nearest tile they have not uncovered.
+                if (goals.Count == 0)
+                    foreach (var p in Board.AllCells)
+                        if (floor[p].Knowledge != Knowledge.Revealed) goals.Add(p);
             }
             if (goals.Count == 0) goals.Add(floor.Exit);
 
-            var field = Pathfinding.DistanceField(goals, p => !Board.BlocksMovement(floor[p]));
+            // In Free Roam every tile is one click away; standing on the exit still needs a step off and back on.
+            if (run.Movement == MovementMode.Free) return goals.Contains(run.Hero.Pos) ? 2 : 1;
+            // Step by Step moves diagonally, so distances count diagonal steps.
+            var field = Pathfinding.DistanceField(goals, p => !Board.BlocksMovement(floor[p]), diagonal: true);
             int distance = field[run.Hero.Pos.Index];
             // Standing on the exit does nothing: it only triggers when entered, so step off and back on.
             if (distance == 0 && run.Hero.Pos == floor.Exit) return 2;
@@ -219,7 +277,8 @@ namespace ClickDungeon.Application
                 copy.Cells[i] = new CellState
                 {
                     Terrain = c.Terrain, IsExit = c.IsExit, Hazard = c.Hazard, BombFuse = c.BombFuse, Content = c.Content,
-                    ChestOpened = c.ChestOpened, GreatChest = c.GreatChest, Used = c.Used, Knowledge = c.Knowledge,
+                    ChestOpened = c.ChestOpened, GreatChest = c.GreatChest, Quality = c.Quality, ChestTaps = c.ChestTaps,
+                    Used = c.Used, Knowledge = c.Knowledge,
                 };
             }
             foreach (var e in f.Enemies)

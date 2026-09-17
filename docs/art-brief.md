@@ -339,3 +339,30 @@ tiles that already existed, so either naming works:
 
 The sheets' "locked stair up" has no rule in this game and is not wired: the way back out of a vault is its own stair, and
 floor entrances are never locked.
+
+## Appendix: newer production sheets — what is wired and what is held (D1)
+
+Three later sheets (core ability & consumable UI, special chest & key system, common encounter monsters) contain art for
+systems this game does not have. Per D1 that art stays on disk, unwired, until the system exists — the board and HUD never
+show a feature the simulation cannot back.
+
+| Sheet asset | Status |
+|---|---|
+| `btn_move`, `btn_slash`, `btn_shield`, `btn_dash`, `btn_potion` | wire to `ui_button_ability_<move\|slash\|shield\|dash\|potion>` — these abilities exist |
+| `btn_open_chest`, `btn_interact` | wire to the Interact command (rules §7) |
+| `icon_heart`, `icon_lock`, `icon_alert`, `tile_highlight`, `enemy_health_bar` | wire: HP, locked exit/door, enemy telegraph, tile selection, enemy HP |
+| `ui_tap_progress` (tap-to-open meter) | wires up with chest tap quality (D-022): a 2/3/4-segment meter matches Common/Rare/Epic |
+| `btn_use_key` | **held** — the floor key is spent by walking onto the exit, not by a button |
+| `btn_bomb`, `btn_heal` | **held** — bombs are armed by entering or slashing the tile; healing is the Potion command |
+| `icon_mana` | **held** — no mana system (D3 default: no mana bar) |
+| `icon_coin`, `icon_gem`, `ui_store_key_card`, `icon_reward_bundle` | **held** — no currency, shop or economy |
+| `item_key_special`, `item_key_premium`, `badge_special_lock` | **held** — the sheet states special keys are a premium currency item, not found in regular dungeon gameplay |
+| `chest_premium_*`, `chest_mega_*`, `vfx_reward_burst` | **held** — premium and mega chests need the special-key economy above before they can open |
+| `goblin_raider_*` | wire as the goblin's art (`actor_goblin_*`) |
+| `slime_minion_*` | wire as the slimelet's art (`actor_slimelet_*`) |
+| `goblin_bomber_*`, `goblin_key_warden_*` | **held** — these are new enemies with no behaviour yet; each needs a rules entry and tests first |
+| `enemy_alert.png` | wire to the existing wake telegraph (`fx_enemy_wake`) |
+
+Mimic chests are in the same position as the two new goblins: a Mimic is an enemy disguised as a chest, so it needs an
+enemy definition and its own rule (first tap reveals it, that tap is the player's action, and it may strike in that same
+enemy phase) before any art is wired.

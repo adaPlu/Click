@@ -178,3 +178,84 @@ Rules referenced here live in `docs/rules.md`.
   (pits already exist in templates), telemetry `fell_through_pit`.
 - **REVERSIBILITY**: high for (a), presentation only. Medium for (b): it changes pacing and the value of every floor's loot,
   and the balance guards measure it.
+
+## D-021 Movement modes
+- **DECISION**: A run picks one of two movement modes, stored in the save. **Free Roam** (default): the hero moves to any
+  tile on the 5×5, nothing blocks the way, and a revealed enemy strikes the hero's tile from anywhere each time the player
+  acts. **Step by Step** (option): the hero moves to one of the eight neighbouring tiles, and enemies chase, declare fire
+  lanes and strike only from adjacent tiles. Adjacency is 8-way for both actors in both modes, dash covers one or two tiles
+  in a straight line, and the only things that stop the hero are a locked vault door and an occupied tile. Walls are no
+  longer generated; the wall sprite is the cover over an unrevealed tile.
+- **WHY**: the 5×5 board is a click surface first. Free Roam makes every tile a legal choice and puts the pressure on
+  reading the board rather than walking across it; Step by Step keeps the tactical positioning game for players who want it.
+- **DEPENDENCIES**: `MovementMode`, `Commands.Validate`/`TryContextual`, `EnemyAi` declare/execute, `Board.HeroCanEnter`,
+  `Visibility` (revealing follows 8-way reach), save validation, `AutoPlayer`, the balance guards.
+- **REVERSIBILITY**: low for the default. Free Roam changes what the game is to play, and it makes the game markedly
+  easier: the difficulty tiers were measured under the old movement and no longer separate, so they must be re-measured
+  against Free Roam before the tiers mean anything.
+
+## D-022 Chest quality and tap-to-open
+- **DECISION**: Regular chests carry a quality that sets how many taps they take to open: **Common 2, Rare 3, Epic 4**
+  (weights 60 / 30 / 10). Every tap is a full player action costing a turn, so each one gives every revealed monster its
+  response. A vault's great chest is always Epic and still grants three rewards. Quality is drawn from a hash of the run
+  seed, floor and cell at floor setup rather than from the generator's stream, so floors from a given seed are unchanged;
+  the reward is still committed by the tap that finally opens the chest. Ruleset version 5.
+- **WHY**: looting stops being free. A chest in a room with woken monsters becomes a real decision — two to four turns of
+  exposure for one reward — instead of a one-click pickup grabbed on the way past.
+- **NOT BUILT**: Special/Premium chests and the Mimic. The art sheet itself states special keys are a premium currency item
+  "not found in regular dungeon gameplay", so a premium chest would be a dead mechanic until a shop and currency exist (D1).
+  A Mimic is an enemy wearing a chest: it needs an enemy definition, a rules entry and tests before any art is wired. Both
+  sets of art stay on disk, unwired (see `docs/art-brief.md`).
+- **DEPENDENCIES**: `ChestQuality`, `CellState.Quality`/`ChestTaps`, `Chests.Tap`/`TapsToOpen`/`RollQuality`,
+  `RunFactory.SetupFloor`, `TurnResolver` Interact, save validation, `AutoPlayer.Copy`, `GameEventKind.ChestTapped`.
+- **REVERSIBILITY**: medium. Forcing every quality to Common and one tap restores the old behaviour, but the balance moves
+  with it: chests now cost turns, and the bot already skips them entirely in Free Roam.
+
+### D-021 amendment: Free Roam gives no hints
+- **DECISION**: Free Roam produces no `Sensed` cells. Every tile the hero has not revealed is drawn as a blank cover with
+  no clue of any kind, whatever lies under it; knowledge runs `Unseen → Revealed` only. The exit stays known from the start
+  (§2.1). Step by Step keeps sensing and its clue set unchanged. Because nothing distant is ever known in Free Roam, the
+  "can't dash into the unknown" restriction applies only in Step by Step — a blind dash there is no worse than a blind step.
+- **WHY**: with hints, a Free Roam floor could be read from a distance and solved in two clicks — tap the key, tap the exit.
+  Removing them makes clicking a tile the way you learn what is on it, which is the point of the mode.
+- **NOTE**: this does not change `AutoPlayer`. The bot never consults `cell.Knowledge`, so its runs still take the optimal
+  route and cannot measure what hiding information does to a human player. Any balance number taken from the bot after this
+  change describes an omniscient player, not a real one.
+- **DEPENDENCIES**: `Visibility.Update`, `Commands.ValidateDash`, rules §2.1/§2.3/§5/§12.
+- **REVERSIBILITY**: high — one condition in `Visibility.Update`.
+
+### D-021 amendment: a blind AutoPlayer for half the measurements
+- **DECISION**: `AutoPlayer` can be constructed **blind**. A blind bot decides on a *redacted* copy of the run: every tile
+  it has not revealed is blanked (terrain, hazard and content cleared) and enemies standing on unrevealed tiles are removed.
+  Its one-turn look-ahead runs on that redacted board, and a command it believes is legal is still checked against the real
+  board before it is played. Because a blind player has no key to walk to, two things give it a reason to explore: the
+  nearest unrevealed tile becomes the goal when no objective is visible, and uncovering tiles counts as progress and score.
+  `BalanceReport` now measures every tier in both modes **twice, once sighted and once blind**.
+- **WHY**: the sighted bot walks straight to a key it should not be able to see, so its numbers describe an omniscient
+  player and say nothing about how the game plays once hints are gone. Redaction has to cover the look-ahead as well as the
+  scoring, or the bot would still find a trap by simulating a step onto it.
+- **DEPENDENCIES**: `AutoPlayer.Redact`/`Blind`/`RevealedCells`, `GoalDistance` exploration fallback, `PlayRun`,
+  `BalanceTests.Measure` and the balance guards.
+- **REVERSIBILITY**: high — blind defaults to false, so every existing sighted measurement is unchanged.
+
+### D-021 amendment: enemy reach is the same in both modes
+- **DECISION**: Melee monsters (goblin, crowned slime, slimelet, and Lord Blobert while puffed up) attack only from a tile
+  next to the hero and otherwise step closer — in Free Roam as well as Step by Step. Ranged monsters (the fire imp, down a
+  clear lane up to 3 tiles) and the boss's slam and summon act from a distance. The Free Roam "strike from anywhere" rule
+  is removed, so enemy behaviour no longer depends on the movement mode; the modes now differ only in how far the hero
+  moves and whether nearby tiles are hinted.
+- **WHY**: distance should matter. With strikes from anywhere, every monster threatened the whole board equally. Now a
+  melee monster is a threat you choose to engage — slashing it means standing next to it — while ranged monsters and the
+  boss are what pressure you across the board.
+- **DEPENDENCIES**: `EnemyAi.ChaseIntent`/`LaneIntent`/`Execute`, rules §12, the balance guards (re-measured).
+- **REVERSIBILITY**: high.
+
+### D-017 amendment: tiers retuned for adjacent-only melee
+- **DECISION**: Knight's Trial is no longer the unmodified base content: it adds one enemy to every normal floor
+  (`ExtraEnemies = 1`) and starts with one fewer potion. Blobert's Wrath adds two enemies instead of one and takes two
+  hearts from the hero (8 max HP), on top of its existing enemy, hazard and boss changes. Squire's Stroll is unchanged.
+- **WHY**: once melee monsters had to stand next to the hero (D-021 amendment), a blind novice AutoPlayer won 39 / 35 / 26
+  of 40 and the tiers barely differed. `DifficultySweep` showed enemy and boss HP barely matter, because a melee monster
+  can be walked away from; crowding and unavoidable damage do. After retuning, the same player wins 39 / 31 / 9.
+- **DEPENDENCIES**: `ContentCatalog` difficulty definitions, rules §10 / §10.2, `BalanceTests` guards.
+- **REVERSIBILITY**: high — content numbers only. Real playtest telemetry should replace the bot as the judge.

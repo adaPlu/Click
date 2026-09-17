@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using ClickDungeon.Domain;
+using ClickDungeon.Simulation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -60,6 +61,7 @@ namespace ClickDungeon.Application
             var hero = run.Hero;
             var floor = run.Floor;
             Require(Enum.IsDefined(typeof(Difficulty), run.Difficulty), "unknown difficulty");
+            Require(Enum.IsDefined(typeof(MovementMode), run.Movement), "unknown movement mode");
             Require(Enum.IsDefined(typeof(RunStatus), run.Status), "unknown run status");
             Require(floor.Enemies != null && run.Rewards != null, "missing enemy or reward list");
             Require(run.FloorCount >= 1 && floor.FloorIndex >= 1 && floor.FloorIndex <= run.FloorCount, "floor number out of range");
@@ -73,8 +75,10 @@ namespace ClickDungeon.Application
             {
                 Require(cell != null, "missing tile");
                 Require(Enum.IsDefined(typeof(Terrain), cell.Terrain) && Enum.IsDefined(typeof(HazardKind), cell.Hazard)
-                        && Enum.IsDefined(typeof(ContentKind), cell.Content) && Enum.IsDefined(typeof(Knowledge), cell.Knowledge),
+                        && Enum.IsDefined(typeof(ContentKind), cell.Content) && Enum.IsDefined(typeof(Knowledge), cell.Knowledge)
+                        && Enum.IsDefined(typeof(ChestQuality), cell.Quality),
                     "unknown tile value");
+                Require(cell.ChestTaps >= 0 && cell.ChestTaps <= Chests.TapsToOpen(cell.Quality), "chest tap count out of range");
             }
             Require(floor[hero.Pos].Terrain == Terrain.Floor, "hero inside a wall or pit");
 

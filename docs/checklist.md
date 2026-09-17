@@ -71,7 +71,7 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 - [x] AutoPlayer balance tool: `BalanceReport` (explicit) plus `BalanceTests` guards; kit bot demo uses it (`-cdBot`).
 - [x] Floor 5 reachable: novice AutoPlayer reaches Blobert in 100% (easy) and 99% (medium) of runs.
 - [x] Exit tile reads open once the key is held.
-- [ ] Refine Knight's Trial and Blobert's Wrath numbers.
+- [x] Refine Knight's Trial and Blobert's Wrath numbers (D-017 amendment, retuned for adjacent-only melee).
 - [ ] Check tiers against real playtest telemetry.
 
 
@@ -90,3 +90,84 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 - [x] Pits stay solid on the last floor and inside vaults; a fatal fall never leaves a hero inside a pit.
 - [x] Tests: fall damage and landing, fatal fall, pit blocking, occupied teleport pad.
 - [ ] Re-tune once playtest data shows how often players take the fall.
+
+## Movement modes (D-021, rules §12)
+- [x] Free Roam (default): tap any tile, no hints about unrevealed ones.
+- [x] Step by Step (option): the eight neighbours only, with sensing hints.
+- [x] Enemies behave the same in both modes: melee from a neighbouring tile, ranged and boss attacks from a distance
+      (the earlier Free Roam "strike from anywhere" rule was removed — see Enemy reach below).
+- [x] 8-way adjacency for hero and enemies; dash covers one or two tiles; revealing follows melee reach.
+- [x] Nothing blocks the hero but a locked vault door and an occupied tile; walls are no longer generated.
+- [x] Saves record the mode and resume in it.
+- [ ] Mode picker on the title screen, a `-cdMovement` automation flag, and pause/end-screen text.
+- [ ] Re-measure the difficulty tiers under Free Roam: they no longer separate (rules §10.1).
+
+## Open: Free Roam removes the death threat (rules §10.1, D-021)
+Measured over 200 seeds per tier, both modes, with `BalanceReport`.
+- [x] Measured: in Free Roam the bot **never dies** — zero deaths in all 15 tier/skill rows. Losses are
+      stalls against the command cap, almost all on Blobert's floor.
+- [x] Cause identified: attacks target a cell one turn ahead (§3.4); with the whole board one tap away,
+      moving out of the telegraphed cell is always free, so enemies can never connect.
+- [ ] **Decide the fix.** Leading candidate: in Free Roam a revealed enemy's attack resolves against the
+      hero's *current* tile rather than the declared cell, which is what "monsters attack each turn you
+      take any action" implies. Needs a decision entry: it changes the §3.4 pillar for one mode.
+- [ ] Re-measure every tier afterwards and re-base the `BalanceTests` guards from the new data.
+- [ ] Separately: the 0%-mistake bot deadlocks in the Step by Step step-away dance and understates that mode.
+
+## Chest quality and tap-to-open (D-022, rules §7)
+- [x] Common 2 / Rare 3 / Epic 4 taps; every tap is a full turn that the monsters answer.
+- [x] Vault great chests are Epic and still grant three rewards.
+- [x] Quality drawn from a hash at floor setup: floors from a seed are unchanged, saves carry it, ruleset bumped to 5.
+- [ ] Board art: per-quality chest treatments and the 2/3/4-segment progress meter (`ui_tap_progress` is in the sheets).
+- [ ] Telemetry: record taps, so we can see how often a player starts a chest and walks away from it.
+- [ ] Special/Premium chests and the Mimic: blocked on a currency system and a new enemy (see the art brief).
+
+## Free Roam gives no hints (D-021 amendment, rules §2.1 / §2.3 / §12)
+- [x] Free Roam produces no `Sensed` cells: every unrevealed tile is a blank cover, whatever lies under it.
+- [x] Sensing and the clue set are unchanged in Step by Step.
+- [x] "Can't dash into the unknown" now applies only in Step by Step, since nothing distant is ever known in Free Roam.
+- [x] Test: `FreeRoamGivesNoHintsAtAll`.
+- [ ] Re-measure the tiers afterwards: the guards were all set against a sighted bot.
+
+## Blind AutoPlayer (D-021 amendment)
+- [x] A blind bot decides on a redacted board — unrevealed tiles blanked, hidden enemies removed — look-ahead included,
+      so it cannot find a trap by simulating a step onto it.
+- [x] Exploration drive: the nearest unrevealed tile becomes the goal when no objective is visible, and uncovering tiles
+      counts as both progress and score.
+- [x] `BalanceReport` measures every tier in both modes twice, sighted and blind.
+- [x] `GuardBaseline` (explicit) prints the slice the guards assert, at the sample sizes they use.
+- [ ] Set the three balance guards from `GuardBaseline` output rather than by nudging thresholds.
+
+## Open: the floor banner covers the HUD (a trade, not a defect)
+Measured at the 1920×1080 reference; centre-anchored y=0 is mid-screen, so the top edge is +540.
+
+| Element | Placed | Occupies |
+|---|---|---|
+| Floor banner | centre `(0, 482)`, 760×116 | y **424→540**, x −380→+380 |
+| HP bar | top-left `(592, −28)`, 440×54 | y **458→512**, x −368→+72 |
+| Boss/slash/turn chips | top-left `(1254, −32)` and `(1438, −32)`, 170×46 | y **462→508** |
+| Floor plaque | top-left `(100, −126)`, 380×104 | y 310→414 (clear) |
+| Board top | — | ≈426 |
+
+The HP bar sits entirely inside the banner, and the first chip is clipped. There is no free gap to move into:
+424→540 *is* the HUD band, and the banner is wider than the space between the plaque and the chips. The call site
+chose this deliberately — "above the board, over the top HUD band, so it never hides board tiles" — so the real
+question is which one it may cover for ~1.3 s.
+
+- [ ] **Decide.** Recommended: move it down (e.g. `(0, 300)` → y 242→358) so it briefly overlaps the top of the board
+      instead of the health bar. It is transient, never blocks input (`blocksRaycasts = false`), and the floor plaque
+      carries the same floor number and name permanently — whereas HP is hidden exactly when arriving on a new floor.
+- [ ] Alternative if board tiles must stay clear: shrink the plate and drop the subtitle, or slide it under the chips.
+- [x] `-cdBlind 1` automation flag: demo and screenshot runs can use a blind bot (README, `ClickDungeonApp`).
+
+## Enemy reach (D-021 amendment, rules §12)
+- [x] Decided: melee monsters must stand next to the hero to attack, in both modes; the fire imp and Lord Blobert's slam
+      and summon reach from a distance. "Strike from anywhere" is gone, so enemy behaviour no longer depends on the mode.
+- [x] Tests: `FreeRoamMeleeMustStandNextToTheHeroToAttack`, `FreeRoamRangedEnemiesAndTheBossReachFromADistance`.
+- [x] Re-measured (rules §10.2) and guards re-based.
+- [ ] **Retune the difficulty tiers**: every tier got much easier, and Knight's Trial is now only four novice wins
+      behind Squire's Stroll.
+- [x] Retuned (D-017 amendment): Knight's Trial +1 enemy / −1 potion; Blobert's Wrath +2 enemies / −2 hearts.
+      Blind novice wins 39 / 31 / 9 of 40 (rules §10.2).
+- [ ] **AutoPlayer stall bug**: the casual blind bot runs out of commands in ~1 run in 10 at every tier, even where it
+      never dies. Its balance numbers are unusable until that is fixed.

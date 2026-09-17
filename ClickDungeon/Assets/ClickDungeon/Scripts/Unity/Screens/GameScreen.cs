@@ -287,7 +287,7 @@ namespace ClickDungeon.Unity.Screens
             }
             else if (mode == TargetMode.Dash)
             {
-                Say("DASH: leap exactly two tiles in a straight line, clearing traps.", Expression.Confident);
+                Say("DASH: leap one or two tiles in a straight line, diagonals too, clearing traps.", Expression.Confident);
             }
 
             _mode = mode;
@@ -596,8 +596,13 @@ namespace ClickDungeon.Unity.Screens
                 switch (_mode)
                 {
                     case TargetMode.Slash: sb.AppendLine("SLASH: tap a lit tile next to you. Bombs can be slashed to arm them."); break;
-                    case TargetMode.Dash: sb.AppendLine("DASH: tap a lit tile two steps away. You jump over the middle tile."); break;
-                    default: sb.AppendLine("Tap a lit tile to step. Tap an enemy beside you to slash, a chest to open it, or yourself to wait.\n\nHover any tile to learn what is known about it."); break;
+                    case TargetMode.Dash: sb.AppendLine("DASH: tap a lit tile one or two steps away in a straight line. You jump over the middle tile."); break;
+                    default:
+                        // Free Roam has no sensing (D-021), so there is nothing to learn by hovering a covered tile.
+                        sb.AppendLine(run.Movement == MovementMode.Step
+                            ? "Tap a lit tile next to you to step. Tap an enemy beside you to slash, a chest to open it, or yourself to wait.\n\nHover any tile to learn what is known about it."
+                            : "Tap any tile to go there. Covered tiles hide what is on them until you reach them.\n\nTap an enemy beside you to slash, a chest to open it, or yourself to wait.");
+                        break;
                 }
                 int incoming = Threats.DamageAt(_threats, run.Hero.Pos);
                 if (incoming > 0) sb.AppendLine($"\n<color=#FF6B5E>Your tile is hit for {incoming} next turn!</color>");
@@ -939,10 +944,11 @@ namespace ClickDungeon.Unity.Screens
     public static class Menus
     {
         public const string HelpText =
-            "- Tap a lit tile next to you to step. Tap an enemy beside you to SLASH, a chest to open it, or Sir Clickington to wait.\n" +
-            "- Tiles two steps away are SENSED. Icons tell you what is there: red diamond ! = enemy, orange triangle ! = trap, K = key, $ = treasure, dot = safe.\n" +
-            "- Stepping next to a sensed enemy wakes it. It shows its intent and only acts on the NEXT turn.\n" +
-            "- Tiles marked -N will be hit next turn. Step off, SHIELD to block (staggers attackers), or DASH two tiles over traps.\n" +
+            "- FREE ROAM: tap any tile to go there. Covered tiles give no hints; you learn what is on them by reaching them.\n" +
+            "- STEP BY STEP: step to a lit tile next to you. Tiles two steps away are SENSED: red diamond ! = enemy, orange triangle ! = trap, K = key, $ = treasure, dot = safe.\n" +
+            "- Tap an enemy beside you to SLASH, a chest to open it (2-4 taps, each a turn), or Sir Clickington to wait.\n" +
+            "- Revealing an enemy wakes it. It shows its intent and only acts on the NEXT turn. Most must stand next to you to hit; Fire Imps shoot along a line and Lord Blobert slams from anywhere.\n" +
+            "- Tiles marked -N will be hit next turn. Step off, SHIELD to block (staggers attackers), or DASH one or two tiles over traps.\n" +
             "- Find the KEY, reach the EXIT. Floor 5: defeat Lord Blobert.\n\n" +
             "Keys: WASD / arrows, Space = wait, 1-5 = abilities, Esc = menu, H = help.";
 

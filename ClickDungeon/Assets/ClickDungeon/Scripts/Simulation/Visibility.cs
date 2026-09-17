@@ -16,14 +16,16 @@ namespace ClickDungeon.Simulation
             foreach (var p in Board.AllCells)
             {
                 var cell = floor[p];
-                int distance = p.Manhattan(hero.Pos);
-                if (distance <= heroClass.RevealRadius)
+                // Revealing follows melee reach (the eight neighbours); sensing stays a diamond around the hero.
+                if (p.Chebyshev(hero.Pos) <= heroClass.RevealRadius)
                 {
                     if (cell.Knowledge == Knowledge.Revealed) continue;
                     cell.Knowledge = Knowledge.Revealed;
                     events.Add(GameEvent.Of(GameEventKind.CellRevealed, to: p));
                 }
-                else if (distance <= heroClass.SenseRadius && cell.Knowledge == Knowledge.Unseen)
+                // Free Roam gives no hints at all: every tile stays a blank cover until the hero reveals it (D-021).
+                else if (run.Movement == MovementMode.Step
+                         && p.Manhattan(hero.Pos) <= heroClass.SenseRadius && cell.Knowledge == Knowledge.Unseen)
                 {
                     cell.Knowledge = Knowledge.Sensed;
                     var sensed = GameEvent.Of(GameEventKind.CellSensed, to: p);

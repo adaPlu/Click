@@ -86,7 +86,7 @@ namespace ClickDungeon.Tests
         [TestCase("HC...")]
         [TestCase("HG...")]
         [TestCase("H.g..")]
-        [TestCase("H.#..")]
+        [TestCase("H.D..")]
         public void DashRejectsBlockedPathsAndEnemyClues(string row)
         {
             var run = Run(
@@ -99,17 +99,42 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
-        public void DashMustBeStraightAndExact()
+        public void DashMovesOneOrTwoTilesInAStraightLine()
         {
+            // Rules §5: one or two tiles, diagonals included.
+            var corner = Run(
+                ".....",
+                ".....",
+                ".....",
+                ".....",
+                "H....");
+            Assert.That(Do(corner, PlayerCommand.Dash(P(3, 0))).Accepted, Is.False, "Three tiles is too far.");
+            Assert.That(Do(corner, PlayerCommand.Dash(P(1, 2))).Accepted, Is.False, "Not a straight line.");
+
             var run = Run(
                 ".....",
                 ".....",
                 "..H..",
                 ".....",
                 ".....");
-            Assert.That(Do(run, PlayerCommand.Dash(P(3, 3))).Accepted, Is.False);
-            Assert.That(Do(run, PlayerCommand.Dash(P(2, 3))).Accepted, Is.False);
-            Assert.That(Do(run, PlayerCommand.Dash(P(2, 4))).Accepted, Is.True);
+            Assert.That(Do(run, PlayerCommand.Dash(P(3, 3))).Accepted, Is.True, "One tile, diagonally.");
+
+            var two = Run(
+                ".....",
+                ".....",
+                "..H..",
+                ".....",
+                ".....");
+            Assert.That(Do(two, PlayerCommand.Dash(P(2, 4))).Accepted, Is.True, "Two tiles, straight.");
+
+            var diagonal = Run(
+                ".....",
+                ".....",
+                "..H..",
+                ".....",
+                ".....");
+            // Free Roam has no sensing, so a blind dash is allowed there just as a blind step is (D-021).
+            Assert.That(Do(diagonal, PlayerCommand.Dash(P(4, 4))).Accepted, Is.True, "Two tiles, diagonally.");
         }
     }
 
@@ -125,9 +150,11 @@ namespace ClickDungeon.Tests
                 ".....",
                 ".....");
             run.Hero.Hp = 5;
+            // Relative: the starting potion count is a difficulty setting, not a rule.
+            int before = run.Hero.Potions;
             DoOk(run, PlayerCommand.Potion());
             Assert.That(run.Hero.Hp, Is.EqualTo(9));
-            Assert.That(run.Hero.Potions, Is.EqualTo(1));
+            Assert.That(run.Hero.Potions, Is.EqualTo(before - 1));
         }
 
         [Test]
@@ -212,10 +239,11 @@ namespace ClickDungeon.Tests
         [Test]
         public void SlashedBombDamagesEnemiesInBlast()
         {
-            var run = Run(
+            // The goblin sits in the blast but two tiles from the hero, so it stays asleep and the bomb is what kills it.
+            var run = StepRun(
                 ".....",
-                ".....",
-                ".gb..",
+                "..g..",
+                "..b..",
                 "..H..",
                 ".....");
             DoOk(run, PlayerCommand.Slash(P(2, 2)));

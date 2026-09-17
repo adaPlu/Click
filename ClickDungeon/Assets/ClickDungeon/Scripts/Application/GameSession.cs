@@ -47,11 +47,13 @@ namespace ClickDungeon.Application
         /// <summary>Starts a run at the current catalog's difficulty.</summary>
         public List<GameEvent> StartNewRun(ulong seed) => StartNewRun(seed, Catalog.Difficulty);
 
-        public List<GameEvent> StartNewRun(ulong seed, Difficulty difficulty)
+        public List<GameEvent> StartNewRun(ulong seed, Difficulty difficulty) => StartNewRun(seed, difficulty, MovementMode.Free);
+
+        public List<GameEvent> StartNewRun(ulong seed, Difficulty difficulty, MovementMode movement)
         {
             UseCatalog(Catalog.ForDifficulty(difficulty));
             var events = new List<GameEvent>();
-            Run = RunFactory.NewRun(seed, Catalog, events);
+            Run = RunFactory.NewRun(seed, Catalog, events, ContentCatalog.DefaultHeroId, movement);
             Persist();
             Telemetry?.RunStarted(Run, events);
             return events;

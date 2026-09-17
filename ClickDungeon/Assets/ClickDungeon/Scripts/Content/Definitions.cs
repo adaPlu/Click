@@ -54,7 +54,10 @@ namespace ClickDungeon.Content
         /// <summary>Lava is permanent and never expires, so entering one costs more than spikes.</summary>
         public int LavaDamage = 3;
         public int FountainHeal = 3;
-        /// <summary>Dropping through a pit to the next floor (rules §4).</summary>
+        /// <summary>
+        /// Dropping through a pit to the next floor (rules §4). Fixed: unlike spikes, bombs and lava, the difficulty tiers
+        /// never change it, so the cost of taking the shortcut reads the same in every run.
+        /// </summary>
         public int FallDamage = 3;
         /// <summary>Fuse set on arming. 1 = explodes in the environment step of the following turn.</summary>
         public int BombFuse = 1;

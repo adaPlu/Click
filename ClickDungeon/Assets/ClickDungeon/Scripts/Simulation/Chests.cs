@@ -23,6 +23,51 @@ namespace ClickDungeon.Simulation
             return draw > 0 ? id + ":" + draw : id;
         }
 
+        /// <summary>Taps a chest needs before it opens (D-022): Common 2, Rare 3, Epic 4.</summary>
+        public static int TapsToOpen(ChestQuality quality)
+        {
+            switch (quality)
+            {
+                case ChestQuality.Rare: return 3;
+                case ChestQuality.Epic: return 4;
+                default: return 2;
+            }
+        }
+
+        /// <summary>
+        /// A chest's quality, drawn from a hash rather than the generator's stream, so adding quality moved no other
+        /// placement: floors from a given seed are unchanged. Weights: Common 60, Rare 30, Epic 10.
+        /// </summary>
+        public static ChestQuality RollQuality(ulong runSeed, int floorIndex, GridPos cell, bool vault)
+        {
+            var rng = new DeterministicRng(
+                Hash.Of(runSeed, Hash.LootSalt, QualitySalt, (ulong)floorIndex, (ulong)cell.Index, vault ? 1UL : 0UL));
+            int roll = rng.Next(100);
+            if (roll < 10) return ChestQuality.Epic;
+            return roll < 40 ? ChestQuality.Rare : ChestQuality.Common;
+        }
+
+        const ulong QualitySalt = 0x9E3779B97F4A7C15UL;
+
+        /// <summary>
+        /// One tap on a closed chest. The lid gives a little and the turn resolves around it like any other action, so
+        /// every revealed monster gets its response (D-022). Returns true when this tap is the one that opened it.
+        /// </summary>
+        public static bool Tap(RunState run, GridPos cell, ContentCatalog catalog, List<GameEvent> events)
+        {
+            var state = run.Floor[cell];
+            if (!state.IsClosedChest) return false;
+            state.ChestTaps++;
+            int needed = TapsToOpen(state.Quality);
+            if (state.ChestTaps >= needed)
+            {
+                Open(run, cell, catalog, events);
+                return true;
+            }
+            events.Add(GameEvent.Of(GameEventKind.ChestTapped, to: cell, amount: needed - state.ChestTaps));
+            return false;
+        }
+
         public static RewardRecord RollReward(ulong runSeed, int floorIndex, GridPos cell, ContentCatalog catalog) =>
             RollReward(runSeed, floorIndex, cell, catalog, false, 0);
 

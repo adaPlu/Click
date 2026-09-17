@@ -89,21 +89,22 @@ namespace ClickDungeon.Tests
         {
             var run = ChestRun();
             var expected = Chests.RollReward(run.RunSeed, 1, P(2, 2), Catalog);
-            var result = DoOk(run, PlayerCommand.Interact(P(2, 2)));
+            int taps = Chests.TapsToOpen(run.Floor[P(2, 2)].Quality);
+            var result = OpenChest(run, P(2, 2));
 
             var opened = result.Events.Find(e => e.Kind == GameEventKind.ChestOpened);
             Assert.That(opened, Is.Not.Null);
             Assert.That(opened.Reward.Kind, Is.EqualTo(expected.Kind));
             Assert.That(run.Rewards.Count, Is.EqualTo(1));
             Assert.That(run.Floor[P(2, 2)].ChestOpened, Is.True);
-            Assert.That(run.Turn, Is.EqualTo(1), "Opening a chest is one gameplay turn.");
+            Assert.That(run.Turn, Is.EqualTo(taps), "Every tap is a full gameplay turn (D-022).");
         }
 
         [Test]
         public void ChestCannotBeOpenedTwice()
         {
             var run = ChestRun();
-            DoOk(run, PlayerCommand.Interact(P(2, 2)));
+            OpenChest(run, P(2, 2));
             var hero = SaveSerializer.ToJson(run);
 
             Assert.That(Do(run, PlayerCommand.Interact(P(2, 2))).Accepted, Is.False);
@@ -116,7 +117,7 @@ namespace ClickDungeon.Tests
         public void RewardSurvivesSaveAndCannotDuplicateAfterLoad()
         {
             var run = ChestRun();
-            DoOk(run, PlayerCommand.Interact(P(2, 2)));
+            OpenChest(run, P(2, 2));
             var loaded = SaveSerializer.FromJson(SaveSerializer.ToJson(run));
             Assert.That(Do(loaded, PlayerCommand.Interact(P(2, 2))).Accepted, Is.False);
             Assert.That(loaded.Rewards.Count, Is.EqualTo(1));
@@ -131,8 +132,8 @@ namespace ClickDungeon.Tests
             DoOk(late, PlayerCommand.Wait());
             DoOk(late, PlayerCommand.Wait());
 
-            DoOk(early, PlayerCommand.Interact(P(2, 2)));
-            DoOk(late, PlayerCommand.Interact(P(2, 2)));
+            OpenChest(early, P(2, 2));
+            OpenChest(late, P(2, 2));
             Assert.That(late.Rewards[0].Kind, Is.EqualTo(early.Rewards[0].Kind));
             Assert.That(late.Rewards[0].Amount, Is.EqualTo(early.Rewards[0].Amount));
         }

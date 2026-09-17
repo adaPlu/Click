@@ -26,13 +26,14 @@ namespace ClickDungeon.Simulation
         public static bool BlocksFire(CellState cell) => cell.Terrain == Terrain.Wall || cell.Terrain == Terrain.Door;
 
         /// <summary>
-        /// The hero may also step into a pit: that is a fall to the next floor (rules §4). Enemies never can, and on the last
-        /// floor or inside a vault there is nowhere to fall, so pits stay solid there.
+        /// No tile blocks the hero (D-021): only another actor, or a vault door still shut, which is a closed door rather
+        /// than a space. Stepping into a pit is a fall to the next floor, and pits never generate where nothing is below.
         /// </summary>
         public static bool HeroCanEnter(RunState run, GridPos p) =>
             p.InBounds
-            && (!BlocksMovement(run.Floor[p]) || (run.Floor[p].Terrain == Terrain.Pit && CanFallThrough(run)))
-            && run.Floor.EnemyAt(p) == null;
+            && run.Floor.EnemyAt(p) == null
+            && !run.Floor[p].IsLockedDoor
+            && (run.Floor[p].Terrain != Terrain.Pit || CanFallThrough(run));
 
         public static bool CanFallThrough(RunState run) =>
             !run.Floor.IsVault && run.Floor.FloorIndex < run.FloorCount;
@@ -115,12 +116,13 @@ namespace ClickDungeon.Simulation
             return cells;
         }
 
+        /// <summary>The slam covers the target tile and everything touching it, diagonals included (rules §3.6).</summary>
         public static List<GridPos> SlamCells(GridPos center)
         {
             var cells = new List<GridPos> { center };
-            foreach (var d in Directions.All)
+            foreach (var step in Directions.Around)
             {
-                var n = center.Step(d);
+                var n = center.Offset(step);
                 if (n.InBounds) cells.Add(n);
             }
             return cells;
@@ -136,6 +138,16 @@ namespace ClickDungeon.Simulation
                 if (p.InBounds) cells.Add(p);
             }
             return cells;
+        }
+
+        /// <summary>Neighbouring tiles an actor could step to, diagonals included.</summary>
+        public static IEnumerable<GridPos> Neighbours(GridPos p)
+        {
+            foreach (var step in Directions.Around)
+            {
+                var n = p.Offset(step);
+                if (n.InBounds) yield return n;
+            }
         }
 
         public static bool IsDeadEnd(FloorState floor, GridPos p)
@@ -154,8 +166,20 @@ namespace ClickDungeon.Simulation
     {
         public const int Unreachable = int.MaxValue;
 
-        /// <summary>BFS distance from any source over cells accepted by <paramref name="passable"/>.</summary>
-        public static int[] DistanceField(IEnumerable<GridPos> sources, Func<GridPos, bool> passable)
+        static IEnumerable<GridPos> StraightNeighbours(GridPos p)
+        {
+            foreach (var d in Directions.All)
+            {
+                var n = p.Step(d);
+                if (n.InBounds) yield return n;
+            }
+        }
+
+        /// <summary>
+        /// BFS distance from any source over cells accepted by <paramref name="passable"/>. Straight steps only by default:
+        /// floor generation measures distances that way. Pass <paramref name="diagonal"/> for movement distances (D-021).
+        /// </summary>
+        public static int[] DistanceField(IEnumerable<GridPos> sources, Func<GridPos, bool> passable, bool diagonal = false)
         {
             var dist = new int[BoardRules.CellCount];
             for (int i = 0; i < dist.Length; i++) dist[i] = Unreachable;
@@ -169,10 +193,9 @@ namespace ClickDungeon.Simulation
             while (queue.Count > 0)
             {
                 var p = queue.Dequeue();
-                foreach (var d in Directions.All)
+                foreach (var n in diagonal ? Board.Neighbours(p) : StraightNeighbours(p))
                 {
-                    var n = p.Step(d);
-                    if (!n.InBounds || dist[n.Index] != Unreachable || !passable(n)) continue;
+                    if (dist[n.Index] != Unreachable || !passable(n)) continue;
                     dist[n.Index] = dist[p.Index] + 1;
                     queue.Enqueue(n);
                 }

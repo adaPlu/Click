@@ -57,10 +57,15 @@ namespace ClickDungeon.Simulation
             floor.TemplateId = template.Id;
             floor.Transform = transform;
             floor.AttemptIndex = attempt;
+            // Walls are only the cover drawn over unknown tiles, so no floor is generated with them (D-021). A template's
+            // walls become plain floor; its pits stay, except where there is no floor below to fall to.
+            bool pitsAllowed = floorIndex < catalog.RunFloorCount;
             foreach (var p in Board.AllCells)
             {
                 var tp = TemplateTransform.ToTemplate(p, transform);
-                floor[p].Terrain = template.TerrainAt(tp.X, tp.Y);
+                var terrain = template.TerrainAt(tp.X, tp.Y);
+                if (terrain == Terrain.Wall || (terrain == Terrain.Pit && !pitsAllowed)) terrain = Terrain.Floor;
+                floor[p].Terrain = terrain;
             }
 
             var usable = LargestFloorRegion(floor);
@@ -227,11 +232,8 @@ namespace ClickDungeon.Simulation
             floor.TemplateId = template.Id;
             floor.Transform = transform;
             floor.AttemptIndex = attempt;
-            foreach (var p in Board.AllCells)
-            {
-                var tp = TemplateTransform.ToTemplate(p, transform);
-                floor[p].Terrain = template.TerrainAt(tp.X, tp.Y);
-            }
+            // A vault hangs off a floor, so it has nowhere to fall to: every tile is plain floor (D-021).
+            foreach (var p in Board.AllCells) floor[p].Terrain = Terrain.Floor;
 
             var usable = LargestFloorRegion(floor);
             if (usable.Count < 10) return null;

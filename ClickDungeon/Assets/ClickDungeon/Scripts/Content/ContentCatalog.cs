@@ -265,12 +265,16 @@ namespace ClickDungeon.Content
             };
             c.Difficulties[Difficulty.Medium] = new DifficultyDefinition
             {
-                Id = Difficulty.Medium, DisplayName = "Knight's Trial", Tagline = "The dungeon as designed. Read every tile.",
+                Id = Difficulty.Medium, DisplayName = "Knight's Trial", Tagline = "More monsters, one less potion. Read every tile.",
+                // Tuned for adjacent-only melee (D-021 amendment): blind novice AutoPlayer wins ~80% (rules §10.2).
+                StartingPotions = -1, ExtraEnemies = 1,
             };
             c.Difficulties[Difficulty.Hardcore] = new DifficultyDefinition
             {
-                Id = Difficulty.Hardcore, DisplayName = "Blobert's Wrath", Tagline = "Tougher monsters, meaner traps, fewer potions. No mercy.",
-                StartingPotions = -1, EnemyHp = 1, EnemyDamage = 1, HazardDamage = 1, BossHp = 4, BossSlamDamage = 1, ExtraEnemies = 1,
+                Id = Difficulty.Hardcore, DisplayName = "Blobert's Wrath", Tagline = "Fewer hearts, crowded floors, meaner monsters. No mercy.",
+                // Tuned for adjacent-only melee (D-021 amendment): blind novice AutoPlayer wins ~32% (rules §10.2).
+                HeroMaxHp = -2, StartingPotions = -1, EnemyHp = 1, EnemyDamage = 1, HazardDamage = 1, BossHp = 4, BossSlamDamage = 1,
+                ExtraEnemies = 2,
             };
             return c;
         }

@@ -203,6 +203,8 @@ namespace ClickDungeon.Unity.Screens
                     return "<color=#F2C94C>Picked up the key.</color>";
                 case GameEventKind.PotionCollected:
                     return "<color=#9FD8A0>Found a potion.</color>";
+                case GameEventKind.ChestTapped:
+                    return $"<color=#F2C94C>The lid shifts… {e.Amount} more to go.</color>";
                 case GameEventKind.ChestOpened:
                     return $"<color=#F2C94C>Chest: {RewardText(e.Reward)}</color>";
                 case GameEventKind.ExitUnlocked:

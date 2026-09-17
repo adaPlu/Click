@@ -73,7 +73,8 @@ namespace ClickDungeon.Simulation
                     break;
                 }
                 case CommandKind.Interact:
-                    Chests.Open(run, command.Target, catalog, events);
+                    // One tap. A chest takes several, and each is a full turn the enemies answer (D-022).
+                    Chests.Tap(run, command.Target, catalog, events);
                     break;
             }
 

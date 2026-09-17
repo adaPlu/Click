@@ -39,7 +39,12 @@ Build Windows: **ClickDungeon → Build Windows** → `ClickDungeon/Builds/Windo
 
 ### Controls
 
-- Tap/click a lit neighbouring tile: step, slash an adjacent enemy, or open an adjacent chest. Tap the hero to wait.
+- **Free Roam** (default): tap any tile on the board to step there, tap an adjacent enemy to slash it, or tap a
+  chest on or beside you to work it open. Tap the hero to wait. Unrevealed tiles are blank covers with no hints —
+  clicking is how you find out what is on them.
+- **Step by Step** (option): the same, except you can only move to one of the eight neighbouring tiles, and
+  sensing marks nearby tiles with a clue.
+- Chests take several taps to open — Common 2, Rare 3, Epic 4 — and every tap is a turn the monsters answer.
 - SLASH / DASH buttons select a target mode; SHIELD / POTION act immediately.
 - Keyboard: WASD/arrows, Space wait, 1–5 abilities, Esc menu/back, H help.
 
@@ -50,6 +55,10 @@ ClickDungeon/Builds/Windows/ClickDungeon.exe -cdShot shot.png -cdScreen game -cd
 ```
 
 Uses a separate save folder and quits after capturing.
+
+Bot flags: `-cdBot smart|casual|random`, plus `-cdBlind 1` to make the bot decide on what the player can see
+rather than the whole board — without it the bot walks straight to a key it should not know about (D-021).
+Also `-cdDifficulty easy|medium|hardcore`, `-cdOverlay <name>` and `-cdTelemetryDir <folder>`.
 
 ## Playtest telemetry (Gate 2)
 

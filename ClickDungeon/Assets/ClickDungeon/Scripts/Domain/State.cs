@@ -16,8 +16,12 @@ namespace ClickDungeon.Domain
         public int BombFuse = -1;
         public ContentKind Content;
         public bool ChestOpened;
-        /// <summary>Vault chest: one Interact grants three rewards (D-018).</summary>
+        /// <summary>Vault chest: grants three rewards when it finally opens (D-018).</summary>
         public bool GreatChest;
+        /// <summary>How many taps this chest takes to open (D-022).</summary>
+        public ChestQuality Quality;
+        /// <summary>Taps already spent on this chest. Each one is a full player action.</summary>
+        public int ChestTaps;
         /// <summary>Set once a door has been opened by a pressure plate, or a fountain or teleport pad has been used.</summary>
         public bool Used;
         public Knowledge Knowledge;
@@ -124,6 +128,7 @@ namespace ClickDungeon.Domain
         public ulong RunSeed;
         public int FloorCount;
         public Difficulty Difficulty;
+        public MovementMode Movement;
         public int Turn;
         public RunStatus Status;
         public HeroState Hero;

@@ -62,14 +62,17 @@ namespace ClickDungeon.Tests
             ("sharp", 0.0), ("casual", AutoPlayer.CasualMistakeRate), ("sloppy", 0.35), ("novice", NoviceMistakeRate), ("flailing", FlailingMistakeRate),
         };
 
-        static Tally Measure(Difficulty tier, int runs, double mistakeRate) => Measure(ContentCatalog.CreateDefault(tier), runs, mistakeRate);
+        static Tally Measure(Difficulty tier, int runs, double mistakeRate, MovementMode movement = MovementMode.Free,
+            bool blind = false) =>
+            Measure(ContentCatalog.CreateDefault(tier), runs, mistakeRate, movement, blind);
 
-        static Tally Measure(ContentCatalog catalog, int runs, double mistakeRate)
+        static Tally Measure(ContentCatalog catalog, int runs, double mistakeRate, MovementMode movement = MovementMode.Free,
+            bool blind = false)
         {
             var tally = new Tally { Runs = runs };
             for (ulong seed = 1; seed <= (ulong)runs; seed++)
             {
-                var r = AutoPlayer.PlayRun(catalog, seed, MaxCommands, mistakeRate);
+                var r = AutoPlayer.PlayRun(catalog, seed, MaxCommands, mistakeRate, movement, blind);
                 if (r.Floor >= catalog.RunFloorCount) tally.ReachedBoss++;
                 if (r.Status == RunStatus.Won) tally.Won++;
                 else if (r.Status == RunStatus.Lost) tally.DeathsByFloor[r.Floor]++;
@@ -92,27 +95,32 @@ namespace ClickDungeon.Tests
         [Test]
         public void SquiresStrollLetsANovicePlayerBeatBlobert()
         {
-            var easy = Measure(Difficulty.Easy, 30, NoviceMistakeRate);
-            Assert.That(easy.ReachedBoss, Is.GreaterThanOrEqualTo(27), $"Only {easy.ReachedBoss}/30 novice easy runs reached floor 5.");
-            Assert.That(easy.Won, Is.GreaterThanOrEqualTo(21), $"Only {easy.Won}/30 novice easy runs beat Lord Blobert.");
+            // Blind: a sighted bot walks to a key it could not see, so its numbers are not about playing this game.
+            // Measured 30-seed baseline: 29 reach, 29 won (rules §10.2). Thresholds sit a few runs below that.
+            var easy = Measure(Difficulty.Easy, 30, NoviceMistakeRate, blind: true);
+            Assert.That(easy.ReachedBoss, Is.GreaterThanOrEqualTo(26), $"Only {easy.ReachedBoss}/30 novice easy runs reached floor 5.");
+            Assert.That(easy.Won, Is.GreaterThanOrEqualTo(26), $"Only {easy.Won}/30 novice easy runs beat Lord Blobert.");
         }
 
         [Test]
         public void KnightsTrialLetsANovicePlayerReachBlobert()
         {
-            var medium = Measure(Difficulty.Medium, 30, NoviceMistakeRate);
-            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(24), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
+            // Measured 30-seed blind baseline after retuning: 24 reach (rules §10.2).
+            var medium = Measure(Difficulty.Medium, 30, NoviceMistakeRate, blind: true);
+            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(21), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
         }
 
         [Test]
         public void TiersKeepTheirOrder()
         {
-            var easy = Measure(Difficulty.Easy, 40, FlailingMistakeRate);
-            var medium = Measure(Difficulty.Medium, 40, FlailingMistakeRate);
-            var hardcore = Measure(Difficulty.Hardcore, 40, FlailingMistakeRate);
+            // Blind novice. Measured 40-seed blind baseline after retuning: 39 / 31 / 9 won, 39 / 33 / 20 reached (rules §10.2).
+            var easy = Measure(Difficulty.Easy, 40, NoviceMistakeRate, blind: true);
+            var medium = Measure(Difficulty.Medium, 40, NoviceMistakeRate, blind: true);
+            var hardcore = Measure(Difficulty.Hardcore, 40, NoviceMistakeRate, blind: true);
             Assert.That(easy.Won, Is.GreaterThan(medium.Won), "Squire's Stroll must be won more often than Knight's Trial.");
             Assert.That(medium.Won, Is.GreaterThan(hardcore.Won), "Knight's Trial must be won more often than Blobert's Wrath.");
-            Assert.That(easy.ReachedBoss, Is.GreaterThan(hardcore.ReachedBoss));
+            // Hiding the board de-saturates this, so reaching Blobert tells the tiers apart again.
+            Assert.That(easy.ReachedBoss, Is.GreaterThan(hardcore.ReachedBoss), "Squire's Stroll must reach Blobert more often than Blobert's Wrath.");
         }
 
         [Test, Explicit("Slow balance report: dotnet test --filter Name=BalanceReport --logger \"console;verbosity=detailed\"")]
@@ -120,21 +128,24 @@ namespace ClickDungeon.Tests
         {
             const int runs = 200;
             TestContext.Out.WriteLine($"AutoPlayer balance report: {runs} seeds per tier, {MaxCommands} command cap");
-            TestContext.Out.WriteLine("player  tier       reach F5   won   avg turns  deaths F1..F5         stalled F1..F5");
+            TestContext.Out.WriteLine("sees    mode  player  tier       reach F5   won   avg turns  deaths F1..F5         stalled F1..F5");
+            // Half the runs blind: the bot only knows what the player knows, which is the number that describes real play.
+            foreach (var blind in new[] { false, true })
+            foreach (var movement in new[] { MovementMode.Free, MovementMode.Step })
             foreach (var (name, mistakeRate) in Skills)
             foreach (var tier in Tiers)
             {
-                var t = Measure(tier, runs, mistakeRate);
+                var t = Measure(tier, runs, mistakeRate, movement, blind);
                 TestContext.Out.WriteLine(
-                    $"{name,-7} {tier,-10} {Pct(t.ReachedBoss, runs),7}  {Pct(t.Won, runs),5}  {t.Turns / (double)runs,9:0.0}  " +
-                    $"{ByFloor(t.DeathsByFloor),-20}  {ByFloor(t.StalledByFloor)}");
+                    $"{(blind ? "blind" : "all"),-7} {movement,-5} {name,-7} {tier,-10} {Pct(t.ReachedBoss, runs),7}  {Pct(t.Won, runs),5}  " +
+                    $"{t.Turns / (double)runs,9:0.0}  {ByFloor(t.DeathsByFloor),-20}  {ByFloor(t.StalledByFloor)}");
             }
         }
 
         [Test, Explicit("Tuning aid: compares candidate numbers for Knight's Trial and Blobert's Wrath")]
         public void DifficultySweep()
         {
-            const int runs = 120;
+            const int runs = 60;
             DifficultyDefinition Tier(Difficulty id, Action<DifficultyDefinition> tweak = null)
             {
                 // CreateDefault builds fresh definitions, so tweaking this one changes nothing else.
@@ -145,33 +156,33 @@ namespace ClickDungeon.Tests
 
             var candidates = new List<(string name, DifficultyDefinition tuning)>
             {
+                // Adjacent-only melee (D-021 amendment). Round 1 showed enemy and boss HP barely matter (a melee monster can
+                // be walked away from); damage and crowding do. Round 2 combines the levers that moved the novice.
+                ("E0 current", Tier(Difficulty.Easy)),
                 ("M0 base", Tier(Difficulty.Medium)),
-                ("M1 boss hp +2", Tier(Difficulty.Medium, d => d.BossHp = 2)),
-                ("M2 potions -1", Tier(Difficulty.Medium, d => d.StartingPotions = -1)),
-                ("M3 enemy hp +1", Tier(Difficulty.Medium, d => d.EnemyHp = 1)),
-                ("M4 enemies +1", Tier(Difficulty.Medium, d => d.ExtraEnemies = 1)),
-                ("M5 boss +2 slam +1", Tier(Difficulty.Medium, d => { d.BossHp = 2; d.BossSlamDamage = 1; })),
-                ("M6 hero hp -2", Tier(Difficulty.Medium, d => d.HeroMaxHp = -2)),
+                ("M7 dmg+1 enemies+1", Tier(Difficulty.Medium, d => { d.EnemyDamage = 1; d.ExtraEnemies = 1; })),
+                ("M8 M7 potions-1", Tier(Difficulty.Medium, d => { d.EnemyDamage = 1; d.ExtraEnemies = 1; d.StartingPotions = -1; })),
+                ("M9 enemies+1 pot-1", Tier(Difficulty.Medium, d => { d.ExtraEnemies = 1; d.StartingPotions = -1; })),
                 ("H0 current", Tier(Difficulty.Hardcore)),
-                ("H1 hero hp -2", Tier(Difficulty.Hardcore, d => d.HeroMaxHp = -2)),
-                ("H2 boss 20 slam 6", Tier(Difficulty.Hardcore, d => { d.BossHp = 8; d.BossSlamDamage = 2; })),
-                ("H3 no potions", Tier(Difficulty.Hardcore, d => d.StartingPotions = -2)),
-                ("H4 enemies +2", Tier(Difficulty.Hardcore, d => d.ExtraEnemies = 2)),
-                ("H5 hero -2 boss 20", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = -2; d.BossHp = 8; })),
+                ("H7 enem+2 hero-2", Tier(Difficulty.Hardcore, d => { d.ExtraEnemies = 2; d.HeroMaxHp = -2; })),
+                ("H8 enem+2 hp+2", Tier(Difficulty.Hardcore, d => { d.ExtraEnemies = 2; d.EnemyHp = 2; })),
+                ("H9 enem+2 dmg+2", Tier(Difficulty.Hardcore, d => { d.ExtraEnemies = 2; d.EnemyDamage = 2; })),
+                ("H10 hero-2 no pots", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = -2; d.StartingPotions = -2; })),
             };
 
-            TestContext.Out.WriteLine($"Difficulty sweep: {runs} seeds, reach F5 / win per player; novice deaths F1..F5");
+            // Blind and in Free Roam, like the guards: this is the number that describes real play.
+            TestContext.Out.WriteLine($"Difficulty sweep (blind, Free Roam): {runs} seeds, reach F5 / win per player; novice deaths F1..F5");
             foreach (var (name, tuning) in candidates)
             {
                 var catalog = ContentCatalog.CreateTuned(tuning);
                 var line = new System.Text.StringBuilder($"{name,-20}");
                 Tally novice = null;
-                foreach (var (skill, rate) in Skills)
+                foreach (var (skill, rate) in new[] { ("casual", AutoPlayer.CasualMistakeRate), ("novice", NoviceMistakeRate) })
                 {
-                    if (skill == "sloppy") continue;
-                    var t = Measure(catalog, runs, rate);
+                    var t = Measure(catalog, runs, rate, MovementMode.Free, blind: true);
                     if (skill == "novice") novice = t;
-                    line.Append($"  {skill} {Pct(t.ReachedBoss, runs),4}/{Pct(t.Won, runs),-4}");
+                    // Stalls are printed too: a player who runs out of commands failed the bot, not the dungeon.
+                    line.Append($"  {skill} {Pct(t.ReachedBoss, runs),4}/{Pct(t.Won, runs),-4} stall {t.Stalled,2}");
                 }
                 line.Append($"  | {ByFloor(novice.DeathsByFloor)}");
                 TestContext.Out.WriteLine(line.ToString());

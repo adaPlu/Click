@@ -47,21 +47,27 @@ namespace ClickDungeon.Tests
 
             Assert.That(run.Hero.Hp, Is.EqualTo(10));
             Assert.That(Has(result, GameEventKind.EnemyMissed), Is.True);
-            Assert.That(Enemy(run, "goblin").Intent.Kind, Is.EqualTo(IntentKind.Move));
+            Assert.That(Enemy(run, "goblin").Intent.Target, Is.EqualTo(P(1, 3)), "The next strike aims where the hero is now.");
         }
 
         [Test]
-        public void ChaserStepsAlongShortestPathWithDirectionTieBreak()
+        public void ChasersStepDiagonallyThenStrikeWithoutMoving()
         {
-            var run = GoblinAhead();
-            DoOk(run, PlayerCommand.Move(P(2, 3)));
-            DoOk(run, PlayerCommand.Move(P(1, 3)));
-            DoOk(run, PlayerCommand.Wait());
-
+            var run = StepRun(
+                "....G",
+                ".....",
+                "..H..",
+                ".....",
+                ".....");
             var goblin = Enemy(run, "goblin");
-            Assert.That(goblin.Pos, Is.EqualTo(P(2, 3)));
-            Assert.That(goblin.Intent.Kind, Is.EqualTo(IntentKind.Attack));
-            Assert.That(goblin.Intent.Target, Is.EqualTo(P(1, 3)));
+
+            DoOk(run, PlayerCommand.Wait());
+            Assert.That(goblin.Pos, Is.EqualTo(P(3, 3)), "One diagonal step toward the hero.");
+            Assert.That(goblin.Intent.Kind, Is.EqualTo(IntentKind.Attack), "Touching diagonally is in reach.");
+
+            DoOk(run, PlayerCommand.Wait());
+            Assert.That(goblin.Pos, Is.EqualTo(P(3, 3)), "It strikes instead of stepping.");
+            Assert.That(goblin.Intent.Target, Is.EqualTo(P(2, 2)));
         }
 
         [Test]
@@ -123,7 +129,7 @@ namespace ClickDungeon.Tests
         [Test]
         public void FireImpTelegraphsLaneThenReloads()
         {
-            var run = Run(
+            var run = StepRun(
                 ".....",
                 ".....",
                 "H..I.",
@@ -158,7 +164,8 @@ namespace ClickDungeon.Tests
         [Test]
         public void WallsBlockFireLanes()
         {
-            var run = Run(
+            // Walls are no longer generated, but they still stop fire wherever one stands (rules §1.2).
+            var run = StepRun(
                 ".....",
                 ".....",
                 "H.#I.",
@@ -170,7 +177,7 @@ namespace ClickDungeon.Tests
         [Test]
         public void FireImpBacksAwayWhenAdjacent()
         {
-            var run = Run(
+            var run = StepRun(
                 ".....",
                 ".....",
                 "HI...",
@@ -179,13 +186,56 @@ namespace ClickDungeon.Tests
             var imp = Enemy(run, "fire_imp");
             Assert.That(imp.Intent.Kind, Is.EqualTo(IntentKind.Move));
             DoOk(run, PlayerCommand.Wait());
-            Assert.That(imp.Pos.Manhattan(run.Hero.Pos), Is.EqualTo(2));
+            Assert.That(imp.Pos.Chebyshev(run.Hero.Pos), Is.GreaterThanOrEqualTo(2), "Out of reach, diagonals included.");
+        }
+
+        [Test]
+        public void FreeRoamMeleeMustStandNextToTheHeroToAttack()
+        {
+            // D-021: reach is the same in both modes, so a goblin two tiles away closes in rather than striking.
+            var run = Run(
+                "....G",
+                ".....",
+                "..H..",
+                ".....",
+                ".....");
+            var goblin = Enemy(run, "goblin");
+            Assert.That(goblin.Intent.Kind, Is.EqualTo(IntentKind.Move));
+
+            DoOk(run, PlayerCommand.Wait());
+            Assert.That(run.Hero.Hp, Is.EqualTo(10), "Nothing can hit from two tiles away.");
+            Assert.That(goblin.Pos, Is.EqualTo(P(3, 3)));
+            Assert.That(goblin.Intent.Kind, Is.EqualTo(IntentKind.Attack), "Now it is next to the hero.");
+        }
+
+        [Test]
+        public void FreeRoamRangedEnemiesAndTheBossReachFromADistance()
+        {
+            var lane = Run(
+                ".....",
+                ".....",
+                "H..I.",
+                ".....",
+                ".....");
+            Assert.That(Enemy(lane, "fire_imp").Intent.Kind, Is.EqualTo(IntentKind.Fire));
+            DoOk(lane, PlayerCommand.Wait());
+            Assert.That(lane.Hero.Hp, Is.EqualTo(8), "The imp shoots from three tiles away.");
+
+            var boss = Run(5, 1UL,
+                "B....",
+                ".....",
+                "..H..",
+                ".....",
+                ".....");
+            Assert.That(Enemy(boss, "lord_blobert").Intent.Kind, Is.EqualTo(IntentKind.Slam));
+            DoOk(boss, PlayerCommand.Wait());
+            Assert.That(boss.Hero.Hp, Is.EqualTo(10 - Catalog.Enemy("lord_blobert").SlamDamage), "Blobert slams from across the room.");
         }
 
         [Test]
         public void EnemiesPathAroundHazards()
         {
-            var run = Run(
+            var run = StepRun(
                 ".....",
                 ".....",
                 "H^G..",

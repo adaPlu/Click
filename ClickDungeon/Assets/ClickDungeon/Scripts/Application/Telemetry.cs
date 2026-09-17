@@ -315,6 +315,10 @@ namespace ClickDungeon.Application
                     case GameEventKind.PotionCollected:
                         Emit("pickup_collected", run, floor, turn, D("item", "potion", "cell", Cell(e.To)));
                         break;
+                    case GameEventKind.ChestTapped:
+                        // How often a player starts a chest and walks away is a Gate 2 question (D-022).
+                        Emit("chest_tapped", run, floor, turn, D("cell", Cell(e.To), "taps_left", e.Amount));
+                        break;
                     case GameEventKind.ChestOpened:
                         if (e.Reward != null && e.Reward.Kind == RewardKind.MaxHp) hp += e.Reward.Amount;
                         Emit("chest_opened", run, floor, turn, D(

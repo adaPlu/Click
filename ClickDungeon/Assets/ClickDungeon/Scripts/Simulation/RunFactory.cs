@@ -23,13 +23,14 @@ namespace ClickDungeon.Simulation
         }
 
         public static RunState NewRun(ulong seed, ContentCatalog catalog, List<GameEvent> events,
-            string identityId = ContentCatalog.DefaultHeroId)
+            string identityId = ContentCatalog.DefaultHeroId, MovementMode movement = MovementMode.Free)
         {
             var run = new RunState
             {
                 RunSeed = seed,
                 FloorCount = catalog.RunFloorCount,
                 Difficulty = catalog.Difficulty,
+                Movement = movement,
                 ContentCatalogVersion = catalog.Version,
                 Hero = CreateHero(catalog, identityId),
             };
@@ -110,6 +111,17 @@ namespace ClickDungeon.Simulation
             hero.Guard = false;
             hero.ShieldCooldown = 0;
             hero.DashCooldown = 0;
+
+            // Chest quality (D-022). Assigned here rather than during generation so it draws on the run seed without
+            // moving the generator's stream: floors from a given seed are unchanged. A vault's great chest is always Epic.
+            foreach (var p in Board.AllCells)
+            {
+                var cell = floor[p];
+                if (cell.Content != ContentKind.Chest) continue;
+                cell.Quality = cell.GreatChest
+                    ? ChestQuality.Epic
+                    : Chests.RollQuality(run.RunSeed, floor.FloorIndex, p, floor.IsVault);
+            }
 
             if (floor.Exit.InBounds) floor[floor.Exit].Knowledge = Knowledge.Revealed;
             events.Add(GameEvent.Of(GameEventKind.FloorStarted, amount: floor.FloorIndex, to: floor.Start));

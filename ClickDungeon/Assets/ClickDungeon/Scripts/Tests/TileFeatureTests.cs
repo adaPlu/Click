@@ -90,6 +90,16 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
+        public void FallDamageIsTheSameOnEveryTier()
+        {
+            var damages = new[] { Difficulty.Easy, Difficulty.Medium, Difficulty.Hardcore }
+                .Select(tier => ContentCatalog.CreateDefault(tier).Hazards.FallDamage)
+                .Distinct()
+                .ToList();
+            Assert.That(damages.Count, Is.EqualTo(1), "Fall damage is fixed; only spikes, bombs and lava move with the tier.");
+        }
+
+        [Test]
         public void TeleportWithAnOccupiedFarPadDoesNothing()
         {
             var run = Run(
@@ -173,7 +183,8 @@ namespace ClickDungeon.Tests
                 ".....");
             run.Floor.IsVault = true;
 
-            var result = DoOk(run, PlayerCommand.Interact(P(1, 2)));
+            Assert.That(run.Floor[P(1, 2)].Quality, Is.EqualTo(ChestQuality.Epic), "A great chest is always Epic (D-022).");
+            var result = OpenChest(run, P(1, 2));
             Assert.That(run.Rewards.Count, Is.EqualTo(Catalog.Vault.GreatChestRewards));
             Assert.That(result.Events.Count(e => e.Kind == GameEventKind.ChestOpened), Is.EqualTo(Catalog.Vault.GreatChestRewards));
             Assert.That(run.Rewards.Select(r => r.TransactionId).Distinct().Count(), Is.EqualTo(run.Rewards.Count));

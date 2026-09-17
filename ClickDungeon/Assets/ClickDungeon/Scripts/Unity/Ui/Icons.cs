@@ -165,6 +165,20 @@ namespace ClickDungeon.Unity.Ui
             }
         }
 
+        /// <summary>
+        /// Tap progress on a closed chest (D-022): one pip per tap it needs, filled for the taps already spent. Drawn
+        /// only once the first tap has landed, so an untouched chest stays clean.
+        /// </summary>
+        public static void ChestProgress(Transform t, int taps, int needed)
+        {
+            if (taps <= 0 || needed <= 1) return;
+            const float pitch = 16f;
+            float start = -pitch * (needed - 1) * 0.5f;
+            for (int i = 0; i < needed; i++)
+                Shape(t, Shapes.Rounded, i < taps ? Palette.Gold : Palette.StoneDark,
+                    new Vector2(start + pitch * i, -46f), new Vector2(12f, 8f));
+        }
+
         public static void Potion(Transform t, float scale = 1f)
         {
             if (TryArt(t, ArtKeys.Potion, TileSize * scale)) return;

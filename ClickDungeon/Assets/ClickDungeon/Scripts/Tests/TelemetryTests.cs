@@ -50,7 +50,8 @@ namespace ClickDungeon.Tests
         [Test]
         public void TileChoiceRecordsOnlyWhatThePlayerCouldSee()
         {
-            var run = Run(
+            // Step by Step, so the options are the eight neighbours rather than every tile on the board.
+            var run = StepRun(
                 ".....",
                 ".g...",
                 ".....",
@@ -64,7 +65,7 @@ namespace ClickDungeon.Tests
             Assert.That((bool)data["consequential"], Is.True);
             Assert.That((string)data["chosen"], Is.EqualTo("2,1"));
             var options = (JArray)data["options"];
-            Assert.That(options.Count, Is.EqualTo(4));
+            Assert.That(options.Count, Is.EqualTo(8));
             var towardEnemy = options.First(o => (string)o["cell"] == "1,2");
             Assert.That((int)towardEnemy["known_enemy"], Is.EqualTo(1));
             Assert.That((int)options[(int)data["chosen_index"]]["known_enemy"], Is.EqualTo(0));
@@ -142,7 +143,9 @@ namespace ClickDungeon.Tests
                 ".....",
                 ".....");
             var sink = new MemoryTelemetrySink();
-            Play(Recorder(sink), chestRun, PlayerCommand.Interact(P(2, 2)));
+            var chestRecorder = Recorder(sink);
+            for (int i = 0, taps = Chests.TapsToOpen(chestRun.Floor[P(2, 2)].Quality); i < taps; i++)
+                Play(chestRecorder, chestRun, PlayerCommand.Interact(P(2, 2)));
             Assert.That((string)Single(sink, "chest_opened")["data"]["reward"], Is.EqualTo(chestRun.Rewards[0].Kind.ToString().ToLowerInvariant()));
 
             var deathRun = Run(
@@ -161,7 +164,8 @@ namespace ClickDungeon.Tests
         [Test]
         public void RejectedCommandsAreRecorded()
         {
-            var run = Run(
+            // Step by Step: the far corner is out of reach, which is what makes this command rejected.
+            var run = StepRun(
                 ".....",
                 ".....",
                 "..H..",
@@ -245,7 +249,7 @@ namespace ClickDungeon.Tests
             var sink = new MemoryTelemetrySink();
             var recorder = Recorder(sink);
 
-            var laneRun = Run(
+            var laneRun = StepRun(
                 ".....",
                 ".....",
                 ".H.I.",

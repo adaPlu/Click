@@ -11,7 +11,8 @@ namespace ClickDungeon.Domain
     public static class Versions
     {
         public const int SaveSchema = 1;
-        public const int Ruleset = 3;
+        // Bumped for chest quality: opening a chest now costs several turns instead of one (D-022).
+        public const int Ruleset = 5;
         // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
         public const int Generation = 2;
     }
@@ -46,6 +47,19 @@ namespace ClickDungeon.Domain
 
     /// <summary>Run difficulty tier. Medium is 0 so saves made before tiers existed load unchanged.</summary>
     public enum Difficulty { Medium = 0, Easy = 1, Hardcore = 2 }
+
+    /// <summary>
+    /// How many taps a chest takes to open (D-022): Common 2, Rare 3, Epic 4. Common is 0 so saves made before
+    /// quality existed load as Common.
+    /// </summary>
+    public enum ChestQuality { Common = 0, Rare = 1, Epic = 2 }
+
+    /// <summary>
+    /// How the hero moves (D-021). Free Roam is the default: click any open tile, with no hints about unrevealed ones.
+    /// Step by Step restricts movement to the eight neighbouring tiles and hints at nearby tiles. Enemies behave the same
+    /// in both: melee monsters attack from a neighbouring tile, ranged monsters and the boss from a distance.
+    /// </summary>
+    public enum MovementMode { Free = 0, Step = 1 }
 
     public enum CommandKind { Move = 0, Wait, Slash, Shield, Dash, Potion, Interact }
 

@@ -26,25 +26,51 @@ namespace ClickDungeon.Tests
         [Test]
         public void IllegalMoveCostsNothing()
         {
-            var run = Open();
-            var result = Do(run, PlayerCommand.Move(P(4, 4)));
-            Assert.That(result.Accepted, Is.False);
+            var run = Run(
+                ".....",
+                "..G..",
+                "..H..",
+                ".....",
+                ".....");
+            var result = Do(run, PlayerCommand.Move(P(2, 3)));
+            Assert.That(result.Accepted, Is.False, "Someone is standing there.");
             Assert.That(result.RejectReason, Is.Not.Empty);
             Assert.That(run.Hero.Pos, Is.EqualTo(P(2, 2)));
             Assert.That(run.Turn, Is.EqualTo(0));
         }
 
-        [TestCase('#')]
-        [TestCase('C')]
-        public void WallsAndClosedChestsBlockMovement(char blocker)
+        [Test]
+        public void OnlyShutDoorsAndOccupiedTilesBlockTheHero()
         {
-            var run = Run(
+            // Nothing else blocks (D-021): walls are not generated at all, and a chest is furniture you can stand on.
+            var door = Run(
                 ".....",
-                "..." + blocker + ".",
+                "...D.",
                 "...H.",
                 ".....",
                 ".....");
-            Assert.That(Do(run, PlayerCommand.Move(P(3, 3))).Accepted, Is.False);
+            Assert.That(Do(door, PlayerCommand.Move(P(3, 3))).Accepted, Is.False, "A shut door is not a tile.");
+
+            var chest = Run(
+                ".....",
+                "...C.",
+                "...H.",
+                ".....",
+                ".....");
+            Assert.That(Do(chest, PlayerCommand.Move(P(3, 3))).Accepted, Is.True);
+        }
+
+        [Test]
+        public void StepByStepReachesOnlyTheEightNeighbours()
+        {
+            var run = StepRun(
+                ".....",
+                ".....",
+                "..H..",
+                ".....",
+                ".....");
+            Assert.That(Do(run, PlayerCommand.Move(P(4, 4))).Accepted, Is.False, "Two tiles away is out of reach.");
+            Assert.That(Do(run, PlayerCommand.Move(P(3, 3))).Accepted, Is.True, "Diagonals count as neighbours.");
         }
 
         [Test]
@@ -90,7 +116,7 @@ namespace ClickDungeon.Tests
                 ".HC..",
                 ".....",
                 ".....");
-            DoOk(run, PlayerCommand.Interact(P(2, 2)));
+            OpenChest(run, P(2, 2));
             DoOk(run, PlayerCommand.Move(P(2, 2)));
         }
 
@@ -111,7 +137,10 @@ namespace ClickDungeon.Tests
             Assert.That(chest.Kind, Is.EqualTo(CommandKind.Interact));
             Commands.TryContextual(run, P(3, 2), out var step);
             Assert.That(step.Kind, Is.EqualTo(CommandKind.Move));
-            Assert.That(Commands.TryContextual(run, P(4, 4), out _), Is.False);
+
+            Assert.That(Commands.TryContextual(run, P(4, 4), out var far), Is.True, "Free Roam reaches the whole board.");
+            Assert.That(far.Kind, Is.EqualTo(CommandKind.Move));
+            Assert.That(Commands.TryContextual(Step(run), P(4, 4), out _), Is.False, "Step by Step does not.");
         }
 
         [Test]
@@ -133,7 +162,8 @@ namespace ClickDungeon.Tests
         [Test]
         public void RevealsDistanceOneAndSensesDistanceTwo()
         {
-            var run = Run(
+            // Sensing only exists in Step by Step; Free Roam gives no hints at all (D-021).
+            var run = StepRun(
                 ".....",
                 ".....",
                 "..H..",
@@ -143,11 +173,28 @@ namespace ClickDungeon.Tests
             Assert.That(floor[P(2, 2)].Knowledge, Is.EqualTo(Knowledge.Revealed));
             Assert.That(floor[P(2, 3)].Knowledge, Is.EqualTo(Knowledge.Revealed));
             Assert.That(floor[P(3, 2)].Knowledge, Is.EqualTo(Knowledge.Revealed));
-            Assert.That(floor[P(3, 3)].Knowledge, Is.EqualTo(Knowledge.Sensed));
+            // Revealing follows melee reach, so the diagonal neighbour is revealed, not merely sensed (D-021).
+            Assert.That(floor[P(3, 3)].Knowledge, Is.EqualTo(Knowledge.Revealed));
             Assert.That(floor[P(2, 4)].Knowledge, Is.EqualTo(Knowledge.Sensed));
             Assert.That(floor[P(0, 2)].Knowledge, Is.EqualTo(Knowledge.Sensed));
             Assert.That(floor[P(4, 4)].Knowledge, Is.EqualTo(Knowledge.Unseen));
             Assert.That(floor[P(0, 0)].Knowledge, Is.EqualTo(Knowledge.Unseen));
+        }
+
+        [Test]
+        public void FreeRoamGivesNoHintsAtAll()
+        {
+            // D-021: every tile the hero has not revealed stays a blank cover, so the board cannot be read from a distance.
+            var run = Run(
+                "..g..",
+                ".....",
+                "^.H.K",
+                ".....",
+                "..C..");
+            foreach (var p in Board.AllCells)
+                Assert.That(run.Floor[p].Knowledge, Is.Not.EqualTo(Knowledge.Sensed), $"{p} should be a blank cover.");
+            Assert.That(run.Floor[P(2, 2)].Knowledge, Is.EqualTo(Knowledge.Revealed), "The hero still sees its own tile.");
+            Assert.That(run.Floor[P(0, 2)].Knowledge, Is.EqualTo(Knowledge.Unseen), "Two tiles away is unknown, not hinted.");
         }
 
         [Test]
@@ -165,7 +212,7 @@ namespace ClickDungeon.Tests
         [Test]
         public void SensedCellsShowTruthfulClues()
         {
-            var run = Run(
+            var run = StepRun(
                 "..g..",
                 ".....",
                 "^.H.K",
@@ -183,7 +230,7 @@ namespace ClickDungeon.Tests
         [Test]
         public void KnowledgeNeverGoesBackwards()
         {
-            var run = Run(
+            var run = StepRun(
                 ".....",
                 ".....",
                 "..H..",
