@@ -24,17 +24,25 @@ When you press PLAY, pick a difficulty:
 Goal on each floor: find the KEY, then reach the EXIT.
 
 Controls
-- Click a lit tile next to Sir Clickington to step onto it.
-- Click an enemy next to him to SLASH it. Click a chest next to him to open it.
+- Click any tile to go there. Covered tiles hide what is on them until you click them.
+- If a monster or a locked door is hiding under the tile you click, Sir Clickington
+  stays where he is and the tile is uncovered, so you can see what it was.
+- Click a monster next to him to SLASH it.
+- Chests take 2 to 4 clicks to open, and every click is a turn. Click the chest while
+  standing on it or next to it. Better chests take more clicks and give more.
 - Click Sir Clickington himself to wait a turn.
 - SLASH and DASH buttons: pick the button, then pick a lit tile.
 - SHIELD and POTION buttons act immediately.
 - Keyboard: WASD or arrow keys to move, Space to wait, 1-5 for the buttons,
   Esc for the menu, H for help.
 
+Want a slower, more careful game? Settings > MOVEMENT switches to STEP BY STEP for
+your next run: you move one tile at a time, and tiles near you show clues.
+
 Tips the game will also show you
-- Tiles two steps away show clues about what is hidden there.
-- Enemies wake up when you step next to them, and always show what they'll do next turn.
+- Monsters wake up when you uncover them, and always show what they'll do next turn.
+- Most monsters must stand next to you to hit you. Fire Imps shoot along a straight
+  line, and Lord Blobert can slam you from anywhere.
 - Tiles marked -N will be hit next turn.
 
 
