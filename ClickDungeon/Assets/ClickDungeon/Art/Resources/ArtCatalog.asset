@@ -198,9 +198,19 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 5eb33f5f4ae8f554c93b1b4c0844f306, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: fx_bomb_fuse
+    Frames:
+    - {fileID: 21300000, guid: ddce8e748412e164792c3facf464184e, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: fx_chest_gem
     Frames:
     - {fileID: 21300000, guid: 63b9b0e94f81df940a116f90751f5fd7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: fx_chest_glow
+    Frames:
+    - {fileID: 21300000, guid: 0d17fb77b6e79064f91461cdd18e0157, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: fx_chest_rays
@@ -228,9 +238,34 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 2d44411404bd1724c98b25d5de6cdeaa, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: fx_chest_shimmer
+    Frames:
+    - {fileID: 21300000, guid: 9d893ac382ed21f4f9138af40c48a713, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: fx_enemy_wake
     Frames:
     - {fileID: 21300000, guid: 248deacd6d536ef4a89c8e943db1b705, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: fx_exit_unlock
+    Frames:
+    - {fileID: 21300000, guid: 086a12a112404bd40a127b0406a3f9d6, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: fx_key_collect
+    Frames:
+    - {fileID: 21300000, guid: f06a7625bde486941ab19f64f9bb23d2, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: fx_potion_collect
+    Frames:
+    - {fileID: 21300000, guid: 5a634dbfe1820834c8b9bc41d3e0d53d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: fx_spikes_trigger
+    Frames:
+    - {fileID: 21300000, guid: 3afa0ac5916e0dc4ab8c472118d51ef3, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: icon_ability_dash
@@ -596,6 +631,16 @@ MonoBehaviour:
   - Key: ui_highlight_hover
     Frames:
     - {fileID: 21300000, guid: 48de1879c1ef091498ec434f64be72dc, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_highlight_legal
+    Frames:
+    - {fileID: 21300000, guid: a0dc118b4dbd01b47b45e2b389f26c28, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_highlight_target
+    Frames:
+    - {fileID: 21300000, guid: 1e0f9d8bc4685f44fb915d27f1d4158f, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: ui_icon_crown

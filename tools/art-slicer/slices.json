@@ -147,6 +147,15 @@
     { "key": "ui_icon_settings", "source": "ref2-gameplay", "rect": [1473, 15, 75, 75], "mode": "icon", "tolerance": 55, "largest_only": true, "size": 128, "folder": "UI", "wired": true },
     { "key": "ui_chest_reaction_anticipation", "source": "ref6-vertical-slice", "rect": [148, 912, 95, 128], "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "UI", "wired": true },
     { "key": "ui_chest_reaction_heavy", "source": "ref6-vertical-slice", "rect": [762, 915, 100, 128], "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "UI", "wired": true },
-    { "key": "ui_chest_reaction_triumph", "source": "ref6-vertical-slice", "rect": [1102, 912, 105, 130], "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "UI", "wired": true }
+    { "key": "ui_chest_reaction_triumph", "source": "ref6-vertical-slice", "rect": [1102, 912, 105, 130], "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "UI", "wired": true },
+    { "key": "fx_chest_shimmer", "size": 128, "source": "ref-treasure", "rect": [1184, 514, 32, 36], "mode": "icon", "tolerance": 40, "largest_only": true, "folder": "FX", "wired": true },
+    { "key": "fx_key_collect", "size": 256, "tint": [1.0, 0.88, 0.45], "source": "ref-treasure", "rect": [1184, 514, 32, 36], "mode": "icon", "tolerance": 40, "largest_only": true, "folder": "FX", "wired": true },
+    { "key": "fx_potion_collect", "size": 256, "tint": [0.6, 1.0, 0.65], "source": "ref-treasure", "rect": [1184, 514, 32, 36], "mode": "icon", "tolerance": 40, "largest_only": true, "folder": "FX", "wired": true },
+    { "key": "fx_exit_unlock", "size": 256, "tint": [0.6, 0.85, 1.0], "source": "ref-treasure", "rect": [1184, 514, 32, 36], "mode": "icon", "tolerance": 40, "largest_only": true, "folder": "FX", "wired": true },
+    { "key": "ui_highlight_legal", "source": "ref-core-ui", "rect": [884, 632, 144, 127], "mode": "icon", "size": 256, "hollow": 0.09, "tint": [1.5, 1.25, 0.55], "colorize": true, "folder": "UI", "wired": true },
+    { "key": "ui_highlight_target", "source": "ref-core-ui", "rect": [884, 632, 144, 127], "mode": "icon", "size": 256, "hollow": 0.09, "tint": [1.6, 0.6, 0.5], "colorize": true, "folder": "UI", "wired": true },
+    { "key": "fx_spikes_trigger", "size": 256, "tint": [1.0, 0.55, 0.5], "source": "ref-treasure", "rect": [1184, 514, 32, 36], "mode": "icon", "tolerance": 40, "largest_only": true, "folder": "FX", "wired": true },
+    { "key": "fx_bomb_fuse", "size": 128, "tint": [1.0, 0.7, 0.35], "source": "ref-treasure", "rect": [1184, 514, 32, 36], "mode": "icon", "tolerance": 40, "largest_only": true, "folder": "FX", "wired": true },
+    { "key": "fx_chest_glow", "source": "ref-treasure", "rect": [1230, 530, 160, 140], "mode": "icon", "tolerance": 40, "size": 512, "folder": "FX", "wired": true }
   ]
 }

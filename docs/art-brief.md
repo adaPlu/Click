@@ -406,3 +406,8 @@ and lighting, so flattening the middle produced a beige floor plaque with pale t
 longer read, panels flatter than the procedural ones, and an HP bar that lost its shape at our width. The keys stay
 procedural until frame art exists that is drawn to stretch.
 
+A fourth pass filled the effects and the two remaining tile highlights. The slicer gained `tint` (multiply) and
+`colorize` (keep the brightness, replace the colour): one sparkle cut from the reward burst serves the chest shimmer and
+the key, potion, exit-unlock, spike and bomb-fuse effects in their own colours, and one glowing tile frame serves the
+gold legal-move, red target and blue hover highlights. Colourising is the only way to turn the sheet's blue glow gold.
+

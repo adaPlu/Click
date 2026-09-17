@@ -245,6 +245,29 @@ def frame(crop: Image.Image, spec: dict) -> tuple:
     return out, border
 
 
+def tint(image: Image.Image, spec: dict) -> Image.Image:
+    """
+    Recolours a cut-out so one crop can serve several colours (the three tile highlights, a sparkle that is gold for the
+    key and green for a potion). "tint" multiplies the colours; with "colorize" the brightness is kept and the colour is
+    replaced, which is the only way to turn a blue glow gold.
+    """
+    if "tint" not in spec:
+        return image
+    r, g, b = (float(v) for v in spec["tint"])
+    colorize = bool(spec.get("colorize"))
+    px = image.load()
+    for y in range(image.height):
+        for x in range(image.width):
+            cr, cg, cb, ca = px[x, y]
+            if ca == 0:
+                continue
+            if colorize:
+                lum = 0.299 * cr + 0.587 * cg + 0.114 * cb
+                cr = cg = cb = lum
+            px[x, y] = (min(255, round(cr * r)), min(255, round(cg * g)), min(255, round(cb * b)), ca)
+    return image
+
+
 def render(crop: Image.Image, spec: dict) -> Image.Image:
     mode = spec.get("mode", "tile")
     size = int(spec.get("size", 256))
@@ -307,7 +330,7 @@ def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=Non
             rect = snap(rect, boxes[stem])
         x, y, w, h = rect
         crop = image.crop((max(0, x), max(0, y), min(image.width, x + w), min(image.height, y + h)))
-        result = render(crop, spec)
+        result = tint(render(crop, spec).convert("RGBA"), spec)
 
         if spec.get("mode") == "frame":
             borders[key] = frame(crop, spec)[1]

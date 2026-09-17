@@ -231,4 +231,6 @@ question is which one it may cover for ~1.3 s.
 - [x] Frames: slicer `frame` mode plus importer-applied 9-slice borders, ready for frame art that is drawn to stretch.
       The reference sheets' own frames were tried and reverted: flattening their baked-in middles read worse in the game
       than the procedural panels.
+- [x] Fourth pass: all three tile highlights and six board effects, from one sparkle and one frame recoloured by the
+      slicer. Coverage is 121 reference slices and 72 procedural placeholders.
 
