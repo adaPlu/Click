@@ -203,6 +203,21 @@ def contain(image: Image.Image, size: int, anchor: str) -> Image.Image:
     return canvas
 
 
+def hollow(image: Image.Image, spec: dict) -> Image.Image:
+    """Clears the middle of a frame (a tile highlight keeps only its glowing border, so the tile shows through)."""
+    if "hollow" not in spec:
+        return image
+    inset = round(min(image.size) * float(spec["hollow"]))
+    if inset <= 0:
+        return image
+    px = image.load()
+    for y in range(inset, image.height - inset):
+        for x in range(inset, image.width - inset):
+            r, g, b, _ = px[x, y]
+            px[x, y] = (r, g, b, 0)
+    return image
+
+
 def render(crop: Image.Image, spec: dict) -> Image.Image:
     mode = spec.get("mode", "tile")
     size = int(spec.get("size", 256))
@@ -224,7 +239,7 @@ def render(crop: Image.Image, spec: dict) -> Image.Image:
         source = remove_background(crop, int(spec["tolerance"])) if "tolerance" in spec else crop
         if spec.get("largest_only"):
             source = keep_largest_component(source)
-        return contain(source, size, "center")
+        return hollow(contain(source, size, "center"), spec)
     raise ValueError(f"Unknown mode '{mode}' for {spec.get('key')}")
 
 

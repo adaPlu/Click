@@ -14,6 +14,7 @@
     "ref-imp-sheet": { "file": "FireImpDetailsAnimations.png", "size": [1168, 1346], "label": "Fire Imp details and animations" },
     "ref-items2": { "file": "items2.png", "size": [1448, 1086], "label": "Supporting: items and equipment library (second sheet)" },
     "ref-monster-pack": { "file": "gobinslime.png", "size": [1448, 1086], "label": "Common encounter monster pack (goblin raider, slime minion)" },
+    "ref-treasure": { "file": "Treasuyre.png", "size": [1448, 1086], "label": "Special chest and key system asset pack" },
     "ref-core-ui": { "file": "CoreUI PAck.png", "size": [1448, 1086], "label": "Core ability and consumable UI pack" }
   },
   "slices": [
@@ -114,6 +115,21 @@
     { "key": "icon_danger_warning", "source": "ref-core-ui", "rect": [695, 652, 88, 82], "mode": "icon", "size": 128, "folder": "Icons", "wired": true },
     { "key": "actor_lord_blobert_summon", "source": "ref6-vertical-slice", "rect": [965, 578, 140, 110], "mode": "sprite", "tolerance": 18, "local_tolerance": 4, "min_island": 0.02, "size": 384, "folder": "Actors", "wired": true },
     { "key": "actor_lord_blobert_puffup", "source": "ref6-vertical-slice", "rect": [1105, 578, 145, 112], "mode": "sprite", "tolerance": 18, "local_tolerance": 4, "min_island": 0.02, "size": 384, "folder": "Actors", "wired": true },
-    { "key": "actor_lord_blobert_defeat", "source": "ref6-vertical-slice", "rect": [1262, 595, 160, 90], "mode": "sprite", "tolerance": 18, "local_tolerance": 4, "min_island": 0.02, "size": 384, "folder": "Actors", "wired": true }
+    { "key": "actor_lord_blobert_defeat", "source": "ref6-vertical-slice", "rect": [1262, 595, 160, 90], "mode": "sprite", "tolerance": 18, "local_tolerance": 4, "min_island": 0.02, "size": 384, "folder": "Actors", "wired": true },
+    { "key": "icon_clue_enemy", "source": "ref-core-ui", "rect": [1068, 664, 88, 78], "mode": "icon", "tolerance": 45, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_clue_danger", "source": "ref-core-ui", "rect": [695, 652, 88, 82], "mode": "icon", "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_clue_objective", "source": "ref-core-ui", "rect": [683, 462, 95, 98], "mode": "icon", "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_clue_treasure", "source": "ref-core-ui", "rect": [795, 462, 95, 98], "mode": "icon", "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_clue_feature", "source": "ref-core-ui", "rect": [907, 462, 95, 98], "mode": "icon", "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_clue_exit", "source": "ref4-tiles-b", "rect": [1161, 157, 168, 168], "mode": "icon", "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_underfoot_spikes", "source": "ref4-tiles-b", "rect": [588, 157, 168, 168], "mode": "icon", "size": 128, "folder": "Icons", "wired": true },
+    { "key": "icon_underfoot_bomb", "source": "ref4-tiles-b", "rect": [397, 157, 168, 168], "mode": "icon", "size": 128, "folder": "Icons", "wired": true },
+    { "key": "icon_underfoot_bomb_armed", "source": "ref-core-ui", "rect": [1131, 462, 95, 98], "mode": "icon", "size": 128, "folder": "Icons", "wired": true },
+    { "key": "icon_underfoot_exit_open", "source": "ref4-tiles-b", "rect": [1161, 157, 168, 168], "mode": "icon", "size": 128, "folder": "Icons", "wired": true },
+    { "key": "ui_chest_progress_back", "source": "ref-treasure", "rect": [980, 648, 55, 32], "mode": "wide", "size": 512, "folder": "UI", "wired": true },
+    { "key": "ui_chest_progress_fill", "source": "ref-treasure", "rect": [893, 652, 78, 26], "mode": "wide", "size": 512, "folder": "UI", "wired": true },
+    { "key": "fx_chest_rays", "source": "ref-treasure", "rect": [1230, 530, 160, 140], "mode": "icon", "tolerance": 40, "size": 512, "folder": "FX", "wired": true },
+    { "key": "fx_chest_gem", "source": "ref-treasure", "rect": [1226, 590, 66, 72], "mode": "icon", "tolerance": 50, "largest_only": true, "size": 256, "folder": "FX", "wired": true },
+    { "key": "ui_highlight_hover", "source": "ref-core-ui", "rect": [884, 632, 144, 127], "mode": "icon", "size": 256, "folder": "UI", "hollow": 0.09, "wired": true }
   ]
 }

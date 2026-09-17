@@ -178,6 +178,16 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 5eb33f5f4ae8f554c93b1b4c0844f306, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: fx_chest_gem
+    Frames:
+    - {fileID: 21300000, guid: 63b9b0e94f81df940a116f90751f5fd7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: fx_chest_rays
+    Frames:
+    - {fileID: 21300000, guid: 0bc75aeb1414add43a00db05e32a5bae, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: fx_chest_reward_anticipation
     Frames:
     - {fileID: 21300000, guid: d3d930dcf2ce23c4382a17740448dba7, type: 3}
@@ -228,14 +238,64 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 5ac1dae382813334cb0ce5f07a3a3744, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_clue_danger
+    Frames:
+    - {fileID: 21300000, guid: 04440ca9fb7e0244d887b2cd341221af, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_clue_enemy
+    Frames:
+    - {fileID: 21300000, guid: 65547b20534750246a0e33c36a2fba64, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_clue_exit
+    Frames:
+    - {fileID: 21300000, guid: 5321be0dabf156841b3d9e4e768f4cd5, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_clue_feature
+    Frames:
+    - {fileID: 21300000, guid: f691a9b65d03d65468d1ab4bd8053e4a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_clue_objective
+    Frames:
+    - {fileID: 21300000, guid: a7f784bbf12725544998b67dcbf605ab, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_clue_treasure
+    Frames:
+    - {fileID: 21300000, guid: 18690d628388c714eb1d645c10492ff1, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_danger_warning
     Frames:
     - {fileID: 21300000, guid: 7a22e3c0d8c52e540898cca7f3fa9958, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_underfoot_bomb
+    Frames:
+    - {fileID: 21300000, guid: 759b8e1bb17d91d45a1f2fea0047c19c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_underfoot_bomb_armed
+    Frames:
+    - {fileID: 21300000, guid: 8246a66bb68645f4c9cb173474bfeebd, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_underfoot_exit_locked
     Frames:
     - {fileID: 21300000, guid: baa90f1a51ce8b24cb2d402b6e8dc30d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_underfoot_exit_open
+    Frames:
+    - {fileID: 21300000, guid: dbc10bcf3a1771d4d8679eb4e34daa98, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_underfoot_spikes
+    Frames:
+    - {fileID: 21300000, guid: c63b899de75cfe149ac85e3f4c007503, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: logo_clickdungeon
@@ -428,6 +488,16 @@ MonoBehaviour:
     - {fileID: 21300000, guid: facb0d5e5bb7dc547875622cecf1e77f, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: ui_chest_progress_back
+    Frames:
+    - {fileID: 21300000, guid: 7f4fd1abf6ca74f43bdab568322645eb, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_chest_progress_fill
+    Frames:
+    - {fileID: 21300000, guid: 501e70fc9f293c8459d0bdd7918c5099, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: ui_continue_preview
     Frames:
     - {fileID: 21300000, guid: f95c3113e1caa55439a7922dd2b29510, type: 3}
@@ -441,6 +511,11 @@ MonoBehaviour:
   - Key: ui_floor_plaque
     Frames:
     - {fileID: 21300000, guid: f210fc7ddc8093545afea8158d0d4ab2, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_highlight_hover
+    Frames:
+    - {fileID: 21300000, guid: 48de1879c1ef091498ec434f64be72dc, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: ui_icon_crown

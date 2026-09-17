@@ -374,3 +374,13 @@ Character and boss encyclopedia sheets (animation-state key frames) are converte
 and `defeat` poses from the vertical slice. Monsters with no rules yet (Goblin Brute King, Skeleton Warrior, Bat Swarm
 Leader, Mimic Chest, Armored Boar, Spooky Spellbook, Cave Spider, Theater Curtain Demon, Goblin Bomber, Key Warden) stay
 unconverted (D1).
+
+A second conversion pass filled the keys these sheets could still cover: the Step by Step clue icons
+(`icon_clue_<enemy|danger|objective|treasure|exit|feature>` — a goblin head, the red alert, the key, a chest, the stairs
+down and the pointing hand; `icon_clue_safe` keeps its plain dot), the underfoot badges
+(`icon_underfoot_<spikes|bomb|bomb_armed|exit_open>`), the chest overlay's tap meter
+(`ui_chest_progress_back` / `ui_chest_progress_fill`, cut from `ui_tap_progress` without its baked chest and hand),
+the reward burst (`fx_chest_rays`, `fx_chest_gem` from `vfx_reward_burst`) and `ui_highlight_hover` from
+`tile_highlight`, hollowed out by the slicer so only its glowing border is left. `fx_chest_coin` stays unwired: a coin
+implies a currency this game does not have (D1).
+

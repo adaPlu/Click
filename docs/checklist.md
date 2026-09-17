@@ -217,3 +217,10 @@ question is which one it may cover for ~1.3 s.
 - [x] Regression tests: `HiddenTileArtTests` (Unity), `HiddenTileTests`, `InspectTileTests`.
 - [ ] Step by Step still shows sensing markers, and monsters that start awake stay visible (user decision to keep both).
 
+## Art conversion, second pass
+- [x] Step by Step clue icons, underfoot badges, the chest tap meter, the reward burst and the hover highlight all have
+      art; coverage is 95 reference slices and 98 procedural placeholders (was 80 / 113).
+- [x] Slicer: a `hollow` setting clears the middle of a frame, so a tile highlight keeps only its glow.
+- [ ] Still procedural, with no source art on the sheets: intent badges, danger telegraphs, HUD frames and panels,
+      modal panels, title-screen panels and buttons (their labels are baked in), backgrounds, and most FX.
+
