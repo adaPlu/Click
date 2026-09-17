@@ -33,6 +33,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 2e2e42a958edb9b4790ded878f5a4b8f, type: 3}
     Fps: 8
     Placeholder: 1
+  - Key: actor_crowned_slime_rest
+    Frames:
+    - {fileID: 21300000, guid: be213511035ea85458c47a2e0d970458, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_crowned_slime_wake
     Frames:
     - {fileID: 21300000, guid: 48ffd28a340ade14483b942ec7af38dd, type: 3}
@@ -46,6 +51,11 @@ MonoBehaviour:
   - Key: actor_fire_imp_defeat
     Frames:
     - {fileID: 21300000, guid: 364a697a11a4d894aa2d90c1f92f8ebb, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_fire_imp_fire
+    Frames:
+    - {fileID: 21300000, guid: fd01145bef808a349bb3b443dcd01c1b, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: actor_fire_imp_hit
@@ -128,6 +138,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 2c4d4212a07ade6469d9506c6b170c42, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: actor_sir_clickington_guard
+    Frames:
+    - {fileID: 21300000, guid: 25b1cb7a001c4b74ab52fc04b66db699, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_sir_clickington_hit
     Frames:
     - {fileID: 21300000, guid: 2894f35313f0cde41b2ca015080c2081, type: 3}
@@ -167,6 +182,11 @@ MonoBehaviour:
     Frames:
     - {fileID: 21300000, guid: f71ee45578d47594499a2b82bb068bb5, type: 3}
     Fps: 8
+    Placeholder: 1
+  - Key: actor_slimelet_spawn
+    Frames:
+    - {fileID: 21300000, guid: a3547744a6ea85f4883f7f0d7e91a339, type: 3}
+    Fps: 12
     Placeholder: 1
   - Key: actor_slimelet_wake
     Frames:
@@ -273,6 +293,21 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 7a22e3c0d8c52e540898cca7f3fa9958, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_reward_maxhp
+    Frames:
+    - {fileID: 21300000, guid: 19796cca4a2ca3742830feb941b2c522, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_reward_potion
+    Frames:
+    - {fileID: 21300000, guid: 8119152e56cc03d4a902aaea9be22bba, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_reward_slashdamage
+    Frames:
+    - {fileID: 21300000, guid: 004d44c7bf1aa114cb51271740a0b4fb, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_underfoot_bomb
     Frames:
     - {fileID: 21300000, guid: 759b8e1bb17d91d45a1f2fea0047c19c, type: 3}
@@ -346,6 +381,11 @@ MonoBehaviour:
   - Key: tile_bomb
     Frames:
     - {fileID: 21300000, guid: aeb94c8b44ac95f4caaa4a6d11568b4b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_bomb_armed
+    Frames:
+    - {fileID: 21300000, guid: 1b152e7924cd5424f923940a50d09528, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: tile_chest_closed
@@ -433,6 +473,16 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 638734cc7d71c3a4a9a306dc40df41be, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: tile_stair_down
+    Frames:
+    - {fileID: 21300000, guid: b845f4dc8a50cd14ea2344998895be22, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_stair_down_locked
+    Frames:
+    - {fileID: 21300000, guid: 80257ea82b031e5458bfb9f9aa164136, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: tile_stair_up
     Frames:
     - {fileID: 21300000, guid: f917f8c3a933276449784cfb1dad4ea5, type: 3}
@@ -451,6 +501,21 @@ MonoBehaviour:
   - Key: tile_torch
     Frames:
     - {fileID: 21300000, guid: ed02c6d8c0bf8254491eee00cef8554e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_trap_bomb
+    Frames:
+    - {fileID: 21300000, guid: 231d009f93d546942822d512a628dd2d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_trap_pit
+    Frames:
+    - {fileID: 21300000, guid: 91c2e799a1d29a144ac05ae8ed6a0acb, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_trap_spike
+    Frames:
+    - {fileID: 21300000, guid: d3daf81e3c006f44c99e1a0def676107, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: tile_wall
@@ -566,6 +631,11 @@ MonoBehaviour:
   - Key: ui_icon_quit
     Frames:
     - {fileID: 21300000, guid: 12b943e3d9ea23f44b997a624439b7ee, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_settings
+    Frames:
+    - {fileID: 21300000, guid: 10e292c76b18dd94f95a944cbfc9420a, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: ui_icon_shop

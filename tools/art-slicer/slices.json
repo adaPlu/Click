@@ -130,6 +130,20 @@
     { "key": "ui_chest_progress_fill", "source": "ref-treasure", "rect": [893, 652, 78, 26], "mode": "wide", "size": 512, "folder": "UI", "wired": true },
     { "key": "fx_chest_rays", "source": "ref-treasure", "rect": [1230, 530, 160, 140], "mode": "icon", "tolerance": 40, "size": 512, "folder": "FX", "wired": true },
     { "key": "fx_chest_gem", "source": "ref-treasure", "rect": [1226, 590, 66, 72], "mode": "icon", "tolerance": 50, "largest_only": true, "size": 256, "folder": "FX", "wired": true },
-    { "key": "ui_highlight_hover", "source": "ref-core-ui", "rect": [884, 632, 144, 127], "mode": "icon", "size": 256, "folder": "UI", "hollow": 0.09, "wired": true }
+    { "key": "ui_highlight_hover", "source": "ref-core-ui", "rect": [884, 632, 144, 127], "mode": "icon", "size": 256, "folder": "UI", "hollow": 0.09, "wired": true },
+    { "key": "tile_stair_down", "source": "ref4-tiles-b", "rect": [1161, 157, 168, 168], "mode": "tile", "size": 256, "folder": "Tiles", "snap": true, "wired": true },
+    { "key": "tile_stair_down_locked", "source": "ref4-tiles-b", "rect": [1352, 157, 168, 168], "mode": "tile", "size": 256, "folder": "Tiles", "snap": true, "wired": true },
+    { "key": "tile_trap_pit", "source": "ref4-tiles-b", "rect": [206, 157, 168, 168], "mode": "tile", "size": 256, "folder": "Tiles", "snap": true, "wired": true },
+    { "key": "tile_trap_spike", "source": "ref4-tiles-b", "rect": [588, 157, 168, 168], "mode": "tile", "size": 256, "folder": "Tiles", "snap": true, "wired": true },
+    { "key": "tile_trap_bomb", "source": "ref4-tiles-b", "rect": [397, 157, 168, 168], "mode": "tile", "size": 256, "folder": "Tiles", "snap": true, "wired": true },
+    { "key": "tile_bomb_armed", "source": "ref-core-ui", "rect": [1131, 462, 95, 98], "mode": "tile", "size": 256, "folder": "Tiles", "wired": true },
+    { "key": "icon_reward_potion", "source": "ref-core-ui", "rect": [567, 462, 95, 98], "mode": "icon", "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_reward_maxhp", "source": "ref-core-ui", "rect": [60, 660, 69, 66], "mode": "icon", "tolerance": 45, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_reward_slashdamage", "source": "ref-core-ui", "rect": [235, 462, 95, 98], "mode": "icon", "size": 192, "folder": "Icons", "wired": true },
+    { "key": "actor_crowned_slime_rest", "source": "ref-slime-sheet", "rect": [960, 612, 96, 105], "mode": "sprite", "tolerance": 50, "min_island": 0.02, "size": 256, "folder": "Actors", "wired": true },
+    { "key": "actor_slimelet_spawn", "source": "ref-slime-sheet", "rect": [25, 840, 160, 135], "mode": "sprite", "tolerance": 50, "min_island": 0.02, "size": 256, "folder": "Actors", "wired": true },
+    { "key": "actor_fire_imp_fire", "source": "ref-imp-sheet", "rect": [395, 820, 190, 110], "mode": "sprite", "tolerance": 50, "min_island": 0.02, "size": 256, "folder": "Actors", "wired": true },
+    { "key": "actor_sir_clickington_guard", "source": "ref-knight-sheet", "rect": [258, 302, 366, 448], "mode": "sprite", "tolerance": 24, "local_tolerance": 5, "min_island": 0.05, "size": 256, "folder": "Actors", "wired": true },
+    { "key": "ui_icon_settings", "source": "ref2-gameplay", "rect": [1473, 15, 75, 75], "mode": "icon", "tolerance": 55, "largest_only": true, "size": 128, "folder": "UI", "wired": true }
   ]
 }
