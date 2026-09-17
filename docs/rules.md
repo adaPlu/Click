@@ -210,7 +210,9 @@ Then back to 1. The encounter is won when Blobert dies (minions vanish).
 
 ## 5. Hero: Sir Clickington (Knight) *(tune numbers)*
 
-Max HP 10. Slash damage 2. Starts each run with 2 potions.
+Max HP 10. Slash damage 2. Starts each run with 2 potions. Another hero may take
+the run instead (§5.1); everything below is the Knight's, and the table's numbers
+come from whichever class is playing.
 
 | Command   | Turn cost | Cooldown | Rule |
 |-----------|-----------|----------|------|
@@ -229,6 +231,26 @@ Illegal commands are rejected with a reason and cost nothing.
 
 Entering a cell (walk or dash landing) resolves, in order: hazard → pickup
 (key / potion auto-collect) → exit.
+
+### 5.1 Hero classes (D-024)
+
+A run is taken by one **hero identity**, chosen on the title screen before the run
+starts. A run already in progress keeps the hero it began with, and the save
+carries it. Every class plays by the same rules; only its numbers differ.
+
+| Class | Hearts | Slash | Potions (heal) | Shield | Dash |
+|---|---|---|---|---|---|
+| Knight (Sir Clickington) | 10 | 2 | 2 (heal 4) | every 3 | 2 tiles every 3 |
+| Paladin (Dawnward) | 12 | 2 | 2 (heal 6) | every 2 | **1 tile** every 4 |
+
+The Paladin is the steadier of the two: more hearts, a stronger potion and a
+shield that comes back sooner, paid for with a dash that moves one tile and
+recharges slower — and dash is how a hero crosses a trap or breaks away from a
+monster. Difficulty tiers apply to whichever class is playing (§10).
+
+Measured, 40 seeds per tier with the novice bot (`HeroSweep`): sighted, both
+heroes win every tier. Blind, the Knight wins 40 / 36 / 29 and the Paladin
+39 / 38 / 33, so the Paladin is the gentler start and the Knight the faster run.
 
 ---
 

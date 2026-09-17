@@ -112,6 +112,21 @@ namespace ClickDungeon.Content
                 Id = DefaultHeroId, DisplayName = "Sir Clickington", ClassId = "knight", Tagline = "Brave. Loyal. Clickable.",
             };
 
+            // The Paladin trades reach for staying power: more hearts, a shield that comes back sooner and a stronger
+            // potion, against a dash of a single tile that also recharges slower (rules §5.1). A softer slash was tried
+            // first and made boss fights drag: the sighted bot won 24 of 40 on Blobert's Wrath against the Knight's 40.
+            c.HeroClasses["paladin"] = new HeroClassDefinition
+            {
+                Id = "paladin", DisplayName = "Paladin",
+                MaxHp = 12, SlashDamage = 2, StartingPotions = 2, PotionHeal = 6,
+                ShieldCooldown = 2, DashCooldown = 4, DashDistance = 1,
+                RevealRadius = 1, SenseRadius = 2,
+            };
+            c.HeroIdentities["dawnward"] = new HeroIdentityDefinition
+            {
+                Id = "dawnward", DisplayName = "Dawnward", ClassId = "paladin", Tagline = "Steadfast. Shielded. Unshaken.",
+            };
+
             AddEnemy(c, new EnemyDefinition { Id = "goblin", DisplayName = "Goblin", Behavior = EnemyBehavior.Chaser, MaxHp = 3, Damage = 2 });
             AddEnemy(c, new EnemyDefinition { Id = "crowned_slime", DisplayName = "Crowned Slime", Behavior = EnemyBehavior.SlowChaser, MaxHp = 5, Damage = 3 });
             AddEnemy(c, new EnemyDefinition { Id = "fire_imp", DisplayName = "Fire Imp", Behavior = EnemyBehavior.Lane, MaxHp = 2, Damage = 2, Range = 3 });

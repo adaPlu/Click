@@ -78,7 +78,8 @@ namespace ClickDungeon.Unity
                 Store.Delete();
                 ulong seed = ulong.TryParse(ArgValue("-cdSeed"), out var s) ? s : 20260914UL;
                 OpenGame(Session.StartNewRun(seed, LaunchOptions.ParseDifficulty(ArgValue("-cdDifficulty")),
-                    LaunchOptions.ParseMovement(ArgValue("-cdMovement"))), null);
+                    LaunchOptions.ParseMovement(ArgValue("-cdMovement")),
+                    LaunchOptions.ParseHero(ArgValue("-cdHero"), Catalog, HeroChoice())), null);
                 int turns = int.TryParse(ArgValue("-cdTurns"), out var t) ? t : 0;
                 bool randomBot = ArgValue("-cdBot") == "random";
                 var rng = new DeterministicRng(seed);
@@ -178,12 +179,19 @@ namespace ClickDungeon.Unity
         }
 
         /// <summary>New run at the difficulty of the run just played (victory / defeat "NEW RUN").</summary>
+        /// <summary>The saved hero, or the default one when that identity is no longer in the catalog.</summary>
+        string HeroChoice()
+        {
+            string id = UserPrefs.Hero;
+            return Catalog.HeroIdentities.ContainsKey(id) ? id : Content.ContentCatalog.DefaultHeroId;
+        }
+
         public void StartNewRun() => StartNewRun(Session.Catalog.Difficulty);
 
         public void StartNewRun(Domain.Difficulty difficulty)
         {
             UserPrefs.LastDifficulty = difficulty;
-            var events = Session.StartNewRun(LaunchOptions.NewRunSeed(), difficulty, UserPrefs.Movement);
+            var events = Session.StartNewRun(LaunchOptions.NewRunSeed(), difficulty, UserPrefs.Movement, HeroChoice());
             OpenGame(events, null);
         }
 
@@ -301,6 +309,17 @@ namespace ClickDungeon.Unity
             set
             {
                 PlayerPrefs.SetInt("cd.movementMode", (int)value);
+                PlayerPrefs.Save();
+            }
+        }
+
+        /// <summary>The hero for the next new run (D-024). A run in progress keeps the hero it was started with.</summary>
+        public static string Hero
+        {
+            get => PlayerPrefs.GetString("cd.hero", Content.ContentCatalog.DefaultHeroId);
+            set
+            {
+                PlayerPrefs.SetString("cd.hero", value);
                 PlayerPrefs.Save();
             }
         }

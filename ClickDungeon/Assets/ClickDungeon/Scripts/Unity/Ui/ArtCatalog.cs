@@ -338,7 +338,6 @@ namespace ClickDungeon.Unity.Ui
                 StairDownLocked, StairDown, StairUp, TrapPit, TrapSpike, TrapBomb, Lava, Water, Shadow, FloorCracked, FloorMoss,
                 WallCorner, TorchWall, DoorLocked, DoorOpen, PressurePlate, Teleport, FountainHeal,
                 Logo, TitleBackground, GameplayBackground,
-                Actor(HeroId),
             };
             foreach (var enemy in catalog.Enemies.Values) keys.Add(Actor(enemy.Id));
             foreach (var enemy in catalog.Enemies.Values) keys.Add(EnemyPortrait(enemy.Id));
@@ -351,7 +350,8 @@ namespace ClickDungeon.Unity.Ui
             foreach (var clue in new[] { Clue.Enemy, Clue.Danger, Clue.Objective, Clue.Treasure, Clue.Safe, Clue.Exit, Clue.Feature }) keys.Add(ClueIcon(clue));
             foreach (var kind in new[] { CommandKind.Move, CommandKind.Slash, CommandKind.Shield, CommandKind.Dash, CommandKind.Potion })
                 keys.Add(AbilityIcon(kind));
-            foreach (var expression in Expressions) keys.Add(Portrait(HeroId, expression));
+            foreach (var identity in catalog.HeroIdentities.Values)
+            foreach (var expression in Expressions) keys.Add(Portrait(identity.Id, expression));
             foreach (var kind in IntentKinds) keys.Add(IntentIcon(kind));
             foreach (var kind in ThreatKinds) keys.Add(DangerOverlay(kind));
             keys.Add(DangerWarning);
@@ -376,8 +376,12 @@ namespace ClickDungeon.Unity.Ui
             keys.AddRange(new[] { UnderfootSpikes, UnderfootBomb, UnderfootBombArmed, UnderfootExitLocked, UnderfootExitOpen });
             keys.AddRange(new[] { FxSpikesTrigger, FxExplosion, FxKeyCollect, FxPotionCollect, FxExitUnlock, FxEnemyWake, BombFuse });
             keys.AddRange(new[] { FloorBanner, FloorBannerBoss });
-            keys.Add(Actor(HeroId, "guard"));
-            foreach (var animation in HeroAnimations) keys.Add(Actor(HeroId, animation));
+            foreach (var identity in catalog.HeroIdentities.Values)
+            {
+                keys.Add(Actor(identity.Id));
+                keys.Add(Actor(identity.Id, "guard"));
+                foreach (var animation in HeroAnimations) keys.Add(Actor(identity.Id, animation));
+            }
             foreach (var enemy in catalog.Enemies.Values)
             {
                 foreach (var animation in EnemyAnimations) keys.Add(Actor(enemy.Id, animation));

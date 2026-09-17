@@ -49,11 +49,14 @@ namespace ClickDungeon.Application
 
         public List<GameEvent> StartNewRun(ulong seed, Difficulty difficulty) => StartNewRun(seed, difficulty, MovementMode.Free);
 
-        public List<GameEvent> StartNewRun(ulong seed, Difficulty difficulty, MovementMode movement)
+        public List<GameEvent> StartNewRun(ulong seed, Difficulty difficulty, MovementMode movement) =>
+            StartNewRun(seed, difficulty, movement, ContentCatalog.DefaultHeroId);
+
+        public List<GameEvent> StartNewRun(ulong seed, Difficulty difficulty, MovementMode movement, string heroId)
         {
             UseCatalog(Catalog.ForDifficulty(difficulty));
             var events = new List<GameEvent>();
-            Run = RunFactory.NewRun(seed, Catalog, events, ContentCatalog.DefaultHeroId, movement);
+            Run = RunFactory.NewRun(seed, Catalog, events, heroId, movement);
             Persist();
             Telemetry?.RunStarted(Run, events);
             return events;

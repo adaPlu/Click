@@ -23,6 +23,10 @@ namespace ClickDungeon.Unity.Screens
         readonly Text _continueFloor;
         readonly Text _continueName;
         readonly Text _flash;
+        RectTransform _heroPortrait;
+        RectTransform _heroButtonIcon;
+        Text _heroName;
+        Text _heroTagline;
         RunState _saved;
 
         public TitleScreen(ClickDungeonApp app, RectTransform parent)
@@ -68,6 +72,7 @@ namespace ClickDungeon.Unity.Screens
             // A modal left open when a run started (for example CONTINUE INSTEAD) must not greet the player on return.
             if (_modal.IsOpen) _modal.Hide();
             _flash.text = "";
+            RefreshHeroCard();
             _saved = null;
             if (_app.Store.TryLoad(out var run, out _) && run.Status == RunStatus.InProgress) _saved = run;
 
@@ -87,6 +92,7 @@ namespace ClickDungeon.Unity.Screens
             if (name == "settings") Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting);
             else if (name == "rules") _modal.Show("HOW TO PLAY", Menus.HelpText, _modal.Hide, Menus.B("GOT IT", Palette.PlayGreen, _modal.Hide));
             else if (name == "difficulty") ChooseDifficulty(_modal.Hide);
+            else if (name == "heroes") OpenHeroSelect();
         }
 
         public void Tick()
@@ -167,24 +173,60 @@ namespace ClickDungeon.Unity.Screens
             if (!art) Icons.Crown(rt, new Vector2(0f, -170f), 0.9f);
         }
 
+        /// <summary>The saved hero, or the default when that identity is gone from the catalog.</summary>
+        string HeroChoice()
+        {
+            string id = UserPrefs.Hero;
+            return _app.Catalog.HeroIdentities.ContainsKey(id) ? id : Content.ContentCatalog.DefaultHeroId;
+        }
+
+        void OpenHeroSelect()
+        {
+            Menus.OpenHeroSelect(_modal, _app.Catalog, HeroChoice(), id =>
+            {
+                UserPrefs.Hero = id;
+                RefreshHeroCard();
+                OpenHeroSelect();
+            }, _modal.Hide);
+        }
+
         void BuildHeroCard()
         {
             var card = UiFactory.Rect(Root, "HeroCard");
             card.Place(TopLeft, TopLeft, new Vector2(28f, -22f), new Vector2(430f, 136f));
             Panel(card, Palette.Navy.WithAlpha(0.95f), Palette.GoldDark, ArtKeys.TitleHeroCard);
 
-            var portrait = UiFactory.Rect(card, "Portrait");
-            portrait.Place(new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(14f, 0f), new Vector2(108f, 108f));
-            var face = Icons.Portrait(portrait, 108f);
-            face.text = ":D";
-            Icons.TryArtImage(portrait, ArtKeys.Portrait(ArtKeys.HeroId, "happy"), 108f);
+            _heroPortrait = UiFactory.Rect(card, "Portrait");
+            _heroPortrait.Place(new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(14f, 0f), new Vector2(108f, 108f));
 
-            var identity = _app.Catalog.HeroIdentity(Content.ContentCatalog.DefaultHeroId);
-            var name = UiFactory.Text(card, "Name", identity.DisplayName, 38, Palette.Gold, TextAnchor.MiddleLeft, FontStyle.Bold);
-            name.rectTransform.Place(new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(136f, -16f), new Vector2(290f, 50f));
-            UiFactory.Shadow(name, Color.black, 2f);
-            var tagline = UiFactory.Text(card, "Tagline", identity.Tagline, 24, Palette.TextLight, TextAnchor.MiddleLeft);
-            tagline.rectTransform.Place(new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(136f, -70f), new Vector2(290f, 40f));
+            _heroName = UiFactory.Text(card, "Name", "", 38, Palette.Gold, TextAnchor.MiddleLeft, FontStyle.Bold);
+            _heroName.rectTransform.Place(new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(136f, -16f), new Vector2(290f, 50f));
+            UiFactory.Shadow(_heroName, Color.black, 2f);
+            _heroTagline = UiFactory.Text(card, "Tagline", "", 24, Palette.TextLight, TextAnchor.MiddleLeft);
+            _heroTagline.rectTransform.Place(new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(136f, -70f), new Vector2(290f, 40f));
+            RefreshHeroCard();
+        }
+
+        /// <summary>The card shows whoever takes the next run, so picking a hero is visible straight away (D-024).</summary>
+        void RefreshHeroCard()
+        {
+            string id = HeroChoice();
+            var identity = _app.Catalog.HeroIdentity(id);
+            _heroName.text = identity.DisplayName;
+            _heroTagline.text = identity.Tagline;
+
+            Face(_heroPortrait, id, 108f);
+            // The button carries the same face, so the choice reads without opening the menu.
+            Face(_heroButtonIcon, id, 76f);
+        }
+
+        void Face(RectTransform parent, string heroId, float size)
+        {
+            if (parent == null) return;
+            for (int i = parent.childCount - 1; i >= 0; i--) UiFactory.SafeDestroy(parent.GetChild(i).gameObject);
+            if (!ArtAt(parent, Vector2.zero, size, ArtKeys.Portrait(heroId, "happy"), ArtKeys.Portrait(heroId, "neutral"),
+                    ArtKeys.Actor(heroId)))
+                Icons.Portrait(parent, size).text = ":D";
         }
 
         void BuildLogo()
@@ -332,6 +374,14 @@ namespace ClickDungeon.Unity.Screens
             if (!ArtAt(swords, Vector2.zero, 64f, ArtKeys.PlayIcon))
                 Icons.Ability(Icons.Group(swords, Vector2.zero, 0f, 0.8f), CommandKind.Slash);
             play.Label.rectTransform.Stretch(80, 4, 8, 4);
+
+            var heroes = UiFactory.Button(Root, "HeroSelect", "HERO SELECT", Palette.Navy, 34, OpenHeroSelect);
+            heroes.Rect.Place(Vector2.zero, Vector2.zero, new Vector2(400f, 28f), new Vector2(300f, 136f));
+            heroes.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(290f, 44f));
+            UiArt.ApplyPanel(heroes.Background, heroes.Border, ArtKeys.ButtonSecondary);
+            _heroButtonIcon = UiFactory.Rect(heroes.Rect, "Helm");
+            _heroButtonIcon.Place(Center, Center, new Vector2(0f, 22f), new Vector2(76f, 76f));
+            RefreshHeroCard();
 
             var settings = UiFactory.Button(Root, "Settings", "SETTINGS", Palette.Navy, 34, () => Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting));
             settings.Rect.Place(new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-356f, 28f), new Vector2(280f, 136f));

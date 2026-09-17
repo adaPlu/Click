@@ -388,8 +388,9 @@ namespace ClickDungeon.Unity.Screens
         void RenderTokens(RunState run, ContentCatalog catalog, bool animate)
         {
             var alive = new HashSet<int> { HeroTokenId };
-            UpsertToken(HeroTokenId, "hero:" + run.Hero.Guard, run.Hero.Pos, animate,
-                body => Icons.Hero(body, run.Hero.Guard), null, null, null, 0, 0);
+            string heroId = run.Hero.IdentityId;
+            UpsertToken(HeroTokenId, "hero:" + heroId + ":" + run.Hero.Guard, run.Hero.Pos, animate,
+                body => Icons.Hero(body, run.Hero.Guard, heroId), null, null, null, 0, 0);
 
             foreach (var enemy in run.Floor.Enemies)
             {

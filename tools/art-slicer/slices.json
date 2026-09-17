@@ -15,6 +15,7 @@
     "ref-items2": { "file": "items2.png", "size": [1448, 1086], "label": "Supporting: items and equipment library (second sheet)" },
     "ref-monster-pack": { "file": "gobinslime.png", "size": [1448, 1086], "label": "Common encounter monster pack (goblin raider, slime minion)" },
     "ref-treasure": { "file": "Treasuyre.png", "size": [1448, 1086], "label": "Special chest and key system asset pack" },
+    "ref-dawnward": { "file": "Dawnward.png", "size": [1122, 1402], "label": "Dawnward hero identity (Paladin)" },
     "ref-core-ui": { "file": "CoreUI PAck.png", "size": [1448, 1086], "label": "Core ability and consumable UI pack" }
   },
   "slices": [
@@ -164,6 +165,14 @@
     { "key": "portrait_goblin", "source": "ref-monster-pack", "rect": [400, 190, 118, 106], "mode": "icon", "size": 192, "folder": "Portraits", "wired": true },
     { "key": "portrait_slimelet", "source": "ref-monster-pack", "rect": [1096, 608, 120, 102], "mode": "icon", "size": 192, "folder": "Portraits", "wired": true },
     { "key": "ui_hp_fill", "source": "ref2-gameplay", "rect": [676, 26, 58, 32], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
-    { "key": "ui_hp_back", "source": "ref2-gameplay", "rect": [898, 24, 36, 40], "mode": "wide", "size": 256, "folder": "UI", "wired": true }
+    { "key": "ui_hp_back", "source": "ref2-gameplay", "rect": [898, 24, 36, 40], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
+    { "key": "portrait_dawnward_neutral", "source": "ref-dawnward", "rect": [752, 300, 140, 150], "mode": "portrait", "size": 256, "folder": "Portraits", "wired": true },
+    { "key": "portrait_dawnward_happy", "source": "ref-dawnward", "rect": [925, 305, 125, 140], "mode": "portrait", "size": 256, "folder": "Portraits", "wired": true },
+    { "key": "actor_dawnward_idle", "rect": [760, 515, 300, 205], "source": "ref-dawnward", "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true },
+    { "key": "actor_dawnward_slash", "rect": [235, 800, 230, 215], "source": "ref-dawnward", "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true },
+    { "key": "actor_dawnward_hit", "rect": [480, 815, 160, 190], "source": "ref-dawnward", "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true },
+    { "key": "actor_dawnward_victory", "rect": [690, 800, 170, 205], "source": "ref-dawnward", "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true },
+    { "key": "actor_dawnward_defeat", "rect": [880, 840, 190, 165], "source": "ref-dawnward", "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true },
+    { "key": "actor_dawnward_guard", "rect": [30, 280, 380, 440], "source": "ref-dawnward", "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true }
   ]
 }

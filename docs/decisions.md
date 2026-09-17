@@ -330,3 +330,22 @@ Rules referenced here live in `docs/rules.md`.
   `Discovery` rules, plates, and that no pits are generated on the last floor. `InspectTileTests` checks hover text.
 - **REVERSIBILITY**: easy; presentation filters and two small rule changes.
 
+## D-024 Hero select
+- **DECISION**: A run is taken by a hero identity chosen on the title screen, and the choice is remembered between runs
+  (`cd.hero`). A run in progress keeps its own hero, and the save carries it. The catalog gains a second class, the
+  Paladin, and its first identity, Dawnward: 12 hearts, potions that heal 6, a shield every 2 turns, against a dash of
+  one tile every 4. Board token, portrait and pose art follow the hero, falling back to the first hero's art so a new
+  identity can be added before its art exists.
+- **WHY**: the reference title screen has a HERO SELECT button, and the sheets ship a second hero. This is the smallest
+  system that makes that part of the screen real (the alternative was drawing a button that does nothing, which D1 rules out).
+- **TUNING**: the Paladin first had slash 1 to pay for its hearts. That made boss fights drag: the sighted bot won 24 of
+  40 on Blobert's Wrath against the Knight's 40, and runs hit the command cap at ~307 turns. With slash 2 and one heart
+  fewer it wins every tier sighted, and blind it wins 39 / 38 / 33 of 40 against the Knight's 40 / 36 / 29.
+- **DEPENDENCIES**: `ContentCatalog` hero classes and identities, `GameSession.StartNewRun(..., heroId)`,
+  `UserPrefs.Hero`, `LaunchOptions.ParseHero` (`-cdHero` for automation), `Menus.OpenHeroSelect`, the title hero card and
+  its button, `Icons.Hero`, portrait lookup, art keys per identity, rules §5.1.
+- **TESTS**: `HeroSelectTests` (identities are complete, the chosen hero is the one who plays, the Paladin plays to its
+  own numbers, an unknown name falls back, the hero survives a save, and every hero can finish every tier),
+  `SettingsMenuTests.HeroSelectListsEveryHeroWithItsNumbersAndMarksTheChosenOne`, and the `HeroSweep` balance aid.
+- **REVERSIBILITY**: easy. Removing the second identity leaves the Knight and one button to delete.
+

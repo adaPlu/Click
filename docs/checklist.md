@@ -238,3 +238,11 @@ question is which one it may cover for ~1.3 s.
 - [x] Fifth pass: the monster pack's gameplay sprites, its health bar and its portrait icons (Inspect panel, awake
       monsters only). Coverage is 127 reference slices of 200 wired keys.
 
+## Hero select (D-024)
+- [x] Second class and identity: the Paladin, Dawnward, with its art from the hero sheet (portraits, board token, guard,
+      slash, hit, victory, defeat).
+- [x] Chosen on the title screen, remembered between runs, carried by the save; a run in progress keeps its hero.
+- [x] `-cdHero` for automation, and a `HeroSweep` aid that measures every hero against every tier.
+- [x] Measured: sighted, both win every tier. Blind, Knight 40 / 36 / 29 and Paladin 39 / 38 / 33 of 40.
+- [ ] The title screen's other buttons (inventory, talents, shop) still need their systems before they can appear.
+

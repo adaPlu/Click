@@ -1,5 +1,6 @@
 using System;
 using System.Security.Cryptography;
+using ClickDungeon.Content;
 using ClickDungeon.Domain;
 
 namespace ClickDungeon.Application
@@ -38,6 +39,18 @@ namespace ClickDungeon.Application
                     if (string.Equals(mode.ToString(), value.Trim(), StringComparison.OrdinalIgnoreCase)) return mode;
             }
             return MovementMode.Free;
+        }
+
+        /// <summary>
+        /// Hero identity by id (sir_clickington, dawnward; any case). An unknown name falls back to <paramref name="fallback"/>,
+        /// so a stale automation flag or saved choice never stops a run from starting.
+        /// </summary>
+        public static string ParseHero(string value, ContentCatalog catalog, string fallback)
+        {
+            if (string.IsNullOrWhiteSpace(value) || catalog == null) return fallback;
+            foreach (var id in catalog.HeroIdentities.Keys)
+                if (string.Equals(id, value.Trim(), StringComparison.OrdinalIgnoreCase)) return id;
+            return fallback;
         }
     }
 }

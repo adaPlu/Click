@@ -122,10 +122,10 @@ namespace ClickDungeon.Application
 
         /// <summary>Plays a whole run headless, stopping after <paramref name="maxCommands"/> commands.</summary>
         public static AutoRunResult PlayRun(ContentCatalog catalog, ulong seed, int maxCommands, double mistakeRate = 0,
-            MovementMode movement = MovementMode.Free, bool blind = false, bool loots = true)
+            MovementMode movement = MovementMode.Free, bool blind = false, bool loots = true, string heroId = null)
         {
             var player = new AutoPlayer(mistakeRate, blind, loots);
-            var run = RunFactory.NewRun(seed, catalog, new List<GameEvent>(), ContentCatalog.DefaultHeroId, movement);
+            var run = RunFactory.NewRun(seed, catalog, new List<GameEvent>(), heroId ?? ContentCatalog.DefaultHeroId, movement);
             for (int i = 0; i < maxCommands && run.Status == RunStatus.InProgress; i++)
                 TurnResolver.Apply(run, player.Choose(run, catalog, seed * 7919UL + (ulong)i), catalog);
             return new AutoRunResult

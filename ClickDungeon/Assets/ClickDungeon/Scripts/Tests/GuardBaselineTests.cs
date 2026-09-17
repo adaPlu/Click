@@ -12,6 +12,32 @@ namespace ClickDungeon.Tests
     /// </summary>
     public class GuardBaselineTests
     {
+        /// <summary>Each hero against each tier, so a new class can be judged next to the one it is joining (D-024).</summary>
+        [Test, Explicit("Tuning aid: dotnet test --filter Name=HeroSweep --logger \"console;verbosity=detailed\"")]
+        public void HeroSweep()
+        {
+            TestContext.Out.WriteLine("hero            sees     tier      | 40 seeds reach/won | avg turns | avg hp left");
+            var catalogs = ContentCatalog.CreateDefault();
+            foreach (var identity in catalogs.HeroIdentities.Values)
+            foreach (var blind in new[] { false, true })
+            foreach (var tier in new[] { Difficulty.Easy, Difficulty.Medium, Difficulty.Hardcore })
+            {
+                var catalog = ContentCatalog.CreateDefault(tier);
+                int reached = 0, won = 0;
+                long turns = 0, hp = 0;
+                for (ulong seed = 1; seed <= 40; seed++)
+                {
+                    var r = AutoPlayer.PlayRun(catalog, seed, BalanceTests.MaxCommands, 0.5,
+                        MovementMode.Free, blind, heroId: identity.Id);
+                    if (r.Floor >= catalog.RunFloorCount) reached++;
+                    if (r.Status == RunStatus.Won) won++;
+                    turns += r.Turns;
+                    hp += r.Hp;
+                }
+                TestContext.Out.WriteLine($"{identity.Id,-15} {(blind ? "blind " : "sees  "),-8} {tier,-9} | {reached,6}/{won,-11} | {turns / 40f,9:0.0} | {hp / 40f,11:0.0}");
+            }
+        }
+
         [Test, Explicit("Tuning aid: dotnet test --filter Name=GuardBaseline --logger \"console;verbosity=detailed\"")]
         public void GuardBaseline()
         {

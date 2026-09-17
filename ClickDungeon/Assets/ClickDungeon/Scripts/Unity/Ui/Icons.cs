@@ -344,10 +344,12 @@ namespace ClickDungeon.Unity.Ui
 
         // ---------------------------------------------------------------- actors
 
-        public static void Hero(Transform t, bool guard)
+        public static void Hero(Transform t, bool guard, string heroId = ArtKeys.HeroId)
         {
             if (guard) Shape(t, Shapes.Ring, Palette.Gold, Vector2.zero, new Vector2(128f, 128f));
-            if (TryArtFirst(t, TileSize, guard ? ArtKeys.Actor(ArtKeys.HeroId, "guard") : ArtKeys.Actor(ArtKeys.HeroId), ArtKeys.Actor(ArtKeys.HeroId))) return;
+            // The chosen hero's art, then its standing pose, then the first hero's: a new hero shows up even before its art does.
+            if (TryArtFirst(t, TileSize, guard ? ArtKeys.Actor(heroId, "guard") : ArtKeys.Actor(heroId), ArtKeys.Actor(heroId),
+                    guard ? ArtKeys.Actor(ArtKeys.HeroId, "guard") : ArtKeys.Actor(ArtKeys.HeroId), ArtKeys.Actor(ArtKeys.HeroId))) return;
             Shape(t, Shapes.Triangle, Palette.Hp, new Vector2(10f, 48f), new Vector2(36f, 32f), -15f);
             Shape(t, Shapes.Circle, Palette.Steel, Vector2.zero, new Vector2(98f, 98f));
             Shape(t, Shapes.Circle, Palette.Hero, new Vector2(0f, -4f), new Vector2(80f, 80f));

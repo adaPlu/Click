@@ -468,7 +468,11 @@ namespace ClickDungeon.Unity.Screens
             _speech.text = line;
             _speechFace.text = Lines.Face(face);
             _face.text = Lines.Face(face);
-            if (_portraitArt != null && Art.TryGetSprite(ArtKeys.Portrait(ArtKeys.HeroId, face.ToString()), out var portrait))
+            // This hero's face for the expression, then its neutral one: a hero with few portraits must not borrow another's face.
+            string heroId = Run?.Hero.IdentityId ?? ArtKeys.HeroId;
+            if (_portraitArt != null && (Art.TryGetSprite(ArtKeys.Portrait(heroId, face.ToString()), out var portrait)
+                    || Art.TryGetSprite(ArtKeys.Portrait(heroId, "neutral"), out portrait)
+                    || Art.TryGetSprite(ArtKeys.Portrait(ArtKeys.HeroId, face.ToString()), out portrait)))
                 _portraitArt.sprite = portrait;
         }
 
@@ -1022,6 +1026,49 @@ namespace ClickDungeon.Unity.Screens
         }
 
         public static string MovementName(MovementMode mode) => mode == MovementMode.Step ? "Step by Step" : "Free Roam";
+
+        /// <summary>
+        /// Picks the hero for the next new run (D-024). A run in progress keeps the hero it was started with, so this only
+        /// ever changes what the next run starts as.
+        /// </summary>
+        public static void OpenHeroSelect(ModalOverlay modal, ContentCatalog catalog, string current, Action<string> pick, Action back)
+        {
+            var buttons = new List<(string, Color, Action)>();
+            foreach (var identity in catalog.HeroIdentities.Values)
+            {
+                string id = identity.Id;
+                bool chosen = id == current;
+                buttons.Add(($"{(chosen ? "> " : "")}{identity.DisplayName.ToUpperInvariant()}: {HeroSummary(catalog, identity)}",
+                    chosen ? Palette.PlayGreen : Palette.NavyLight, () => pick(id)));
+            }
+            buttons.Add(B("BACK", Palette.NavyLight, back));
+            modal.Show("HERO SELECT",
+                "Who takes the next run down? A run already in progress keeps its own hero.\n" +
+                HeroLines(catalog, current), back, buttons.ToArray());
+        }
+
+        /// <summary>One line of numbers for a hero, so the pick is made on what actually changes.</summary>
+        static string HeroSummary(ContentCatalog catalog, HeroIdentityDefinition identity)
+        {
+            var hero = catalog.HeroClass(identity.ClassId);
+            return $"{hero.MaxHp} HP, slash {hero.SlashDamage}, {hero.StartingPotions} potions";
+        }
+
+        static string HeroLines(ContentCatalog catalog, string current)
+        {
+            var sb = new StringBuilder();
+            foreach (var identity in catalog.HeroIdentities.Values)
+            {
+                var hero = catalog.HeroClass(identity.ClassId);
+                sb.AppendLine();
+                sb.AppendLine($"<color=#F2C14E>{identity.DisplayName}</color> ({hero.DisplayName}){(identity.Id == current ? "  — chosen" : "")}");
+                sb.AppendLine(identity.Tagline);
+                sb.AppendLine($"{hero.MaxHp} hearts, slash {hero.SlashDamage}, potion heals {hero.PotionHeal}, " +
+                    $"{hero.StartingPotions} potions, shield every {hero.ShieldCooldown}, dash {hero.DashDistance} " +
+                    $"{(hero.DashDistance == 1 ? "tile" : "tiles")} every {hero.DashCooldown}.");
+            }
+            return sb.ToString();
+        }
 
         public static void OpenSettings(ModalOverlay modal, Action back, Action changed = null)
         {

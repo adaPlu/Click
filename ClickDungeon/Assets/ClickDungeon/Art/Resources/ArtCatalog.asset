@@ -43,6 +43,36 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 48ffd28a340ade14483b942ec7af38dd, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: actor_dawnward_defeat
+    Frames:
+    - {fileID: 21300000, guid: 926e6d5adada49a4f8c092ea47c25299, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_dawnward_guard
+    Frames:
+    - {fileID: 21300000, guid: 926e91e5f4d70cc4bbc5f7da6fe14220, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_dawnward_hit
+    Frames:
+    - {fileID: 21300000, guid: b725328d880702f4a99b12adbc1c1e59, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_dawnward_idle
+    Frames:
+    - {fileID: 21300000, guid: 718e91260ed71074ab50e24d75a848ee, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_dawnward_slash
+    Frames:
+    - {fileID: 21300000, guid: 49b449ce0bdc9d345841a7ab1ce0e731, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_dawnward_victory
+    Frames:
+    - {fileID: 21300000, guid: aa9c78a804f50ac4ea1468e950c499ff, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_fire_imp_attack
     Frames:
     - {fileID: 21300000, guid: dbbc13a39e6db8b42a270b155c1cc255, type: 3}
@@ -381,6 +411,16 @@ MonoBehaviour:
   - Key: logo_clickdungeon
     Frames:
     - {fileID: 21300000, guid: fe2abc399562d9d4bab4fa48b0cfa9a3, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_dawnward_happy
+    Frames:
+    - {fileID: 21300000, guid: 6fa18cd847219da48b45ad4f7221546f, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_dawnward_neutral
+    Frames:
+    - {fileID: 21300000, guid: 9da02b7b2aeada04c98f32d75addbe9c, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_goblin
