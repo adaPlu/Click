@@ -202,15 +202,20 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
-        public void ExitIsAlwaysKnown()
+        public void ExitIsCoveredUntilClicked()
         {
+            // D-023: the exit is a tile like any other; it is found by clicking it.
             var run = Run(
                 "....X",
                 ".....",
                 ".....",
                 ".....",
                 "H....");
+            Assert.That(run.Floor[P(4, 4)].Knowledge, Is.EqualTo(Knowledge.Unseen));
+
+            DoOk(run, PlayerCommand.Move(P(4, 4)));
             Assert.That(run.Floor[P(4, 4)].Knowledge, Is.EqualTo(Knowledge.Revealed));
+            Assert.That(run.Floor.FloorIndex, Is.EqualTo(1), "Without the key, stepping on the exit only uncovers it.");
         }
 
         [Test]

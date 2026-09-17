@@ -131,6 +131,11 @@ namespace ClickDungeon.UnityTests
             RunFactory.SetupFloor(run, Catalog, new List<GameEvent>());
             var board = new BoardView((RectTransform)_root.transform, _root.AddComponent<SpriteFrameAnimator>(), Vector2.zero);
 
+            // D-023: a covered exit is a cover like any other tile; its art would give away where it is.
+            board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
+            Assert.That(Images().Any(i => i.sprite == locked || i.sprite == open), Is.False, "A covered exit shows no exit art.");
+
+            floor[floor.Exit].Knowledge = Knowledge.Revealed;
             board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
             Assert.That(Images().Any(i => i.sprite == locked), Is.True);
             Assert.That(Images().Any(i => i.sprite == open), Is.False);

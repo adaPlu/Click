@@ -53,14 +53,15 @@ Nothing on the board stops the hero except a locked vault door and a tile someon
 
 ### 2.1 What is always known
 
-- The **Exit** cell is Revealed from the start (you always know where you are
-  going; you may not yet know how to open it).
+- **Nothing is known in advance, the exit included** (D-023): the exit is covered like
+  every other tile and found by clicking it. Stepping onto it without the key only
+  uncovers it.
 - **Everything else is covered**, terrain included: an unknown tile is drawn as
   a plain stone cover, and only sensing (its clue) or revealing tells the player
   what is under it. Walls and pits are found the same way as hazards and content.
 - In **Free Roam** there is **no sensing at all**: a covered tile shows nothing —
   no clue, no hint — until it is clicked (§2.3, §12). The exit is
-  the only thing known in advance.
+  covered too.
 
 ### 2.2 Per-cell knowledge states
 
@@ -380,11 +381,12 @@ next to the hero, §12) — reach F5 / win:
 | Player             | Squire's Stroll | Knight's Trial | Blobert's Wrath |
 |--------------------|-----------------|----------------|-----------------|
 | novice, sighted    | 40 / 40         | 40 / 40        | 40 / 40         |
-| novice, **blind**  | 40 / 36         | 36 / 25        | 22 / 8          |
+| novice, **blind**  | 40 / 39         | 33 / 21        | 21 / 10         |
 | flailing, sighted  | 40 / 40         | 40 / 37        | 40 / 31         |
 | flailing, **blind**| 40 / 32         | 29 / 11        | 16 / 1          |
 
-Measured after click-to-reveal (D-023) and its retune. **Sighted bots now win every run at every tier**:
+Measured after click-to-reveal (D-023), its retune, and covering the exit (novice rows; covering the exit
+added ~24 turns to a Knight's Trial run and moved novice wins from 36 / 25 / 8 to 39 / 21 / 10). **Sighted bots now win every run at every tier**:
 seeing the board makes the dungeon trivial, and hidden information is what makes the tiers bite. Before the
 retune, blind clicking made Knight's Trial and Blobert's Wrath near-unwinnable (8 and 0 novice wins of 30),
 with traps and bumped monsters doing the killing. In the 60-seed `DifficultySweep` the careful (casual) blind

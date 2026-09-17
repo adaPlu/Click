@@ -301,3 +301,12 @@ Rules referenced here live in `docs/rules.md`.
   `GameEventKind.HeroBumped`, telemetry `tile_bumped`, `AutoPlayer` vault scoring, difficulty definitions, rules §2 / §3 /
   §10 / §12, help and hint text.
 - **REVERSIBILITY**: medium. The reveal radius is one condition, but every tier was retuned around blind clicking.
+
+### D-023 amendment: the exit is covered too
+- **DECISION**: The exit is no longer revealed when a floor starts or a vault is entered or left. It is covered like every
+  other tile and found by clicking it; stepping onto it without the key only uncovers it. The blind AutoPlayer no longer
+  sees a covered exit (it explores for it once it holds the key), and tile-choice telemetry records exit distance only
+  once the exit has been uncovered.
+- **WHY**: design direction — nothing on the board is known in advance.
+- **MEASURED**: blind novice wins 39 / 21 / 10 of 40 (was 36 / 25 / 8); Knight's Trial runs ~24 turns longer. Tiers stay
+  ordered, so no retune; the Knight's Trial reach guard was re-based from 24 to 21 of 30.

@@ -90,13 +90,12 @@ namespace ClickDungeon.Simulation
             return floor.Start;
         }
 
-        /// <summary>Shared arrival work: clear guard, reveal the exit, update sight and re-declare intents.</summary>
+        /// <summary>Shared arrival work: clear guard, update sight and re-declare intents. The exit stays covered (D-023).</summary>
         static void ArriveOnFloor(RunState run, ContentCatalog catalog, List<GameEvent> events)
         {
             var hero = run.Hero;
             if (run.Floor.Start.InBounds && run.OuterFloor != null) hero.Pos = run.Floor.Start;
             hero.Guard = false;
-            if (run.Floor.Exit.InBounds) run.Floor[run.Floor.Exit].Knowledge = Knowledge.Revealed;
             Visibility.Update(run, catalog, events);
             TurnResolver.DeclareAll(run, catalog, events);
         }
@@ -123,7 +122,7 @@ namespace ClickDungeon.Simulation
                     : Chests.RollQuality(run.RunSeed, floor.FloorIndex, p, floor.IsVault);
             }
 
-            if (floor.Exit.InBounds) floor[floor.Exit].Knowledge = Knowledge.Revealed;
+            // The exit is covered like every other tile until it is clicked (D-023).
             events.Add(GameEvent.Of(GameEventKind.FloorStarted, amount: floor.FloorIndex, to: floor.Start));
             Visibility.Update(run, catalog, events);
             TurnResolver.DeclareAll(run, catalog, events);

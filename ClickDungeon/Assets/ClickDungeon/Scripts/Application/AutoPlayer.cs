@@ -263,7 +263,12 @@ namespace ClickDungeon.Application
             {
                 var cell = floor[p];
                 if (cell.Knowledge == Knowledge.Revealed) continue;
-                // The exit is known from the start (rules §2.1); everything else under a cover is simply unknown.
+                // Everything under a cover is unknown, the exit included (D-023).
+                if (cell.IsExit)
+                {
+                    cell.IsExit = false;
+                    floor.Exit = GridPos.Invalid;
+                }
                 cell.Terrain = Terrain.Floor;
                 cell.Hazard = HazardKind.None;
                 cell.BombFuse = -1;
@@ -303,7 +308,12 @@ namespace ClickDungeon.Application
                     foreach (var p in Board.AllCells)
                         if (floor[p].Knowledge != Knowledge.Revealed) goals.Add(p);
             }
-            if (goals.Count == 0) goals.Add(floor.Exit);
+            if (goals.Count == 0 && floor.Exit.InBounds) goals.Add(floor.Exit);
+            // Holding the key with the exit still covered: search for it the same way as for the key (D-023).
+            if (goals.Count == 0)
+                foreach (var p in Board.AllCells)
+                    if (floor[p].Knowledge != Knowledge.Revealed) goals.Add(p);
+            if (goals.Count == 0) return 0;
 
             // In Free Roam every tile is one click away; standing on the exit still needs a step off and back on.
             if (run.Movement == MovementMode.Free) return goals.Contains(run.Hero.Pos) ? 2 : 1;

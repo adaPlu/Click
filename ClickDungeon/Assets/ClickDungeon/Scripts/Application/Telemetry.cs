@@ -364,7 +364,8 @@ namespace ClickDungeon.Application
         {
             var floor = run.Floor;
             var heroClass = _catalog.HeroClass(run.Hero.ClassId);
-            var exitField = floor.Exit.InBounds
+            // Only what the player could see: the exit's distance counts once it has been uncovered (D-023).
+            var exitField = floor.Exit.InBounds && floor[floor.Exit].Knowledge == Knowledge.Revealed
                 ? Pathfinding.DistanceField(new[] { floor.Exit }, p => !Board.BlocksMovement(floor[p]))
                 : null;
 

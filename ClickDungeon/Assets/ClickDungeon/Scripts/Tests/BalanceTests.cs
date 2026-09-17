@@ -96,24 +96,24 @@ namespace ClickDungeon.Tests
         public void SquiresStrollLetsANovicePlayerBeatBlobert()
         {
             // Blind: a sighted bot walks to a key it could not see, so its numbers are not about playing this game.
-            // Measured 30-seed baseline with click-to-reveal: 30 reach, 27 won (rules §10.2). Thresholds sit a few runs below that.
+            // Measured 30-seed baseline with click-to-reveal and a covered exit: 30 reach, 30 won (rules §10.2). Thresholds sit a few runs below that.
             var easy = Measure(Difficulty.Easy, 30, NoviceMistakeRate, blind: true);
             Assert.That(easy.ReachedBoss, Is.GreaterThanOrEqualTo(27), $"Only {easy.ReachedBoss}/30 novice easy runs reached floor 5.");
-            Assert.That(easy.Won, Is.GreaterThanOrEqualTo(24), $"Only {easy.Won}/30 novice easy runs beat Lord Blobert.");
+            Assert.That(easy.Won, Is.GreaterThanOrEqualTo(26), $"Only {easy.Won}/30 novice easy runs beat Lord Blobert.");
         }
 
         [Test]
         public void KnightsTrialLetsANovicePlayerReachBlobert()
         {
-            // Measured 30-seed blind baseline with click-to-reveal: 27 reach (rules §10.2).
+            // Measured 30-seed blind baseline with a covered exit: 24 reach (rules §10.2).
             var medium = Measure(Difficulty.Medium, 30, NoviceMistakeRate, blind: true);
-            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(24), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
+            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(21), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
         }
 
         [Test]
         public void TiersKeepTheirOrder()
         {
-            // Blind novice. Measured 40-seed blind baseline with click-to-reveal: 36 / 25 / 8 won, 40 / 36 / 22 reached (rules §10.2).
+            // Blind novice. Measured 40-seed blind baseline with a covered exit: 39 / 21 / 10 won, 40 / 33 / 21 reached (rules §10.2).
             var easy = Measure(Difficulty.Easy, 40, NoviceMistakeRate, blind: true);
             var medium = Measure(Difficulty.Medium, 40, NoviceMistakeRate, blind: true);
             var hardcore = Measure(Difficulty.Hardcore, 40, NoviceMistakeRate, blind: true);
