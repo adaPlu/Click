@@ -426,7 +426,7 @@ namespace ClickDungeon.Unity.Screens
             if (_chest.IsOpen || Run == null) return;
             var run = Run;
             _modal.Show("PAUSED",
-                $"Floor {run.Floor.FloorIndex}: {Catalog.ProfileFor(run.Floor.FloorIndex).Name}\nDifficulty: {DifficultyName(run)}\nTurn {run.Turn + 1}    Seed {run.RunSeed}\nYour run is saved after every turn.{(_app.TelemetryActive ? "\nPlaytest log is on (saved on this device only)." : "")}",
+                $"Floor {run.Floor.FloorIndex}: {Catalog.ProfileFor(run.Floor.FloorIndex).Name}\nDifficulty: {DifficultyName(run)}\nMovement: {Menus.MovementName(run.Movement)}\nTurn {run.Turn + 1}    Seed {run.RunSeed}\nYour run is saved after every turn.{(_app.TelemetryActive ? "\nPlaytest log is on (saved on this device only)." : "")}",
                 _modal.Hide,
                 Menus.B("RESUME", Palette.PlayGreen, _modal.Hide),
                 Menus.B("HOW TO PLAY", Palette.NavyLight, OpenHelp),
@@ -974,9 +974,19 @@ namespace ClickDungeon.Unity.Screens
             modal.Show("CHOOSE YOUR FATE", body.ToString(), back, buttons.ToArray());
         }
 
+        public static string MovementName(MovementMode mode) => mode == MovementMode.Step ? "Step by Step" : "Free Roam";
+
         public static void OpenSettings(ModalOverlay modal, Action back, Action changed = null)
         {
-            modal.Show("SETTINGS", "Gameplay never depends on these.\nThe playtest log stays on this device and is never sent anywhere.", back,
+            modal.Show("SETTINGS",
+                "MOVEMENT applies to your next new run; a run in progress keeps its own.\n" +
+                "Free Roam: tap any tile. Step by Step: one neighbouring tile at a time, with nearby hints.\n" +
+                "The other settings never change gameplay. The playtest log stays on this device and is never sent anywhere.", back,
+                B($"MOVEMENT: {MovementName(UserPrefs.Movement).ToUpperInvariant()}", Palette.NavyLight, () =>
+                {
+                    UserPrefs.Movement = UserPrefs.Movement == MovementMode.Step ? MovementMode.Free : MovementMode.Step;
+                    OpenSettings(modal, back, changed);
+                }),
                 B($"REDUCED MOTION: {(UserPrefs.ReducedMotion ? "ON" : "OFF")}", Palette.NavyLight, () =>
                 {
                     UserPrefs.ReducedMotion = !UserPrefs.ReducedMotion;

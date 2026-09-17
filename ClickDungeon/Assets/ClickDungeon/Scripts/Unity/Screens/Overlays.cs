@@ -68,7 +68,9 @@ namespace ClickDungeon.Unity.Screens
             _back = back;
             _title.text = title;
             _body.text = body;
-            foreach (Transform child in _buttons) UnityEngine.Object.Destroy(child.gameObject);
+            // Backwards and through SafeDestroy: a menu can re-open itself from its own button (the settings toggles), and in
+            // edit mode DestroyImmediate removes a child from under a forward loop.
+            for (int i = _buttons.childCount - 1; i >= 0; i--) UiFactory.SafeDestroy(_buttons.GetChild(i).gameObject);
 
             const float buttonHeight = 78f;
             const float spacing = 14f;

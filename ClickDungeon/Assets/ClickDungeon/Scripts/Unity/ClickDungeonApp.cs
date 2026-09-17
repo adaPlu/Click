@@ -62,7 +62,7 @@ namespace ClickDungeon.Unity
 
         /// <summary>
         /// Dev automation: -cdShot path.png [-cdScreen title|game] [-cdSeed n] [-cdTurns n] [-cdDifficulty easy|medium|hardcore]
-        /// [-cdBot smart|casual|random] [-cdBlind 1] [-cdTelemetryDir dir] [-cdOverlay name].
+        /// [-cdMovement free|step] [-cdBot smart|casual|random] [-cdBlind 1] [-cdTelemetryDir dir] [-cdOverlay name].
         /// -cdBlind makes the bot decide on what the player can see, so a demo run explores instead of walking
         /// straight to a key it should not know about (D-021). It takes a value, so pass "-cdBlind 1".
         /// Overlays: game pause|help|chest|chestburst|banner|bossbanner|victory|defeat, title settings|rules|difficulty.
@@ -77,7 +77,8 @@ namespace ClickDungeon.Unity
             {
                 Store.Delete();
                 ulong seed = ulong.TryParse(ArgValue("-cdSeed"), out var s) ? s : 20260914UL;
-                OpenGame(Session.StartNewRun(seed, LaunchOptions.ParseDifficulty(ArgValue("-cdDifficulty"))), null);
+                OpenGame(Session.StartNewRun(seed, LaunchOptions.ParseDifficulty(ArgValue("-cdDifficulty")),
+                    LaunchOptions.ParseMovement(ArgValue("-cdMovement"))), null);
                 int turns = int.TryParse(ArgValue("-cdTurns"), out var t) ? t : 0;
                 bool randomBot = ArgValue("-cdBot") == "random";
                 var rng = new DeterministicRng(seed);
@@ -182,7 +183,7 @@ namespace ClickDungeon.Unity
         public void StartNewRun(Domain.Difficulty difficulty)
         {
             UserPrefs.LastDifficulty = difficulty;
-            var events = Session.StartNewRun(LaunchOptions.NewRunSeed(), difficulty);
+            var events = Session.StartNewRun(LaunchOptions.NewRunSeed(), difficulty, UserPrefs.Movement);
             OpenGame(events, null);
         }
 
@@ -285,9 +286,25 @@ namespace ClickDungeon.Unity
         }
     }
 
-    /// <summary>Per-device presentation preferences. Never read by simulation.</summary>
+    /// <summary>
+    /// Per-device preferences. Never read by simulation: the ones that shape a run (difficulty, movement) are handed to a new
+    /// run when it starts, and the run keeps them in its save from then on.
+    /// </summary>
     public static class UserPrefs
     {
+        /// <summary>Movement mode for the next new run (D-021). A run in progress keeps the mode it was started with.</summary>
+        public static Domain.MovementMode Movement
+        {
+            get => PlayerPrefs.GetInt("cd.movementMode", (int)Domain.MovementMode.Free) == (int)Domain.MovementMode.Step
+                ? Domain.MovementMode.Step
+                : Domain.MovementMode.Free;
+            set
+            {
+                PlayerPrefs.SetInt("cd.movementMode", (int)value);
+                PlayerPrefs.Save();
+            }
+        }
+
         public static bool ReducedMotion
         {
             get => PlayerPrefs.GetInt("cd.reducedMotion", 0) == 1;

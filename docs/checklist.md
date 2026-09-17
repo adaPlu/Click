@@ -99,7 +99,7 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 - [x] 8-way adjacency for hero and enemies; dash covers one or two tiles; revealing follows melee reach.
 - [x] Nothing blocks the hero but a locked vault door and an occupied tile; walls are no longer generated.
 - [x] Saves record the mode and resume in it.
-- [ ] Mode picker on the title screen, a `-cdMovement` automation flag, and pause/end-screen text.
+- [x] Mode picker in Settings (applies to the next new run), a `-cdMovement free|step` automation flag, and the mode on the pause screen.
 - [ ] Re-measure the difficulty tiers under Free Roam: they no longer separate (rules §10.1).
 
 ## Open: Free Roam removes the death threat (rules §10.1, D-021)

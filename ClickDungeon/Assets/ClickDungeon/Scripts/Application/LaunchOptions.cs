@@ -28,5 +28,16 @@ namespace ClickDungeon.Application
             }
             return Difficulty.Medium;
         }
+
+        /// <summary>Movement mode by name (free, step; any case). Numbers and unknown names give Free Roam, the default.</summary>
+        public static MovementMode ParseMovement(string value)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                foreach (MovementMode mode in Enum.GetValues(typeof(MovementMode)))
+                    if (string.Equals(mode.ToString(), value.Trim(), StringComparison.OrdinalIgnoreCase)) return mode;
+            }
+            return MovementMode.Free;
+        }
     }
 }

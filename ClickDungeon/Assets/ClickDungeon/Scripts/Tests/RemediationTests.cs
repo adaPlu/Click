@@ -30,6 +30,16 @@ namespace ClickDungeon.Tests
             Assert.That(LaunchOptions.ParseDifficulty(value), Is.EqualTo(expected));
         }
 
+        [TestCase("step", MovementMode.Step)]
+        [TestCase(" FREE ", MovementMode.Free)]
+        [TestCase("1", MovementMode.Free)]
+        [TestCase("sideways", MovementMode.Free)]
+        [TestCase(null, MovementMode.Free)]
+        public void MovementIsParsedByNameOnly(string value, MovementMode expected)
+        {
+            Assert.That(LaunchOptions.ParseMovement(value), Is.EqualTo(expected));
+        }
+
         [Test]
         public void RunSeedsAreRandom()
         {

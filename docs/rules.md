@@ -59,7 +59,7 @@ Nothing on the board stops the hero except a locked vault door and a tile someon
   a plain stone cover, and only sensing (its clue) or revealing tells the player
   what is under it. Walls and pits are found the same way as hazards and content.
 - In **Free Roam** there is **no sensing at all**: a covered tile shows nothing —
-  no clue, no hint — until the hero reveals it by reaching it (§12). The exit is
+  no clue, no hint — until it is clicked (§2.3, §12). The exit is
   the only thing known in advance.
 
 ### 2.2 Per-cell knowledge states
@@ -435,7 +435,8 @@ Sheet one uses shorter names (`floor_stone.png`); the registry uses the `tile_*`
 
 ## 12. Movement modes *(D-021)*
 
-Chosen when starting a run and stored in the save. Both modes use every other rule in this file;
+Chosen in **Settings → MOVEMENT** (default Free Roam); the choice applies to the next new run and is stored in that run's
+save, so a run in progress keeps its mode. Both modes use every other rule in this file;
 only how far the hero may move, and how enemies threaten, differ.
 
 | | **Free Roam** (default) | **Step by Step** (option) |
