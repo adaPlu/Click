@@ -153,6 +153,9 @@ namespace ClickDungeon.Unity.Ui
         public const string HighlightHover = "ui_highlight_hover";
         public const string PortraitFrame = "ui_frame_portrait";
         public const string HpBack = "ui_hp_back";
+        /// <summary>The bar over a monster's token (the monster pack's enemy_health_bar).</summary>
+        public const string EnemyHpBack = "ui_enemy_hp_back";
+        public const string EnemyHpFill = "ui_enemy_hp_fill";
         public const string HpFill = "ui_hp_fill";
         public const string HpFrame = "ui_hp_frame";
         public const string Heart = "ui_icon_heart";
@@ -351,7 +354,7 @@ namespace ClickDungeon.Unity.Ui
             keys.AddRange(new[]
             {
                 HighlightLegal, HighlightTarget, HighlightHover,
-                PortraitFrame, HpBack, HpFill, HpFrame, Heart, Chip, FloorPlaque, Panel, SpeechStrip,
+                PortraitFrame, HpBack, HpFill, HpFrame, EnemyHpBack, EnemyHpFill, Heart, Chip, FloorPlaque, Panel, SpeechStrip,
                 AbilityButtonDefault, AbilitySelected, CountBadge, SettingsButton, HelpButton,
             });
             foreach (var kind in AbilityKinds) keys.Add(AbilityButton(kind));

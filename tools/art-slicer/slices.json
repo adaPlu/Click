@@ -44,10 +44,10 @@
     { "key": "tile_fountain_heal", "source": "ref4-tiles-b", "rect": [1258, 675, 258, 150], "mode": "tile", "size": 256, "folder": "Tiles", "snap": true },
     { "key": "tile_potion", "source": "ref-items", "rect": [553, 85, 52, 52], "mode": "sprite", "anchor": "center", "tolerance": 45, "size": 256, "folder": "Tiles", "wired": true },
     { "key": "actor_sir_clickington_idle", "source": "ref-knight-sheet", "rect": [680, 590, 195, 170], "mode": "sprite", "tolerance": 55, "size": 256, "folder": "Actors", "wired": true },
-    { "key": "actor_goblin_idle", "source": "ref-monster-pack", "rect": [274, 372, 70, 83], "mode": "sprite", "size": 256, "folder": "Actors", "wired": true, "tolerance": 35, "min_island": 0.02 },
+    { "key": "actor_goblin_idle", "source": "ref-monster-pack", "rect": [584, 208, 82, 70], "mode": "sprite", "tolerance": 38, "local_tolerance": 6, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true },
     { "key": "actor_crowned_slime_idle", "source": "ref-slime-sheet", "rect": [712, 425, 165, 140], "mode": "sprite", "tolerance": 55, "size": 256, "folder": "Actors", "wired": true },
     { "key": "actor_fire_imp_idle", "source": "ref-imp-sheet", "rect": [748, 418, 180, 158], "mode": "sprite", "tolerance": 55, "size": 256, "folder": "Actors", "wired": true },
-    { "key": "actor_slimelet_idle", "source": "ref-monster-pack", "rect": [990, 775, 70, 95], "mode": "sprite", "size": 256, "folder": "Actors", "wired": true, "tolerance": 35, "min_island": 0.02 },
+    { "key": "actor_slimelet_idle", "source": "ref-monster-pack", "rect": [1298, 648, 86, 70], "mode": "sprite", "tolerance": 38, "local_tolerance": 6, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true },
     { "key": "actor_lord_blobert_idle", "source": "ref6-vertical-slice", "rect": [535, 578, 315, 197], "mode": "sprite", "tolerance": 18, "local_tolerance": 4, "min_island": 0.02, "size": 384, "folder": "Actors", "wired": true },
     { "key": "actor_lord_blobert_puffed", "source": "ref6-vertical-slice", "rect": [1105, 578, 145, 112], "mode": "sprite", "tolerance": 18, "local_tolerance": 4, "min_island": 0.02, "size": 384, "folder": "Actors", "wired": true },
     { "key": "actor_lord_blobert_deflated", "source": "ref6-vertical-slice", "rect": [1262, 595, 160, 90], "mode": "sprite", "tolerance": 18, "local_tolerance": 4, "min_island": 0.02, "size": 384, "folder": "Actors", "wired": true },
@@ -158,6 +158,8 @@
     { "key": "fx_bomb_fuse", "size": 128, "tint": [1.0, 0.7, 0.35], "source": "ref-treasure", "rect": [1184, 514, 32, 36], "mode": "icon", "tolerance": 40, "largest_only": true, "folder": "FX", "wired": true },
     { "key": "fx_chest_glow", "source": "ref-treasure", "rect": [1230, 530, 160, 140], "mode": "icon", "tolerance": 40, "size": 512, "folder": "FX", "wired": true },
     { "key": "bg_gameplay", "source": "ref2-gameplay", "rect": [0, 0, 1672, 941], "mode": "scene", "blank": [[0, 0, 1672, 130], [110, 82, 320, 106], [424, 112, 834, 720], [424, 812, 834, 129], [680, 868, 620, 73], [48, 372, 220, 200], [1372, 170, 240, 220]], "blur": 38, "dim": 0.82, "size": 1280, "folder": "UI", "wired": true },
-    { "key": "bg_title", "source": "ref1-title", "rect": [0, 0, 1672, 941], "mode": "scene", "blank": [[0, 0, 540, 152], [1230, 0, 442, 120], [152, 172, 368, 356], [1345, 160, 316, 378], [398, 5, 884, 252], [0, 742, 1672, 199]], "blur": 42, "dim": 0.95, "size": 1280, "folder": "UI", "wired": true }
+    { "key": "bg_title", "source": "ref1-title", "rect": [0, 0, 1672, 941], "mode": "scene", "blank": [[0, 0, 540, 152], [1230, 0, 442, 120], [152, 172, 368, 356], [1345, 160, 316, 378], [398, 5, 884, 252], [0, 742, 1672, 199]], "blur": 42, "dim": 0.95, "size": 1280, "folder": "UI", "wired": true },
+    { "key": "ui_enemy_hp_back", "source": "ref-core-ui", "rect": [1306, 658, 38, 38], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
+    { "key": "ui_enemy_hp_fill", "source": "ref-core-ui", "rect": [1182, 668, 96, 20], "mode": "wide", "size": 256, "folder": "UI", "wired": true }
   ]
 }

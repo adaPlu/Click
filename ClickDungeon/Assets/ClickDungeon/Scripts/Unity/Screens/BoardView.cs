@@ -497,8 +497,11 @@ namespace ClickDungeon.Unity.Screens
             badgeIcon.gameObject.SetActive(false);
 
             var hpBack = UiFactory.Image(rt, "HpBack", Palette.HpBack, null);
-            hpBack.rectTransform.Place(Center, Center, new Vector2(0f, -CellSize * 0.5f + 12f), new Vector2(84f, 10f));
+            // The monster pack's health bar when it is in the catalog, the flat bar otherwise.
+            bool barArt = UiArt.Apply(hpBack, ArtKeys.EnemyHpBack);
+            hpBack.rectTransform.Place(Center, Center, new Vector2(0f, -CellSize * 0.5f + 12f), new Vector2(84f, barArt ? 16f : 10f));
             var hpFill = UiFactory.Image(hpBack.rectTransform, "HpFill", Palette.Hp, null);
+            if (barArt) UiArt.Apply(hpFill, ArtKeys.EnemyHpFill);
             hpFill.rectTransform.anchorMin = Vector2.zero;
             hpFill.rectTransform.anchorMax = Vector2.one;
             hpFill.rectTransform.offsetMin = Vector2.zero;
