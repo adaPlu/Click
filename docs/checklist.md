@@ -233,4 +233,6 @@ question is which one it may cover for ~1.3 s.
       than the procedural panels.
 - [x] Fourth pass: all three tile highlights and six board effects, from one sparkle and one frame recoloured by the
       slicer. Coverage is 121 reference slices and 72 procedural placeholders.
+- [x] Title and gameplay screens match the reference: both backgrounds are the reference rooms with the reference's own
+      interface blurred out (slicer `scene` mode). Coverage is 123 reference slices and 70 procedural placeholders.
 

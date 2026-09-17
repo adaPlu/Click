@@ -411,3 +411,14 @@ A fourth pass filled the effects and the two remaining tile highlights. The slic
 the key, potion, exit-unlock, spike and bomb-fuse effects in their own colours, and one glowing tile frame serves the
 gold legal-move, red target and blue hover highlights. Colourising is the only way to turn the sheet's blue glow gold.
 
+### Backgrounds (matching the reference screens)
+
+The two references are painted rooms with their own interface drawn into them, so `bg_title` and `bg_gameplay` are made
+with the slicer's `scene` mode: each rectangle listed in `blank` is blurred until nothing of it can be read and slightly
+dimmed, with feathered edges, and the game draws its own HUD, panels, board and buttons over the result. Blanked on the
+title: the reference's hero card and currencies, its top-right buttons, its Continue and Daily Reward panels (frames
+included, or the frame survives as an empty box), its logo and tagline, and its bottom button row. Blanked in the
+gameplay screen: the top HUD band, the floor plaque, the board, the ability row, the bottom nav, and the wording on both
+side banners. **The reference logo reads "ClickDungeon2", which this game must never show: any change to `bg_title`'s
+blanks must be checked against the title screen before it ships.**
+

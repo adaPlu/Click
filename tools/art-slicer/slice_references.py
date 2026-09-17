@@ -24,7 +24,7 @@ import tempfile
 from collections import deque
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
@@ -268,9 +268,40 @@ def tint(image: Image.Image, spec: dict) -> Image.Image:
     return image
 
 
+def scene(crop: Image.Image, spec: dict) -> Image.Image:
+    """
+    A full screen of painted scenery with the reference's own interface removed: each "blank" rectangle is blurred until
+    nothing of it can be read and darkened, which keeps the room's colour and light where a tiled patch would repeat
+    visibly. The game draws its own HUD, panels and board over the result, so none of the reference's interface — its
+    logo above all — may survive here.
+    """
+    out = crop.convert("RGBA")
+    radius = float(spec.get("blur", 30))
+    dim = float(spec.get("dim", 0.7))
+    for rect in spec.get("blank", []):
+        x, y, w, h = rect
+        box = (max(0, x), max(0, y), min(out.width, x + w), min(out.height, y + h))
+        # Blur a margin around the rectangle as well, so its own pixels are smeared into the scenery around it.
+        margin = round(radius * 2)
+        wide = (max(0, box[0] - margin), max(0, box[1] - margin), min(out.width, box[2] + margin), min(out.height, box[3] + margin))
+        blurred = out.crop(wide).filter(ImageFilter.GaussianBlur(radius)).point(lambda v: round(v * dim))
+        region = blurred.crop((box[0] - wide[0], box[1] - wide[1], box[2] - wide[0], box[3] - wide[1]))
+        # Feathered edges: a hard rectangle of blur would draw its own outline across the scenery.
+        feather = round(float(spec.get("feather", 18)))
+        mask = Image.new("L", region.size, 0)
+        ImageDraw.Draw(mask).rectangle([feather, feather, region.width - feather, region.height - feather], fill=255)
+        out.paste(region, (box[0], box[1]), mask.filter(ImageFilter.GaussianBlur(feather * 0.6)))
+    size = int(spec.get("size", out.width))
+    if size != out.width:
+        out = out.resize((size, max(1, round(out.height * size / out.width))), Image.LANCZOS)
+    return out
+
+
 def render(crop: Image.Image, spec: dict) -> Image.Image:
     mode = spec.get("mode", "tile")
     size = int(spec.get("size", 256))
+    if mode == "scene":
+        return scene(crop, spec)
     if mode == "frame":
         return frame(crop, spec)[0]
     if mode in ("tile", "portrait"):
