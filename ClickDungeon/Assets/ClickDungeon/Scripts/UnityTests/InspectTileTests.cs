@@ -69,6 +69,19 @@ namespace ClickDungeon.UnityTests
         }
 
         [Test]
+        public void OnlyAMonsterYouCanSeeShowsItsPortrait()
+        {
+            // The monster pack ships a portrait icon per monster; a sleeping one is part of its cover (D-023 amendment).
+            var run = CoveredBoard(MovementMode.Free);
+            Assert.That(GameScreen.InspectPortraitKey(run, Lurker), Is.Null, "A sleeping monster has nothing to show.");
+
+            run.Floor[Lurker].Knowledge = Knowledge.Revealed;
+            run.Floor.EnemyAt(Lurker).Awake = true;
+            Assert.That(GameScreen.InspectPortraitKey(run, Lurker), Is.EqualTo("portrait_goblin"));
+            Assert.That(GameScreen.InspectPortraitKey(run, Pit), Is.Null, "An empty tile has no portrait.");
+        }
+
+        [Test]
         public void UncoveredTilesSayWhatTheyAre()
         {
             var run = CoveredBoard(MovementMode.Free);

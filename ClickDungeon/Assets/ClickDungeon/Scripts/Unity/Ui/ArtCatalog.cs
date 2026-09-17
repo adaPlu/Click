@@ -259,6 +259,9 @@ namespace ClickDungeon.Unity.Ui
 
         public static string Actor(string contentId, string state = "idle") => $"actor_{contentId}_{state}";
 
+        /// <summary>A monster's portrait icon, shown in the Inspect panel while hovering it (the monster pack's <c>*_icon</c>).</summary>
+        public static string EnemyPortrait(string enemyId) => $"portrait_{enemyId}";
+
         public static string ClueIcon(Clue flag) => $"icon_clue_{flag.ToString().ToLowerInvariant()}";
 
         public static string AbilityIcon(CommandKind kind) => $"icon_ability_{kind.ToString().ToLowerInvariant()}";
@@ -338,6 +341,7 @@ namespace ClickDungeon.Unity.Ui
                 Actor(HeroId),
             };
             foreach (var enemy in catalog.Enemies.Values) keys.Add(Actor(enemy.Id));
+            foreach (var enemy in catalog.Enemies.Values) keys.Add(EnemyPortrait(enemy.Id));
             foreach (var enemy in catalog.Enemies.Values)
             {
                 if (!enemy.IsBoss) continue;

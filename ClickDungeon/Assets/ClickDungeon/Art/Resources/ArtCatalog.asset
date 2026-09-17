@@ -383,6 +383,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: fe2abc399562d9d4bab4fa48b0cfa9a3, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_goblin
+    Frames:
+    - {fileID: 21300000, guid: b131a50442f4ba244bc55328603873f4, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_sir_clickington_angry
     Frames:
     - {fileID: 21300000, guid: 18f8044af4bc0c24e8bc312bfac400be, type: 3}
@@ -421,6 +426,11 @@ MonoBehaviour:
   - Key: portrait_sir_clickington_worried
     Frames:
     - {fileID: 21300000, guid: ef9b72a55d2d7014cab138c7e61822d4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_slimelet
+    Frames:
+    - {fileID: 21300000, guid: 05d00f36c220f9a42ace05c4a30af9ae, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: tile_bomb

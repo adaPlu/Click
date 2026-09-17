@@ -422,3 +422,8 @@ gameplay screen: the top HUD band, the floor plaque, the board, the ability row,
 side banners. **The reference logo reads "ClickDungeon2", which this game must never show: any change to `bg_title`'s
 blanks must be checked against the title screen before it ships.**
 
+A fifth pass wired the pack assets that were still unused: each monster's own 5×5 gameplay sprite (the goblin and slimelet
+had been standing on crops from their animation strips), the monster health bar over a token (`ui_enemy_hp_back` /
+`ui_enemy_hp_fill`, falling back to the flat bar), and the portrait icons, which now show in the Inspect panel while
+hovering a monster you can see (`portrait_<enemy id>`; a sleeping monster shows nothing, D-023 amendment).
+

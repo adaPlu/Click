@@ -235,4 +235,6 @@ question is which one it may cover for ~1.3 s.
       slicer. Coverage is 121 reference slices and 72 procedural placeholders.
 - [x] Title and gameplay screens match the reference: both backgrounds are the reference rooms with the reference's own
       interface blurred out (slicer `scene` mode). Coverage is 123 reference slices and 70 procedural placeholders.
+- [x] Fifth pass: the monster pack's gameplay sprites, its health bar and its portrait icons (Inspect panel, awake
+      monsters only). Coverage is 127 reference slices of 200 wired keys.
 

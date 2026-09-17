@@ -57,6 +57,7 @@ namespace ClickDungeon.Unity.Screens
         Text _logText;
         Text _inspectTitle;
         Text _inspectBody;
+        Image _inspectPortrait;
 
         TargetMode _mode = TargetMode.Move;
         GridPos? _hover;
@@ -75,6 +76,10 @@ namespace ClickDungeon.Unity.Screens
             _logText = BuildPanel("WhatHappened", new Vector2(0f, 0.5f), new Vector2(36f, -60f), "WHAT HAPPENED", out _);
             _logText.text = "<color=#A69F93>Nothing yet.\n\nEvery hit, discovery and wake-up will be explained here, newest first.</color>";
             _inspectBody = BuildPanel("Inspect", new Vector2(1f, 0.5f), new Vector2(-36f, -60f), "INSPECT", out _inspectTitle);
+            _inspectPortrait = UiFactory.Image((RectTransform)_inspectBody.transform.parent, "Portrait", Color.white, null);
+            _inspectPortrait.preserveAspect = true;
+            _inspectPortrait.rectTransform.Place(new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-16f, -14f), new Vector2(44f, 44f));
+            _inspectPortrait.gameObject.SetActive(false);
 
             _board = new BoardView(Root, app, new Vector2(0f, 66f));
             _board.CellClicked += OnCellClicked;
@@ -614,6 +619,7 @@ namespace ClickDungeon.Unity.Screens
                 int incoming = Threats.DamageAt(_threats, run.Hero.Pos);
                 if (incoming > 0) sb.AppendLine($"\n<color=#FF6B5E>Your tile is hit for {incoming} next turn!</color>");
                 _inspectBody.text = sb.ToString();
+                ShowInspectPortrait(null);
                 return;
             }
 
@@ -625,6 +631,24 @@ namespace ClickDungeon.Unity.Screens
 
             _inspectTitle.text = title;
             _inspectBody.text = sb.ToString();
+            ShowInspectPortrait(InspectPortraitKey(run, p));
+        }
+
+        /// <summary>
+        /// The portrait art key for a hovered tile, or null. Only a monster the player can see has one: a sleeping monster is
+        /// part of its cover (D-023 amendment).
+        /// </summary>
+        public static string InspectPortraitKey(RunState run, GridPos p)
+        {
+            var enemy = run.Floor.EnemyAt(p);
+            return enemy != null && enemy.Awake ? ArtKeys.EnemyPortrait(enemy.DefId) : null;
+        }
+
+        /// <summary>Shows the portrait when the catalog has that art, and nothing otherwise.</summary>
+        void ShowInspectPortrait(string key)
+        {
+            bool show = key != null && UiArt.Apply(_inspectPortrait, key);
+            _inspectPortrait.gameObject.SetActive(show);
         }
 
         /// <summary>

@@ -160,6 +160,8 @@
     { "key": "bg_gameplay", "source": "ref2-gameplay", "rect": [0, 0, 1672, 941], "mode": "scene", "blank": [[0, 0, 1672, 130], [110, 82, 320, 106], [424, 112, 834, 720], [424, 812, 834, 129], [680, 868, 620, 73], [48, 372, 220, 200], [1372, 170, 240, 220]], "blur": 38, "dim": 0.82, "size": 1280, "folder": "UI", "wired": true },
     { "key": "bg_title", "source": "ref1-title", "rect": [0, 0, 1672, 941], "mode": "scene", "blank": [[0, 0, 540, 152], [1230, 0, 442, 120], [152, 172, 368, 356], [1345, 160, 316, 378], [398, 5, 884, 252], [0, 742, 1672, 199]], "blur": 42, "dim": 0.95, "size": 1280, "folder": "UI", "wired": true },
     { "key": "ui_enemy_hp_back", "source": "ref-core-ui", "rect": [1306, 658, 38, 38], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
-    { "key": "ui_enemy_hp_fill", "source": "ref-core-ui", "rect": [1182, 668, 96, 20], "mode": "wide", "size": 256, "folder": "UI", "wired": true }
+    { "key": "ui_enemy_hp_fill", "source": "ref-core-ui", "rect": [1182, 668, 96, 20], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
+    { "key": "portrait_goblin", "source": "ref-monster-pack", "rect": [400, 190, 118, 106], "mode": "icon", "size": 192, "folder": "Portraits", "wired": true },
+    { "key": "portrait_slimelet", "source": "ref-monster-pack", "rect": [1096, 608, 120, 102], "mode": "icon", "size": 192, "folder": "Portraits", "wired": true }
   ]
 }
