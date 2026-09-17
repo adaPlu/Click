@@ -11,8 +11,8 @@ namespace ClickDungeon.Tests
         public void ShieldBlocksTelegraphedMeleeAndStaggers()
         {
             var run = Run(
-                "..g..",
                 ".....",
+                "..g..",
                 "..H..",
                 ".....",
                 ".....");
@@ -30,8 +30,8 @@ namespace ClickDungeon.Tests
         public void ShieldCooldownSkipsTwoTurns()
         {
             var run = Run(
-                "..g..",
                 ".....",
+                "..g..",
                 "..H..",
                 ".....",
                 ".....");
@@ -39,11 +39,11 @@ namespace ClickDungeon.Tests
             DoOk(run, PlayerCommand.Shield());
 
             Assert.That(Do(run, PlayerCommand.Shield()).Accepted, Is.False);
-            DoOk(run, PlayerCommand.Slash(P(2, 4)));
+            DoOk(run, PlayerCommand.Slash(P(2, 3)));
             Assert.That(run.Hero.Hp, Is.EqualTo(10), "Staggered goblin recovers instead of attacking.");
 
             Assert.That(Do(run, PlayerCommand.Shield()).Accepted, Is.False);
-            DoOk(run, PlayerCommand.Slash(P(2, 4)));
+            DoOk(run, PlayerCommand.Slash(P(2, 3)));
             Assert.That(run.Floor.Enemies, Is.Empty);
 
             DoOk(run, PlayerCommand.Shield());
@@ -78,14 +78,15 @@ namespace ClickDungeon.Tests
                 ".....",
                 ".....");
             DoOk(run, PlayerCommand.Dash(P(2, 2)));
-            Assert.That(run.Hero.Hp, Is.EqualTo(8));
+            // Relative: trap damage is a difficulty setting, not a rule.
+            Assert.That(run.Hero.Hp, Is.EqualTo(10 - Catalog.Hazards.SpikeDamage));
         }
 
         [TestCase("H#...")]
         [TestCase("Ho...")]
         [TestCase("HC...")]
         [TestCase("HG...")]
-        [TestCase("H.g..")]
+        [TestCase("H.G..")]
         [TestCase("H.D..")]
         public void DashRejectsBlockedPathsAndEnemyClues(string row)
         {
@@ -95,7 +96,24 @@ namespace ClickDungeon.Tests
                 row,
                 ".....",
                 ".....");
+            // Obstacles the player can see. Covered ones stop the dash as a bump instead (D-023).
+            foreach (var p in Board.AllCells) run.Floor[p].Knowledge = Knowledge.Revealed;
             Assert.That(Do(run, PlayerCommand.Dash(P(2, 2))).Accepted, Is.False);
+        }
+
+        [Test]
+        public void DashingIntoACoveredObstacleBumpsIt()
+        {
+            var run = Run(
+                ".....",
+                ".....",
+                "H#...",
+                ".....",
+                ".....");
+            var result = DoOk(run, PlayerCommand.Dash(P(2, 2)));
+            Assert.That(Has(result, GameEventKind.HeroBumped), Is.True);
+            Assert.That(run.Hero.Pos, Is.EqualTo(P(0, 2)));
+            Assert.That(run.Floor[P(1, 2)].Knowledge, Is.EqualTo(Knowledge.Revealed), "The dash uncovered what stopped it.");
         }
 
         [Test]
@@ -199,7 +217,7 @@ namespace ClickDungeon.Tests
                 ".....",
                 ".....");
             var result = DoOk(run, PlayerCommand.Move(P(1, 2)));
-            Assert.That(run.Hero.Hp, Is.EqualTo(8));
+            Assert.That(run.Hero.Hp, Is.EqualTo(10 - Catalog.Hazards.SpikeDamage));
             Assert.That(Has(result, GameEventKind.SpikesTriggered), Is.True);
         }
 
@@ -218,7 +236,7 @@ namespace ClickDungeon.Tests
 
             var result = DoOk(run, PlayerCommand.Wait());
             Assert.That(Has(result, GameEventKind.BombExploded), Is.True);
-            Assert.That(run.Hero.Hp, Is.EqualTo(6));
+            Assert.That(run.Hero.Hp, Is.EqualTo(10 - Catalog.Hazards.BombDamage));
             Assert.That(run.Floor[P(2, 2)].Hazard, Is.EqualTo(HazardKind.None));
         }
 
@@ -246,6 +264,8 @@ namespace ClickDungeon.Tests
                 "..b..",
                 "..H..",
                 ".....");
+            // The bomb has to be uncovered before it can be slashed (D-023).
+            run.Floor[P(2, 2)].Knowledge = Knowledge.Revealed;
             DoOk(run, PlayerCommand.Slash(P(2, 2)));
             DoOk(run, PlayerCommand.Move(P(2, 0)));
             Assert.That(run.Floor.Enemies, Is.Empty);

@@ -303,7 +303,9 @@ namespace ClickDungeon.Unity.Screens
                 if (!cell.ChestOpened)
                 {
                     Icons.TryArt(view.Icons, ArtKeys.ChestShimmer, CellSize);
-                    Icons.ChestProgress(view.Icons, cell.ChestTaps, ClickDungeon.Simulation.Chests.TapsToOpen(cell.Quality));
+                    // Above the tokens: in Free Roam the hero often stands on the chest it is opening, and the token
+                    // would hide a meter drawn on the tile itself.
+                    Icons.ChestProgress(view.Labels, cell.ChestTaps, ClickDungeon.Simulation.Chests.TapsToOpen(cell.Quality));
                 }
             }
             else if (cell.Content == ContentKind.Potion) Icons.Potion(view.Icons);

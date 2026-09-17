@@ -77,12 +77,53 @@ namespace ClickDungeon.Tests
 
     public class ChestTests
     {
-        static RunState ChestRun(ulong seed = 1234UL) => Run(1, seed,
-            ".....",
-            ".....",
-            ".HC..",
-            ".....",
-            ".....");
+        /// <summary>A Common chest, so these tests see its fixed reward count; <see cref="BetterChestsGrantMoreRewards"/> covers quality.</summary>
+        static int CommonRewards => Catalog.ChestRewardsByQuality[(int)ChestQuality.Common];
+
+        static RunState ChestRun(ulong seed = 1234UL)
+        {
+            var run = Run(1, seed,
+                ".....",
+                ".....",
+                ".HC..",
+                ".....",
+                ".....");
+            run.Floor[P(2, 2)].Quality = ChestQuality.Common;
+            return run;
+        }
+
+        [Test]
+        public void ChestsOpenedCountsChestsNotRewards()
+        {
+            // An Epic chest grants several rewards, but it is one chest (the end screen and telemetry count chests).
+            var run = ChestRun();
+            run.Floor[P(2, 2)].Quality = ChestQuality.Epic;
+            OpenChest(run, P(2, 2));
+            Assert.That(run.Rewards.Count, Is.GreaterThan(1));
+            Assert.That(Chests.ChestsOpened(run.Rewards), Is.EqualTo(1));
+            Assert.That(Chests.IsFirstDraw("chest:3:12"), Is.True);
+            Assert.That(Chests.IsFirstDraw("chest:v3:12"), Is.True, "A vault chest's first draw.");
+            Assert.That(Chests.IsFirstDraw("chest:3:12:2"), Is.False);
+        }
+
+        [Test]
+        public void BetterChestsGrantMoreRewards()
+        {
+            // D-022: a chest that costs more taps pays more.
+            foreach (var quality in new[] { ChestQuality.Common, ChestQuality.Rare, ChestQuality.Epic })
+            {
+                int expected = Catalog.ChestRewardsByQuality[(int)quality];
+                var run = ChestRun();
+                run.Floor[P(2, 2)].Quality = quality;
+                OpenChest(run, P(2, 2));
+                Assert.That(run.Rewards.Count, Is.EqualTo(expected), quality.ToString());
+                if (quality != ChestQuality.Common)
+                    Assert.That(expected, Is.GreaterThan(Catalog.ChestRewardsByQuality[(int)quality - 1]), "A better chest pays more.");
+                var ids = new System.Collections.Generic.HashSet<string>();
+                foreach (var reward in run.Rewards) ids.Add(reward.TransactionId);
+                Assert.That(ids.Count, Is.EqualTo(expected), "Every reward is its own transaction, so none can be granted twice.");
+            }
+        }
 
         [Test]
         public void InteractCommitsDeterministicReward()
@@ -95,7 +136,7 @@ namespace ClickDungeon.Tests
             var opened = result.Events.Find(e => e.Kind == GameEventKind.ChestOpened);
             Assert.That(opened, Is.Not.Null);
             Assert.That(opened.Reward.Kind, Is.EqualTo(expected.Kind));
-            Assert.That(run.Rewards.Count, Is.EqualTo(1));
+            Assert.That(run.Rewards.Count, Is.EqualTo(CommonRewards));
             Assert.That(run.Floor[P(2, 2)].ChestOpened, Is.True);
             Assert.That(run.Turn, Is.EqualTo(taps), "Every tap is a full gameplay turn (D-022).");
         }
@@ -109,7 +150,7 @@ namespace ClickDungeon.Tests
 
             Assert.That(Do(run, PlayerCommand.Interact(P(2, 2))).Accepted, Is.False);
             Assert.That(Chests.Open(run, P(2, 2), Catalog, new System.Collections.Generic.List<GameEvent>()), Is.Null);
-            Assert.That(run.Rewards.Count, Is.EqualTo(1));
+            Assert.That(run.Rewards.Count, Is.EqualTo(CommonRewards));
             Assert.That(SaveSerializer.ToJson(run), Is.EqualTo(hero));
         }
 
@@ -120,7 +161,7 @@ namespace ClickDungeon.Tests
             OpenChest(run, P(2, 2));
             var loaded = SaveSerializer.FromJson(SaveSerializer.ToJson(run));
             Assert.That(Do(loaded, PlayerCommand.Interact(P(2, 2))).Accepted, Is.False);
-            Assert.That(loaded.Rewards.Count, Is.EqualTo(1));
+            Assert.That(loaded.Rewards.Count, Is.EqualTo(CommonRewards));
         }
 
         [Test]

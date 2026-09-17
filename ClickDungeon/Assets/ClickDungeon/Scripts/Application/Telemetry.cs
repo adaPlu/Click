@@ -315,6 +315,9 @@ namespace ClickDungeon.Application
                     case GameEventKind.PotionCollected:
                         Emit("pickup_collected", run, floor, turn, D("item", "potion", "cell", Cell(e.To)));
                         break;
+                    case GameEventKind.HeroBumped:
+                        Emit("tile_bumped", run, floor, turn, D("cell", Cell(e.To), "found", e.Source));
+                        break;
                     case GameEventKind.ChestTapped:
                         // How often a player starts a chest and walks away is a Gate 2 question (D-022).
                         Emit("chest_tapped", run, floor, turn, D("cell", Cell(e.To), "taps_left", e.Amount));

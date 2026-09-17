@@ -29,6 +29,11 @@ namespace ClickDungeon.Simulation
             {
                 case CommandKind.Move:
                 {
+                    if (Board.ClickUncovers(run, command.Target))
+                    {
+                        Bump(run, command.Target, events);
+                        break;
+                    }
                     var from = hero.Pos;
                     hero.Pos = command.Target;
                     events.Add(GameEvent.Of(GameEventKind.HeroMoved, from: from, to: hero.Pos));
@@ -55,9 +60,15 @@ namespace ClickDungeon.Simulation
                     break;
                 case CommandKind.Dash:
                 {
+                    hero.DashCooldown = heroClass.DashCooldown;
+                    var lurker = FirstLurkerOnDash(run, command.Target);
+                    if (lurker.InBounds)
+                    {
+                        Bump(run, lurker, events);
+                        break;
+                    }
                     var from = hero.Pos;
                     hero.Pos = command.Target;
-                    hero.DashCooldown = heroClass.DashCooldown;
                     events.Add(GameEvent.Of(GameEventKind.HeroDashed, from: from, to: hero.Pos));
                     Hazards.HeroEnter(run, hero.Pos, catalog, events);
                     enteredCell = true;
@@ -116,6 +127,30 @@ namespace ClickDungeon.Simulation
             if (hero.DashCooldown > 0) hero.DashCooldown--;
             run.Turn++;
             return result;
+        }
+
+        /// <summary>
+        /// Clicking a covered tile the hero cannot enter uncovers it and the hero stays put (D-023). A sleeping enemy there
+        /// wakes in the visibility step, so first contact still holds: it declares now and acts only after the next command.
+        /// </summary>
+        static void Bump(RunState run, GridPos p, List<GameEvent> events)
+        {
+            string what = run.Floor.EnemyAt(p) != null ? "lurker" : "obstacle";
+            events.Add(GameEvent.Of(GameEventKind.HeroBumped, from: run.Hero.Pos, to: p, source: what));
+            Visibility.Reveal(run.Floor, p, events);
+        }
+
+        /// <summary>The first covered tile along a dash that stops it as a bump, or <see cref="GridPos.Invalid"/>.</summary>
+        static GridPos FirstLurkerOnDash(RunState run, GridPos target)
+        {
+            var hero = run.Hero.Pos;
+            if (!Directions.TryStepFromDelta(target.X - hero.X, target.Y - hero.Y, out var step)) return GridPos.Invalid;
+            for (int i = 1, distance = hero.Chebyshev(target); i <= distance; i++)
+            {
+                var p = hero.Offset(new GridPos(step.X * i, step.Y * i));
+                if (Commands.DashBumpsAt(run, p, landing: i == distance)) return p;
+            }
+            return GridPos.Invalid;
         }
 
         public static void DeclareAll(RunState run, ContentCatalog catalog, List<GameEvent> events)

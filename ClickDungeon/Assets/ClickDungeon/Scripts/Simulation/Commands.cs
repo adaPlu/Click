@@ -29,6 +29,7 @@ namespace ClickDungeon.Simulation
                     // Free Roam reaches the whole board; Step by Step is one tile at a time, diagonals included (D-021).
                     if (run.Movement == MovementMode.Step && !hero.Pos.IsAdjacent(target))
                         return Fail(out reason, "Sir Clickington can only step to a neighbouring tile.");
+                    if (Board.ClickUncovers(run, target)) { reason = null; return true; }
                     if (!Board.HeroCanEnter(run, target)) return Fail(out reason, "That way is blocked.");
                     return true;
 
@@ -80,6 +81,8 @@ namespace ClickDungeon.Simulation
             for (int i = 1; i < distance; i++)
             {
                 var middle = hero.Pos.Offset(new GridPos(step.X * i, step.Y * i));
+                // Whatever blocks the dash under a cover stops it as a bump instead of refusing it (D-023).
+                if (DashBumpsAt(run, middle, landing: false)) { reason = null; return true; }
                 var cell = run.Floor[middle];
                 if (cell.Terrain != Terrain.Floor || cell.IsClosedChest || run.Floor.EnemyAt(middle) != null)
                     return Fail(out reason, "Something blocks the dash.");
@@ -89,12 +92,27 @@ namespace ClickDungeon.Simulation
             // Free Roam has no sensing, so every distant tile is unknown; a blind dash is no worse than a blind step.
             if (run.Movement == MovementMode.Step && landing.Knowledge == Knowledge.Unseen)
                 return Fail(out reason, "Can't dash into the unknown.");
+            if (DashBumpsAt(run, target, landing: true)) { reason = null; return true; }
             var occupant = run.Floor.EnemyAt(target);
             if (occupant != null) return Fail(out reason, occupant.Awake ? "An enemy stands there." : "Something lurks there.");
             if (!Board.HeroCanEnter(run, target)) return Fail(out reason, "Can't land there.");
 
             reason = null;
             return true;
+        }
+
+        /// <summary>
+        /// A covered tile on a dash path that stops the dash as a bump (D-023). The landing uses the move rule; a middle tile
+        /// also stops the dash for anything a dash cannot pass over (a wall, pit, door or closed chest).
+        /// </summary>
+        public static bool DashBumpsAt(RunState run, GridPos p, bool landing)
+        {
+            if (!p.InBounds || run.Floor[p].Knowledge == Knowledge.Revealed) return false;
+            if (landing) return Board.ClickUncovers(run, p);
+            var enemy = run.Floor.EnemyAt(p);
+            if (enemy != null) return !enemy.Awake;
+            var cell = run.Floor[p];
+            return cell.Terrain != Terrain.Floor || cell.IsClosedChest;
         }
 
         /// <summary>Cells where a targeted command of this kind is currently legal.</summary>

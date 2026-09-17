@@ -187,7 +187,7 @@ namespace ClickDungeon.Unity.Screens
                 case "chest": _chest.Open(new RewardRecord { Kind = RewardKind.Potion, Amount = 1 }, null); break;
                 case "chestburst":
                     _chest.Open(new RewardRecord { Kind = RewardKind.MaxHp, Amount = 2 }, null);
-                    for (int i = 0; i < 3; i++) _chest.Tap();
+                    _chest.Tap();
                     break;
                 case "banner": ShowFloorBanner(); break;
                 case "bossbanner": _floorBanner.Show(Catalog.RunFloorCount, Catalog.ProfileFor(Catalog.RunFloorCount).Name, true); break;
@@ -312,7 +312,7 @@ namespace ClickDungeon.Unity.Screens
             bool floorChanged = run.Floor.FloorIndex != floorBefore;
             AppendLog(result.Events);
 
-            RewardRecord reward = null;
+            var rewards = new List<RewardRecord>();
             int bestPriority = 0;
             string line = null;
             var face = Expression.Neutral;
@@ -332,7 +332,8 @@ namespace ClickDungeon.Unity.Screens
                     _lastDamageSource = e.Source;
                     shake = true;
                 }
-                if (e.Kind == GameEventKind.ChestOpened) reward = e.Reward;
+                // A chest grants one reward per tap (D-022), so the reveal collects every one of them.
+                if (e.Kind == GameEventKind.ChestOpened && e.Reward != null) rewards.Add(e.Reward);
                 // The stairs heal lands on the new floor's start, so it still gets its popup when the floor changes.
                 if (!floorChanged || (e.Kind == GameEventKind.HeroHealed && e.Source == "stairs")) ShowPopup(e);
             }
@@ -350,9 +351,9 @@ namespace ClickDungeon.Unity.Screens
             if (!floorChanged) _board.QueueActorAnimations(run, result.Events);
             Refresh(!floorChanged);
 
-            if (reward != null)
+            if (rewards.Count > 0)
             {
-                _chest.Open(reward, () =>
+                _chest.Open(rewards, () =>
                 {
                     Refresh(false);
                     CheckRunEnd();
@@ -403,7 +404,7 @@ namespace ClickDungeon.Unity.Screens
             if (run.Status == RunStatus.Won)
             {
                 _modal.Show(ModalStyle.Victory, "VICTORY!",
-                    $"Lord Blobert is defeated. Again.\n\nDifficulty: {DifficultyName(run)}\nTurns taken: {run.Turn}\nChests opened: {run.Rewards.Count}\n\nSir Clickington: \"Victory! Snacks for everyone!\"",
+                    $"Lord Blobert is defeated. Again.\n\nDifficulty: {DifficultyName(run)}\nTurns taken: {run.Turn}\nChests opened: {Chests.ChestsOpened(run.Rewards)} ({run.Rewards.Count} rewards)\n\nSir Clickington: \"Victory! Snacks for everyone!\"",
                     () => { },
                     Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
                     Menus.B("TITLE", Palette.NavyLight, _app.ShowTitle));
@@ -601,7 +602,7 @@ namespace ClickDungeon.Unity.Screens
                         // Free Roam has no sensing (D-021), so there is nothing to learn by hovering a covered tile.
                         sb.AppendLine(run.Movement == MovementMode.Step
                             ? "Tap a lit tile next to you to step. Tap an enemy beside you to slash, a chest to open it, or yourself to wait.\n\nHover any tile to learn what is known about it."
-                            : "Tap any tile to go there. Covered tiles hide what is on them until you reach them.\n\nTap an enemy beside you to slash, a chest to open it, or yourself to wait.");
+                            : "Tap any tile to uncover it. Covered tiles hide what is on them until you click them; if something is in the way, you stay put and see what it was.\n\nTap an enemy beside you to slash, a chest to open it, or yourself to wait.");
                         break;
                 }
                 int incoming = Threats.DamageAt(_threats, run.Hero.Pos);
@@ -944,10 +945,10 @@ namespace ClickDungeon.Unity.Screens
     public static class Menus
     {
         public const string HelpText =
-            "- FREE ROAM: tap any tile to go there. Covered tiles give no hints; you learn what is on them by reaching them.\n" +
+            "- Tiles are uncovered only by clicking them. FREE ROAM: tap any tile to go there; if a monster or a shut door is hiding under it, you stay put and it is revealed.\n" +
             "- STEP BY STEP: step to a lit tile next to you. Tiles two steps away are SENSED: red diamond ! = enemy, orange triangle ! = trap, K = key, $ = treasure, dot = safe.\n" +
             "- Tap an enemy beside you to SLASH, a chest to open it (2-4 taps, each a turn), or Sir Clickington to wait.\n" +
-            "- Revealing an enemy wakes it. It shows its intent and only acts on the NEXT turn. Most must stand next to you to hit; Fire Imps shoot along a line and Lord Blobert slams from anywhere.\n" +
+            "- Uncovering an enemy wakes it. It shows its intent and only acts on the NEXT turn. Most must stand next to you to hit; Fire Imps shoot along a line and Lord Blobert slams from anywhere.\n" +
             "- Tiles marked -N will be hit next turn. Step off, SHIELD to block (staggers attackers), or DASH one or two tiles over traps.\n" +
             "- Find the KEY, reach the EXIT. Floor 5: defeat Lord Blobert.\n\n" +
             "Keys: WASD / arrows, Space = wait, 1-5 = abilities, Esc = menu, H = help.";

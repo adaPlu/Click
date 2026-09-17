@@ -259,3 +259,45 @@ Rules referenced here live in `docs/rules.md`.
   can be walked away from; crowding and unavoidable damage do. After retuning, the same player wins 39 / 31 / 9.
 - **DEPENDENCIES**: `ContentCatalog` difficulty definitions, rules §10 / §10.2, `BalanceTests` guards.
 - **REVERSIBILITY**: high — content numbers only. Real playtest telemetry should replace the bot as the judge.
+
+### D-022 amendment: chests pay one reward per tap
+- **DECISION**: A chest grants one reward per tap it costs — Common 2, Rare 3, Epic 4 (`ChestRewardsByQuality`) — and a
+  vault's great chest grants 5. Each reward draw is stronger: +2 potions (was 1) and +3 max HP (was 2); +1 Slash damage is
+  unchanged. `AutoPlayer` now opens chests by default: it counts taps already spent as progress, values standing in reach
+  of a known chest, and will not leave a floor with known loot while healthy and with nothing awake on it.
+- **WHY**: every chest used to grant one reward however many turns it cost, and the bot — looking one turn ahead — could
+  never see the value of a first tap, so no run opened a chest. `ChestWorth` (60 seeds per tier, blind novice) showed
+  looting at the old rewards cost wins; at the shipped rewards looting gives 4–5× the loot at the same win rate, and on
+  Blobert's Wrath beats skipping chests (25 wins vs 19).
+- **OPEN**: on the two easier tiers looting is still roughly neutral. Safe windows to spend 2–4 turns are rare once melee
+  monsters chase, so the next lever is *when* a chest can be opened, not how much it pays.
+- **DEPENDENCIES**: `Chests.RewardDraws`, `ContentCatalog.ChestRewardsByQuality` and reward table, `VaultTuning`,
+  `AutoPlayer` looting policy, `ChestWorth`, rules §7 / §10.2, balance guards.
+- **REVERSIBILITY**: high — content numbers, plus `loots: false` on the bot.
+- **REVISED (same day)**: potion draws went back to +1 (weight 2) and that weight moved to +3 max HP (weight 3): at +2
+  potions per draw a looting run ended with ~11 unused. The chest reveal overlay no longer asks for its own 3 taps — the
+  turns were already spent on the board — and lists every reward granted. The end screen and the telemetry summary count
+  chests (first draws), not rewards. Blind novice now wins 36 / 29 / 15; looting still beats skipping on Blobert's Wrath
+  (24 vs 19 of 60).
+
+## D-023 Tiles reveal only when clicked
+- **DECISION**: A tile is revealed only by clicking it, never by the hero's sight range. The hero's own tile is revealed;
+  every other tile stays covered, including its neighbours. Clicking a covered tile the hero cannot enter is a **bump**:
+  the hero stays put, the tile is uncovered and the turn is spent. That covers a sleeping monster (which wakes, and under
+  first contact only acts after the player's next command), a shut vault door, and a pit with nothing below. A dash is
+  stopped the same way by the first covered tile on its path that would block it. Step by Step still senses clues within
+  two steps; sensing is not revealing. Monsters wake only when their tile is uncovered.
+- **WHY**: design direction — clicking is how you learn the board. A click that was refused would have leaked what was
+  under the cover, so every blocked click becomes an uncovering instead.
+- **BOT**: two AutoPlayer bugs surfaced. Leaving a vault returns to the same floor number, so it scored as no progress and
+  the bot circled vaults until the command cap (26 of 30 Squire's Stroll runs); being in a vault now costs score unless
+  the bot is safely looting. This also fixed the casual bot's long-standing stall bug.
+- **TUNING** (D-017 amendment): every click is now a blind step, so traps and bumped monsters do the hurting. Knight's
+  Trial drops the extra monster and missing potion and blunts traps by 1. Blobert's Wrath drops its extra monsters,
+  missing hearts and extra monster/trap damage; its pressure is Lord Blobert (+4 HP, +1 slam), tougher monsters and one
+  potion. Blind novice AutoPlayer wins 36 / 25 / 8 of 40; sighted bots now win every run at every tier, so hidden
+  information is what makes the tiers bite.
+- **DEPENDENCIES**: `Visibility.Update`/`Reveal`, `Board.ClickUncovers`, `Commands.DashBumpsAt`, `TurnResolver.Bump`,
+  `GameEventKind.HeroBumped`, telemetry `tile_bumped`, `AutoPlayer` vault scoring, difficulty definitions, rules §2 / §3 /
+  §10 / §12, help and hint text.
+- **REVERSIBILITY**: medium. The reveal radius is one condition, but every tier was retuned around blind clicking.

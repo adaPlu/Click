@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using ClickDungeon.Simulation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -33,7 +34,7 @@ namespace ClickDungeon.Application
         public int PaidSpikesOnPurpose;
 
         public int Shields, ShieldsUnderThreat, Dashes, DashesUnderThreat, PotionsUsed, Waits;
-        public int ChestsOpened, RewardsSkipped, CommandsRejected;
+        public int ChestsOpened, ChestRewards, RewardsSkipped, CommandsRejected;
 
         public static TelemetrySummary FromLines(IEnumerable<string> lines)
         {
@@ -97,7 +98,11 @@ namespace ClickDungeon.Application
                         FloorTurnsTotal += turns.Value;
                     }
                     break;
-                case "chest_opened": ChestsOpened++; break;
+                case "chest_opened":
+                    // One event per reward; only a chest's first draw keeps the chest's own transaction id (D-022).
+                    ChestRewards++;
+                    if (Chests.IsFirstDraw((string)o["data"]?["transaction"])) ChestsOpened++;
+                    break;
                 case "optional_reward_skipped": RewardsSkipped++; break;
                 case "command_rejected": CommandsRejected++; break;
                 case "ability_used":
@@ -246,7 +251,7 @@ namespace ClickDungeon.Application
             sb.AppendLine($"- Shield: {Shields} (with a telegraphed hit on the hero's tile: {ShieldsUnderThreat}, {Pct(ShieldsUnderThreat, Shields)})");
             sb.AppendLine($"- Dash: {Dashes} (escaping a telegraphed hit: {DashesUnderThreat}, {Pct(DashesUnderThreat, Dashes)})");
             sb.AppendLine($"- Potions: {PotionsUsed} | Waits: {Waits}");
-            sb.AppendLine($"- Chests opened: {ChestsOpened} | Optional rewards left behind: {RewardsSkipped}");
+            sb.AppendLine($"- Chests opened: {ChestsOpened} ({ChestRewards} rewards) | Optional rewards left behind: {RewardsSkipped}");
             sb.AppendLine($"- Rejected commands (possible UI confusion): {CommandsRejected}");
             sb.AppendLine();
 

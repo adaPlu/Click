@@ -78,15 +78,17 @@ exit `Unlocked`.
 
 At the end of the player's action (and at floor start), from the hero's cell:
 
-- Cells at Chebyshev distance **≤ 1** (the eight neighbours) become **Revealed**:
-  revealing follows melee reach.
+- **Only a clicked tile is Revealed** (D-023): the tile the hero stands on. Sight range
+  reveals nothing — the hero's neighbours stay covered until they are clicked too.
+- Clicking a covered tile the hero **cannot enter** is a **bump**: the hero stays put, the
+  tile is Revealed and the turn is spent. That covers a sleeping monster, a shut vault
+  door and a pit with nothing below; a dash stops the same way at the first covered tile
+  on its path that would block it. A refused click would give away what was hidden.
 - Cells at Manhattan distance **≤ 2** become at least **Sensed** — **Step by Step only**.
-  Free Roam produces no Sensed cells at all, so knowledge there runs `Unseen → Revealed`.
+  Sensing is not revealing. Free Roam produces no Sensed cells at all.
 
-In **Step by Step** the hero never walks onto an unrevealed cell, because every legal
-step is already revealed. In **Free Roam** a tap may land on a Sensed or Unseen tile —
-that is the mode's trade, and the clue set is shown before committing (§12). Dash may
-land on a Sensed cell, never on one carrying an ENEMY clue.
+Every step onto a covered tile is a blind step: its hazard triggers as usual. Step by
+Step dashes may land on a Sensed cell, never on one carrying an ENEMY clue.
 
 ### 2.4 Clue set
 
@@ -109,7 +111,8 @@ Clues are **deterministic and truthful**. No false clues in Gate 1.
 ### 3.1 Dormant / Awake
 
 - Enemies start **Dormant** and hidden. Dormant enemies do nothing.
-- An enemy **wakes** the moment its cell becomes Revealed.
+- An enemy **wakes** the moment its cell becomes Revealed — which, since D-023, means the
+  moment the player clicks its tile and bumps it.
 - Awake enemies stay visible wherever they move.
 - The boss starts Revealed and Awake.
 
@@ -253,8 +256,8 @@ Ordering is covered by automated tests.
   entered: a hero already standing on it when Blobert falls steps off and back on.
 - **Chest**: `Interact` with a closed chest on the hero's own tile or one beside it.
   - A chest has a **quality** that sets how many taps it takes to open (D-022):
-    **Common 2, Rare 3, Epic 4**. A vault's great chest is always Epic and still
-    grants three rewards.
+    **Common 2, Rare 3, Epic 4**. It grants **one reward per tap**: Common 2, Rare 3,
+    Epic 4. A vault's great chest is always Epic and grants five.
   - **Every tap is a full player action costing one turn**, so each one gives every
     revealed monster its response. Opening a chest is exposure, not a free pickup.
   - Quality is drawn from `hash(runSeed, floorIndex, chestId)` at floor setup, so it
@@ -264,7 +267,11 @@ Ordering is covered by automated tests.
     `hash(runSeed, floorIndex, chestId)` and never consumes a shared RNG stream, so
     opening a chest cannot change anything else.
   - An opened chest stays opened; taps cannot duplicate rewards.
-  - Gate 1 reward table: +1 potion, +2 max HP (and heal 2), +1 Slash damage.
+  - Reward table (each draw): +1 potion (weight 2), +3 max HP and heal 3 (weight 3),
+    +1 Slash damage (weight 1).
+  - Opening is shown on the board: after the first tap the chest tile carries one pip per
+    tap it needs, filled as taps land. The reward reveal that follows costs no turns and
+    lists every reward the chest granted.
 - **Floor complete** → next floor generates, hero HP/potions/boons carry over,
   cooldowns reset, key is cleared.
 - **Run**: 5 floors. Floor 5 is Lord Blobert's arena; its exit is unlocked
@@ -308,18 +315,18 @@ A floor is valid only if:
 ## 10. Difficulty tiers *(tune numbers)*
 
 Chosen when starting a run and stored in the run (decision D-017). Every tier uses the rules
-above; only numbers change. §3–§8 describe the base content; Knight's Trial adds one enemy per normal
-floor and removes one starting potion (retuned for adjacent-only melee, §10.2).
+above; only numbers change. §3–§8 describe the base content; Knight's Trial blunts traps by one
+(retuned for click-to-reveal, where every click is a blind step — §10.2).
 
 | Setting                                | Squire's Stroll (easy) | Knight's Trial (medium) | Blobert's Wrath (hardcore) |
 |----------------------------------------|------------------------|-------------------------|----------------------------|
-| Hero max HP                            | 14 (+4)                | 10                      | 8 (−2)                     |
-| Starting potions                       | 3 (+1)                 | 1 (−1)                  | 1 (−1)                     |
+| Hero max HP                            | 14 (+4)                | 10                      | 10                         |
+| Starting potions                       | 3 (+1)                 | 2                       | 1 (−1)                     |
 | Goblin / Slime / Imp / Slimelet HP     | 3 / 5 / 2 / 1          | 3 / 5 / 2 / 1           | 4 / 6 / 3 / 2 (+1)         |
-| Goblin / Slime / Imp / Slimelet damage | 1 / 2 / 1 / 1 (−1)     | 2 / 3 / 2 / 1           | 3 / 4 / 3 / 2 (+1)         |
-| Lord Blobert HP / Slam / puffed attack | 10 / 3 / 1             | 12 / 4 / 2              | 16 / 5 / 3                 |
-| Spikes / bomb damage                   | 1 / 3                  | 2 / 4                   | 3 / 5                      |
-| Enemies on normal floors               | profile                | profile +1 (min and max) | profile +2 (min and max)  |
+| Goblin / Slime / Imp / Slimelet damage | 1 / 2 / 1 / 1 (−1)     | 2 / 3 / 2 / 1           | 2 / 3 / 2 / 1              |
+| Lord Blobert HP / Slam / puffed attack | 10 / 3 / 1             | 12 / 4 / 2              | 16 / 5 / 2                 |
+| Spikes / bomb damage                   | 1 / 3                  | 1 / 3 (−1)              | 2 / 4                      |
+| Enemies on normal floors               | profile                | profile                 | profile                    |
 | HP restored on arriving at a new floor | 3                      | 0                       | 0                          |
 
 Damage and HP never drop below 1.
@@ -372,10 +379,16 @@ next to the hero, §12) — reach F5 / win:
 
 | Player             | Squire's Stroll | Knight's Trial | Blobert's Wrath |
 |--------------------|-----------------|----------------|-----------------|
-| novice, sighted    | 38 / 38         | 38 / 38        | 38 / 37         |
-| novice, **blind**  | 39 / 39         | 33 / 31        | 20 / 9          |
-| flailing, sighted  | 35 / 34         | 38 / 31        | 37 / 19         |
-| flailing, **blind**| 40 / 38         | 30 / 22        | 23 / 8          |
+| novice, sighted    | 40 / 40         | 40 / 40        | 40 / 40         |
+| novice, **blind**  | 40 / 36         | 36 / 25        | 22 / 8          |
+| flailing, sighted  | 40 / 40         | 40 / 37        | 40 / 31         |
+| flailing, **blind**| 40 / 32         | 29 / 11        | 16 / 1          |
+
+Measured after click-to-reveal (D-023) and its retune. **Sighted bots now win every run at every tier**:
+seeing the board makes the dungeon trivial, and hidden information is what makes the tiers bite. Before the
+retune, blind clicking made Knight's Trial and Blobert's Wrath near-unwinnable (8 and 0 novice wins of 30),
+with traps and bumped monsters doing the killing. In the 60-seed `DifficultySweep` the careful (casual) blind
+bot wins 93% / 77% / 53%.
 
 - **Adjacent-only melee first made every tier much easier** (blind novice won 39 / 35 / 26 of 40, Knight's
   Trial four wins behind Squire's Stroll). The tiers were retuned with `DifficultySweep` (D-017 amendment):
@@ -431,6 +444,7 @@ only how far the hero may move, and how enemies threaten, differ.
 | Dash | one or two tiles in a straight line | same |
 | Enemies | **the same in both modes** (below) | same |
 | Hints | **none** — every unrevealed tile is a blank cover, whatever is under it | sensing marks clues at Manhattan ≤ 2 (§2.4) |
+| Revealing | only a clicked tile; a blocked click is a bump (§2.3, D-023) | same |
 
 **Enemy reach does not depend on the mode.** Melee monsters — goblin, crowned slime, slimelet, and Lord
 Blobert while puffed up — attack only from a tile next to the hero (8-way) and otherwise step closer.

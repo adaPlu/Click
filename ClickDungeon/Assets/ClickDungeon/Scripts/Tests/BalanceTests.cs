@@ -96,24 +96,24 @@ namespace ClickDungeon.Tests
         public void SquiresStrollLetsANovicePlayerBeatBlobert()
         {
             // Blind: a sighted bot walks to a key it could not see, so its numbers are not about playing this game.
-            // Measured 30-seed baseline: 29 reach, 29 won (rules §10.2). Thresholds sit a few runs below that.
+            // Measured 30-seed baseline with click-to-reveal: 30 reach, 27 won (rules §10.2). Thresholds sit a few runs below that.
             var easy = Measure(Difficulty.Easy, 30, NoviceMistakeRate, blind: true);
-            Assert.That(easy.ReachedBoss, Is.GreaterThanOrEqualTo(26), $"Only {easy.ReachedBoss}/30 novice easy runs reached floor 5.");
-            Assert.That(easy.Won, Is.GreaterThanOrEqualTo(26), $"Only {easy.Won}/30 novice easy runs beat Lord Blobert.");
+            Assert.That(easy.ReachedBoss, Is.GreaterThanOrEqualTo(27), $"Only {easy.ReachedBoss}/30 novice easy runs reached floor 5.");
+            Assert.That(easy.Won, Is.GreaterThanOrEqualTo(24), $"Only {easy.Won}/30 novice easy runs beat Lord Blobert.");
         }
 
         [Test]
         public void KnightsTrialLetsANovicePlayerReachBlobert()
         {
-            // Measured 30-seed blind baseline after retuning: 24 reach (rules §10.2).
+            // Measured 30-seed blind baseline with click-to-reveal: 27 reach (rules §10.2).
             var medium = Measure(Difficulty.Medium, 30, NoviceMistakeRate, blind: true);
-            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(21), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
+            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(24), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
         }
 
         [Test]
         public void TiersKeepTheirOrder()
         {
-            // Blind novice. Measured 40-seed blind baseline after retuning: 39 / 31 / 9 won, 39 / 33 / 20 reached (rules §10.2).
+            // Blind novice. Measured 40-seed blind baseline with click-to-reveal: 36 / 25 / 8 won, 40 / 36 / 22 reached (rules §10.2).
             var easy = Measure(Difficulty.Easy, 40, NoviceMistakeRate, blind: true);
             var medium = Measure(Difficulty.Medium, 40, NoviceMistakeRate, blind: true);
             var hardcore = Measure(Difficulty.Hardcore, 40, NoviceMistakeRate, blind: true);
@@ -156,18 +156,18 @@ namespace ClickDungeon.Tests
 
             var candidates = new List<(string name, DifficultyDefinition tuning)>
             {
-                // Adjacent-only melee (D-021 amendment). Round 1 showed enemy and boss HP barely matter (a melee monster can
-                // be walked away from); damage and crowding do. Round 2 combines the levers that moved the novice.
+                // Click-to-reveal (D-023): every click is a blind step, so hazards now kill. Candidates walk back the crowding
+                // and scarcity added for adjacent-only melee, and soften hazards.
+                // Round 2. Knight's Trial is now "base, hazards -1" (65% novice wins in round 1). Blobert's Wrath was still at
+                // 13% at its softest round-1 candidate, so these walk it back further.
                 ("E0 current", Tier(Difficulty.Easy)),
-                ("M0 base", Tier(Difficulty.Medium)),
-                ("M7 dmg+1 enemies+1", Tier(Difficulty.Medium, d => { d.EnemyDamage = 1; d.ExtraEnemies = 1; })),
-                ("M8 M7 potions-1", Tier(Difficulty.Medium, d => { d.EnemyDamage = 1; d.ExtraEnemies = 1; d.StartingPotions = -1; })),
-                ("M9 enemies+1 pot-1", Tier(Difficulty.Medium, d => { d.ExtraEnemies = 1; d.StartingPotions = -1; })),
-                ("H0 current", Tier(Difficulty.Hardcore)),
-                ("H7 enem+2 hero-2", Tier(Difficulty.Hardcore, d => { d.ExtraEnemies = 2; d.HeroMaxHp = -2; })),
-                ("H8 enem+2 hp+2", Tier(Difficulty.Hardcore, d => { d.ExtraEnemies = 2; d.EnemyHp = 2; })),
-                ("H9 enem+2 dmg+2", Tier(Difficulty.Hardcore, d => { d.ExtraEnemies = 2; d.EnemyDamage = 2; })),
-                ("H10 hero-2 no pots", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = -2; d.StartingPotions = -2; })),
+                ("M0 current", Tier(Difficulty.Medium)),
+                ("HD hero10 enem+1 haz0", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = 0; d.ExtraEnemies = 1; d.HazardDamage = 0; })),
+                ("HE hero10 enem0 haz0", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = 0; d.ExtraEnemies = 0; d.HazardDamage = 0; })),
+                ("HF HD potions0", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = 0; d.ExtraEnemies = 1; d.HazardDamage = 0; d.StartingPotions = 0; })),
+                ("HG HD dmg0", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = 0; d.ExtraEnemies = 1; d.HazardDamage = 0; d.EnemyDamage = 0; })),
+                ("HH HE potions0", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = 0; d.ExtraEnemies = 0; d.HazardDamage = 0; d.StartingPotions = 0; })),
+                ("HI HE dmg0", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = 0; d.ExtraEnemies = 0; d.HazardDamage = 0; d.EnemyDamage = 0; })),
             };
 
             // Blind and in Free Roam, like the guards: this is the number that describes real play.

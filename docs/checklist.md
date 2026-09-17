@@ -171,3 +171,21 @@ question is which one it may cover for ~1.3 s.
       Blind novice wins 39 / 31 / 9 of 40 (rules §10.2).
 - [ ] **AutoPlayer stall bug**: the casual blind bot runs out of commands in ~1 run in 10 at every tier, even where it
       never dies. Its balance numbers are unusable until that is fixed.
+
+## Chest rewards (D-022 amendment)
+- [x] One reward per tap: Common 2, Rare 3, Epic 4; great chest 5. Draws give +2 potions or +3 max HP or +1 Slash.
+- [x] AutoPlayer opens chests when safe; `ChestWorth` compares skipping, old rewards and shipped rewards.
+- [x] Measured: 4–5× the loot at the same win rate; looting beats skipping on Blobert's Wrath (25 vs 19 of 60).
+- [ ] Looting is still roughly neutral on the easier tiers. Consider *when* chests can be opened (a lid that keeps
+      progress, or tapping that does not provoke) rather than raising rewards further.
+- [x] Chest reveal overlay opens straight to the reveal (no second tap ritual) and lists all rewards.
+- [x] Tap pips on the board are readable (they were drawn at 12×8 on gold art).
+- [x] End screen and telemetry summary count chests, not rewards (`Chests.ChestsOpened`).
+- [x] Potion draws back to +1; weight moved to +3 max HP.
+
+## Tiles reveal only when clicked (D-023)
+- [x] Only the hero's own tile is revealed; every other tile needs a click. Step by Step keeps its sensed clues.
+- [x] Clicking a covered tile you cannot enter is a bump: sleeping monster (wakes), shut door, bottomless pit. Dashes too.
+- [x] AutoPlayer no longer circles vaults; the casual bot's stall bug is gone (0 stalls in every sweep).
+- [x] Tiers retuned: blind novice wins 36 / 25 / 8 of 40 (rules §10.2).
+- [x] Help, hint and log text: "Something was lurking there!" / "Something blocks the way."

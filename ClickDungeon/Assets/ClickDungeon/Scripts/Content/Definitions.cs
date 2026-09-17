@@ -142,7 +142,7 @@ namespace ClickDungeon.Content
         public int MinEnemies = 2;
         public int MaxEnemies = 3;
         /// <summary>Rewards granted at once by a great chest.</summary>
-        public int GreatChestRewards = 3;
+        public int GreatChestRewards = 5;
         public int MinChests = 2;
         public int MaxChests = 3;
     }

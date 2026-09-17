@@ -49,6 +49,9 @@ namespace ClickDungeon.Tests
                 "...H.",
                 ".....",
                 ".....");
+            // While covered, clicking the door is a bump that uncovers it; once seen, it refuses the click (D-023).
+            Assert.That(Has(DoOk(door, PlayerCommand.Move(P(3, 3))), GameEventKind.HeroBumped), Is.True);
+            Assert.That(door.Hero.Pos, Is.EqualTo(P(3, 2)));
             Assert.That(Do(door, PlayerCommand.Move(P(3, 3))).Accepted, Is.False, "A shut door is not a tile.");
 
             var chest = Run(
@@ -83,6 +86,8 @@ namespace ClickDungeon.Tests
                 "...H.",
                 ".....",
                 ".....");
+            // An uncovered pit with nothing below refuses the click; a covered one would be a bump (D-023).
+            lastFloor.Floor[P(3, 3)].Knowledge = Knowledge.Revealed;
             Assert.That(Do(lastFloor, PlayerCommand.Move(P(3, 3))).Accepted, Is.False);
 
             var earlyFloor = Run(1, 1234UL,
@@ -160,9 +165,9 @@ namespace ClickDungeon.Tests
     public class VisibilityTests
     {
         [Test]
-        public void RevealsDistanceOneAndSensesDistanceTwo()
+        public void RevealsOnlyTheHerosTileAndSensesNearby()
         {
-            // Sensing only exists in Step by Step; Free Roam gives no hints at all (D-021).
+            // D-023: only a clicked tile is revealed. Step by Step still senses clues within two steps (D-021).
             var run = StepRun(
                 ".....",
                 ".....",
@@ -171,10 +176,9 @@ namespace ClickDungeon.Tests
                 ".....");
             var floor = run.Floor;
             Assert.That(floor[P(2, 2)].Knowledge, Is.EqualTo(Knowledge.Revealed));
-            Assert.That(floor[P(2, 3)].Knowledge, Is.EqualTo(Knowledge.Revealed));
-            Assert.That(floor[P(3, 2)].Knowledge, Is.EqualTo(Knowledge.Revealed));
-            // Revealing follows melee reach, so the diagonal neighbour is revealed, not merely sensed (D-021).
-            Assert.That(floor[P(3, 3)].Knowledge, Is.EqualTo(Knowledge.Revealed));
+            Assert.That(floor[P(2, 3)].Knowledge, Is.EqualTo(Knowledge.Sensed), "A neighbour is sensed, not revealed.");
+            Assert.That(floor[P(3, 2)].Knowledge, Is.EqualTo(Knowledge.Sensed));
+            Assert.That(floor[P(3, 3)].Knowledge, Is.EqualTo(Knowledge.Sensed));
             Assert.That(floor[P(2, 4)].Knowledge, Is.EqualTo(Knowledge.Sensed));
             Assert.That(floor[P(0, 2)].Knowledge, Is.EqualTo(Knowledge.Sensed));
             Assert.That(floor[P(4, 4)].Knowledge, Is.EqualTo(Knowledge.Unseen));
@@ -238,7 +242,9 @@ namespace ClickDungeon.Tests
                 ".....");
             DoOk(run, PlayerCommand.Move(P(1, 2)));
             DoOk(run, PlayerCommand.Move(P(0, 2)));
-            Assert.That(run.Floor[P(3, 2)].Knowledge, Is.EqualTo(Knowledge.Revealed));
+            // Tiles once stood on stay revealed, and a sensed tile left far behind stays sensed.
+            Assert.That(run.Floor[P(2, 2)].Knowledge, Is.EqualTo(Knowledge.Revealed));
+            Assert.That(run.Floor[P(1, 2)].Knowledge, Is.EqualTo(Knowledge.Revealed));
             Assert.That(run.Floor[P(4, 2)].Knowledge, Is.EqualTo(Knowledge.Sensed));
         }
     }

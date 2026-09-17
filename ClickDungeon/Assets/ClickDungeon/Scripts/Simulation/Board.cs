@@ -35,6 +35,19 @@ namespace ClickDungeon.Simulation
             && !run.Floor[p].IsLockedDoor
             && (run.Floor[p].Terrain != Terrain.Pit || CanFallThrough(run));
 
+        /// <summary>
+        /// Clicking this covered tile uncovers it instead of moving (D-023): a sleeping enemy hides there, or the tile cannot
+        /// be entered (a shut vault door, a pit with nothing below). Refusing the click would give away what is under the
+        /// cover, so it becomes a bump. An awake enemy is visible wherever it stands, so clicking it is still refused.
+        /// </summary>
+        public static bool ClickUncovers(RunState run, GridPos p)
+        {
+            if (!p.InBounds || run.Floor[p].Knowledge == Knowledge.Revealed) return false;
+            var enemy = run.Floor.EnemyAt(p);
+            if (enemy != null) return !enemy.Awake;
+            return !HeroCanEnter(run, p);
+        }
+
         public static bool CanFallThrough(RunState run) =>
             !run.Floor.IsVault && run.Floor.FloorIndex < run.FloorCount;
 

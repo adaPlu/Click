@@ -50,6 +50,18 @@ namespace ClickDungeon.Simulation
         const ulong QualitySalt = 0x9E3779B97F4A7C15UL;
 
         /// <summary>
+        /// How many rewards a chest grants when it opens: by quality for a regular chest (D-022), the vault's count for a
+        /// great chest (D-018).
+        /// </summary>
+        public static int RewardDraws(CellState chest, ContentCatalog catalog)
+        {
+            if (chest.GreatChest) return Math.Max(1, catalog.Vault.GreatChestRewards);
+            var byQuality = catalog.ChestRewardsByQuality;
+            int index = (int)chest.Quality;
+            return index >= 0 && index < byQuality.Length ? Math.Max(1, byQuality[index]) : 1;
+        }
+
+        /// <summary>
         /// One tap on a closed chest. The lid gives a little and the turn resolves around it like any other action, so
         /// every revealed monster gets its response (D-022). Returns true when this tap is the one that opened it.
         /// </summary>
@@ -66,6 +78,28 @@ namespace ClickDungeon.Simulation
             }
             events.Add(GameEvent.Of(GameEventKind.ChestTapped, to: cell, amount: needed - state.ChestTaps));
             return false;
+        }
+
+        /// <summary>
+        /// True for the first reward a chest grants. Its transaction id is the chest's own (<c>chest:3:12</c>); every later
+        /// draw appends its index (<c>chest:3:12:2</c>), so counting first draws counts chests, not rewards.
+        /// </summary>
+        public static bool IsFirstDraw(string transactionId)
+        {
+            if (string.IsNullOrEmpty(transactionId)) return false;
+            int colons = 0;
+            foreach (char c in transactionId)
+                if (c == ':') colons++;
+            return colons == 2;
+        }
+
+        /// <summary>How many chests the given rewards came from.</summary>
+        public static int ChestsOpened(IEnumerable<RewardRecord> rewards)
+        {
+            int count = 0;
+            foreach (var reward in rewards)
+                if (reward != null && IsFirstDraw(reward.TransactionId)) count++;
+            return count;
         }
 
         public static RewardRecord RollReward(ulong runSeed, int floorIndex, GridPos cell, ContentCatalog catalog) =>
@@ -109,7 +143,7 @@ namespace ClickDungeon.Simulation
             if (!state.IsClosedChest) return null;
             state.ChestOpened = true;
 
-            int draws = state.GreatChest ? Math.Max(1, catalog.Vault.GreatChestRewards) : 1;
+            int draws = RewardDraws(state, catalog);
             RewardRecord first = null;
             for (int draw = 0; draw < draws; draw++)
             {

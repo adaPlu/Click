@@ -49,7 +49,7 @@ namespace ClickDungeon.Tests
                 ".....");
             DoOk(run, PlayerCommand.Move(P(2, 2)));
             var threats = Threats.Compute(run, Catalog);
-            Assert.That(Threats.DamageAt(threats, P(3, 3)), Is.EqualTo(4));
+            Assert.That(Threats.DamageAt(threats, P(3, 3)), Is.EqualTo(Catalog.Hazards.BombDamage));
             Assert.That(Threats.DamageAt(threats, P(4, 2)), Is.EqualTo(0));
         }
     }

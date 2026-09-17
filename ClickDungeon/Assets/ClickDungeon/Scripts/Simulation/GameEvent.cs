@@ -17,6 +17,7 @@ namespace ClickDungeon.Simulation
         HeroBlocked,
         HeroHealed,
         ChestTapped,
+        HeroBumped,
         EnemyWoke,
         EnemyMoved,
         EnemyAttacked,

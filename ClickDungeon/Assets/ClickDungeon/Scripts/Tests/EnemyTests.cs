@@ -7,9 +7,10 @@ namespace ClickDungeon.Tests
 {
     public class FirstContactAndTurnOrderTests
     {
+        /// <summary>A sleeping goblin on the covered tile just above the hero. Clicking that tile bumps it awake (D-023).</summary>
         static RunState GoblinAhead() => Run(
-            "..g..",
             ".....",
+            "..g..",
             "..H..",
             ".....",
             ".....");
@@ -21,11 +22,13 @@ namespace ClickDungeon.Tests
             var result = DoOk(run, PlayerCommand.Move(P(2, 3)));
 
             var goblin = Enemy(run, "goblin");
+            Assert.That(Has(result, GameEventKind.HeroBumped), Is.True);
+            Assert.That(run.Hero.Pos, Is.EqualTo(P(2, 2)), "Bumping a hidden monster does not move the hero.");
             Assert.That(Has(result, GameEventKind.EnemyWoke), Is.True);
             Assert.That(Has(result, GameEventKind.HeroDamaged), Is.False);
             Assert.That(run.Hero.Hp, Is.EqualTo(10));
             Assert.That(goblin.Intent.Kind, Is.EqualTo(IntentKind.Attack));
-            Assert.That(goblin.Intent.Target, Is.EqualTo(P(2, 3)));
+            Assert.That(goblin.Intent.Target, Is.EqualTo(P(2, 2)));
             Assert.That(goblin.JustWoken, Is.False);
         }
 
@@ -68,6 +71,44 @@ namespace ClickDungeon.Tests
             DoOk(run, PlayerCommand.Wait());
             Assert.That(goblin.Pos, Is.EqualTo(P(3, 3)), "It strikes instead of stepping.");
             Assert.That(goblin.Intent.Target, Is.EqualTo(P(2, 2)));
+        }
+
+        [Test]
+        public void TilesRevealOnlyWhenClicked()
+        {
+            // D-023: walking up to a sleeping monster reveals nothing; only clicking its tile does.
+            var run = Run(
+                ".....",
+                ".....",
+                "..H..",
+                "..g..",
+                ".....");
+            DoOk(run, PlayerCommand.Move(P(1, 2)));
+            var goblin = Enemy(run, "goblin");
+            Assert.That(run.Floor[P(2, 1)].Knowledge, Is.Not.EqualTo(Knowledge.Revealed), "Standing beside a tile does not reveal it.");
+            Assert.That(goblin.Awake, Is.False);
+
+            var bump = DoOk(run, PlayerCommand.Move(P(2, 1)));
+            Assert.That(Has(bump, GameEventKind.HeroBumped), Is.True);
+            Assert.That(run.Hero.Pos, Is.EqualTo(P(1, 2)));
+            Assert.That(run.Floor[P(2, 1)].Knowledge, Is.EqualTo(Knowledge.Revealed));
+            Assert.That(goblin.Awake, Is.True);
+        }
+
+        [Test]
+        public void DashingIntoAHiddenMonsterBumpsIt()
+        {
+            var run = Run(
+                ".....",
+                ".....",
+                "H.g..",
+                ".....",
+                ".....");
+            var result = DoOk(run, PlayerCommand.Dash(P(2, 2)));
+            Assert.That(Has(result, GameEventKind.HeroBumped), Is.True);
+            Assert.That(run.Hero.Pos, Is.EqualTo(P(0, 2)), "The dash stops: the hero stays put.");
+            Assert.That(Enemy(run, "goblin").Awake, Is.True);
+            Assert.That(run.Hero.DashCooldown, Is.GreaterThan(0), "The dash was still spent.");
         }
 
         [Test]

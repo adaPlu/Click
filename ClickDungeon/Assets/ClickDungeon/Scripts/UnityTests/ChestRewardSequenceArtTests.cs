@@ -96,7 +96,7 @@ namespace ClickDungeon.UnityTests
 
             var overlay = NewOverlay();
             overlay.Open(new RewardRecord { Kind = RewardKind.MaxHp, Amount = 2 }, null);
-            for (int i = 0; i < 3; i++) overlay.Tap();
+            overlay.Tap(); // Skips the anticipation beat straight to the reveal.
 
             Assert.That(Pose().sprite, Is.SameAs(reveal));
             var rewardIcon = Named("RewardCard").Find("Icon").GetComponent<Image>();
@@ -115,7 +115,7 @@ namespace ClickDungeon.UnityTests
             UseArt((ArtKeys.Heart, heart));
             var overlay = NewOverlay();
             overlay.Open(new RewardRecord { Kind = RewardKind.MaxHp, Amount = 2 }, null);
-            for (int i = 0; i < 3; i++) overlay.Tap();
+            overlay.Tap(); // Skips the anticipation beat straight to the reveal.
             Assert.That(Named("RewardCard").Find("Icon").GetComponent<Image>().sprite, Is.SameAs(heart));
 
             Object.DestroyImmediate(_root);
@@ -123,7 +123,7 @@ namespace ClickDungeon.UnityTests
             UseArt();
             var bare = NewOverlay();
             bare.Open(new RewardRecord { Kind = RewardKind.SlashDamage, Amount = 1 }, null);
-            for (int i = 0; i < 3; i++) bare.Tap();
+            bare.Tap();
             Assert.That(Named("RewardCard").Find("Icon").gameObject.activeSelf, Is.False);
             Assert.That(Named("Rays").gameObject.activeSelf, Is.False);
         }
@@ -146,11 +146,58 @@ namespace ClickDungeon.UnityTests
                 Floor = floor,
             };
             RunFactory.SetupFloor(run, Catalog, new List<GameEvent>());
+            // Tiles reveal only when clicked (D-023); a covered chest draws as a cover, not a chest.
+            floor[new GridPos(2, 3)].Knowledge = Knowledge.Revealed;
 
             var board = new BoardView((RectTransform)_root.transform, _root.AddComponent<SpriteFrameAnimator>(), Vector2.zero);
             board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
 
             Assert.That(Named("Cell 2,3").Find("Icons").GetComponentsInChildren<Image>(true).Any(i => i.sprite == shimmer), Is.True);
+        }
+
+        [Test]
+        public void TappedBoardChestsShowTapProgress()
+        {
+            // D-022: after the first tap a board chest carries a backing strip and one pip per tap it needs.
+            // Regression: the meter was drawn under the hero token when the hero stood on the chest.
+            UseArt();
+            int untouched = ChestIconImages(0);
+            int tapped = ChestIconImages(2);
+            Assert.That(tapped - untouched, Is.EqualTo(1 + Chests.TapsToOpen(ChestQuality.Epic)));
+        }
+
+        int ChestIconImages(int taps)
+        {
+            var root = new GameObject("PipRoot" + taps, typeof(RectTransform));
+            try
+            {
+                var floor = FloorState.CreateEmpty();
+                floor.FloorIndex = 1;
+                floor.Start = new GridPos(2, 2);
+                floor[new GridPos(2, 3)].Content = ContentKind.Chest;
+                var run = new RunState
+                {
+                    RunSeed = 1,
+                    FloorCount = Catalog.RunFloorCount,
+                    Hero = RunFactory.CreateHero(Catalog, ContentCatalog.DefaultHeroId),
+                    Floor = floor,
+                };
+                RunFactory.SetupFloor(run, Catalog, new List<GameEvent>());
+                var chest = floor[new GridPos(2, 3)];
+                chest.Knowledge = Knowledge.Revealed;
+                chest.Quality = ChestQuality.Epic;
+                chest.ChestTaps = taps;
+
+                var board = new BoardView((RectTransform)root.transform, root.AddComponent<SpriteFrameAnimator>(), Vector2.zero);
+                board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
+                // The meter draws in the label layer, above tokens, so a hero standing on the chest cannot hide it.
+                return root.GetComponentsInChildren<Transform>(true).First(t => t.name == "Labels 2,3")
+                    .GetComponentsInChildren<Image>(true).Length;
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
         }
 
         [Test]

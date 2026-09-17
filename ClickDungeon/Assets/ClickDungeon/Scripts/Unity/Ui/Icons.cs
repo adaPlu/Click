@@ -172,11 +172,16 @@ namespace ClickDungeon.Unity.Ui
         public static void ChestProgress(Transform t, int taps, int needed)
         {
             if (taps <= 0 || needed <= 1) return;
-            const float pitch = 16f;
+            // Sized for a 136-unit tile and set on a dark strip: pips drawn straight onto gold chest art could not be seen.
+            const float pitch = 26f, y = -50f;
             float start = -pitch * (needed - 1) * 0.5f;
+            Shape(t, Shapes.Rounded, new Color(0f, 0f, 0f, 0.75f), new Vector2(0f, y), new Vector2(pitch * needed + 10f, 26f));
             for (int i = 0; i < needed; i++)
-                Shape(t, Shapes.Rounded, i < taps ? Palette.Gold : Palette.StoneDark,
-                    new Vector2(start + pitch * i, -46f), new Vector2(12f, 8f));
+            {
+                bool done = i < taps;
+                Shape(t, Shapes.Rounded, done ? Palette.Gold : new Color(1f, 1f, 1f, 0.22f),
+                    new Vector2(start + pitch * i, y), new Vector2(20f, 14f));
+            }
         }
 
         public static void Potion(Transform t, float scale = 1f)

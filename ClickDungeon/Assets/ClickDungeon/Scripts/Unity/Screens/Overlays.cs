@@ -130,12 +130,13 @@ namespace ClickDungeon.Unity.Screens
     }
 
     /// <summary>
-    /// The tactile chest ritual. The reward was already committed by the Interact command (decision D-005);
-    /// taps here cost no turns and can never grant anything.
+    /// The chest reward reveal. Rewards were already committed by the tap that opened the chest (D-005, D-022), after the
+    /// real taps on the board; this overlay costs no turns and can never grant anything.
     /// </summary>
     public sealed class ChestOverlay
     {
-        const int RequiredTaps = 3;
+        /// <summary>The anticipation beat before the lid bursts on its own.</summary>
+        const float AnticipationSeconds = 0.35f;
         static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
 
         readonly MonoBehaviour _host;
@@ -153,10 +154,9 @@ namespace ClickDungeon.Unity.Screens
         readonly Image _reactionFrame;
         readonly Image _rewardIcon;
         Coroutine _sequence;
-        int _taps;
         bool _burst;
         Action _onClosed;
-        RewardRecord _reward;
+        IReadOnlyList<RewardRecord> _rewards = Array.Empty<RewardRecord>();
 
         public ChestOverlay(RectTransform parent, MonoBehaviour host)
         {
@@ -215,6 +215,12 @@ namespace ClickDungeon.Unity.Screens
             UiArt.ApplyPanel(cardBack, cardBorder, ArtKeys.ChestRewardCard);
             _rewardText = UiFactory.Text(_rewardCard, "Text", "", 52, Palette.Gold, TextAnchor.MiddleCenter, FontStyle.Bold);
             _rewardText.rectTransform.Stretch();
+            // A chest can grant several rewards (D-022); the line shrinks to fit rather than overflowing the card.
+            // Best fit only shrinks text that is not allowed to overflow its box.
+            _rewardText.verticalOverflow = VerticalWrapMode.Truncate;
+            _rewardText.resizeTextForBestFit = true;
+            _rewardText.resizeTextMinSize = 24;
+            _rewardText.resizeTextMaxSize = 52;
             UiFactory.Shadow(_rewardText, new Color(0f, 0f, 0f, 0.8f), 3f);
             _rewardIcon = UiFactory.Image(_rewardCard, "Icon", Color.white, null);
             _rewardIcon.rectTransform.Place(new Vector2(0f, 0.5f), Center, new Vector2(70f, 0f), new Vector2(96f, 96f));
@@ -229,22 +235,35 @@ namespace ClickDungeon.Unity.Screens
 
         public bool IsOpen => _root.gameObject.activeSelf;
 
-        public void Open(RewardRecord reward, Action onClosed)
+        public void Open(RewardRecord reward, Action onClosed) => Open(new[] { reward }, onClosed);
+
+        /// <summary>
+        /// Reveals rewards the chest has already granted. Opening it took real turns on the board (D-022), so there is no
+        /// second round of tapping here: the lid bursts after a short beat, and a tap skips ahead or collects.
+        /// </summary>
+        public void Open(IReadOnlyList<RewardRecord> rewards, Action onClosed)
         {
-            _reward = reward;
+            _rewards = rewards ?? Array.Empty<RewardRecord>();
             _onClosed = onClosed;
-            _taps = 0;
             _burst = false;
             DrawChest(false);
-            _progressBack.gameObject.SetActive(true);
-            _progressFill.anchorMax = new Vector2(0f, 1f);
+            // The chest's tap meter lives on the board tile now; the overlay only celebrates.
+            _progressBack.gameObject.SetActive(false);
             _rewardCard.gameObject.SetActive(false);
             _rays.gameObject.SetActive(false);
             StopSequence();
             ShowReaction("anticipation");
-            _prompt.text = $"TAP TO OPEN  (0/{RequiredTaps})";
+            _prompt.text = "";
             _root.SetAsLastSibling();
             _root.gameObject.SetActive(true);
+            _sequence = _host.StartCoroutine(BurstAfterAnticipation());
+        }
+
+        System.Collections.IEnumerator BurstAfterAnticipation()
+        {
+            if (!UserPrefs.ReducedMotion) yield return new WaitForSecondsRealtime(AnticipationSeconds);
+            _sequence = null;
+            if (IsOpen && !_burst) Burst();
         }
 
         public void Tap()
@@ -259,12 +278,26 @@ namespace ClickDungeon.Unity.Screens
                 closed?.Invoke();
                 return;
             }
+            // Tapping during the anticipation beat skips straight to the reveal.
+            StopSequence();
+            Burst();
+        }
 
-            _taps++;
-            _progressFill.anchorMax = new Vector2(_taps / (float)RequiredTaps, 1f);
-            _host.StartCoroutine(Tween.Punch(_chest, 0.18f, 0.18f));
-            _prompt.text = $"TAP TO OPEN  ({_taps}/{RequiredTaps})";
-            if (_taps >= RequiredTaps) Burst();
+        /// <summary>Rewards of the same kind are added together: "+2 POTION   +6 MAX HP".</summary>
+        static string RewardSummary(IReadOnlyList<RewardRecord> rewards)
+        {
+            var totals = new List<RewardRecord>();
+            foreach (var reward in rewards)
+            {
+                if (reward == null) continue;
+                var total = totals.Find(t => t.Kind == reward.Kind);
+                if (total == null) totals.Add(new RewardRecord { Kind = reward.Kind, Amount = reward.Amount });
+                else total.Amount += reward.Amount;
+            }
+            if (totals.Count == 0) return Lines.RewardText(null);
+            var parts = new List<string>();
+            foreach (var total in totals) parts.Add(Lines.RewardText(total));
+            return string.Join("   ", parts);
         }
 
         void Burst()
@@ -272,8 +305,9 @@ namespace ClickDungeon.Unity.Screens
             _burst = true;
             DrawChest(true);
             _progressBack.gameObject.SetActive(false);
-            _rewardText.text = Lines.RewardText(_reward);
-            bool hasIcon = TryRewardIcon(_reward, out var rewardIcon);
+            _rewardText.text = RewardSummary(_rewards);
+            var first = _rewards.Count > 0 ? _rewards[0] : null;
+            bool hasIcon = TryRewardIcon(first, out var rewardIcon);
             _rewardIcon.gameObject.SetActive(hasIcon);
             if (hasIcon) SetSprite(_rewardIcon, rewardIcon);
             _rewardText.rectTransform.Stretch(hasIcon ? 120f : 0f, 0f, 0f, 0f);

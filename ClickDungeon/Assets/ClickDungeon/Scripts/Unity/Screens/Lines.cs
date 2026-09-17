@@ -203,6 +203,10 @@ namespace ClickDungeon.Unity.Screens
                     return "<color=#F2C94C>Picked up the key.</color>";
                 case GameEventKind.PotionCollected:
                     return "<color=#9FD8A0>Found a potion.</color>";
+                case GameEventKind.HeroBumped:
+                    return e.Source == "lurker"
+                        ? "<color=#FF6B5E>Something was lurking there!</color>"
+                        : "Something blocks the way.";
                 case GameEventKind.ChestTapped:
                     return $"<color=#F2C94C>The lid shifts… {e.Amount} more to go.</color>";
                 case GameEventKind.ChestOpened:

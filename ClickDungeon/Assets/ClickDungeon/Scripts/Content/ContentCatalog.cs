@@ -30,6 +30,12 @@ namespace ClickDungeon.Content
         public readonly List<TopologyTemplate> Templates = new List<TopologyTemplate>();
         public readonly List<FloorProfile> FloorProfiles = new List<FloorProfile>();
         public readonly List<RewardEntry> ChestRewards = new List<RewardEntry>();
+
+        /// <summary>
+        /// Rewards a regular chest grants when it opens, indexed by <see cref="ChestQuality"/> (D-022). Better chests cost
+        /// more taps, so they pay one reward per tap: Common 2, Rare 3, Epic 4.
+        /// </summary>
+        public readonly int[] ChestRewardsByQuality = { 2, 3, 4 };
         public readonly Dictionary<Difficulty, DifficultyDefinition> Difficulties = new Dictionary<Difficulty, DifficultyDefinition>();
 
         public HeroClassDefinition HeroClass(string id) => Get(HeroClasses, id, "hero class");
@@ -254,8 +260,10 @@ namespace ClickDungeon.Content
                 FloorIndex = 5, Name = "Blobert's Court", IsBoss = true, BossId = "lord_blobert", MinPotions = 1, MaxPotions = 1, MinExitDistance = 3,
             });
 
-            c.ChestRewards.Add(new RewardEntry { Kind = RewardKind.Potion, Amount = 1, Weight = 3 });
-            c.ChestRewards.Add(new RewardEntry { Kind = RewardKind.MaxHp, Amount = 2, Weight = 2 });
+            // Chests cost 2-4 turns each (D-022 amendment, measured with ChestWorth). Potions stay single: at two per draw
+            // a looting run ended with ~11 unused, so that weight went to max HP instead.
+            c.ChestRewards.Add(new RewardEntry { Kind = RewardKind.Potion, Amount = 1, Weight = 2 });
+            c.ChestRewards.Add(new RewardEntry { Kind = RewardKind.MaxHp, Amount = 3, Weight = 3 });
             c.ChestRewards.Add(new RewardEntry { Kind = RewardKind.SlashDamage, Amount = 1, Weight = 1 });
 
             c.Difficulties[Difficulty.Easy] = new DifficultyDefinition
@@ -265,16 +273,17 @@ namespace ClickDungeon.Content
             };
             c.Difficulties[Difficulty.Medium] = new DifficultyDefinition
             {
-                Id = Difficulty.Medium, DisplayName = "Knight's Trial", Tagline = "More monsters, one less potion. Read every tile.",
-                // Tuned for adjacent-only melee (D-021 amendment): blind novice AutoPlayer wins ~80% (rules §10.2).
-                StartingPotions = -1, ExtraEnemies = 1,
+                Id = Difficulty.Medium, DisplayName = "Knight's Trial", Tagline = "The dungeon as designed. Click carefully.",
+                // Tuned for click-to-reveal (D-023), where every click is a blind step: traps blunted by one, no extra
+                // monsters or missing potions. Blind novice AutoPlayer wins ~65% (rules §10.2).
+                HazardDamage = -1,
             };
             c.Difficulties[Difficulty.Hardcore] = new DifficultyDefinition
             {
-                Id = Difficulty.Hardcore, DisplayName = "Blobert's Wrath", Tagline = "Fewer hearts, crowded floors, meaner monsters. No mercy.",
-                // Tuned for adjacent-only melee (D-021 amendment): blind novice AutoPlayer wins ~32% (rules §10.2).
-                HeroMaxHp = -2, StartingPotions = -1, EnemyHp = 1, EnemyDamage = 1, HazardDamage = 1, BossHp = 4, BossSlamDamage = 1,
-                ExtraEnemies = 2,
+                Id = Difficulty.Hardcore, DisplayName = "Blobert's Wrath", Tagline = "Tougher monsters, a mightier Blobert, one potion. No mercy.",
+                // Tuned for click-to-reveal (D-023): blind traps and bumped monsters already hurt, so the pressure moved to
+                // Lord Blobert. Blind novice AutoPlayer wins ~23%, casual ~53% (rules §10.2).
+                StartingPotions = -1, EnemyHp = 1, BossHp = 4, BossSlamDamage = 1,
             };
             return c;
         }

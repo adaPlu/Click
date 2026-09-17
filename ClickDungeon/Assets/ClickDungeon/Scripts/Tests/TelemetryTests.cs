@@ -142,11 +142,15 @@ namespace ClickDungeon.Tests
                 ".HC..",
                 ".....",
                 ".....");
+            // One chest_opened event per reward granted.
+            chestRun.Floor[P(2, 2)].Quality = ChestQuality.Common;
             var sink = new MemoryTelemetrySink();
             var chestRecorder = Recorder(sink);
             for (int i = 0, taps = Chests.TapsToOpen(chestRun.Floor[P(2, 2)].Quality); i < taps; i++)
                 Play(chestRecorder, chestRun, PlayerCommand.Interact(P(2, 2)));
-            Assert.That((string)Single(sink, "chest_opened")["data"]["reward"], Is.EqualTo(chestRun.Rewards[0].Kind.ToString().ToLowerInvariant()));
+            var opened = sink.Named("chest_opened");
+            Assert.That(opened.Count, Is.EqualTo(chestRun.Rewards.Count));
+            Assert.That((string)JObject.Parse(opened[0].ToJson())["data"]["reward"], Is.EqualTo(chestRun.Rewards[0].Kind.ToString().ToLowerInvariant()));
 
             var deathRun = Run(
                 ".....",
