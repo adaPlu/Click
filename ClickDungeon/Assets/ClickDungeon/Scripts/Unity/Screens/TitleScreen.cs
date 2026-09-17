@@ -311,7 +311,7 @@ namespace ClickDungeon.Unity.Screens
             var title = UiFactory.Text(panel, "Title", "HOW TO PLAY", 36, Palette.Gold, TextAnchor.MiddleCenter, FontStyle.Bold);
             title.rectTransform.Place(TopCenter, TopCenter, new Vector2(0f, -12f), new Vector2(320f, 52f));
             var body = UiFactory.Text(panel, "Body",
-                "Read the sensed tiles.\nWake enemies on purpose.\nDodge the marked tiles.\nGrab the key. Find the exit.\nBeat Lord Blobert on floor 5.",
+                "Click a tile to uncover it.\nEvery tile hides something.\nWake enemies on purpose.\nGrab the key. Find the exit.\nBeat Lord Blobert on floor 5.",
                 24, Palette.TextLight, TextAnchor.UpperCenter);
             body.rectTransform.Stretch(16, 76, 16, 76);
             body.lineSpacing = 1.3f;
