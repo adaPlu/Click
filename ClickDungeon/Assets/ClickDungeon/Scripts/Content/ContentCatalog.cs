@@ -19,6 +19,7 @@ namespace ClickDungeon.Content
         public HazardTuning Hazards = new HazardTuning();
         /// <summary>What a vault room behind a door holds (D-018).</summary>
         public VaultTuning Vault = new VaultTuning();
+        public TreasureTuning Treasure = new TreasureTuning();
         /// <summary>The tier this catalog was built for. Every number in it already includes that tier's adjustments.</summary>
         public Difficulty Difficulty = Difficulty.Medium;
         /// <summary>HP restored when the hero arrives on the next floor.</summary>

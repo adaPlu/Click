@@ -347,6 +347,8 @@ namespace ClickDungeon.Application
                 ReturnPos = run.ReturnPos,
                 // Reward records are never changed after they are granted.
                 Rewards = new List<RewardRecord>(run.Rewards),
+                CoinsFound = run.CoinsFound,
+                GemsFound = run.GemsFound,
             };
         }
 

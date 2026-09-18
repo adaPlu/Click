@@ -5,6 +5,7 @@
         "ClickDungeon.Domain",
         "ClickDungeon.Content",
         "ClickDungeon.Simulation",
+        "ClickDungeon.Application",
         "ClickDungeon.Unity",
         "ClickDungeon.Editor",
         "UnityEngine.UI",

@@ -45,6 +45,8 @@ namespace ClickDungeon.Simulation
         FountainUsed,
         ChestOpened,
         ExitUnlocked,
+        CoinsFound,
+        GemFound,
         FloorCompleted,
         RunWon,
         RunLost,

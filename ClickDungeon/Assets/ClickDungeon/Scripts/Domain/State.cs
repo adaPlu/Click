@@ -138,6 +138,9 @@ namespace ClickDungeon.Domain
         /// <summary>The door cell the hero stepped through, where they come back out.</summary>
         public GridPos ReturnPos = GridPos.Invalid;
         public List<RewardRecord> Rewards = new List<RewardRecord>();
+        /// <summary>Treasure carried out of the dungeon (D-025). Banked into the profile when the run ends.</summary>
+        public int CoinsFound;
+        public int GemsFound;
 
         public bool HasReward(string transactionId)
         {

@@ -349,3 +349,14 @@ Rules referenced here live in `docs/rules.md`.
   `SettingsMenuTests.HeroSelectListsEveryHeroWithItsNumbersAndMarksTheChosenOne`, and the `HeroSweep` balance aid.
 - **REVERSIBILITY**: easy. Removing the second identity leaves the Knight and one button to delete.
 
+## D-025 Coins, gems and the shop
+- **DECISION**: Runs carry coins (chests, stairs) and gems (Lord Blobert) out into a between-runs profile
+  (`profile.json`, kept apart from the run save so a broken run never costs coins). The title screen shows the purse and
+  a SHOP that sells provisions for the next run (potion ration, heart token). Banking happens once, when a run ends;
+  abandoning banks too. Automation keeps its profile in memory.
+- **WHY**: the reference title and game screens show coin and gem counters and a SHOP; a counter with nothing to spend on
+  would be the fake chrome D1 rules out, so currency ships with its shop.
+- **BALANCE**: the tier guards and bots play with an empty profile, so every measured number describes a first run.
+  Provisions make later runs easier by design.
+- **TESTS**: `TreasureAndShopTests`, `SettingsMenuTests.TheShopShowsThePurseAndOnlyOffersWhatTheCoinsCover`.
+

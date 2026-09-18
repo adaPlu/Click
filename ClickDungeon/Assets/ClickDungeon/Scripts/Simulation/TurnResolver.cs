@@ -209,6 +209,8 @@ namespace ClickDungeon.Simulation
             }
 
             events.Add(GameEvent.Of(GameEventKind.FloorCompleted, amount: floor.FloorIndex));
+            // Walking down the stairs pays; falling through a pit (above) skips the floor and pays nothing.
+            Treasure.Coins(run, catalog.Treasure.CoinsPerFloor, hero.Pos, events);
             run.Turn++;
             if (floor.FloorIndex >= run.FloorCount)
             {

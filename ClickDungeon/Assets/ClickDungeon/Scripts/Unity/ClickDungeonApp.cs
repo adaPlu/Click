@@ -37,7 +37,11 @@ namespace ClickDungeon.Unity
             AutomationMode = ArgValue("-cdShot") != null;
             _automationTelemetryDir = AutomationMode ? ArgValue("-cdTelemetryDir") : null;
             Store = new FileSaveStore(Path.Combine(UnityEngine.Application.persistentDataPath, AutomationMode ? "saves-automation" : "saves"));
-            Session = new GameSession(ContentCatalog.CreateDefault(), Store);
+            // Automation keeps its coins in memory, so screenshot runs never spend or bank a real player's profile.
+            var profiles = AutomationMode
+                ? (IProfileStore)new MemoryProfileStore()
+                : new FileProfileStore(Path.Combine(UnityEngine.Application.persistentDataPath, "saves"));
+            Session = new GameSession(ContentCatalog.CreateDefault(), Store, null, profiles);
             ApplyTelemetrySetting();
 
             EnsureCamera();

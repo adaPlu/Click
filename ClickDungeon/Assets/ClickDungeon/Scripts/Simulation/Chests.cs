@@ -151,6 +151,7 @@ namespace ClickDungeon.Simulation
                 if (run.HasReward(reward.TransactionId)) continue;
                 reward.Turn = run.Turn;
                 run.Rewards.Add(reward);
+                Treasure.Coins(run, catalog.Treasure.CoinsPerChestReward, cell, events);
                 Grant(run.Hero, reward);
 
                 var opened = GameEvent.Of(GameEventKind.ChestOpened, to: cell, amount: reward.Amount, source: reward.Kind.ToString());

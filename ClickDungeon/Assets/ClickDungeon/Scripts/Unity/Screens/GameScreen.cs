@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using ClickDungeon.Application;
 using ClickDungeon.Content;
 using ClickDungeon.Domain;
 using ClickDungeon.Simulation;
@@ -414,7 +415,7 @@ namespace ClickDungeon.Unity.Screens
             if (run.Status == RunStatus.Won)
             {
                 _modal.Show(ModalStyle.Victory, "VICTORY!",
-                    $"Lord Blobert is defeated. Again.\n\nDifficulty: {DifficultyName(run)}\nTurns taken: {run.Turn}\nChests opened: {Chests.ChestsOpened(run.Rewards)} ({run.Rewards.Count} rewards)\n\nSir Clickington: \"Victory! Snacks for everyone!\"",
+                    $"Lord Blobert is defeated. Again.\n\nDifficulty: {DifficultyName(run)}\nTurns taken: {run.Turn}\nChests opened: {Chests.ChestsOpened(run.Rewards)} ({run.Rewards.Count} rewards)\n{Purse(run)}\n\nSir Clickington: \"Victory! Snacks for everyone!\"",
                     () => { },
                     Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
                     Menus.B("TITLE", Palette.NavyLight, _app.ShowTitle));
@@ -422,11 +423,18 @@ namespace ClickDungeon.Unity.Screens
             else
             {
                 _modal.Show(ModalStyle.Defeat, "DEFEATED",
-                    $"Fell on floor {run.Floor.FloorIndex}: {floorName}\nFinal blow: {Lines.SourceName(_lastDamageSource ?? "?", Catalog)}\nDifficulty: {DifficultyName(run)}\nTurns survived: {run.Turn}\n\nThe WHAT HAPPENED log shows every hit.\n\nSir Clickington: \"Tell my horse... wait. I don't have a horse.\"",
+                    $"Fell on floor {run.Floor.FloorIndex}: {floorName}\nFinal blow: {Lines.SourceName(_lastDamageSource ?? "?", Catalog)}\nDifficulty: {DifficultyName(run)}\nTurns survived: {run.Turn}\n{Purse(run)}\n\nThe WHAT HAPPENED log shows every hit.\n\nSir Clickington: \"Tell my horse... wait. I don't have a horse.\"",
                     () => { },
                     Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
                     Menus.B("TITLE", Palette.NavyLight, _app.ShowTitle));
             }
+        }
+
+        /// <summary>What the run carried out, which the profile has just banked (D-025).</summary>
+        static string Purse(RunState run)
+        {
+            string gems = run.GemsFound > 0 ? $" and {run.GemsFound} gem{(run.GemsFound == 1 ? "" : "s")}" : "";
+            return $"Carried out: {run.CoinsFound} coins{gems}";
         }
 
         // ------------------------------------------------------------------ menus
@@ -1068,6 +1076,42 @@ namespace ClickDungeon.Unity.Screens
                     $"{(hero.DashDistance == 1 ? "tile" : "tiles")} every {hero.DashCooldown}.");
             }
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Spends what runs carried out (D-025). Provisions outfit the next run, so buying mid-run is not possible: the shop
+        /// only opens from the title.
+        /// </summary>
+        public static void OpenShop(ModalOverlay modal, ContentCatalog catalog, ProfileState profile, Action<ShopItem> buy, Action back)
+        {
+            var buttons = new List<(string, Color, Action)>();
+            foreach (ShopItem item in new[] { ShopItem.PotionRation, ShopItem.HeartToken })
+            {
+                var stock = item;
+                bool afford = Shop.CanAfford(profile, stock);
+                buttons.Add(($"{Shop.DisplayName(stock)} — {Shop.Price(stock)} COINS{(afford ? "" : " (NOT ENOUGH)")}",
+                    afford ? Palette.PlayGreen : Palette.NavyLight, () => buy(stock)));
+            }
+            buttons.Add(B("DONE", Palette.NavyLight, back));
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"<color=#F2C14E>{profile.Coins} coins</color>   <color=#B06BE6>{profile.Gems} gems</color>");
+            sb.AppendLine();
+            foreach (ShopItem item in new[] { ShopItem.PotionRation, ShopItem.HeartToken })
+                sb.AppendLine($"{Shop.DisplayName(item)}: {Shop.Describe(item, catalog)}");
+            sb.AppendLine();
+            if (profile.PotionRations > 0 || profile.HeartTokens > 0)
+                sb.AppendLine($"Waiting for your next run: {profile.PotionRations} potion rations, {profile.HeartTokens} heart tokens.");
+            sb.AppendLine("Coins come out of chests and off every floor you finish. Gems are Lord Blobert's alone.");
+            modal.Show("SHOP", sb.ToString(), back, buttons.ToArray());
+        }
+
+        /// <summary>Buys one item and writes the profile. False means the coins were not there and nothing changed.</summary>
+        public static bool Buy(GameSession session, ShopItem item)
+        {
+            if (session?.Profile == null || !Shop.TryBuy(session.Profile, item)) return false;
+            session.SaveProfile();
+            return true;
         }
 
         public static void OpenSettings(ModalOverlay modal, Action back, Action changed = null)

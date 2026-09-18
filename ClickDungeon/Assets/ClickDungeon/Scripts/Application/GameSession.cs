@@ -13,13 +13,27 @@ namespace ClickDungeon.Application
     public sealed class GameSession
     {
         readonly ISaveStore _store;
+        readonly IProfileStore _profiles;
         TelemetryRecorder _telemetry;
 
-        public GameSession(ContentCatalog catalog, ISaveStore store, TelemetryRecorder telemetry = null)
+        public GameSession(ContentCatalog catalog, ISaveStore store, TelemetryRecorder telemetry = null,
+            IProfileStore profiles = null)
         {
             Catalog = catalog;
             _store = store;
+            _profiles = profiles ?? new MemoryProfileStore();
+            Profile = _profiles.Load();
             Telemetry = telemetry;
+        }
+
+        /// <summary>What the player keeps between runs (D-025). Never read during a run: provisions become hero numbers at the start.</summary>
+        public ProfileState Profile { get; private set; }
+
+        /// <summary>Writes the profile. Presentation calls this after spending in the shop.</summary>
+        public void SaveProfile()
+        {
+            if (_profiles == null || Profile == null) return;
+            Guarded(() => _profiles.Save(Profile));
         }
 
         /// <summary>Content tuned for the current run's difficulty. Changes when a run of another tier starts or resumes.</summary>
@@ -57,6 +71,9 @@ namespace ClickDungeon.Application
             UseCatalog(Catalog.ForDifficulty(difficulty));
             var events = new List<GameEvent>();
             Run = RunFactory.NewRun(seed, Catalog, events, heroId, movement);
+            // Provisions are spent into the run's own numbers, so the simulation stays a function of its inputs.
+            ProfileSystem.Provision(Profile, Run, Catalog);
+            SaveProfile();
             Persist();
             Telemetry?.RunStarted(Run, events);
             return events;
@@ -90,15 +107,31 @@ namespace ClickDungeon.Application
         {
             if (Run == null) return CommandResult.Rejected("No run in progress.");
             var pending = Telemetry?.Begin(Run, command);
+            var wasInProgress = Run.Status == RunStatus.InProgress;
             var result = TurnResolver.Apply(Run, command, Catalog);
             if (result.Accepted) Persist();
+            // The treasure carried out is banked once, on the turn the run ends.
+            if (wasInProgress && Run.Status != RunStatus.InProgress)
+            {
+                ProfileSystem.Bank(Profile, Run);
+                SaveProfile();
+            }
             Telemetry?.Complete(pending, Run, result);
             return result;
         }
 
+        /// <summary>Giving up still carries out what was found: abandoning is not a way to lose coins, nor to farm them twice.</summary>
         public void Abandon()
         {
-            if (Run != null) Telemetry?.RunAbandoned(Run);
+            if (Run != null)
+            {
+                Telemetry?.RunAbandoned(Run);
+                if (Run.Status == RunStatus.InProgress)
+                {
+                    ProfileSystem.Bank(Profile, Run);
+                    SaveProfile();
+                }
+            }
             Run = null;
             SaveError = null;
             if (_store != null) Guarded(_store.Delete);

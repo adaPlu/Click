@@ -137,6 +137,21 @@ namespace ClickDungeon.Content
     }
 
     /// <summary>What a vault room holds (D-018): either one great chest or a handful of ordinary ones.</summary>
+    /// <summary>What a run pays out into the profile (D-025, rules §13).</summary>
+    public sealed class TreasureTuning
+    {
+        /// <summary>Per reward drawn from a chest.</summary>
+        public int CoinsPerChestReward = 4;
+        /// <summary>For walking down the stairs off a floor.</summary>
+        public int CoinsPerFloor = 10;
+        /// <summary>Lord Blobert's crown jewel: the only gem in the game.</summary>
+        public int GemsForTheBoss = 1;
+        /// <summary>What one bought potion ration is worth on the next run.</summary>
+        public int PotionRationPotions = 1;
+        /// <summary>What one bought heart token is worth on the next run.</summary>
+        public int HeartTokenHearts = 2;
+    }
+
     public sealed class VaultTuning
     {
         public int MinEnemies = 2;

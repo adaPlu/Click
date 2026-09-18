@@ -76,5 +76,29 @@ namespace ClickDungeon.UnityTests
             Buttons().First(b => b.name.Contains("SIR CLICKINGTON")).onClick.Invoke();
             Assert.That(picked, Is.EqualTo("sir_clickington"));
         }
+
+        [Test]
+        public void TheShopShowsThePurseAndOnlyOffersWhatTheCoinsCover()
+        {
+            // D-025: coins come out of runs; the shop is the only place they go.
+            var catalog = ClickDungeon.Content.ContentCatalog.CreateDefault();
+            var profile = new ClickDungeon.Domain.ProfileState { Coins = ClickDungeon.Application.Shop.PotionRationCoins, Gems = 1 };
+            var modal = new ModalOverlay((RectTransform)_root.transform, _root.AddComponent<SpriteFrameAnimator>());
+            ClickDungeon.Application.ShopItem? bought = null;
+            Menus.OpenShop(modal, catalog, profile, item => bought = item, () => { });
+
+            var body = _root.GetComponentsInChildren<Text>(true).First(t => t.name == "Body").text;
+            Assert.That(body, Does.Contain($"{profile.Coins} coins"));
+            Assert.That(body, Does.Contain("1 gems").Or.Contain("1 gem"));
+
+            var names = Buttons().Select(b => b.name).ToList();
+            Assert.That(names.Any(n => n.StartsWith("POTION RATION") && !n.Contains("NOT ENOUGH")), Is.True,
+                "The ration is affordable...");
+            Assert.That(names.Any(n => n.StartsWith("HEART TOKEN") && n.Contains("NOT ENOUGH")), Is.True,
+                "...the token is not, and says so.");
+
+            Buttons().First(b => b.name.StartsWith("POTION RATION")).onClick.Invoke();
+            Assert.That(bought, Is.EqualTo(ClickDungeon.Application.ShopItem.PotionRation));
+        }
     }
 }

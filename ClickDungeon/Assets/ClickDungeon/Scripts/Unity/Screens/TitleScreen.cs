@@ -25,6 +25,8 @@ namespace ClickDungeon.Unity.Screens
         readonly Text _flash;
         RectTransform _heroPortrait;
         RectTransform _heroButtonIcon;
+        Text _coins;
+        Text _gems;
         Text _heroName;
         Text _heroTagline;
         RunState _saved;
@@ -73,6 +75,7 @@ namespace ClickDungeon.Unity.Screens
             if (_modal.IsOpen) _modal.Hide();
             _flash.text = "";
             RefreshHeroCard();
+            RefreshPurse();
             _saved = null;
             if (_app.Store.TryLoad(out var run, out _) && run.Status == RunStatus.InProgress) _saved = run;
 
@@ -93,6 +96,7 @@ namespace ClickDungeon.Unity.Screens
             else if (name == "rules") _modal.Show("HOW TO PLAY", Menus.HelpText, _modal.Hide, Menus.B("GOT IT", Palette.PlayGreen, _modal.Hide));
             else if (name == "difficulty") ChooseDifficulty(_modal.Hide);
             else if (name == "heroes") OpenHeroSelect();
+            else if (name == "shop") OpenShop();
         }
 
         public void Tick()
@@ -180,6 +184,15 @@ namespace ClickDungeon.Unity.Screens
             return _app.Catalog.HeroIdentities.ContainsKey(id) ? id : Content.ContentCatalog.DefaultHeroId;
         }
 
+        void OpenShop()
+        {
+            Menus.OpenShop(_modal, _app.Catalog, _app.Session.Profile, item =>
+            {
+                if (Menus.Buy(_app.Session, item)) RefreshPurse();
+                OpenShop();
+            }, _modal.Hide);
+        }
+
         void OpenHeroSelect()
         {
             Menus.OpenHeroSelect(_modal, _app.Catalog, HeroChoice(), id =>
@@ -204,7 +217,12 @@ namespace ClickDungeon.Unity.Screens
             UiFactory.Shadow(_heroName, Color.black, 2f);
             _heroTagline = UiFactory.Text(card, "Tagline", "", 24, Palette.TextLight, TextAnchor.MiddleLeft);
             _heroTagline.rectTransform.Place(new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(136f, -70f), new Vector2(290f, 40f));
+
+            // The purse sits under the card, as in the reference. Both counters are real: coins and gems come out of runs.
+            _coins = Purse(card, new Vector2(140f, -112f), ArtKeys.CoinIcon, Palette.Gold);
+            _gems = Purse(card, new Vector2(300f, -112f), ArtKeys.GemIcon, Palette.Summon);
             RefreshHeroCard();
+            RefreshPurse();
         }
 
         /// <summary>The card shows whoever takes the next run, so picking a hero is visible straight away (D-024).</summary>
@@ -218,6 +236,29 @@ namespace ClickDungeon.Unity.Screens
             Face(_heroPortrait, id, 108f);
             // The button carries the same face, so the choice reads without opening the menu.
             Face(_heroButtonIcon, id, 76f);
+        }
+
+        /// <summary>One counter: its icon, then its number.</summary>
+        Text Purse(RectTransform card, Vector2 pos, string iconKey, Color fallback)
+        {
+            var slot = UiFactory.Rect(card, "Purse " + iconKey);
+            slot.Place(new Vector2(0f, 1f), new Vector2(0f, 1f), pos, new Vector2(150f, 44f));
+            var icon = UiFactory.Rect(slot, "Icon");
+            icon.Place(new Vector2(0f, 0.5f), Center, new Vector2(20f, 0f), new Vector2(38f, 38f));
+            if (!ArtAt(icon, Vector2.zero, 38f, iconKey))
+                Icons.Shape(icon, Shapes.Circle, fallback, Vector2.zero, new Vector2(30f, 30f));
+            var text = UiFactory.Text(slot, "Text", "0", 26, Palette.TextLight, TextAnchor.MiddleLeft, FontStyle.Bold);
+            text.rectTransform.Place(new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(46f, 0f), new Vector2(100f, 40f));
+            UiFactory.Shadow(text, Color.black, 2f);
+            return text;
+        }
+
+        /// <summary>Coins and gems as they stand, after a run banks or the shop spends.</summary>
+        void RefreshPurse()
+        {
+            var profile = _app.Session.Profile;
+            if (_coins != null) _coins.text = profile.Coins.ToString();
+            if (_gems != null) _gems.text = profile.Gems.ToString();
         }
 
         void Face(RectTransform parent, string heroId, float size)
@@ -382,6 +423,15 @@ namespace ClickDungeon.Unity.Screens
             _heroButtonIcon = UiFactory.Rect(heroes.Rect, "Helm");
             _heroButtonIcon.Place(Center, Center, new Vector2(0f, 22f), new Vector2(76f, 76f));
             RefreshHeroCard();
+
+            var shop = UiFactory.Button(Root, "Shop", "SHOP", Palette.Navy, 34, OpenShop);
+            shop.Rect.Place(Vector2.zero, Vector2.zero, new Vector2(720f, 28f), new Vector2(260f, 136f));
+            shop.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(250f, 44f));
+            UiArt.ApplyPanel(shop.Background, shop.Border, ArtKeys.ButtonSecondary);
+            var coinIcon = UiFactory.Rect(shop.Rect, "Coin");
+            coinIcon.Place(Center, Center, new Vector2(0f, 22f), new Vector2(72f, 72f));
+            if (!ArtAt(coinIcon, Vector2.zero, 72f, ArtKeys.CoinIcon, ArtKeys.ChestLargeClosed))
+                Icons.Shape(coinIcon, Shapes.Circle, Palette.Gold, Vector2.zero, new Vector2(52f, 52f));
 
             var settings = UiFactory.Button(Root, "Settings", "SETTINGS", Palette.Navy, 34, () => Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting));
             settings.Rect.Place(new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-356f, 28f), new Vector2(280f, 136f));

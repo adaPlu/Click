@@ -499,3 +499,26 @@ pits are never generated on a floor with nothing below it.
 
 Both modes are the same simulation, so a save records its mode and resumes in it.
 
+## 13. Treasure, the profile and the shop *(D-025, tune numbers)*
+
+A run carries treasure out; the **profile** keeps it between runs.
+
+| Source | Pays |
+|---|---|
+| Each reward a chest gives up | 4 coins |
+| Walking down the stairs off a floor | 10 coins (falling through a pit pays nothing) |
+| Defeating Lord Blobert | 1 gem |
+
+What a run found is banked once, when it ends — won, lost or abandoned. The
+**shop** (title screen only) sells provisions for the *next* run:
+
+| Item | Price | Effect |
+|---|---|---|
+| Potion ration | 60 coins | +1 potion at the start of the next run |
+| Heart token | 120 coins | +2 max hearts (full) at the start of the next run |
+
+Provisions are spent when the next run starts. A run never reads the profile:
+provisions become the hero's starting numbers, so a run still follows only from
+its seed, tier, hero and provisions. Gems have no use yet; they are counted so
+the special-key shelf can price in them.
+

@@ -152,6 +152,9 @@ namespace ClickDungeon.Unity.Ui
         public const string HighlightTarget = "ui_highlight_target";
         public const string HighlightHover = "ui_highlight_hover";
         public const string PortraitFrame = "ui_frame_portrait";
+        /// <summary>The purse: coins come out of the dungeon, gems off Lord Blobert (D-025).</summary>
+        public const string CoinIcon = "ui_icon_gold";
+        public const string GemIcon = "ui_icon_gem";
         public const string HpBack = "ui_hp_back";
         /// <summary>The bar over a monster's token (the monster pack's enemy_health_bar).</summary>
         public const string EnemyHpBack = "ui_enemy_hp_back";
@@ -358,7 +361,7 @@ namespace ClickDungeon.Unity.Ui
             keys.AddRange(new[]
             {
                 HighlightLegal, HighlightTarget, HighlightHover,
-                PortraitFrame, HpBack, HpFill, HpFrame, EnemyHpBack, EnemyHpFill, Heart, Chip, FloorPlaque, Panel, SpeechStrip,
+                PortraitFrame, HpBack, HpFill, HpFrame, EnemyHpBack, EnemyHpFill, Heart, CoinIcon, GemIcon, Chip, FloorPlaque, Panel, SpeechStrip,
                 AbilityButtonDefault, AbilitySelected, CountBadge, SettingsButton, HelpButton,
             });
             foreach (var kind in AbilityKinds) keys.Add(AbilityButton(kind));
