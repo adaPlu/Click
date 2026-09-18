@@ -358,6 +358,8 @@ namespace ClickDungeon.Application
                 BonusCoinsPerChestReward = run.BonusCoinsPerChestReward,
                 ShieldCooldownCut = run.ShieldCooldownCut,
                 DashCooldownCut = run.DashCooldownCut,
+                MonstersSlain = run.MonstersSlain,
+                ChestsOpened = run.ChestsOpened,
             };
         }
 

@@ -157,10 +157,10 @@ namespace ClickDungeon.Content
     }
 
     /// <summary>
-    /// One day of the daily reward (D-029, rules §16): what claiming it adds to the profile. Everything it gives is something
-    /// the shop sells or a run carries out, so the reward is never a currency of its own.
+    /// A gift to the profile: a day of the daily reward (D-029), an achievement's prize or a letter's attachment (D-030).
+    /// Everything it gives is something the shop sells or a run carries out, so a gift is never a currency of its own.
     /// </summary>
-    public sealed class DailyRewardDefinition
+    public sealed class RewardBundle
     {
         public string Label;
         public int Coins;
@@ -168,6 +168,20 @@ namespace ClickDungeon.Content
         public int PotionRations;
         public int HeartTokens;
         public int SpecialKeys;
+    }
+
+    /// <summary>What an achievement counts, over every run banked so far (D-030).</summary>
+    public enum AchievementStat { RunsFinished, RunsWon, MonstersSlain, ChestsOpened, DeepestFloor, CoinsEarned, Level, ItemsOwned }
+
+    /// <summary>One of the crown's goals (D-030, rules §17): earned once when its count reaches the target.</summary>
+    public sealed class AchievementDefinition
+    {
+        public string Id;
+        public string Title;
+        public string Description;
+        public AchievementStat Stat;
+        public int Target;
+        public RewardBundle Reward;
     }
 
     /// <summary>Experience a run earns (D-027, rules §14).</summary>

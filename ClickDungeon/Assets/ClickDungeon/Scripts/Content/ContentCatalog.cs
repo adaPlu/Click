@@ -36,7 +36,14 @@ namespace ClickDungeon.Content
         public readonly List<ItemDefinition> Items = new List<ItemDefinition>();
         public int DuplicateItemCoins = 25;
         /// <summary>The daily reward's week (D-029): day one after a missed day, and again after day seven.</summary>
-        public readonly List<DailyRewardDefinition> DailyRewards = new List<DailyRewardDefinition>();
+        public readonly List<RewardBundle> DailyRewards = new List<RewardBundle>();
+        /// <summary>The crown's goals (D-030), in the order the crown lists them.</summary>
+        public readonly List<AchievementDefinition> Achievements = new List<AchievementDefinition>();
+        /// <summary>Attached to the first letter a new profile receives.</summary>
+        public RewardBundle WelcomeGift = new RewardBundle { Label = "a potion ration", PotionRations = 1 };
+
+        static void Achieve(ContentCatalog c, string id, string title, string description, AchievementStat stat, int target, RewardBundle reward) =>
+            c.Achievements.Add(new AchievementDefinition { Id = id, Title = title, Description = description, Stat = stat, Target = target, Reward = reward });
 
         public ItemDefinition Item(string id)
         {
@@ -151,13 +158,25 @@ namespace ClickDungeon.Content
             c.Items.Add(new ItemDefinition { Id = "healing_charm", DisplayName = "Healing Charm", Slot = ItemSlot.Trinket, Effect = "Potions heal 2 more", PotionHeal = 2 });
             c.Items.Add(new ItemDefinition { Id = "scholars_ring", DisplayName = "Scholar's Ring", Slot = ItemSlot.Trinket, Effect = "+5 XP for every floor walked down", XpPerFloor = 5 });
 
-            c.DailyRewards.Add(new DailyRewardDefinition { Label = "30 coins", Coins = 30 });
-            c.DailyRewards.Add(new DailyRewardDefinition { Label = "a potion ration", PotionRations = 1 });
-            c.DailyRewards.Add(new DailyRewardDefinition { Label = "50 coins", Coins = 50 });
-            c.DailyRewards.Add(new DailyRewardDefinition { Label = "a heart token", HeartTokens = 1 });
-            c.DailyRewards.Add(new DailyRewardDefinition { Label = "80 coins", Coins = 80 });
-            c.DailyRewards.Add(new DailyRewardDefinition { Label = "15 gems", Gems = 15 });
-            c.DailyRewards.Add(new DailyRewardDefinition { Label = "a special key", SpecialKeys = 1 });
+            c.DailyRewards.Add(new RewardBundle { Label = "30 coins", Coins = 30 });
+            c.DailyRewards.Add(new RewardBundle { Label = "a potion ration", PotionRations = 1 });
+            c.DailyRewards.Add(new RewardBundle { Label = "50 coins", Coins = 50 });
+            c.DailyRewards.Add(new RewardBundle { Label = "a heart token", HeartTokens = 1 });
+            c.DailyRewards.Add(new RewardBundle { Label = "80 coins", Coins = 80 });
+            c.DailyRewards.Add(new RewardBundle { Label = "15 gems", Gems = 15 });
+            c.DailyRewards.Add(new RewardBundle { Label = "a special key", SpecialKeys = 1 });
+
+            Achieve(c, "first_steps", "First Steps", "Finish a run", AchievementStat.RunsFinished, 1, new RewardBundle { Label = "25 coins", Coins = 25 });
+            Achieve(c, "deep_diver", "Deep Diver", "Reach floor 3", AchievementStat.DeepestFloor, 3, new RewardBundle { Label = "40 coins", Coins = 40 });
+            Achieve(c, "into_the_lair", "Into the Lair", "Reach floor 5", AchievementStat.DeepestFloor, 5, new RewardBundle { Label = "a potion ration", PotionRations = 1 });
+            Achieve(c, "blobert_bested", "Blobert Bested", "Defeat Lord Blobert", AchievementStat.RunsWon, 1, new RewardBundle { Label = "25 gems", Gems = 25 });
+            Achieve(c, "champion", "Champion", "Win 5 runs", AchievementStat.RunsWon, 5, new RewardBundle { Label = "a special key", SpecialKeys = 1 });
+            Achieve(c, "monster_hunter", "Monster Hunter", "Slay 25 monsters", AchievementStat.MonstersSlain, 25, new RewardBundle { Label = "50 coins", Coins = 50 });
+            Achieve(c, "monster_slayer", "Monster Slayer", "Slay 100 monsters", AchievementStat.MonstersSlain, 100, new RewardBundle { Label = "15 gems", Gems = 15 });
+            Achieve(c, "treasure_seeker", "Treasure Seeker", "Open 20 chests", AchievementStat.ChestsOpened, 20, new RewardBundle { Label = "50 coins", Coins = 50 });
+            Achieve(c, "hoarder", "Hoarder", "Carry out 1,000 coins", AchievementStat.CoinsEarned, 1000, new RewardBundle { Label = "20 gems", Gems = 20 });
+            Achieve(c, "seasoned", "Seasoned", "Reach level 5", AchievementStat.Level, 5, new RewardBundle { Label = "a heart token", HeartTokens = 1 });
+            Achieve(c, "collector", "Collector", "Own 5 pieces of gear", AchievementStat.ItemsOwned, 5, new RewardBundle { Label = "15 gems", Gems = 15 });
 
             AddEnemy(c, new EnemyDefinition { Id = "goblin", DisplayName = "Goblin", Behavior = EnemyBehavior.Chaser, MaxHp = 3, Damage = 2 });
             AddEnemy(c, new EnemyDefinition { Id = "crowned_slime", DisplayName = "Crowned Slime", Behavior = EnemyBehavior.SlowChaser, MaxHp = 5, Damage = 3 });

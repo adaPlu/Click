@@ -199,6 +199,11 @@ namespace ClickDungeon.Unity.Ui
         public const string DailyRewardChest = "ui_daily_reward_chest";
         public const string ButtonClaim = "ui_button_claim";
         public const string MenuButton = "ui_button_menu";
+        /// <summary>The crown (achievements) and mail buttons (D-030), and the reference's red "!" on its own, shown on the mail
+        /// button only while a letter wants reading or holds a gift.</summary>
+        public const string CrownButton = "ui_button_crown";
+        public const string MailButton = "ui_button_mail";
+        public const string AlertBadge = "ui_badge_alert";
         public const string TitleHero = "ui_title_hero";
         public const string TitleBlobert = "ui_title_blobert";
         public const string TitleGoblin = "ui_title_goblin";
@@ -390,7 +395,7 @@ namespace ClickDungeon.Unity.Ui
             {
                 ModalPanel, ButtonPrimary, ButtonSecondary, ButtonDanger,
                 ChestLargeClosed, ChestLargeOpen, ChestGlow, ChestProgressBack, ChestProgressFill, ChestRewardCard,
-                TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleDailyPanel, DailyRewardChest, ButtonClaim, MenuButton,
+                TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleDailyPanel, DailyRewardChest, ButtonClaim, MenuButton, CrownButton, MailButton, AlertBadge,
                 TitleHero, TitleBlobert, TitleGoblin, ButtonPlay, ButtonTitleSettings, ButtonQuit, ButtonHeroSelect, ButtonShop, ButtonTalents, ButtonTalentsAlert, ButtonInventory, PlayIcon, SettingsIcon, QuitIcon,
             });
             foreach (var style in ModalStyles) keys.Add(ModalPanelStyle(style));

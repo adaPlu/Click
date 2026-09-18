@@ -24,6 +24,11 @@ namespace ClickDungeon.Application
             _profiles = profiles ?? new MemoryProfileStore();
             Profile = _profiles.Load();
             Telemetry = telemetry;
+            // A new profile gets its welcome letter; one from before the crown gets what it had already earned.
+            int letters = Profile.NextMailId;
+            Mailbox.Welcome(Profile, Catalog);
+            Achievements.Check(Profile, Catalog);
+            if (Profile.NextMailId != letters) SaveProfile();
         }
 
         /// <summary>What the player keeps between runs (D-025). Never read during a run: provisions become hero numbers at the start.</summary>
@@ -113,14 +118,23 @@ namespace ClickDungeon.Application
             var result = TurnResolver.Apply(Run, command, Catalog);
             if (result.Accepted) Persist();
             // The treasure carried out is banked once, on the turn the run ends.
-            if (wasInProgress && Run.Status != RunStatus.InProgress)
-            {
-                ProfileSystem.Bank(Profile, Run);
-                Inventory.Bank(Profile, Run, Catalog);
-                SaveProfile();
-            }
+            if (wasInProgress && Run.Status != RunStatus.InProgress) BankRun();
             Telemetry?.Complete(pending, Run, result);
             return result;
+        }
+
+        /// <summary>
+        /// Everything a finished run leaves the profile: treasure, experience, gear, then the letters for levels gained and
+        /// achievements earned (D-030). Called exactly once per run.
+        /// </summary>
+        void BankRun()
+        {
+            int level = Progression.Level(Profile);
+            ProfileSystem.Bank(Profile, Run);
+            Inventory.Bank(Profile, Run, Catalog);
+            Mailbox.LevelsGained(Profile, level, Progression.Level(Profile));
+            Achievements.Check(Profile, Catalog);
+            SaveProfile();
         }
 
         /// <summary>Giving up still carries out what was found: abandoning is not a way to lose coins, nor to farm them twice.</summary>
@@ -129,12 +143,7 @@ namespace ClickDungeon.Application
             if (Run != null)
             {
                 Telemetry?.RunAbandoned(Run);
-                if (Run.Status == RunStatus.InProgress)
-                {
-                    ProfileSystem.Bank(Profile, Run);
-                    Inventory.Bank(Profile, Run, Catalog);
-                    SaveProfile();
-                }
+                if (Run.Status == RunStatus.InProgress) BankRun();
             }
             Run = null;
             SaveError = null;

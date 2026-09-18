@@ -93,6 +93,10 @@ namespace ClickDungeon.Application
             if (run.Hero != null) profile.SpecialKeys += Math.Max(0, run.Hero.SpecialKeys);
             profile.RunsFinished++;
             if (run.Status == RunStatus.Won) profile.RunsWon++;
+            profile.MonstersSlain += Math.Max(0, run.MonstersSlain);
+            profile.ChestsOpened += Math.Max(0, run.ChestsOpened);
+            profile.CoinsEarned += Math.Max(0, run.CoinsFound);
+            if (run.Floor != null) profile.DeepestFloor = Math.Max(profile.DeepestFloor, run.Floor.FloorIndex);
         }
 
         /// <summary>
@@ -178,6 +182,9 @@ namespace ClickDungeon.Application
                 if (profile.Talents == null) profile.Talents = new System.Collections.Generic.Dictionary<string, int>();
                 if (profile.Items == null) profile.Items = new System.Collections.Generic.List<string>();
                 if (profile.Equipped == null) profile.Equipped = new System.Collections.Generic.Dictionary<string, string>();
+                if (profile.Achievements == null) profile.Achievements = new System.Collections.Generic.List<string>();
+                if (profile.Mail == null) profile.Mail = new System.Collections.Generic.List<MailMessage>();
+                profile.Mail.RemoveAll(m => m == null);
                 return profile;
             }
             catch (Exception)

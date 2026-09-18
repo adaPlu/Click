@@ -397,5 +397,16 @@ Rules referenced here live in `docs/rules.md`.
 - **WHY**: the reference title's DAILY REWARD panel and menu button.
 - **BALANCE**: a week is worth 160 coins, 15 gems and three provisions; the balance guards play an empty profile.
 - **TESTS**: `DailyRewardTests`.
-- **NOT YET**: the crown and mail buttons, whose systems do not exist; their slots stay empty.
+- **LATER**: the crown and mail buttons came with D-030.
+
+## D-030 Achievements (the crown) and mail
+- **DECISION**: The crown opens eleven achievements counted over every banked run (runs finished and won, monsters
+  slain, chests opened, deepest floor, coins carried out, level, gear owned). Runs now count their monsters and chests;
+  the profile keeps the totals. Each achievement is earned once and mails its gift. Mail holds letters from real events
+  (welcome, each level gained, each achievement); gifts wait in the letter until collected, once. The mail button carries
+  the reference's red "!" only while something is unread or uncollected (the "!" is cut out on its own and the button's
+  copy is painted clean). Crown and mail sit in the reference's top-right slots.
+- **WHY**: the reference title's crown and mail buttons.
+- **BALANCE**: gifts only reach the profile; the balance guards play an empty profile.
+- **TESTS**: `CrownAndMailTests`.
 

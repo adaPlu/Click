@@ -607,3 +607,31 @@ Rations, tokens and keys are the shop's own and go into the next run like bought
 ones. After claiming, the panel shows the open chest and tomorrow's reward. A
 clock set back before the last claim cannot claim again until that day has
 passed. HOW TO PLAY, whose panel this place held, is now in the top-right menu.
+
+## 17. Achievements and mail *(D-030, tune numbers)*
+
+The **crown** (top right of the title) lists goals counted over every run. Each
+is earned once, when its count reaches the target; the counts only change when a
+run is banked (won, lost or abandoned).
+
+| Achievement | Goal | Gift |
+|---|---|---|
+| First Steps | Finish a run | 25 coins |
+| Deep Diver | Reach floor 3 | 40 coins |
+| Into the Lair | Reach floor 5 | a potion ration |
+| Blobert Bested | Defeat Lord Blobert | 25 gems |
+| Champion | Win 5 runs | a special key |
+| Monster Hunter | Slay 25 monsters | 50 coins |
+| Monster Slayer | Slay 100 monsters | 15 gems |
+| Treasure Seeker | Open 20 chests | 50 coins |
+| Hoarder | Carry out 1,000 coins | 20 gems |
+| Seasoned | Reach level 5 | a heart token |
+| Collector | Own 5 pieces of gear | 15 gems |
+
+**Mail** (next to the crown) holds letters: a welcome with a potion ration for a
+new profile, one for every level gained, and one for every achievement, carrying
+its gift. A gift stays in its letter until COLLECT (or COLLECT ALL) adds it to
+the profile, once. The mail button shows the red "!" while any letter is unread
+or holds a gift. The newest 40 letters are kept; the oldest read letters with
+nothing to collect make room, and a gift is never thrown away.
+

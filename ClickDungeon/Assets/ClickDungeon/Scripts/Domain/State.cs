@@ -157,6 +157,9 @@ namespace ClickDungeon.Domain
         /// <summary>Turns taken off the class's shield and dash cooldowns by talents (never below one turn).</summary>
         public int ShieldCooldownCut;
         public int DashCooldownCut;
+        /// <summary>Counted for the crown's achievements (D-030) and banked with the rest when the run ends.</summary>
+        public int MonstersSlain;
+        public int ChestsOpened;
         /// <summary>Premium chests still to be placed on the floors ahead (D-026), one per special key carried in.</summary>
         public int PremiumChestsToPlace;
 

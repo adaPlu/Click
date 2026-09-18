@@ -40,11 +40,11 @@ namespace ClickDungeon.Application
             return continues ? profile.DailyStreak % week + 1 : 1;
         }
 
-        public static DailyRewardDefinition Reward(ContentCatalog catalog, int day) =>
+        public static RewardBundle Reward(ContentCatalog catalog, int day) =>
             catalog.DailyRewards.Count == 0 ? null : catalog.DailyRewards[(day - 1) % catalog.DailyRewards.Count];
 
         /// <summary>Pays today's reward into the profile. Null when today is already claimed.</summary>
-        public static DailyRewardDefinition Claim(ProfileState profile, ContentCatalog catalog, DateTime today)
+        public static RewardBundle Claim(ProfileState profile, ContentCatalog catalog, DateTime today)
         {
             if (!CanClaim(profile, today) || catalog.DailyRewards.Count == 0) return null;
             int day = NextDay(profile, catalog, today);

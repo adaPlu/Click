@@ -53,6 +53,7 @@ namespace ClickDungeon.Simulation
                 events.Add(GameEvent.Of(GameEventKind.EnemyDied, enemy.Id, to: enemy.Pos, source: enemy.DefId));
                 bool boss = catalog.Enemy(enemy.DefId).IsBoss;
                 run.XpEarned += boss ? catalog.Xp.ForTheBoss : catalog.Xp.PerMonster;
+                run.MonstersSlain++;
                 if (boss) bossDied = true;
             }
 

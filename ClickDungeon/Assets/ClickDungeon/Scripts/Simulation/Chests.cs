@@ -143,6 +143,7 @@ namespace ClickDungeon.Simulation
             var state = run.Floor[cell];
             if (!state.IsClosedChest) return null;
             state.ChestOpened = true;
+            run.ChestsOpened++;
             // The special key turns in the lock and stays there (D-026).
             if (state.Premium && run.Hero.SpecialKeys > 0) run.Hero.SpecialKeys--;
             if (state.GreatChest) Treasure.Gems(run, catalog.Treasure.GemsPerGreatChest, cell, events);

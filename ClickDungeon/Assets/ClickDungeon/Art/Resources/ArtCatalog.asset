@@ -693,6 +693,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 51f8654fa7670ab42ba72b6c451d9fef, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: ui_badge_alert
+    Frames:
+    - {fileID: 21300000, guid: c15c8338062a96f44a5d6b4af56701d0, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: ui_button_ability_dash
     Frames:
     - {fileID: 21300000, guid: ef3e658e79b516646a4081d26ae74914, type: 3}
@@ -723,6 +728,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 526255faba70dc24bbf80b4361822c0b, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: ui_button_crown
+    Frames:
+    - {fileID: 21300000, guid: bf980c7a6126a1f43bd80ebd0653a3bb, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: ui_button_hero_select
     Frames:
     - {fileID: 21300000, guid: 3cb6320eacc4b9a4395a194c1c76735e, type: 3}
@@ -731,6 +741,11 @@ MonoBehaviour:
   - Key: ui_button_inventory
     Frames:
     - {fileID: 21300000, guid: 9c6e2fea9b635c74ebdaa8821634a50b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_mail
+    Frames:
+    - {fileID: 21300000, guid: 2b20142f82f9a684daa4983a4b700320, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: ui_button_menu
@@ -858,11 +873,6 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 2aff7eb353c557143802243503f0204c, type: 3}
     Fps: 12
     Placeholder: 1
-  - Key: ui_icon_crown
-    Frames:
-    - {fileID: 21300000, guid: e2ac304866945b5428ed64394da725e6, type: 3}
-    Fps: 12
-    Placeholder: 1
   - Key: ui_icon_gem
     Frames:
     - {fileID: 21300000, guid: 7a2910d9656ff35488440c027e9cb6c5, type: 3}
@@ -886,11 +896,6 @@ MonoBehaviour:
   - Key: ui_icon_inventory
     Frames:
     - {fileID: 21300000, guid: 885530b7c6229f345959452731940ad9, type: 3}
-    Fps: 12
-    Placeholder: 1
-  - Key: ui_icon_mail
-    Frames:
-    - {fileID: 21300000, guid: 921f8a0f5bd3d9a4e962f2021d8022ec, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: ui_icon_mana

@@ -148,6 +148,16 @@ namespace ClickDungeon.Unity
                 Inventory.Equip(profile, ContentCatalog.CreateDefault(), id);
             Progression.TryLearn(profile, Progression.Tough);
             Progression.TryLearn(profile, Progression.Lucky);
+            profile.RunsFinished = 14;
+            profile.RunsWon = 2;
+            profile.MonstersSlain = 61;
+            profile.ChestsOpened = 23;
+            profile.DeepestFloor = 5;
+            profile.CoinsEarned = 1630;
+            var catalog = ContentCatalog.CreateDefault();
+            Achievements.Check(profile, catalog);
+            // Some letters read and collected, so the mail shows both kinds.
+            for (int i = 0; i < profile.Mail.Count - 3; i++) Mailbox.Collect(profile, profile.Mail[i].Id);
         }
 
         public string TelemetryDirectory => Path.Combine(UnityEngine.Application.persistentDataPath, "telemetry");

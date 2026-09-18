@@ -10,7 +10,7 @@ namespace ClickDungeon.Unity.Screens
     /// <summary>
     /// Title screen laid out after the reference title art: hero card top-left, big logo and tagline plank,
     /// CONTINUE panel on the left, DAILY REWARD on the right, settings and the menu top-right, and the seven buttons along
-    /// the bottom. Systems that don't exist yet (mail, the crown's achievements) are intentionally absent.
+    /// the bottom. The top-right row is the reference's: the crown (achievements), mail, settings and the menu.
     /// </summary>
     public sealed class TitleScreen
     {
@@ -31,6 +31,9 @@ namespace ClickDungeon.Unity.Screens
         Text _level;
         UiFactory.ButtonParts _talentsButton;
         InventoryOverlay _inventory;
+        AchievementsOverlay _achievements;
+        MailOverlay _mail;
+        GameObject _mailBadge;
         RectTransform _dailyChest;
         Text _dailyLine;
         GameObject _claim;
@@ -75,6 +78,8 @@ namespace ClickDungeon.Unity.Screens
 
             _modal = new ModalOverlay(Root, app);
             _inventory = new InventoryOverlay(Root);
+            _achievements = new AchievementsOverlay(Root);
+            _mail = new MailOverlay(Root);
         }
 
         public RectTransform Root { get; }
@@ -84,6 +89,8 @@ namespace ClickDungeon.Unity.Screens
             // A modal left open when a run started (for example CONTINUE INSTEAD) must not greet the player on return.
             if (_modal.IsOpen) _modal.Hide();
             if (_inventory.IsOpen) _inventory.Hide();
+            if (_achievements.IsOpen) _achievements.Hide();
+            if (_mail.IsOpen) _mail.Hide();
             _flash.text = "";
             RefreshHeroCard();
             RefreshPurse();
@@ -112,6 +119,8 @@ namespace ClickDungeon.Unity.Screens
             else if (name == "shop") OpenShop();
             else if (name == "talents") OpenTalents();
             else if (name == "inventory") OpenInventory();
+            else if (name == "crown") OpenAchievements();
+            else if (name == "mail") OpenMail();
         }
 
         public void Tick()
@@ -124,9 +133,14 @@ namespace ClickDungeon.Unity.Screens
                 if (kb.escapeKey.wasPressedThisFrame) _modal.Back();
                 return;
             }
-            if (_inventory.IsOpen)
+            if (_inventory.IsOpen || _achievements.IsOpen || _mail.IsOpen)
             {
-                if (kb.escapeKey.wasPressedThisFrame) _inventory.Hide();
+                if (kb.escapeKey.wasPressedThisFrame)
+                {
+                    _inventory.Hide();
+                    _achievements.Hide();
+                    _mail.Hide();
+                }
                 return;
             }
             if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)
@@ -203,6 +217,15 @@ namespace ClickDungeon.Unity.Screens
             string id = UserPrefs.Hero;
             return _app.Catalog.HeroIdentities.ContainsKey(id) ? id : Content.ContentCatalog.DefaultHeroId;
         }
+
+        void OpenAchievements() => _achievements.Open(_app.Catalog, _app.Session.Profile);
+
+        void OpenMail() =>
+            _mail.Open(_app.Session.Profile, () =>
+            {
+                _app.Session.SaveProfile();
+                RefreshPurse();
+            });
 
         void OpenInventory() =>
             _inventory.Open(_app.Catalog, _app.Session.Profile, () => _app.Session.SaveProfile());
@@ -307,6 +330,7 @@ namespace ClickDungeon.Unity.Screens
             if (_coins != null) _coins.text = profile.Coins.ToString();
             if (_gems != null) _gems.text = profile.Gems.ToString();
             if (_level != null) _level.text = Progression.Level(profile).ToString();
+            if (_mailBadge != null) _mailBadge.SetActive(Mailbox.Unread(profile) > 0);
             // The red "!" only when a talent point is waiting, as the reference's badge means.
             if (_talentsButton != null)
                 UiArt.ApplyPanel(_talentsButton.Background, _talentsButton.Border,
@@ -448,10 +472,26 @@ namespace ClickDungeon.Unity.Screens
                 Menus.B("SETTINGS", Palette.NavyLight, () => Menus.OpenSettings(_modal, OpenMenu, _app.ApplyTelemetrySetting)),
                 Menus.B("CLOSE", Palette.PlayGreen, _modal.Hide));
 
-        /// <summary>Settings and the menu in the reference's top-right slots, as on the game screen.</summary>
+        /// <summary>The reference's top-right row: crown, mail, settings and the menu, each in its slot.</summary>
         void BuildTopRight()
         {
             var topRight = new Vector2(1f, 1f);
+            var crown = UiFactory.Button(Root, "Crown", "", Palette.Navy, 10, OpenAchievements);
+            crown.Rect.Place(topRight, Center, new Vector2(-413f, -74f), new Vector2(88f, 88f));
+            if (!UiArt.ApplyPanel(crown.Background, crown.Border, ArtKeys.CrownButton))
+                Icons.Crown(crown.Rect, Vector2.zero, 0.9f);
+
+            var mail = UiFactory.Button(Root, "MailButton", "", Palette.Navy, 10, OpenMail);
+            mail.Rect.Place(topRight, Center, new Vector2(-306f, -74f), new Vector2(88f, 88f));
+            if (!UiArt.ApplyPanel(mail.Background, mail.Border, ArtKeys.MailButton))
+                Icons.Shape(mail.Rect, Shapes.Rounded, Palette.Gold, Vector2.zero, new Vector2(52f, 36f));
+            // The red "!" where the reference paints it, overhanging the corner.
+            var badge = Icons.TryArtImage(mail.Rect, ArtKeys.AlertBadge, 38f, new Vector2(40f, 40f));
+            _mailBadge = badge != null ? badge.gameObject
+                : Icons.Shape(mail.Rect, Shapes.Circle, Palette.Danger, new Vector2(40f, 40f), new Vector2(30f, 30f)).gameObject;
+            _mailBadge.GetComponent<Image>().raycastTarget = false;
+            RefreshPurse();
+
             var gear = UiFactory.Button(Root, "Settings", "", Palette.Navy, 10, () => Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting));
             gear.Rect.Place(topRight, Center, new Vector2(-197f, -74f), new Vector2(88f, 88f));
             if (!UiArt.ApplyPanel(gear.Background, gear.Border, ArtKeys.SettingsButton))
