@@ -55,12 +55,12 @@ namespace ClickDungeon.Simulation
                 }
                 case CommandKind.Shield:
                     hero.Guard = true;
-                    hero.ShieldCooldown = heroClass.ShieldCooldown;
+                    hero.ShieldCooldown = Math.Max(1, heroClass.ShieldCooldown - run.ShieldCooldownCut);
                     events.Add(GameEvent.Of(GameEventKind.HeroShielded, to: hero.Pos));
                     break;
                 case CommandKind.Dash:
                 {
-                    hero.DashCooldown = heroClass.DashCooldown;
+                    hero.DashCooldown = Math.Max(1, heroClass.DashCooldown - run.DashCooldownCut);
                     var lurker = FirstLurkerOnDash(run, command.Target);
                     if (lurker.InBounds)
                     {
@@ -211,10 +211,12 @@ namespace ClickDungeon.Simulation
             events.Add(GameEvent.Of(GameEventKind.FloorCompleted, amount: floor.FloorIndex));
             // Walking down the stairs pays; falling through a pit (above) skips the floor and pays nothing.
             Treasure.Coins(run, catalog.Treasure.CoinsPerFloor, hero.Pos, events);
+            run.XpEarned += catalog.Xp.PerFloor;
             run.Turn++;
             if (floor.FloorIndex >= run.FloorCount)
             {
                 run.Status = RunStatus.Won;
+                run.XpEarned += catalog.Xp.ForAWin;
                 events.Add(GameEvent.Of(GameEventKind.RunWon));
                 return true;
             }

@@ -51,7 +51,9 @@ namespace ClickDungeon.Simulation
                 }
                 floor.Enemies.RemoveAt(i);
                 events.Add(GameEvent.Of(GameEventKind.EnemyDied, enemy.Id, to: enemy.Pos, source: enemy.DefId));
-                if (catalog.Enemy(enemy.DefId).IsBoss) bossDied = true;
+                bool boss = catalog.Enemy(enemy.DefId).IsBoss;
+                run.XpEarned += boss ? catalog.Xp.ForTheBoss : catalog.Xp.PerMonster;
+                if (boss) bossDied = true;
             }
 
             if (bossDied)

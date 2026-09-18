@@ -100,5 +100,27 @@ namespace ClickDungeon.UnityTests
             Buttons().First(b => b.name.StartsWith("POTION RATION")).onClick.Invoke();
             Assert.That(bought, Is.EqualTo(ClickDungeon.Application.ShopItem.PotionRation));
         }
+
+        [Test]
+        public void TalentsShowTheLevelThePointsAndWhatCanBeLearned()
+        {
+            // D-027: one point per level; a talent at its top rank, or with no point free, is not offered as learnable.
+            var profile = new ClickDungeon.Domain.ProfileState { Xp = ClickDungeon.Application.Progression.XpForLevel(2) };
+            var modal = new ModalOverlay((RectTransform)_root.transform, _root.AddComponent<SpriteFrameAnimator>());
+            string learned = null;
+            bool reset = false;
+            Menus.OpenTalents(modal, profile, id => learned = id, () => reset = true, () => { });
+
+            var body = _root.GetComponentsInChildren<Text>(true).First(t => t.name == "Body").text;
+            Assert.That(body, Does.Contain("Level 2"));
+            Assert.That(body, Does.Contain("1 talent point"));
+            var names = Buttons().Select(b => b.name).ToList();
+            Assert.That(names.Any(n => n.StartsWith("TOUGH 0/3")), Is.True);
+            Assert.That(names.Any(n => n.StartsWith("RESET")), Is.False, "Nothing learned, nothing to reset.");
+
+            Buttons().First(b => b.name.StartsWith("TOUGH")).onClick.Invoke();
+            Assert.That(learned, Is.EqualTo(ClickDungeon.Application.Progression.Tough));
+            Assert.That(reset, Is.False);
+        }
     }
 }

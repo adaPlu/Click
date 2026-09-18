@@ -137,6 +137,15 @@ namespace ClickDungeon.Content
     }
 
     /// <summary>What a vault room holds (D-018): either one great chest or a handful of ordinary ones.</summary>
+    /// <summary>Experience a run earns (D-027, rules §14).</summary>
+    public sealed class XpTuning
+    {
+        public int PerMonster = 3;
+        public int ForTheBoss = 30;
+        public int PerFloor = 10;
+        public int ForAWin = 20;
+    }
+
     /// <summary>What a run pays out into the profile (D-025, rules §13).</summary>
     public sealed class TreasureTuning
     {

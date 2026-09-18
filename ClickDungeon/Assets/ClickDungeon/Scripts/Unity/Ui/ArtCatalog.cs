@@ -204,6 +204,9 @@ namespace ClickDungeon.Unity.Ui
         /// <summary>Title buttons for the systems built so far (D-024, D-025); each carries its own icon and label.</summary>
         public const string ButtonHeroSelect = "ui_button_hero_select";
         public const string ButtonShop = "ui_button_shop";
+        /// <summary>TALENTS, and the same button with its red "!" for when a talent point is waiting (D-027).</summary>
+        public const string ButtonTalents = "ui_button_talents";
+        public const string ButtonTalentsAlert = "ui_button_talents_alert";
         public const string PlayIcon = "ui_icon_play";
         public const string SettingsIcon = "ui_icon_settings";
         public const string QuitIcon = "ui_icon_quit";
@@ -379,7 +382,7 @@ namespace ClickDungeon.Unity.Ui
                 ModalPanel, ButtonPrimary, ButtonSecondary, ButtonDanger,
                 ChestLargeClosed, ChestLargeOpen, ChestGlow, ChestProgressBack, ChestProgressFill, ChestRewardCard,
                 TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleHowToPanel,
-                TitleHero, TitleBlobert, TitleGoblin, ButtonPlay, ButtonTitleSettings, ButtonQuit, ButtonHeroSelect, ButtonShop, PlayIcon, SettingsIcon, QuitIcon,
+                TitleHero, TitleBlobert, TitleGoblin, ButtonPlay, ButtonTitleSettings, ButtonQuit, ButtonHeroSelect, ButtonShop, ButtonTalents, ButtonTalentsAlert, PlayIcon, SettingsIcon, QuitIcon,
             });
             foreach (var style in ModalStyles) keys.Add(ModalPanelStyle(style));
             keys.AddRange(new[] { ChestRays, ChestCoin, ChestGem, ChestShimmer });

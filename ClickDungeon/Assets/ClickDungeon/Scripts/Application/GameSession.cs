@@ -73,6 +73,7 @@ namespace ClickDungeon.Application
             Run = RunFactory.NewRun(seed, Catalog, events, heroId, movement);
             // Provisions are spent into the run's own numbers, so the simulation stays a function of its inputs.
             ProfileSystem.Provision(Profile, Run, Catalog);
+            Progression.Apply(Profile, Run, Catalog);
             SaveProfile();
             Persist();
             Telemetry?.RunStarted(Run, events);

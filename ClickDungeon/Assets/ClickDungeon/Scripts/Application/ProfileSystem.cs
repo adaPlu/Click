@@ -86,6 +86,7 @@ namespace ClickDungeon.Application
         public static void Bank(ProfileState profile, RunState run)
         {
             if (profile == null || run == null) return;
+            Progression.BankXp(profile, run);
             profile.Coins += Math.Max(0, run.CoinsFound);
             profile.Gems += Math.Max(0, run.GemsFound);
             // A key whose chest was never reached is not lost: it goes back in the pocket for the next run.
@@ -172,6 +173,8 @@ namespace ClickDungeon.Application
                 profile.PotionRations = Math.Max(0, profile.PotionRations);
                 profile.HeartTokens = Math.Max(0, profile.HeartTokens);
                 profile.SpecialKeys = Math.Max(0, profile.SpecialKeys);
+                profile.Xp = Math.Max(0, profile.Xp);
+                if (profile.Talents == null) profile.Talents = new System.Collections.Generic.Dictionary<string, int>();
                 return profile;
             }
             catch (Exception)

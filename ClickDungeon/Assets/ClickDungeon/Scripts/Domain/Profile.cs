@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace ClickDungeon.Domain
 {
@@ -22,6 +23,11 @@ namespace ClickDungeon.Domain
         /// <summary>Special keys owned and not yet carried into a run (D-026).</summary>
         public int SpecialKeys;
 
+        /// <summary>Experience banked from every run (D-027). The level follows from it.</summary>
+        public int Xp;
+        /// <summary>Talent ranks learned, by talent id. Points come from levels; resetting refunds them.</summary>
+        public Dictionary<string, int> Talents = new Dictionary<string, int>();
+
         /// <summary>Runs finished, so the shop can say something true about a first-time player.</summary>
         public int RunsFinished;
         public int RunsWon;
@@ -30,7 +36,8 @@ namespace ClickDungeon.Domain
         {
             SchemaVersion = SchemaVersion, Coins = Coins, Gems = Gems,
             PotionRations = PotionRations, HeartTokens = HeartTokens, SpecialKeys = SpecialKeys,
-            RunsFinished = RunsFinished, RunsWon = RunsWon,
+            RunsFinished = RunsFinished, RunsWon = RunsWon, Xp = Xp,
+            Talents = Talents == null ? new Dictionary<string, int>() : new Dictionary<string, int>(Talents),
         };
     }
 }

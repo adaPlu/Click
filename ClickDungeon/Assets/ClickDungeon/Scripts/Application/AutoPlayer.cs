@@ -351,6 +351,10 @@ namespace ClickDungeon.Application
                 CoinsFound = run.CoinsFound,
                 GemsFound = run.GemsFound,
                 PremiumChestsToPlace = run.PremiumChestsToPlace,
+                XpEarned = run.XpEarned,
+                BonusCoinsPerChestReward = run.BonusCoinsPerChestReward,
+                ShieldCooldownCut = run.ShieldCooldownCut,
+                DashCooldownCut = run.DashCooldownCut,
             };
         }
 

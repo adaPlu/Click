@@ -297,6 +297,21 @@ def scene(crop: Image.Image, spec: dict) -> Image.Image:
     return out
 
 
+def mirror_fix(image: Image.Image, spec: dict) -> Image.Image:
+    """
+    Paints over part of a symmetric button with its mirror image: "mirror_fix" is [x, y, w, h] as fractions of the output.
+    Used to lift a baked-in badge (the TALENTS button's red "!") off a frame whose other side is clean.
+    """
+    if "mirror_fix" not in spec:
+        return image
+    fx, fy, fw, fh = spec["mirror_fix"]
+    w, h = image.size
+    box = (round(fx * w), round(fy * h), round((fx + fw) * w), round((fy + fh) * h))
+    mirrored = image.transpose(Image.FLIP_LEFT_RIGHT).crop(box)
+    image.paste(mirrored, box[:2])
+    return image
+
+
 def render(crop: Image.Image, spec: dict) -> Image.Image:
     mode = spec.get("mode", "tile")
     size = int(spec.get("size", 256))
@@ -361,7 +376,7 @@ def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=Non
             rect = snap(rect, boxes[stem])
         x, y, w, h = rect
         crop = image.crop((max(0, x), max(0, y), min(image.width, x + w), min(image.height, y + h)))
-        result = tint(render(crop, spec).convert("RGBA"), spec)
+        result = mirror_fix(tint(render(crop, spec).convert("RGBA"), spec), spec)
 
         if spec.get("mode") == "frame":
             borders[key] = frame(crop, spec)[1]

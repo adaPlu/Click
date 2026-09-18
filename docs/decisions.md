@@ -369,3 +369,12 @@ Rules referenced here live in `docs/rules.md`.
   floor changes, key required and consumed, unused key returns, great chests hold gems, keyed runs still winnable).
 - **NOT YET**: the premium key and mega chest from the same sheet.
 
+## D-027 Levels, experience and talents
+- **DECISION**: Runs earn XP (monsters 3, Blobert 30, floors walked down 10, a win 20), banked at run end. Levels at
+  50 × the triangle numbers; one talent point per level; five talents (Tough, Stocked, Quick Shield, Fleet, Lucky) applied
+  when a run starts and never spent; free reset. Level badge on both portraits; TALENTS in its reference slot, with the
+  sample's red "!" only while a point is free (a second copy of the art has the "!" painted out).
+- **WHY**: the reference's level badge and TALENTS button.
+- **BALANCE**: talents make later runs easier by design; the balance guards play an empty profile.
+- **TESTS**: `LevelAndTalentTests`, `SettingsMenuTests.TalentsShowTheLevelThePointsAndWhatCanBeLearned`.
+

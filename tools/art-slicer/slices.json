@@ -186,9 +186,10 @@
     { "key": "ui_button_play", "source": "ref1-title", "rect": [58, 777, 282, 134], "mode": "wide", "size": 564, "folder": "UI", "wired": true },
     { "key": "ui_button_hero_select", "source": "ref1-title", "rect": [361, 777, 175, 134], "mode": "wide", "size": 350, "folder": "UI", "wired": true },
     { "key": "ui_button_inventory", "source": "ref1-title", "rect": [554, 777, 187, 134], "mode": "wide", "size": 374, "folder": "UI" },
-    { "key": "ui_button_talents", "source": "ref1-title", "rect": [759, 777, 184, 134], "mode": "wide", "size": 368, "folder": "UI" },
     { "key": "ui_button_shop", "source": "ref1-title", "rect": [961, 777, 180, 134], "mode": "wide", "size": 360, "folder": "UI", "wired": true },
     { "key": "ui_button_title_settings", "source": "ref1-title", "rect": [1161, 777, 182, 134], "mode": "wide", "size": 364, "folder": "UI", "wired": true },
-    { "key": "ui_button_quit", "source": "ref1-title", "rect": [1369, 777, 239, 134], "mode": "wide", "size": 478, "folder": "UI", "wired": true }
+    { "key": "ui_button_quit", "source": "ref1-title", "rect": [1369, 777, 239, 134], "mode": "wide", "size": 478, "folder": "UI", "wired": true },
+    { "key": "ui_button_talents_alert", "source": "ref1-title", "rect": [759, 777, 184, 134], "mode": "wide", "size": 368, "folder": "UI", "wired": true },
+    { "key": "ui_button_talents", "source": "ref1-title", "rect": [759, 777, 184, 134], "mode": "wide", "size": 368, "folder": "UI", "mirror_fix": [0.69, 0.0, 0.31, 0.4], "wired": true }
   ]
 }

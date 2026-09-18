@@ -145,6 +145,13 @@ namespace ClickDungeon.Domain
         /// <summary>Treasure carried out of the dungeon (D-025). Banked into the profile when the run ends.</summary>
         public int CoinsFound;
         public int GemsFound;
+        /// <summary>Experience earned this run (D-027). Banked into the profile, like coins, when the run ends.</summary>
+        public int XpEarned;
+        /// <summary>Extra coins per chest reward, from the Lucky talent. Set when the run starts and never changed.</summary>
+        public int BonusCoinsPerChestReward;
+        /// <summary>Turns taken off the class's shield and dash cooldowns by talents (never below one turn).</summary>
+        public int ShieldCooldownCut;
+        public int DashCooldownCut;
         /// <summary>Premium chests still to be placed on the floors ahead (D-026), one per special key carried in.</summary>
         public int PremiumChestsToPlace;
 

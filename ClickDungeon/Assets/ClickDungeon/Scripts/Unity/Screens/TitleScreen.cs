@@ -1,3 +1,4 @@
+using ClickDungeon.Application;
 using ClickDungeon.Domain;
 using ClickDungeon.Unity.Ui;
 using UnityEngine;
@@ -27,6 +28,8 @@ namespace ClickDungeon.Unity.Screens
         RectTransform _heroButtonIcon;
         Text _coins;
         Text _gems;
+        Text _level;
+        UiFactory.ButtonParts _talentsButton;
         Text _heroName;
         Text _heroTagline;
         RunState _saved;
@@ -97,6 +100,7 @@ namespace ClickDungeon.Unity.Screens
             else if (name == "difficulty") ChooseDifficulty(_modal.Hide);
             else if (name == "heroes") OpenHeroSelect();
             else if (name == "shop") OpenShop();
+            else if (name == "talents") OpenTalents();
         }
 
         public void Tick()
@@ -184,6 +188,22 @@ namespace ClickDungeon.Unity.Screens
             return _app.Catalog.HeroIdentities.ContainsKey(id) ? id : Content.ContentCatalog.DefaultHeroId;
         }
 
+        void OpenTalents()
+        {
+            Menus.OpenTalents(_modal, _app.Session.Profile, id =>
+            {
+                if (Progression.TryLearn(_app.Session.Profile, id)) _app.Session.SaveProfile();
+                RefreshPurse();
+                OpenTalents();
+            }, () =>
+            {
+                Progression.Reset(_app.Session.Profile);
+                _app.Session.SaveProfile();
+                RefreshPurse();
+                OpenTalents();
+            }, _modal.Hide);
+        }
+
         void OpenShop()
         {
             Menus.OpenShop(_modal, _app.Catalog, _app.Session.Profile, item =>
@@ -219,6 +239,14 @@ namespace ClickDungeon.Unity.Screens
             _heroTagline.rectTransform.Place(new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(136f, -70f), new Vector2(290f, 40f));
 
             // The purse sits under the card, as in the reference. Both counters are real: coins and gems come out of runs.
+            // The level badge sits on the portrait's corner, as in the reference.
+            var badge = UiFactory.Image(card, "LevelBadge", Palette.Navy, Shapes.Rounded, true);
+            badge.rectTransform.Place(new Vector2(0f, 0f), Center, new Vector2(26f, 26f), new Vector2(46f, 46f));
+            var badgeEdge = UiFactory.Image(badge.rectTransform, "Edge", Palette.Gold, Shapes.Frame, true);
+            badgeEdge.rectTransform.Stretch();
+            _level = UiFactory.Text(badge.rectTransform, "Level", "1", 28, Palette.TextLight, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _level.rectTransform.Stretch();
+
             _coins = Purse(card, new Vector2(140f, -112f), ArtKeys.CoinIcon, Palette.Gold);
             _gems = Purse(card, new Vector2(300f, -112f), ArtKeys.GemIcon, Palette.Summon);
             RefreshHeroCard();
@@ -259,6 +287,11 @@ namespace ClickDungeon.Unity.Screens
             var profile = _app.Session.Profile;
             if (_coins != null) _coins.text = profile.Coins.ToString();
             if (_gems != null) _gems.text = profile.Gems.ToString();
+            if (_level != null) _level.text = Progression.Level(profile).ToString();
+            // The red "!" only when a talent point is waiting, as the reference's badge means.
+            if (_talentsButton != null)
+                UiArt.ApplyPanel(_talentsButton.Background, _talentsButton.Border,
+                    Progression.PointsFree(profile) > 0 ? ArtKeys.ButtonTalentsAlert : ArtKeys.ButtonTalents);
         }
 
         void Face(RectTransform parent, string heroId, float size)
@@ -406,7 +439,7 @@ namespace ClickDungeon.Unity.Screens
 
         // The reference title's bottom row, as left edge and width on a 1920-wide screen (its 1672-wide art scaled up).
         // INVENTORY and TALENTS keep their slots empty until those systems exist.
-        static readonly (float x, float w) PlaySlot = (67f, 324f), HeroSlot = (414f, 201f), ShopSlot = (1103f, 207f),
+        static readonly (float x, float w) PlaySlot = (67f, 324f), HeroSlot = (414f, 201f), TalentsSlot = (871f, 212f), ShopSlot = (1103f, 207f),
             SettingsSlot = (1333f, 209f), QuitSlot = (1572f, 274f);
         const float ButtonRowHeight = 154f, ButtonRowBottom = 33f;
 
@@ -446,6 +479,9 @@ namespace ClickDungeon.Unity.Screens
                 _heroButtonIcon = icon;
                 RefreshHeroCard();
             }, 30);
+
+            _talentsButton = TitleButton("Talents", "TALENTS", Palette.Navy, OpenTalents, TalentsSlot, ArtKeys.ButtonTalents, icon =>
+                Icons.Shape(icon, Shapes.Diamond, Palette.Gold, Vector2.zero, new Vector2(56f, 56f)));
 
             TitleButton("Shop", "SHOP", Palette.Navy, OpenShop, ShopSlot, ArtKeys.ButtonShop, icon =>
             {

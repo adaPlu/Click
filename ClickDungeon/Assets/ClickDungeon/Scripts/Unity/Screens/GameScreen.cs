@@ -59,6 +59,7 @@ namespace ClickDungeon.Unity.Screens
         Text _inspectTitle;
         Text _inspectBody;
         Image _inspectPortrait;
+        Text _levelBadge;
 
         TargetMode _mode = TargetMode.Move;
         GridPos? _hover;
@@ -434,7 +435,7 @@ namespace ClickDungeon.Unity.Screens
         static string Purse(RunState run)
         {
             string gems = run.GemsFound > 0 ? $" and {run.GemsFound} gem{(run.GemsFound == 1 ? "" : "s")}" : "";
-            return $"Carried out: {run.CoinsFound} coins{gems}";
+            return $"Carried out: {run.CoinsFound} coins{gems}, +{run.XpEarned} XP";
         }
 
         // ------------------------------------------------------------------ menus
@@ -530,6 +531,7 @@ namespace ClickDungeon.Unity.Screens
 
             _hpText.text = $"{hero.Hp} / {hero.MaxHp}";
             _hpFill.anchorMax = new Vector2(Mathf.Clamp01(hero.Hp / (float)hero.MaxHp), 1f);
+            _levelBadge.text = Progression.Level(_app.Session.Profile).ToString();
             _keyChip.text = run.Floor.IsBossFloor ? "BOSS FLOOR" : hero.HasKey ? "KEY: YES" : "KEY: NO";
             if (hero.SpecialKeys > 0) _keyChip.text += $" +{hero.SpecialKeys}";
             _keyChip.color = hero.HasKey || run.Floor.IsBossFloor ? Palette.Gold : Palette.TextLight;
@@ -831,6 +833,15 @@ namespace ClickDungeon.Unity.Screens
             portraitFrame.rectTransform.Stretch();
             UiArt.Apply(portraitFrame, ArtKeys.PortraitFrame);
 
+            // The profile's level on the portrait's corner, as in the reference (D-027). A run never changes it: it is
+            // what the player brought in.
+            var badge = UiFactory.Image(portrait, "LevelBadge", Palette.Navy, Shapes.Rounded, true);
+            badge.rectTransform.Place(new Vector2(0f, 0f), Center, new Vector2(4f, 8f), new Vector2(40f, 40f));
+            var badgeEdge = UiFactory.Image(badge.rectTransform, "Edge", Palette.Gold, Shapes.Frame, true);
+            badgeEdge.rectTransform.Stretch();
+            _levelBadge = UiFactory.Text(badge.rectTransform, "Level", "1", 24, Palette.TextLight, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _levelBadge.rectTransform.Stretch();
+
             var hp = UiFactory.Rect(Root, "Hp");
             hp.Place(TopLeft, TopLeft, new Vector2(592f, -28f), new Vector2(440f, 54f));
             var hpBack = UiFactory.Image(hp, "Back", Palette.HpBack, Shapes.Rounded, true);
@@ -1124,6 +1135,37 @@ namespace ClickDungeon.Unity.Screens
                     $"{profile.SpecialKeys} special keys.");
             sb.AppendLine("Coins come out of chests and off every floor you finish. Gems come from Lord Blobert's hoard and vault chests.");
             modal.Show("SHOP", sb.ToString(), back, buttons.ToArray());
+        }
+
+        /// <summary>
+        /// Levels and talents (D-027). Talents shape every new run and are never used up; resetting refunds every point, so
+        /// trying a build costs nothing. Like the shop, this only opens between runs.
+        /// </summary>
+        public static void OpenTalents(ModalOverlay modal, ProfileState profile, Action<string> learn, Action reset, Action back)
+        {
+            int level = Progression.Level(profile);
+            int free = Progression.PointsFree(profile);
+            int next = Progression.XpForLevel(level + 1);
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"<color=#F2C14E>Level {level}</color>   {profile.Xp} / {next} XP to level {level + 1}");
+            sb.AppendLine(free > 0 ? $"<color=#7BD88F>{free} talent point{(free == 1 ? "" : "s")} to spend.</color>" : "No points to spend: each level gives one.");
+            sb.AppendLine();
+            sb.AppendLine("Experience comes from every run: monsters, floors walked down, Lord Blobert, and winning.");
+            sb.AppendLine("Talents shape every run you start and are never used up.");
+
+            var buttons = new List<(string, Color, Action)>();
+            foreach (var talent in Progression.Talents)
+            {
+                var id = talent.Id;
+                int rank = Progression.Rank(profile, id);
+                bool can = Progression.CanLearn(profile, id);
+                buttons.Add(($"{talent.DisplayName} {rank}/{talent.MaxRank}: {talent.PerRank}",
+                    can ? Palette.PlayGreen : Palette.NavyLight, () => learn(id)));
+            }
+            if (Progression.PointsSpent(profile) > 0) buttons.Add(B("RESET (FREE)", Palette.QuitRed, reset));
+            buttons.Add(B("DONE", Palette.NavyLight, back));
+            modal.Show("TALENTS", sb.ToString(), back, buttons.ToArray());
         }
 
         /// <summary>Buys one item and writes the profile. False means the coins were not there and nothing changed.</summary>

@@ -713,6 +713,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: d7b8432d3b5965947b7dda5882d261f8, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: ui_button_talents_alert
+    Frames:
+    - {fileID: 21300000, guid: 9965529b844d6314ba5397aecf492240, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: ui_button_title_settings
     Frames:
     - {fileID: 21300000, guid: f67b425680998734ba4f6428300acf95, type: 3}

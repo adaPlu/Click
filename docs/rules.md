@@ -531,3 +531,33 @@ floor changes. It opens only with a special key — tapping it without one is
 refused — takes 4 taps like an Epic chest and gives 5 rewards; the key stays in
 the lock. A key whose chest was never reached goes back to the profile.
 
+## 14. Levels and talents *(D-027, tune numbers)*
+
+Every run earns **experience**, banked with its coins when it ends:
+
+| Source | XP |
+|---|---|
+| Each monster defeated | 3 |
+| Lord Blobert | 30 |
+| Each floor walked down (not fallen through) | 10 |
+| Winning the run | 20 |
+
+The **level** follows from the total: level 2 at 50 XP, 3 at 150, 4 at 300, 5 at
+500 (50 × the triangle numbers). Each level past the first gives one **talent
+point**. Talents are learned on the title screen and shape every run started
+afterwards; unlike shop provisions they are never used up. Resetting refunds
+every point for free.
+
+| Talent | Ranks | Per rank |
+|---|---|---|
+| Tough | 3 | +1 max heart |
+| Stocked | 2 | +1 starting potion |
+| Quick Shield | 1 | Shield recharges 1 turn sooner (never below 1) |
+| Fleet | 1 | Dash recharges 1 turn sooner (never below 1) |
+| Lucky | 2 | +2 coins for every chest reward |
+
+The level shows as a badge on the portrait on both screens. The TALENTS button
+wears its red "!" only while a point is waiting. A run never reads the profile:
+talents become the hero's starting numbers, so bots and tier guards (which play
+an empty profile) still measure a first run.
+
