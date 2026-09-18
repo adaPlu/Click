@@ -204,6 +204,9 @@ namespace ClickDungeon.Unity.Ui
         public const string CrownButton = "ui_button_crown";
         public const string MailButton = "ui_button_mail";
         public const string AlertBadge = "ui_badge_alert";
+        /// <summary>The game screen's INVENTORY / TALENTS / SHOP bar (its "!" painted out) and the purse's "+" button.</summary>
+        public const string NavBar = "ui_nav_bar";
+        public const string PlusButton = "ui_button_plus";
         public const string TitleHero = "ui_title_hero";
         public const string TitleBlobert = "ui_title_blobert";
         public const string TitleGoblin = "ui_title_goblin";
@@ -395,7 +398,7 @@ namespace ClickDungeon.Unity.Ui
             {
                 ModalPanel, ButtonPrimary, ButtonSecondary, ButtonDanger,
                 ChestLargeClosed, ChestLargeOpen, ChestGlow, ChestProgressBack, ChestProgressFill, ChestRewardCard,
-                TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleDailyPanel, DailyRewardChest, ButtonClaim, MenuButton, CrownButton, MailButton, AlertBadge,
+                TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleDailyPanel, DailyRewardChest, ButtonClaim, MenuButton, CrownButton, MailButton, AlertBadge, NavBar, PlusButton,
                 TitleHero, TitleBlobert, TitleGoblin, ButtonPlay, ButtonTitleSettings, ButtonQuit, ButtonHeroSelect, ButtonShop, ButtonTalents, ButtonTalentsAlert, ButtonInventory, PlayIcon, SettingsIcon, QuitIcon,
             });
             foreach (var style in ModalStyles) keys.Add(ModalPanelStyle(style));

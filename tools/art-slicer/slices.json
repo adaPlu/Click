@@ -84,6 +84,8 @@
     { "key": "ui_icon_shop", "source": "ref2-gameplay", "rect": [1058, 860, 72, 62], "mode": "icon", "size": 128, "folder": "UI" },
     { "key": "ui_button_crown", "source": "ref1-title", "rect": [1276, 28, 76, 75], "mode": "icon", "size": 128, "folder": "UI", "wired": true },
     { "key": "ui_button_mail", "source": "ref1-title", "rect": [1366, 28, 78, 75], "mode": "icon", "size": 128, "folder": "UI", "mirror_fix": [0.62, 0.0, 0.38, 0.42], "wired": true },
+    { "key": "ui_nav_bar", "source": "ref2-gameplay", "rect": [380, 843, 920, 96], "mode": "wide", "size": 1840, "folder": "UI", "smear": [[0.62, 0.08, 0.05, 0.38]], "wired": true },
+    { "key": "ui_button_plus", "source": "ref2-gameplay", "rect": [1175, 15, 44, 44], "mode": "wide", "size": 88, "folder": "UI", "wired": true },
     { "key": "ui_badge_alert", "source": "ref1-title", "rect": [1424, 22, 31, 31], "mode": "sprite", "tolerance": 60, "largest_only": true, "size": 64, "folder": "UI", "wired": true },
     { "key": "ui_icon_hero_select", "source": "ref1-title", "rect": [415, 788, 70, 55], "mode": "icon", "size": 128, "folder": "UI" },
     { "key": "ui_icon_play", "source": "ref1-title", "rect": [150, 790, 85, 65], "mode": "icon", "size": 128, "folder": "UI", "wired": true },

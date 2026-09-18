@@ -368,6 +368,7 @@ Rules referenced here live in `docs/rules.md`.
 - **TESTS**: `PremiumChestTests` (priced in gems, carried one per floor, placed once and hidden, nothing else on the
   floor changes, key required and consumed, unused key returns, great chests hold gems, keyed runs still winnable).
 - **NOT YET**: the premium key and mega chest from the same sheet.
+- **AMENDED (D-031)**: the shop also opens during a run, from the game screen; what is bought waits for the next run.
 
 ## D-027 Levels, experience and talents
 - **DECISION**: Runs earn XP (monsters 3, Blobert 30, floors walked down 10, a win 20), banked at run end. Levels at
@@ -409,4 +410,17 @@ Rules referenced here live in `docs/rules.md`.
 - **WHY**: the reference title's crown and mail buttons.
 - **BALANCE**: gifts only reach the profile; the balance guards play an empty profile.
 - **TESTS**: `CrownAndMailTests`.
+
+## D-031 The game screen's final layout
+- **DECISION**: The game screen takes the reference's slots on a 1920 × 1080 canvas: logo, portrait with level badge, HP
+  bar, coin and gem counters with "+" (opens the shop), settings and menu top-right, the floor plaque, the board frame
+  from 132 to 792 (scaled to 0.887), the five abilities under it, and the INVENTORY / TALENTS / SHOP bar along the bottom
+  (cut from the reference with its "!" painted out; the game draws the "!" only while a talent point is free). Both sides
+  of the board are clear as in the reference: Sir Clickington's speech and the floor's goal (with turn, slash and key)
+  sit under the floor plaque, INSPECT shows on the right only while a tile is hovered or an ability is aimed, and WHAT
+  HAPPENED moves into the menu (also offered on the defeat panel). The counters show banked coins and gems plus what
+  the run has found. INVENTORY, TALENTS and SHOP open during a run and change the profile, so they outfit the next run;
+  each says so. The reference's mana bar slot stays empty until its design is decided (art brief D3).
+- **WHY**: "title and game page should match exactly 1:1".
+- **TESTS**: the existing screen and menu tests; screenshots with `-cdOverlay hud|menu|log|inventory|talents|shop`.
 

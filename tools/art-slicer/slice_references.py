@@ -313,6 +313,23 @@ def mirror_fix(image: Image.Image, spec: dict) -> Image.Image:
     return image
 
 
+def smear(image: Image.Image, spec: dict) -> Image.Image:
+    """
+    Paints out a baked-in badge on a plain background: "smear" is a list of [x, y, w, h] fractions of the output, and each
+    row of a region takes the colour just left of it. Used where the badge has no clean mirror image (the nav bar's "!").
+    """
+    for fx, fy, fw, fh in spec.get("smear", []):
+        w, h = image.size
+        x0, y0 = max(1, round(fx * w)), round(fy * h)
+        x1, y1 = min(w, round((fx + fw) * w)), min(h, round((fy + fh) * h))
+        px = image.load()
+        for y in range(y0, y1):
+            left = px[x0 - 1, y]
+            for x in range(x0, x1):
+                px[x, y] = left
+    return image
+
+
 def render(crop: Image.Image, spec: dict) -> Image.Image:
     mode = spec.get("mode", "tile")
     size = int(spec.get("size", 256))
@@ -377,7 +394,7 @@ def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=Non
             rect = snap(rect, boxes[stem])
         x, y, w, h = rect
         crop = image.crop((max(0, x), max(0, y), min(image.width, x + w), min(image.height, y + h)))
-        result = mirror_fix(tint(render(crop, spec).convert("RGBA"), spec), spec)
+        result = smear(mirror_fix(tint(render(crop, spec).convert("RGBA"), spec), spec), spec)
 
         if spec.get("mode") == "frame":
             borders[key] = frame(crop, spec)[1]

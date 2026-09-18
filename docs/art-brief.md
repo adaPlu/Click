@@ -108,14 +108,16 @@ Recreate the layout exactly. Items marked * depend on Decision D1.
 - Gold* and gem* counters with "+".
 - Floor plaque, parchment style (floor number and name live).
 - Settings (gear) and menu buttons, top-right.
-- Side banners in the reference style (see D2: the game currently uses these areas for the
-  WHAT HAPPENED log and the INSPECT panel).
+- Side banners in the reference style. The areas stay clear (D-031): the speech bubble and goal card
+  sit under the floor plaque, INSPECT appears on the right only while hovering or aiming, and the
+  WHAT HAPPENED log is in the menu.
 - Board: stone wall surround with the perspective top wall and side walls, torches on the frame,
   5×5 grid with gaps. Deliver as a 9-sliceable frame plus separate wall and torch props.
 - Ability bar: MOVE, SLASH, SHIELD, DASH, POTION. States: normal, hover, pressed, selected (gold
   frame), disabled. Cooldown badge, potion count badge, hotkey number slot.
 - Bottom bar: INVENTORY*, TALENTS*, SHOP* with notification badge*.
-- Sir Clickington speech strip (not in the reference): same frame language as the bottom bar.
+- Sir Clickington speech bubble and goal card (not in the reference), left of the board: same frame
+  language as the bottom bar.
 - Background room dressing: barrels, crates, candles, skull, sword in stone.
 
 ---
@@ -299,7 +301,7 @@ Frames, panels and buttons: set 9-slice borders in the sprite importer. Art with
 | Intent badges (icon at the left of the live badge text) | `icon_intent_<attack\|move\|fire\|rest\|recover\|summon\|slam\|puffup>` (128×128, readable at 26 px) |
 | Danger telegraphs (tile-sized; `-N` and HIT/FIRE/SLAM/BOOM stay live text) | `ui_danger_<attack\|fire\|slam\|blast\|armed\|summon>` (256×256, mostly transparent centre), `icon_danger_warning` (corner icon, readable at 32 px) |
 | Board highlights (tile-sized frames; keep the frame within the outer 8 px of 256, because highlights draw above tokens and an enemy's intent badge sits on the tile's top edge) | `ui_highlight_legal` (MOVE-mode steps), `ui_highlight_target` (SLASH/DASH targets), `ui_highlight_hover` |
-| HUD frames (frame and fill only; all text stays live) | `ui_frame_portrait`, `ui_hp_back`, `ui_hp_fill`, `ui_hp_frame`, `ui_icon_heart`, `ui_chip` (KEY/SLASH/TURN), `ui_plaque_floor`, `ui_panel` (WHAT HAPPENED / INSPECT), `ui_speech_strip`, `ui_badge_count` |
+| HUD frames (frame and fill only; all text stays live) | `ui_frame_portrait`, `ui_hp_back`, `ui_hp_fill`, `ui_hp_frame`, `ui_icon_heart`, `ui_chip` (unused since D-031), `ui_plaque_floor`, `ui_panel` (INSPECT), `ui_speech_strip` (speech bubble, goal card), `ui_badge_count`, `ui_nav_bar` (INVENTORY / TALENTS / SHOP, "!" painted out), `ui_button_plus` |
 | Gameplay buttons | `ui_button_ability_<move\|slash\|shield\|dash\|potion>` (falls back to `ui_button_ability`; icon, label and hotkey draw on top), `ui_button_ability_selected`, `ui_button_settings` (whole button, gear included), `ui_button_help` (frame only; "?" stays live) |
 | Modals (pause, settings, help, victory, defeat; title, body and button labels stay live) | `ui_modal_panel`, `ui_modal_panel_victory`, `ui_modal_panel_defeat` (fall back to `ui_modal_panel`); buttons by role: `ui_button_primary` (green), `ui_button_secondary`, `ui_button_danger` (red) |
 | Chest overlay | `ui_chest_large_closed`, `ui_chest_large_open` (fall back to the tile chest), `fx_chest_glow`, `ui_chest_progress_back`, `ui_chest_progress_fill`, `ui_chest_reward_card` (reward text live) |

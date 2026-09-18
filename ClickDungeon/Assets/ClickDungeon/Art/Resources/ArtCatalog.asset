@@ -758,6 +758,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: e5f9d8800a32ff045af8b9d97562abb3, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: ui_button_plus
+    Frames:
+    - {fileID: 21300000, guid: 03d22e67d84ac5742afbb849b100b40f, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: ui_button_quit
     Frames:
     - {fileID: 21300000, guid: 1c9e21755a2aaf74c997c64471a354a6, type: 3}
@@ -926,6 +931,11 @@ MonoBehaviour:
   - Key: ui_icon_talents
     Frames:
     - {fileID: 21300000, guid: 001e9164323c4d74fbc59164141f5fe2, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_nav_bar
+    Frames:
+    - {fileID: 21300000, guid: 486b85f60237a284f93ac7f19dccc085, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: ui_title_daily_panel

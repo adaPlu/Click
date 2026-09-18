@@ -52,10 +52,15 @@ namespace ClickDungeon.Unity.Screens
         RectTransform _hpFill;
         Text _floorTitle;
         Text _floorName;
-        Text _keyChip;
-        Text _slashChip;
-        Text _turnChip;
-        Text _logText;
+        /// <summary>The run's story, newest first; the menu's WHAT HAPPENED shows it.</summary>
+        string _logText;
+        Text _goal;
+        Text _status;
+        Text _coins;
+        Text _gems;
+        GameObject _talentsBadge;
+        GameObject _inspectPanel;
+        InventoryOverlay _inventory;
         Text _inspectTitle;
         Text _inspectBody;
         Image _inspectPortrait;
@@ -75,15 +80,18 @@ namespace ClickDungeon.Unity.Screens
             Backdrop.Build(Root, ArtKeys.GameplayBackground, new[] { new Vector2(-420f, 220f), new Vector2(420f, 220f), new Vector2(-420f, -120f), new Vector2(420f, -120f) });
             BuildTopLeft();
             BuildTopRight();
-            _logText = BuildPanel("WhatHappened", new Vector2(0f, 0.5f), new Vector2(36f, -60f), "WHAT HAPPENED", out _);
-            _logText.text = "<color=#A69F93>Nothing yet.\n\nEvery hit, discovery and wake-up will be explained here, newest first.</color>";
-            _inspectBody = BuildPanel("Inspect", new Vector2(1f, 0.5f), new Vector2(-36f, -60f), "INSPECT", out _inspectTitle);
+            _logText = "<color=#A69F93>Nothing yet.\n\nEvery hit, discovery and wake-up will be explained here, newest first.</color>";
+            // The reference keeps both sides of the board clear: INSPECT only appears while there is something to inspect.
+            _inspectBody = BuildPanel("Inspect", new Vector2(1f, 0.5f), new Vector2(-36f, 40f), "INSPECT", out _inspectTitle);
+            _inspectPanel = _inspectBody.transform.parent.gameObject;
+            _inspectPanel.SetActive(false);
             _inspectPortrait = UiFactory.Image((RectTransform)_inspectBody.transform.parent, "Portrait", Color.white, null);
             _inspectPortrait.preserveAspect = true;
             _inspectPortrait.rectTransform.Place(new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-16f, -14f), new Vector2(44f, 44f));
             _inspectPortrait.gameObject.SetActive(false);
 
-            _board = new BoardView(Root, app, new Vector2(0f, 66f));
+            _board = new BoardView(Root, app, new Vector2(0f, BoardY));
+            _board.Root.localScale = new Vector3(BoardScale, BoardScale, 1f);
             _board.CellClicked += OnCellClicked;
             _board.CellEntered += p =>
             {
@@ -98,18 +106,20 @@ namespace ClickDungeon.Unity.Screens
 
             BuildAbilityBar();
             BuildSpeechStrip();
+            BuildNavBar();
 
             // Above the board, over the top HUD band, so it never hides board tiles.
             _floorBanner = new FloorBanner(Root, app, new Vector2(0f, 482f));
             _chest = new ChestOverlay(Root, app);
             _modal = new ModalOverlay(Root, app);
+            _inventory = new InventoryOverlay(Root);
         }
 
         public RectTransform Root { get; }
 
         RunState Run => _app.Session.Run;
         ContentCatalog Catalog => _app.Catalog;
-        bool Blocked => _modal.IsOpen || _chest.IsOpen || Run == null || Run.Status != RunStatus.InProgress;
+        bool Blocked => _modal.IsOpen || _chest.IsOpen || _inventory.IsOpen || Run == null || Run.Status != RunStatus.InProgress;
 
         // ------------------------------------------------------------------ lifecycle
 
@@ -124,7 +134,7 @@ namespace ClickDungeon.Unity.Screens
             else
             {
                 Say(notice ?? "Welcome back. Where were we? Ah yes: danger.", Expression.Happy);
-                _logText.text = "Run resumed.";
+                _logText = "Run resumed.";
             }
             Refresh(false);
             ShowFloorBanner();
@@ -149,6 +159,11 @@ namespace ClickDungeon.Unity.Screens
             if (_modal.IsOpen)
             {
                 if (kb.escapeKey.wasPressedThisFrame) _modal.Back();
+                return;
+            }
+            if (_inventory.IsOpen)
+            {
+                if (kb.escapeKey.wasPressedThisFrame) CloseInventory();
                 return;
             }
             if (kb.escapeKey.wasPressedThisFrame)
@@ -190,6 +205,13 @@ namespace ClickDungeon.Unity.Screens
             switch (name)
             {
                 case "pause": OpenPause(); break;
+                case "menu": OpenPause(); break;
+                // The HUD as it looks between floors, without the floor banner that covers it for a moment.
+                case "hud": _floorBanner.Hide(); break;
+                case "log": OpenLog(_modal.Hide); break;
+                case "inventory": OpenInventory(); break;
+                case "talents": OpenTalents(); break;
+                case "shop": OpenShop(); break;
                 case "help": OpenHelp(); break;
                 case "chest": _chest.Open(new RewardRecord { Kind = RewardKind.Potion, Amount = 1 }, null); break;
                 case "chestburst":
@@ -424,9 +446,10 @@ namespace ClickDungeon.Unity.Screens
             else
             {
                 _modal.Show(ModalStyle.Defeat, "DEFEATED",
-                    $"Fell on floor {run.Floor.FloorIndex}: {floorName}\nFinal blow: {Lines.SourceName(_lastDamageSource ?? "?", Catalog)}\nDifficulty: {DifficultyName(run)}\nTurns survived: {run.Turn}\n{Purse(run)}\n\nThe WHAT HAPPENED log shows every hit.\n\nSir Clickington: \"Tell my horse... wait. I don't have a horse.\"",
+                    $"Fell on floor {run.Floor.FloorIndex}: {floorName}\nFinal blow: {Lines.SourceName(_lastDamageSource ?? "?", Catalog)}\nDifficulty: {DifficultyName(run)}\nTurns survived: {run.Turn}\n{Purse(run)}\n\nWHAT HAPPENED shows every hit.\n\nSir Clickington: \"Tell my horse... wait. I don't have a horse.\"",
                     () => { },
                     Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
+                    Menus.B("WHAT HAPPENED", Palette.NavyLight, () => OpenLog(CheckRunEnd)),
                     Menus.B("TITLE", Palette.NavyLight, _app.ShowTitle));
             }
         }
@@ -444,14 +467,68 @@ namespace ClickDungeon.Unity.Screens
         {
             if (_chest.IsOpen || Run == null) return;
             var run = Run;
-            _modal.Show("PAUSED",
+            _modal.Show("MENU",
                 $"Floor {run.Floor.FloorIndex}: {Catalog.ProfileFor(run.Floor.FloorIndex).Name}\nDifficulty: {DifficultyName(run)}\nMovement: {Menus.MovementName(run.Movement)}\nTurn {run.Turn + 1}    Seed {run.RunSeed}\nYour run is saved after every turn.{(_app.TelemetryActive ? "\nPlaytest log is on (saved on this device only)." : "")}",
                 _modal.Hide,
                 Menus.B("RESUME", Palette.PlayGreen, _modal.Hide),
+                Menus.B("WHAT HAPPENED", Palette.NavyLight, () => OpenLog(OpenPause)),
                 Menus.B("HOW TO PLAY", Palette.NavyLight, OpenHelp),
                 Menus.B("SETTINGS", Palette.NavyLight, () => Menus.OpenSettings(_modal, OpenPause, _app.ApplyTelemetrySetting)),
                 Menus.B("ABANDON RUN", Palette.QuitRed, ConfirmAbandon),
                 Menus.B("QUIT TO TITLE", Palette.NavyLight, _app.ShowTitle));
+        }
+
+        /// <summary>The run's story so far, newest first: every hit, discovery and wake-up, in the words the log used to show beside the board.</summary>
+        void OpenLog(Action back) => _modal.Show("WHAT HAPPENED", _logText, back, Menus.B("BACK", Palette.NavyLight, back));
+
+        const string NextRunNote = "\n\n<color=#F2C14E>Changes here outfit your NEXT run. This run keeps what it started with.</color>";
+
+        void OpenInventory()
+        {
+            if (_chest.IsOpen || Run == null) return;
+            _inventory.Open(_app.Catalog, _app.Session.Profile, () =>
+            {
+                _app.Session.SaveProfile();
+                RefreshPurse();
+            });
+        }
+
+        void CloseInventory()
+        {
+            _inventory.Hide();
+            RefreshPurse();
+        }
+
+        void OpenTalents()
+        {
+            if (_chest.IsOpen || Run == null) return;
+            var profile = _app.Session.Profile;
+            Menus.OpenTalents(_modal, profile, id =>
+            {
+                if (Progression.TryLearn(profile, id)) _app.Session.SaveProfile();
+                RefreshPurse();
+                OpenTalents();
+            }, () =>
+            {
+                Progression.Reset(profile);
+                _app.Session.SaveProfile();
+                RefreshPurse();
+                OpenTalents();
+            }, _modal.Hide, NextRunNote);
+        }
+
+        void OpenShop()
+        {
+            if (_chest.IsOpen || Run == null) return;
+            string found = Run.CoinsFound + Run.GemsFound > 0
+                ? $"\n\nFound this run: {Run.CoinsFound} coins, {Run.GemsFound} gems. They are yours to spend once the run ends."
+                : "";
+            Menus.OpenShop(_modal, Catalog, _app.Session.Profile, item =>
+            {
+                Menus.Buy(_app.Session, item);
+                RefreshPurse();
+                OpenShop();
+            }, _modal.Hide, found + NextRunNote);
         }
 
         void OpenHelp()
@@ -500,7 +577,7 @@ namespace ClickDungeon.Unity.Screens
             lines.Insert(0, $"<color=#8F8778>- turn {Math.Max(1, Run.Turn)} -</color>");
             _log.InsertRange(0, lines);
             if (_log.Count > MaxLogLines) _log.RemoveRange(MaxLogLines, _log.Count - MaxLogLines);
-            _logText.text = string.Join("\n", _log);
+            _logText = string.Join("\n", _log);
         }
 
         /// <summary>
@@ -517,7 +594,8 @@ namespace ClickDungeon.Unity.Screens
             Debug.LogWarning("[ClickDungeon] Saving failed: " + error);
             if (Run == null || Run.Status != RunStatus.InProgress) return;
             _log.Insert(0, "<color=#FF9A2E>Couldn't save your run. You can keep playing, but it may not resume later.</color>");
-            _logText.text = string.Join("\n", _log);
+            _logText = string.Join("\n", _log);
+            Say("I couldn't save the run! We can keep going, but it may not resume later.", Expression.Worried);
         }
 
         string _saveWarning;
@@ -532,11 +610,10 @@ namespace ClickDungeon.Unity.Screens
             _hpText.text = $"{hero.Hp} / {hero.MaxHp}";
             _hpFill.anchorMax = new Vector2(Mathf.Clamp01(hero.Hp / (float)hero.MaxHp), 1f);
             _levelBadge.text = Progression.Level(_app.Session.Profile).ToString();
-            _keyChip.text = run.Floor.IsBossFloor ? "BOSS FLOOR" : hero.HasKey ? "KEY: YES" : "KEY: NO";
-            if (hero.SpecialKeys > 0) _keyChip.text += $" +{hero.SpecialKeys}";
-            _keyChip.color = hero.HasKey || run.Floor.IsBossFloor ? Palette.Gold : Palette.TextLight;
-            _slashChip.text = $"SLASH {hero.SlashDamage}";
-            _turnChip.text = $"TURN {run.Turn + 1}";
+            _goal.text = Goal(run);
+            _status.text = $"TURN {run.Turn + 1}   ·   SLASH {hero.SlashDamage}   ·   KEY {(hero.HasKey ? "YES" : "NO")}"
+                           + (hero.SpecialKeys > 0 ? $"   ·   SPECIAL KEYS {hero.SpecialKeys}" : "");
+            RefreshPurse();
             _floorTitle.text = $"FLOOR {run.Floor.FloorIndex}";
             _floorName.text = run.Floor.IsVault
                 ? "THE VAULT"
@@ -552,6 +629,29 @@ namespace ClickDungeon.Unity.Screens
 
             _threats = Threats.Compute(run, Catalog);
             RenderBoard(animate);
+        }
+
+        /// <summary>What this floor asks of the player, the line the INSPECT panel used to open with.</summary>
+        static string Goal(RunState run)
+        {
+            var floor = run.Floor;
+            if (floor.IsBossFloor && !floor.ExitUnlocked) return "GOAL: defeat Lord Blobert to open the exit.";
+            if (floor.ExitUnlocked || run.Hero.HasKey) return "GOAL: reach the EXIT.";
+            return "GOAL: find the KEY, then reach the EXIT.";
+        }
+
+        /// <summary>
+        /// The reference's purse: coins and gems banked, plus what this run has found so far, which is banked when it ends.
+        /// The talents "!" shows while a point is free.
+        /// </summary>
+        void RefreshPurse()
+        {
+            var profile = _app.Session.Profile;
+            int coins = profile.Coins + (Run?.CoinsFound ?? 0), gems = profile.Gems + (Run?.GemsFound ?? 0);
+            _coins.text = coins.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+            _gems.text = gems.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+            _talentsBadge.SetActive(Progression.PointsFree(profile) > 0);
+            _levelBadge.text = Progression.Level(profile).ToString();
         }
 
         /// <summary>Hover handler: only the highlights and inspector change, so the tiles are not rebuilt.</summary>
@@ -613,6 +713,8 @@ namespace ClickDungeon.Unity.Screens
             var floor = run.Floor;
             var sb = new StringBuilder();
 
+            // Nothing hovered in plain movement: the goal is on the left, so the panel steps aside as in the reference.
+            _inspectPanel.SetActive(_hover.HasValue || _mode != TargetMode.Move);
             if (!_hover.HasValue)
             {
                 _inspectTitle.text = "INSPECT";
@@ -816,19 +918,23 @@ namespace ClickDungeon.Unity.Screens
 
         // ------------------------------------------------------------------ layout
 
+        // The reference gameplay screen's slots, on a 1920 × 1080 canvas (its 1672-wide art scaled up): board frame from 132 to
+        // 792 down, ability buttons under it, the INVENTORY / TALENTS / SHOP bar along the bottom.
+        const float BoardY = 78f, BoardScale = 0.887f;
+
         void BuildTopLeft()
         {
             var logo = UiFactory.Text(Root, "Logo", "ClickDungeon", 60, Palette.Gold, TextAnchor.MiddleLeft, FontStyle.Bold);
             logo.horizontalOverflow = HorizontalWrapMode.Overflow;
-            logo.rectTransform.Place(TopLeft, TopLeft, new Vector2(34f, -14f), new Vector2(430f, 96f));
+            logo.rectTransform.Place(TopLeft, TopLeft, new Vector2(40f, -14f), new Vector2(480f, 96f));
             UiFactory.Outline(logo, Palette.Ink, 3f);
             UiFactory.Shadow(logo, new Color(0f, 0f, 0f, 0.8f), 5f);
             Icons.ReplaceTextWithArt(logo, ArtKeys.Logo);
 
             var portrait = UiFactory.Rect(Root, "Portrait");
-            portrait.Place(TopLeft, TopLeft, new Vector2(470f, -10f), new Vector2(104f, 104f));
-            _face = Icons.Portrait(portrait, 104f);
-            _portraitArt = Icons.TryArtImage(portrait, ArtKeys.Portrait(ArtKeys.HeroId, "neutral"), 104f);
+            portrait.Place(TopLeft, TopLeft, new Vector2(572f, -12f), new Vector2(128f, 128f));
+            _face = Icons.Portrait(portrait, 128f);
+            _portraitArt = Icons.TryArtImage(portrait, ArtKeys.Portrait(ArtKeys.HeroId, "neutral"), 128f);
             var portraitFrame = UiFactory.Image(portrait, "Frame", Palette.Gold, Shapes.Frame, true);
             portraitFrame.rectTransform.Stretch();
             UiArt.Apply(portraitFrame, ArtKeys.PortraitFrame);
@@ -836,19 +942,20 @@ namespace ClickDungeon.Unity.Screens
             // The profile's level on the portrait's corner, as in the reference (D-027). A run never changes it: it is
             // what the player brought in.
             var badge = UiFactory.Image(portrait, "LevelBadge", Palette.Navy, Shapes.Rounded, true);
-            badge.rectTransform.Place(new Vector2(0f, 0f), Center, new Vector2(4f, 8f), new Vector2(40f, 40f));
+            badge.rectTransform.Place(new Vector2(0f, 0f), Center, new Vector2(8f, 12f), new Vector2(46f, 46f));
             var badgeEdge = UiFactory.Image(badge.rectTransform, "Edge", Palette.Gold, Shapes.Frame, true);
             badgeEdge.rectTransform.Stretch();
-            _levelBadge = UiFactory.Text(badge.rectTransform, "Level", "1", 24, Palette.TextLight, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _levelBadge = UiFactory.Text(badge.rectTransform, "Level", "1", 28, Palette.TextLight, TextAnchor.MiddleCenter, FontStyle.Bold);
             _levelBadge.rectTransform.Stretch();
 
+            // HP in the reference's top bar slot. The slot under it is the reference's mana bar, which waits for its design.
             var hp = UiFactory.Rect(Root, "Hp");
-            hp.Place(TopLeft, TopLeft, new Vector2(592f, -28f), new Vector2(440f, 54f));
+            hp.Place(TopLeft, TopLeft, new Vector2(735f, -21f), new Vector2(367f, 48f));
             var hpBack = UiFactory.Image(hp, "Back", Palette.HpBack, Shapes.Rounded, true);
             hpBack.rectTransform.Stretch();
             UiArt.Apply(hpBack, ArtKeys.HpBack);
             var fillArea = UiFactory.Rect(hp, "FillArea");
-            fillArea.Stretch(40, 7, 7, 7);
+            fillArea.Stretch(36, 7, 7, 7);
             var fill = UiFactory.Image(fillArea, "Fill", Palette.Hp, Shapes.Rounded, true);
             _hpFill = fill.rectTransform;
             _hpFill.anchorMin = Vector2.zero;
@@ -861,25 +968,24 @@ namespace ClickDungeon.Unity.Screens
             UiArt.Apply(hpBorder, ArtKeys.HpFrame);
 
             var heart = UiFactory.Rect(hp, "Heart");
-            heart.Place(new Vector2(0f, 0.5f), Center, new Vector2(10f, 0f), new Vector2(64f, 64f));
-            if (!Icons.TryArt(heart, ArtKeys.Heart, 64f))
+            heart.Place(new Vector2(0f, 0.5f), Center, new Vector2(10f, 0f), new Vector2(58f, 58f));
+            if (!Icons.TryArt(heart, ArtKeys.Heart, 58f))
             {
                 var heartColor = Palette.Hp.Dim(1.2f);
-                Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(-10f, 6f), new Vector2(34f, 34f));
-                Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(10f, 6f), new Vector2(34f, 34f));
-                Icons.Shape(heart, Shapes.Triangle, heartColor, new Vector2(0f, -10f), new Vector2(50f, 36f), 180f);
+                Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(-9f, 5f), new Vector2(30f, 30f));
+                Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(9f, 5f), new Vector2(30f, 30f));
+                Icons.Shape(heart, Shapes.Triangle, heartColor, new Vector2(0f, -9f), new Vector2(44f, 32f), 180f);
             }
 
-            _hpText = UiFactory.Text(hp, "Text", "", 32, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-            _hpText.rectTransform.Stretch(40, 0, 0, 0);
+            _hpText = UiFactory.Text(hp, "Text", "", 30, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _hpText.rectTransform.Stretch(36, 0, 0, 0);
             UiFactory.Outline(_hpText, new Color(0f, 0f, 0f, 0.8f), 2f);
 
-            _keyChip = Chip("KeyChip", new Vector2(1050f, -32f), 190f);
-            _slashChip = Chip("SlashChip", new Vector2(1254f, -32f), 170f);
-            _turnChip = Chip("TurnChip", new Vector2(1438f, -32f), 170f);
+            _coins = PurseRow("Coins", -21f, ArtKeys.CoinIcon, Palette.Gold);
+            _gems = PurseRow("Gems", -78f, ArtKeys.GemIcon, Palette.Summon);
 
             var plaque = UiFactory.Rect(Root, "FloorPlaque");
-            plaque.Place(TopLeft, TopLeft, new Vector2(100f, -126f), new Vector2(380f, 104f));
+            plaque.Place(TopLeft, TopLeft, new Vector2(126f, -118f), new Vector2(306f, 84f));
             var plaqueShadow = UiFactory.Image(plaque, "Shadow", new Color(0f, 0f, 0f, 0.5f), Shapes.Rounded, true);
             plaqueShadow.rectTransform.Stretch(-4, 2, -8, -10);
             var plaqueBack = UiFactory.Image(plaque, "Back", Palette.Parchment, Shapes.Rounded, true);
@@ -887,42 +993,59 @@ namespace ClickDungeon.Unity.Screens
             var plaqueBorder = UiFactory.Image(plaque, "Border", Palette.GoldDark, Shapes.Frame, true);
             plaqueBorder.rectTransform.Stretch();
             if (UiArt.ApplyPanel(plaqueBack, plaqueBorder, ArtKeys.FloorPlaque)) plaqueShadow.enabled = false;
-            _floorTitle = UiFactory.Text(plaque, "Title", "", 42, Palette.Ink, TextAnchor.MiddleCenter, FontStyle.Bold);
-            _floorTitle.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -6f), new Vector2(360f, 54f));
-            _floorName = UiFactory.Text(plaque, "Name", "", 22, Palette.Ink, TextAnchor.MiddleCenter, FontStyle.Bold);
-            _floorName.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(360f, 34f));
+            _floorTitle = UiFactory.Text(plaque, "Title", "", 34, Palette.Ink, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _floorTitle.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -6f), new Vector2(290f, 42f));
+            _floorName = UiFactory.Text(plaque, "Name", "", 18, Palette.Ink, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _floorName.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(290f, 28f));
         }
 
-        Text Chip(string name, Vector2 pos, float width)
+        /// <summary>
+        /// One purse row from the reference: its icon over the left end of a dark field, the amount, and the "+" that opens the
+        /// shop. Both numbers are real (D-025): banked coins and gems plus what this run has found.
+        /// </summary>
+        Text PurseRow(string name, float y, string iconKey, Color fallback)
         {
-            var rt = UiFactory.Rect(Root, name);
-            rt.Place(TopLeft, TopLeft, pos, new Vector2(width, 46f));
-            var back = UiFactory.Image(rt, "Back", Palette.Navy, Shapes.Rounded, true);
-            back.rectTransform.Stretch();
-            var border = UiFactory.Image(rt, "Border", Palette.GoldDark, Shapes.Frame, true);
-            border.rectTransform.Stretch();
-            UiArt.ApplyPanel(back, border, ArtKeys.Chip);
-            var text = UiFactory.Text(rt, "Text", "", 24, Palette.TextLight, TextAnchor.MiddleCenter, FontStyle.Bold);
-            text.rectTransform.Stretch(6, 2, 6, 2);
-            return text;
+            var row = UiFactory.Rect(Root, name);
+            row.Place(TopLeft, TopLeft, new Vector2(1137f, y), new Vector2(264f, 48f));
+            var field = UiFactory.Image(row, "Field", new Color(0.03f, 0.04f, 0.06f, 0.92f), Shapes.Rounded, true);
+            field.rectTransform.Stretch(22, 3, 54, 3);
+            var edge = UiFactory.Image(field.rectTransform, "Edge", Palette.GoldDark.WithAlpha(0.45f), Shapes.Frame, true);
+            edge.rectTransform.Stretch();
+
+            var icon = UiFactory.Rect(row, "Icon");
+            icon.Place(new Vector2(0f, 0.5f), Center, new Vector2(24f, 0f), new Vector2(48f, 48f));
+            if (Icons.TryArtImage(icon, iconKey, 48f) == null)
+                Icons.Shape(icon, Shapes.Circle, fallback, Vector2.zero, new Vector2(38f, 38f));
+
+            var amount = UiFactory.Text(row, "Amount", "0", 28, Palette.TextLight, TextAnchor.MiddleRight, FontStyle.Bold);
+            amount.rectTransform.Stretch(56, 0, 68, 0);
+            UiFactory.Shadow(amount, Color.black, 2f);
+
+            var plus = UiFactory.Button(row, "Plus", "+", Palette.GoldDark, 34, OpenShop);
+            plus.Rect.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Vector2.zero, new Vector2(50f, 50f));
+            if (UiArt.ApplyPanel(plus.Background, plus.Border, ArtKeys.PlusButton)) plus.Label.enabled = false;
+            return amount;
         }
 
+        /// <summary>Settings and the menu (☰) in the reference's top-right slots. WHAT HAPPENED and HOW TO PLAY live in the menu.</summary>
         void BuildTopRight()
         {
-            var pause = UiFactory.Button(Root, "Settings", "", Palette.Navy, 10, OpenPause);
-            pause.Rect.Place(TopRight, TopRight, new Vector2(-28f, -16f), new Vector2(98f, 98f));
+            var settings = UiFactory.Button(Root, "Settings", "", Palette.Navy, 10,
+                () => Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting));
+            settings.Rect.Place(TopRight, Center, new Vector2(-188f, -67f), new Vector2(86f, 86f));
             // Settings art is the whole button (frame and gear); otherwise draw the procedural gear.
-            if (!UiArt.ApplyPanel(pause.Background, pause.Border, ArtKeys.SettingsButton))
+            if (!UiArt.ApplyPanel(settings.Background, settings.Border, ArtKeys.SettingsButton))
             {
-                var gear = UiFactory.Rect(pause.Rect, "Gear");
-                gear.Place(Center, Center, Vector2.zero, new Vector2(80f, 80f));
-                Icons.Gear(gear, Palette.Gold, 66f);
+                var gear = UiFactory.Rect(settings.Rect, "Gear");
+                gear.Place(Center, Center, Vector2.zero, new Vector2(70f, 70f));
+                Icons.Gear(gear, Palette.Gold, 58f);
             }
 
-            var help = UiFactory.Button(Root, "Help", "?", Palette.Navy, 58, OpenHelp);
-            help.Rect.Place(TopRight, TopRight, new Vector2(-140f, -16f), new Vector2(98f, 98f));
-            help.Label.color = Palette.Gold;
-            UiArt.ApplyPanel(help.Background, help.Border, ArtKeys.HelpButton);
+            var menu = UiFactory.Button(Root, "Menu", "", Palette.Navy, 10, OpenPause);
+            menu.Rect.Place(TopRight, Center, new Vector2(-84f, -67f), new Vector2(86f, 86f));
+            if (!UiArt.ApplyPanel(menu.Background, menu.Border, ArtKeys.MenuButton))
+                for (int i = -1; i <= 1; i++)
+                    Icons.Shape(menu.Rect, Shapes.Rounded, Palette.Gold, new Vector2(0f, i * 16f), new Vector2(46f, 8f));
         }
 
         Text BuildPanel(string name, Vector2 anchor, Vector2 pos, string title, out Text titleText)
@@ -949,14 +1072,14 @@ namespace ClickDungeon.Unity.Screens
         }
 
         /// <summary>The sample art's ability buttons: 112 × 169 on the sheet, drawn here at the same proportions.</summary>
-        static readonly Vector2 AbilityArtSize = new Vector2(106f, 160f);
-        const float AbilityPitch = 122f;
+        static readonly Vector2 AbilityArtSize = new Vector2(110f, 166f);
+        const float AbilityPitch = 150f;
 
         void BuildAbilityBar()
         {
             var bar = UiFactory.Rect(Root, "AbilityBar");
-            // Tucked between the board's bottom edge and the speech strip.
-            bar.Place(Center, Center, new Vector2(0f, -386f), new Vector2(900f, 160f));
+            // Under the board frame, where the reference's row of five sits.
+            bar.Place(Center, Center, new Vector2(0f, -331f), new Vector2(900f, 166f));
 
             var kinds = new[] { CommandKind.Move, CommandKind.Slash, CommandKind.Shield, CommandKind.Dash, CommandKind.Potion };
             var labels = new[] { "MOVE", "SLASH", "SHIELD", "DASH", "POTION" };
@@ -979,10 +1102,10 @@ namespace ClickDungeon.Unity.Screens
                 else
                 {
                     UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.AbilityButtonDefault);
-                    parts.Rect.Place(Center, Center, new Vector2((i - 2) * 178f, 0f), new Vector2(162f, 144f));
-                    parts.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(156f, 34f));
+                    parts.Rect.Place(Center, Center, new Vector2((i - 2) * AbilityPitch, 0f), new Vector2(138f, 138f));
+                    parts.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(134f, 32f));
                     var icon = UiFactory.Rect(parts.Rect, "Icon");
-                    icon.Place(Center, Center, new Vector2(0f, 18f), new Vector2(90f, 90f));
+                    icon.Place(Center, Center, new Vector2(0f, 16f), new Vector2(80f, 80f));
                     Icons.Ability(icon, kind);
                     var hint = UiFactory.Text(parts.Rect, "Hotkey", (i + 1).ToString(), 18, Palette.TextDim, TextAnchor.UpperLeft, FontStyle.Bold);
                     hint.rectTransform.Stretch(12, 8, 0, 0);
@@ -1006,10 +1129,14 @@ namespace ClickDungeon.Unity.Screens
             }
         }
 
+        /// <summary>
+        /// Sir Clickington's running commentary and the floor's goal, on the left under the floor plaque. The reference has no
+        /// strip along the bottom (its nav bar is there), so what he says sits beside the board instead.
+        /// </summary>
         void BuildSpeechStrip()
         {
             var strip = UiFactory.Rect(Root, "Speech");
-            strip.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(1060f, 64f));
+            strip.Place(TopLeft, TopLeft, new Vector2(40f, -222f), new Vector2(460f, 132f));
             var stripBack = UiFactory.Image(strip, "Back", Palette.Navy.WithAlpha(0.95f), Shapes.Rounded, true);
             stripBack.rectTransform.Stretch();
             var stripBorder = UiFactory.Image(strip, "Border", Palette.GoldDark, Shapes.Frame, true);
@@ -1017,16 +1144,78 @@ namespace ClickDungeon.Unity.Screens
             UiArt.ApplyPanel(stripBack, stripBorder, ArtKeys.SpeechStrip);
 
             var faceBack = UiFactory.Image(strip, "FaceBack", Palette.Parchment, Shapes.Circle);
-            faceBack.rectTransform.Place(new Vector2(0f, 0.5f), Center, new Vector2(40f, 0f), new Vector2(52f, 52f));
+            faceBack.rectTransform.Place(new Vector2(0f, 0.5f), Center, new Vector2(42f, 0f), new Vector2(54f, 54f));
             _speechFace = UiFactory.Text(faceBack.rectTransform, "Face", ":)", 24, Palette.Ink, TextAnchor.MiddleCenter, FontStyle.Bold);
             _speechFace.rectTransform.Stretch();
             _speechFace.horizontalOverflow = HorizontalWrapMode.Overflow;
 
-            _speech = UiFactory.Text(strip, "Line", "", 28, Palette.TextLight, TextAnchor.MiddleLeft, FontStyle.Italic);
-            _speech.rectTransform.Stretch(96, 4, 24, 4);
+            _speech = UiFactory.Text(strip, "Line", "", 26, Palette.TextLight, TextAnchor.MiddleLeft, FontStyle.Italic);
+            _speech.rectTransform.Stretch(84, 10, 18, 10);
             _speech.resizeTextForBestFit = true;
-            _speech.resizeTextMinSize = 18;
-            _speech.resizeTextMaxSize = 28;
+            _speech.resizeTextMinSize = 16;
+            _speech.resizeTextMaxSize = 26;
+
+            var goal = UiFactory.Rect(Root, "Goal");
+            goal.Place(TopLeft, TopLeft, new Vector2(40f, -370f), new Vector2(460f, 104f));
+            var goalBack = UiFactory.Image(goal, "Back", Palette.Navy.WithAlpha(0.95f), Shapes.Rounded, true);
+            goalBack.rectTransform.Stretch();
+            var goalBorder = UiFactory.Image(goal, "Border", Palette.GoldDark, Shapes.Frame, true);
+            goalBorder.rectTransform.Stretch();
+            UiArt.ApplyPanel(goalBack, goalBorder, ArtKeys.SpeechStrip);
+            _goal = UiFactory.Text(goal, "Text", "", 24, Palette.Gold, TextAnchor.MiddleLeft, FontStyle.Bold);
+            _goal.rectTransform.Stretch(20, 10, 16, 46);
+            _goal.resizeTextForBestFit = true;
+            _goal.resizeTextMinSize = 16;
+            _goal.resizeTextMaxSize = 24;
+            _status = UiFactory.Text(goal, "Status", "", 19, Palette.TextDim, TextAnchor.MiddleLeft, FontStyle.Bold);
+            _status.rectTransform.Stretch(20, 58, 16, 12);
+            _status.resizeTextForBestFit = true;
+            _status.resizeTextMinSize = 13;
+            _status.resizeTextMaxSize = 19;
+        }
+
+        // The reference's bottom bar on a 1920-wide canvas, and where its three segments meet.
+        static readonly Vector2 NavBarSize = new Vector2(1057f, 110f);
+        static readonly float[] NavSegments = { 0f, 385f, 724f, 1057f };
+
+        /// <summary>
+        /// INVENTORY, TALENTS and SHOP along the bottom, as in the reference. The bar's art carries the icons and labels; each
+        /// segment is a button over it. Changes made here are to the profile, so they outfit the next run.
+        /// </summary>
+        void BuildNavBar()
+        {
+            var bar = UiFactory.Rect(Root, "NavBar");
+            bar.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(4f, 2f), NavBarSize);
+            var art = UiFactory.Image(bar, "Art", Palette.Navy, Shapes.Rounded, true);
+            art.rectTransform.Stretch();
+            bool whole = UiArt.Apply(art, ArtKeys.NavBar);
+            if (!whole)
+            {
+                var edge = UiFactory.Image(bar, "Border", Palette.GoldDark, Shapes.Frame, true);
+                edge.rectTransform.Stretch();
+            }
+
+            var labels = new[] { "INVENTORY", "TALENTS", "SHOP" };
+            var actions = new Action[] { OpenInventory, OpenTalents, OpenShop };
+            for (int i = 0; i < labels.Length; i++)
+            {
+                float left = NavSegments[i], width = NavSegments[i + 1] - NavSegments[i];
+                var segment = UiFactory.Button(bar, labels[i], labels[i], Palette.NavyLight, 30, actions[i]);
+                segment.Rect.Place(new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(left + 8f, 0f), new Vector2(width - 16f, NavBarSize.y - 26f));
+                if (whole)
+                {
+                    // Invisible over the art, but still the tap target.
+                    segment.Background.color = Color.clear;
+                    segment.Border.enabled = false;
+                    segment.Label.enabled = false;
+                }
+            }
+
+            // The reference's red "!" over TALENTS, only while a talent point is free.
+            var badge = Icons.TryArtImage(bar, ArtKeys.AlertBadge, 36f, new Vector2(154f, 25f));
+            _talentsBadge = badge != null ? badge.gameObject
+                : Icons.Shape(bar, Shapes.Circle, Palette.Danger, new Vector2(154f, 25f), new Vector2(28f, 28f)).gameObject;
+            _talentsBadge.GetComponent<Image>().raycastTarget = false;
         }
     }
 
@@ -1109,10 +1298,11 @@ namespace ClickDungeon.Unity.Screens
         }
 
         /// <summary>
-        /// Spends what runs carried out (D-025). Provisions outfit the next run, so buying mid-run is not possible: the shop
-        /// only opens from the title.
+        /// Spends what runs carried out (D-025). Provisions outfit the next run: opened during a run (the game screen's SHOP),
+        /// what is bought waits for the next one.
         /// </summary>
-        public static void OpenShop(ModalOverlay modal, ContentCatalog catalog, ProfileState profile, Action<ShopItem> buy, Action back)
+        public static void OpenShop(ModalOverlay modal, ContentCatalog catalog, ProfileState profile, Action<ShopItem> buy, Action back,
+            string note = null)
         {
             var buttons = new List<(string, Color, Action)>();
             foreach (ShopItem item in Shop.Stock)
@@ -1133,15 +1323,17 @@ namespace ClickDungeon.Unity.Screens
             if (profile.PotionRations > 0 || profile.HeartTokens > 0 || profile.SpecialKeys > 0)
                 sb.AppendLine($"Waiting for your next run: {profile.PotionRations} potion rations, {profile.HeartTokens} heart tokens, " +
                     $"{profile.SpecialKeys} special keys.");
-            sb.AppendLine("Coins come out of chests and off every floor you finish. Gems come from Lord Blobert's hoard and vault chests.");
+            sb.Append("Coins come out of chests and off every floor you finish. Gems come from Lord Blobert's hoard and vault chests.");
+            sb.Append(note);
             modal.Show("SHOP", sb.ToString(), back, buttons.ToArray());
         }
 
         /// <summary>
         /// Levels and talents (D-027). Talents shape every new run and are never used up; resetting refunds every point, so
-        /// trying a build costs nothing. Like the shop, this only opens between runs.
+        /// trying a build costs nothing. Like the shop, what is learned during a run applies from the next one.
         /// </summary>
-        public static void OpenTalents(ModalOverlay modal, ProfileState profile, Action<string> learn, Action reset, Action back)
+        public static void OpenTalents(ModalOverlay modal, ProfileState profile, Action<string> learn, Action reset, Action back,
+            string note = null)
         {
             int level = Progression.Level(profile);
             int free = Progression.PointsFree(profile);
@@ -1152,7 +1344,8 @@ namespace ClickDungeon.Unity.Screens
             sb.AppendLine(free > 0 ? $"<color=#7BD88F>{free} talent point{(free == 1 ? "" : "s")} to spend.</color>" : "No points to spend: each level gives one.");
             sb.AppendLine();
             sb.AppendLine("Experience comes from every run: monsters, floors walked down, Lord Blobert, and winning.");
-            sb.AppendLine("Talents shape every run you start and are never used up.");
+            sb.Append("Talents shape every run you start and are never used up.");
+            sb.Append(note);
 
             var buttons = new List<(string, Color, Action)>();
             foreach (var talent in Progression.Talents)

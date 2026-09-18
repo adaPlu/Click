@@ -57,10 +57,10 @@ namespace ClickDungeon.Unity.Screens
             _grid.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -372f), new Vector2(900f, 280f));
 
             _detail = UiFactory.Text(panel, "Detail", "", 26, Palette.TextLight, TextAnchor.MiddleCenter);
-            _detail.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 104f), new Vector2(900f, 60f));
+            _detail.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 136f), new Vector2(900f, 64f));
 
             var done = UiFactory.Button(panel, "Done", "DONE", Palette.NavyLight, 30, Hide);
-            done.Rect.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 60f), new Vector2(320f, 74f));
+            done.Rect.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 48f), new Vector2(320f, 74f));
 
             _root.gameObject.SetActive(false);
         }
