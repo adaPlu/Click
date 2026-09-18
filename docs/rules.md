@@ -214,18 +214,23 @@ Max HP 10. Slash damage 2. Starts each run with 2 potions. Another hero may take
 the run instead (§5.1); everything below is the Knight's, and the table's numbers
 come from whichever class is playing.
 
-| Command   | Turn cost | Cooldown | Rule |
+| Command   | Turn cost | Mana | Rule |
 |-----------|-----------|----------|------|
 | Move      | 1 | – | Step into an enterable cell: **any tile on the board** in Free Roam, one of the **eight neighbours** in Step by Step (§12). |
 | Wait      | 1 | – | Do nothing (tap Sir Clickington / Space). |
 | Slash     | 1 | – | Target an adjacent cell (8-way) with an awake enemy (damage) or a bomb (arms it). |
-| Shield    | 1 | 3 | Gain **Guard** until end of this turn. Guard blocks all enemy attack and bomb damage. Melee attackers blocked by Guard become **Staggered** (next intent `Recover`); Lord Blobert is never staggered. Spikes are not blocked. |
+| Shield    | 1 | 2 | Gain **Guard** until end of this turn. Guard blocks all enemy attack and bomb damage. Melee attackers blocked by Guard become **Staggered** (next intent `Recover`); Lord Blobert is never staggered. Spikes are not blocked. |
 | Dash      | 1 | 3 | Move **one or two** cells in a straight line, diagonals included. On a 2-cell dash the middle cell must be enterable-or-hazard and not an actor/closed chest/wall/pit; middle-cell hazards are **not** triggered. Landing cell must be enterable; landing triggers its hazard/pickups. In Step by Step the landing may be a Sensed cell but never one carrying an ENEMY clue; Free Roam has no sensing, so a blind dash is allowed there exactly as a blind step is. |
 | Potion    | 1 | – | Heal 4 (not above max). Requires ≥ 1 potion. |
 | Interact  | 1 | – | Target a closed chest on the hero's **own tile or an adjacent one**: one tap toward opening it (see 7). |
 
-Cooldown `N` = after use, the ability is unavailable for the next `N−1`
-player turns.
+### 5.2 Mana (D-032)
+
+SHIELD and DASH cost **mana**; moving, waiting, slashing, potions and chests are
+free. The Knight has a pool of **6**: SHIELD costs **2**, DASH **3**. At the end
+of every turn the hero regains **1** (never above the pool), and every new floor
+starts with a **full** pool. An ability the pool cannot pay for is rejected and
+costs nothing. Each button shows its price; the bar under HP shows the pool.
 
 Illegal commands are rejected with a reason and cost nothing.
 
@@ -238,19 +243,19 @@ A run is taken by one **hero identity**, chosen on the title screen before the r
 starts. A run already in progress keeps the hero it began with, and the save
 carries it. Every class plays by the same rules; only its numbers differ.
 
-| Class | Hearts | Slash | Potions (heal) | Shield | Dash |
-|---|---|---|---|---|---|
-| Knight (Sir Clickington) | 10 | 2 | 2 (heal 4) | every 3 | 2 tiles every 3 |
-| Paladin (Dawnward) | 12 | 2 | 2 (heal 6) | every 2 | **1 tile** every 4 |
+| Class | Hearts | Slash | Potions (heal) | Mana | Shield | Dash |
+|---|---|---|---|---|---|---|
+| Knight (Sir Clickington) | 10 | 2 | 2 (heal 4) | 6 | 2 | 2 tiles for 3 |
+| Paladin (Dawnward) | 12 | 2 | 2 (heal 6) | 8 | 2 | **1 tile** for 4 |
 
 The Paladin is the steadier of the two: more hearts, a stronger potion and a
-shield that comes back sooner, paid for with a dash that moves one tile and
-recharges slower — and dash is how a hero crosses a trap or breaks away from a
-monster. Difficulty tiers apply to whichever class is playing (§10).
+deeper mana pool for shields, paid for with a dash that moves one tile and costs
+more — and dash is how a hero crosses a trap or breaks away from a monster.
+Difficulty tiers apply to whichever class is playing (§10).
 
-Measured, 40 seeds per tier with the novice bot (`HeroSweep`): sighted, both
-heroes win every tier. Blind, the Knight wins 40 / 36 / 29 and the Paladin
-39 / 38 / 33, so the Paladin is the gentler start and the Knight the faster run.
+Measured with mana, 40 seeds per tier with the novice bot (`HeroSweep`): sighted,
+both heroes win every tier. Blind, the Knight wins 40 / 36 / 26 and the Paladin
+37 / 38 / 30 (with cooldowns it was 40 / 36 / 29 and 39 / 38 / 33).
 
 ---
 
@@ -276,7 +281,7 @@ One committed gameplay command resolves as:
    fuse 1 → 0.
 8. **Deaths**; if hero HP ≤ 0 → **run failed**, stop.
 9. **Declare**: every awake enemy (including just-woken) declares its next
-   intent. Guard expires. Cooldowns tick down. Turn counter +1.
+   intent. Guard expires. The hero regains 1 mana. Turn counter +1.
 10. **Events** are emitted for presentation.
 11. **Stable boundary** → autosave → accept next command.
 
@@ -311,7 +316,7 @@ Ordering is covered by automated tests.
     tap it needs, filled as taps land. The reward reveal that follows costs no turns and
     lists every reward the chest granted.
 - **Floor complete** → next floor generates, hero HP/potions/boons carry over,
-  cooldowns reset, key is cleared.
+  mana refills, key is cleared.
 - **Run**: 5 floors. Floor 5 is Lord Blobert's arena; its exit is unlocked
   when he dies and stepping on it wins the run.
 - **Death**: hero HP ≤ 0 ends the run. The save is cleared (roguelike run).
@@ -552,8 +557,8 @@ every point for free.
 |---|---|---|
 | Tough | 3 | +1 max heart |
 | Stocked | 2 | +1 starting potion |
-| Quick Shield | 1 | Shield recharges 1 turn sooner (never below 1) |
-| Fleet | 1 | Dash recharges 1 turn sooner (never below 1) |
+| Focus | 2 | +1 max mana |
+| Fleet | 1 | Dash costs 1 less mana (never below 1) |
 | Lucky | 2 | +2 coins for every chest reward |
 
 The level shows as a badge on the portrait on both screens. The TALENTS button
@@ -575,15 +580,15 @@ becomes 25 coins instead. Nothing found changes the run it was found in.
 | Weapon | Steel Sword | +1 slash damage |
 | Weapon | Lucky Wand | +3 coins for every chest reward |
 | Shield | Iron Shield | +1 max heart |
-| Shield | Gilded Shield | Shield recharges 1 turn sooner |
+| Shield | Gilded Shield | +1 max mana |
 | Armor | Iron Cuirass | +1 max heart |
 | Armor | Royal Plate | +2 max hearts |
-| Boots | Swift Boots | Dash recharges 1 turn sooner |
+| Boots | Swift Boots | Dash costs 1 less mana |
 | Trinket | Healing Charm | Potions heal 2 more |
 | Trinket | Scholar's Ring | +5 XP for every floor walked down |
 
 One item per slot. What is worn shapes every run started afterwards and is never
-used up; cooldown cuts add to talents' and never go below one turn. The
+used up; a dash cost cut adds to the talent's and never goes below one. The
 INVENTORY screen shows the five slots and every item (unfound ones as "?"); tap a
 found item to wear it, tap a worn slot to take it off.
 

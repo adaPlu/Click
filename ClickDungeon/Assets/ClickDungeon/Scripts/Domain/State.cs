@@ -67,8 +67,9 @@ namespace ClickDungeon.Domain
         /// <summary>Special keys carried in from the profile (D-026). Each opens one premium chest; unused ones go back.</summary>
         public int SpecialKeys;
         public bool Guard;
-        public int ShieldCooldown;
-        public int DashCooldown;
+        /// <summary>Mana (D-032): SHIELD and DASH spend it; +1 at the end of every turn, full on every new floor.</summary>
+        public int Mana;
+        public int MaxMana;
     }
 
     [Serializable]
@@ -154,9 +155,8 @@ namespace ClickDungeon.Domain
         /// <summary>From equipment: extra healing per potion, and extra XP per floor walked down.</summary>
         public int PotionHealBonus;
         public int BonusXpPerFloor;
-        /// <summary>Turns taken off the class's shield and dash cooldowns by talents (never below one turn).</summary>
-        public int ShieldCooldownCut;
-        public int DashCooldownCut;
+        /// <summary>Mana taken off the class's dash cost by talents and gear (never below one).</summary>
+        public int DashCostCut;
         /// <summary>Counted for the crown's achievements (D-030) and banked with the rest when the run ends.</summary>
         public int MonstersSlain;
         public int ChestsOpened;

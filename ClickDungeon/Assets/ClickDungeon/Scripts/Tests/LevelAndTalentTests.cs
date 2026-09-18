@@ -74,8 +74,8 @@ namespace ClickDungeon.Tests
             Assert.That(Progression.TryLearn(profile, Progression.Tough), Is.False, "Level 1 has no points.");
 
             profile.Xp = Progression.XpForLevel(5); // four points
-            Assert.That(Progression.TryLearn(profile, Progression.QuickShield), Is.True);
-            Assert.That(Progression.TryLearn(profile, Progression.QuickShield), Is.False, "Quick Shield has one rank.");
+            Assert.That(Progression.TryLearn(profile, Progression.Fleet), Is.True);
+            Assert.That(Progression.TryLearn(profile, Progression.Fleet), Is.False, "Fleet has one rank.");
             Assert.That(Progression.TryLearn(profile, "nonsense"), Is.False);
             Assert.That(Progression.TryLearn(profile, Progression.Tough), Is.True);
             Assert.That(Progression.TryLearn(profile, Progression.Tough), Is.True);
@@ -103,11 +103,11 @@ namespace ClickDungeon.Tests
             Assert.That(trained.BonusCoinsPerChestReward, Is.EqualTo(Progression.LuckyCoins));
             Assert.That(Progression.Rank(profile, Progression.Tough), Is.EqualTo(2), "Talents are not spent by a run.");
 
-            // Quick Shield and Fleet take a turn off the recharge.
-            var knight = Catalog.HeroClass("knight");
-            trained.Hero.Pos = trained.Floor.Start;
-            DoOk(trained, PlayerCommand.Shield());
-            Assert.That(trained.Hero.ShieldCooldown, Is.EqualTo(knight.ShieldCooldown - 2), "Cut by one, then ticked by the turn.");
+            // Focus deepens the mana pool and Fleet makes the dash cheaper (D-032).
+            Assert.That(trained.Hero.MaxMana, Is.EqualTo(plain.Hero.MaxMana + 1));
+            Assert.That(trained.Hero.Mana, Is.EqualTo(trained.Hero.MaxMana));
+            Assert.That(trained.DashCostCut, Is.EqualTo(1));
+            Assert.That(Mana.DashCost(trained, Catalog.HeroClass("knight")), Is.EqualTo(Catalog.HeroClass("knight").DashCost - 1));
         }
 
         [Test]
@@ -121,12 +121,13 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
-        public void CooldownsNeverDropBelowOneTurn()
+        public void TheDashNeverCostsLessThanOneMana()
         {
-            var run = Run(".....", ".....", "..H..", ".....", ".....");
-            run.ShieldCooldownCut = 99;
-            DoOk(run, PlayerCommand.Shield());
-            Assert.That(run.Hero.ShieldCooldown, Is.Zero, "Set to one, then ticked down by the turn: usable next turn, not this one.");
+            var run = Run(".....", ".....", "H....", ".....", ".....");
+            run.DashCostCut = 99;
+            run.Hero.Mana = 1;
+            DoOk(run, PlayerCommand.Dash(P(2, 2)));
+            Assert.That(run.Hero.Mana, Is.EqualTo(Mana.PerTurn), "Paid one, then one back at the end of the turn.");
         }
     }
 }

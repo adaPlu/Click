@@ -19,6 +19,8 @@ namespace ClickDungeon.Simulation
                 MaxHp = heroClass.MaxHp,
                 SlashDamage = heroClass.SlashDamage,
                 Potions = heroClass.StartingPotions,
+                Mana = heroClass.MaxMana,
+                MaxMana = heroClass.MaxMana,
             };
         }
 
@@ -139,8 +141,7 @@ namespace ClickDungeon.Simulation
             hero.Pos = floor.Start;
             hero.HasKey = false;
             hero.Guard = false;
-            hero.ShieldCooldown = 0;
-            hero.DashCooldown = 0;
+            Mana.Refill(hero);
 
             // Chest quality (D-022). Assigned here rather than during generation so it draws on the run seed without
             // moving the generator's stream: floors from a given seed are unchanged. A vault's great chest is always Epic.

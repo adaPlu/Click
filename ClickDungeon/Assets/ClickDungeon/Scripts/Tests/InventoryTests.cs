@@ -20,7 +20,7 @@ namespace ClickDungeon.Tests
             {
                 Assert.That(item.DisplayName, Is.Not.Empty, item.Id);
                 Assert.That(item.Effect, Is.Not.Empty, item.Id);
-                int numbers = item.SlashDamage + item.MaxHp + item.PotionHeal + item.ShieldCooldownCut + item.DashCooldownCut
+                int numbers = item.SlashDamage + item.MaxHp + item.PotionHeal + item.MaxMana + item.DashCostCut
                               + item.CoinsPerChestReward + item.XpPerFloor;
                 Assert.That(numbers, Is.GreaterThan(0), $"{item.Id} must do something.");
             }
@@ -107,7 +107,7 @@ namespace ClickDungeon.Tests
             Assert.That(geared.Hero.SlashDamage, Is.EqualTo(plain.Hero.SlashDamage + 1));
             Assert.That(geared.Hero.MaxHp, Is.EqualTo(plain.Hero.MaxHp + 2));
             Assert.That(geared.PotionHealBonus, Is.EqualTo(2));
-            Assert.That(geared.DashCooldownCut, Is.EqualTo(1));
+            Assert.That(geared.DashCostCut, Is.EqualTo(1));
         }
 
         [Test]

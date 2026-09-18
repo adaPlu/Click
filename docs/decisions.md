@@ -103,6 +103,7 @@ Rules referenced here live in `docs/rules.md`.
 - **DECISION**: Shield and Dash use cooldowns (3). No resource bar.
 - **WHY**: fewer systems; cooldowns stop ability spam.
 - **REVERSIBILITY**: high.
+- **SUPERSEDED** by D-032 (mana).
 
 ## D-015 Local JSONL playtest telemetry recorded from simulation results
 - **DECISION**: `TelemetryRecorder` (Application layer) snapshots decision context before each command and
@@ -423,4 +424,18 @@ Rules referenced here live in `docs/rules.md`.
   each says so. The reference's mana bar slot stays empty until its design is decided (art brief D3).
 - **WHY**: "title and game page should match exactly 1:1".
 - **TESTS**: the existing screen and menu tests; screenshots with `-cdOverlay hud|menu|log|inventory|talents|shop`.
+
+## D-032 Mana replaces cooldowns
+- **DECISION**: SHIELD and DASH cost mana from a pool shown under HP, as in the reference. Knight: 6 mana, shield 2,
+  dash 3. Paladin: 8 mana, shield 2, dash (1 tile) 4. +1 mana at the end of every turn, a full pool on every new floor;
+  move, slash, potions and chests are free. Quick Shield becomes FOCUS (+1 max mana, two ranks, same id so learned
+  points stay); Fleet makes the dash 1 cheaper (never below 1). Gilded Shield gives +1 max mana; Swift Boots a cheaper
+  dash. Ruleset 6; a run saved before mana continues with its class's full pool.
+- **WHY**: the reference's mana bar; the player chooses when to spend instead of waiting out timers (chosen by the
+  owner from three options).
+- **BALANCE**: every guard passes. Hero sweep, blind novice, 40 seeds Easy / Medium / Hardcore: Knight 40 / 36 / 26
+  (was 29 on Hardcore), Paladin 37 / 38 / 30 (was 39 / 38 / 33); sighted still wins every tier. Step-by-step Hardcore
+  with the weakest bots is a little harder, Free Roam unchanged.
+- **TESTS**: `ManaTests`, `ShieldCostsManaAndManaComesBackEachTurn`, `TheDashNeverCostsLessThanOneMana`, and the hero,
+  talent and inventory tests.
 

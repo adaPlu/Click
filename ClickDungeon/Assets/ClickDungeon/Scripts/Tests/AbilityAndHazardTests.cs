@@ -27,26 +27,24 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
-        public void ShieldCooldownSkipsTwoTurns()
+        public void ShieldCostsManaAndManaComesBackEachTurn()
         {
-            var run = Run(
-                ".....",
-                "..g..",
-                "..H..",
-                ".....",
-                ".....");
-            DoOk(run, PlayerCommand.Move(P(2, 3)));
+            // D-032: the Knight starts a floor with 6 mana; a shield costs 2 and every turn gives 1 back.
+            var run = Run(".....", ".....", "..H..", ".....", ".....");
+            var knight = Catalog.HeroClass("knight");
+            Assert.That(run.Hero.Mana, Is.EqualTo(knight.MaxMana));
+            for (int i = 1; i <= 5; i++)
+            {
+                DoOk(run, PlayerCommand.Shield());
+                Assert.That(run.Hero.Mana, Is.EqualTo(knight.MaxMana - i * (knight.ShieldCost - Mana.PerTurn)));
+            }
+            Assert.That(run.Hero.Mana, Is.EqualTo(1));
+            Assert.That(Do(run, PlayerCommand.Shield()).Accepted, Is.False, "One mana does not pay for a shield.");
+            DoOk(run, PlayerCommand.Wait());
             DoOk(run, PlayerCommand.Shield());
 
-            Assert.That(Do(run, PlayerCommand.Shield()).Accepted, Is.False);
-            DoOk(run, PlayerCommand.Slash(P(2, 3)));
-            Assert.That(run.Hero.Hp, Is.EqualTo(10), "Staggered goblin recovers instead of attacking.");
-
-            Assert.That(Do(run, PlayerCommand.Shield()).Accepted, Is.False);
-            DoOk(run, PlayerCommand.Slash(P(2, 3)));
-            Assert.That(run.Floor.Enemies, Is.Empty);
-
-            DoOk(run, PlayerCommand.Shield());
+            for (int i = 0; i < 20; i++) DoOk(run, PlayerCommand.Wait());
+            Assert.That(run.Hero.Mana, Is.EqualTo(knight.MaxMana), "Mana never climbs past the pool.");
         }
     }
 
@@ -64,8 +62,10 @@ namespace ClickDungeon.Tests
             DoOk(run, PlayerCommand.Dash(P(2, 2)));
             Assert.That(run.Hero.Pos, Is.EqualTo(P(2, 2)));
             Assert.That(run.Hero.Hp, Is.EqualTo(10));
-            Assert.That(run.Hero.DashCooldown, Is.EqualTo(2));
-            Assert.That(Do(run, PlayerCommand.Dash(P(0, 2))).Accepted, Is.False);
+            var knight = Catalog.HeroClass("knight");
+            Assert.That(run.Hero.Mana, Is.EqualTo(knight.MaxMana - knight.DashCost + Mana.PerTurn));
+            run.Hero.Mana = knight.DashCost - 1;
+            Assert.That(Do(run, PlayerCommand.Dash(P(0, 2))).Accepted, Is.False, "Not enough mana to dash.");
         }
 
         [Test]

@@ -114,7 +114,7 @@ Recreate the layout exactly. Items marked * depend on Decision D1.
 - Board: stone wall surround with the perspective top wall and side walls, torches on the frame,
   5×5 grid with gaps. Deliver as a 9-sliceable frame plus separate wall and torch props.
 - Ability bar: MOVE, SLASH, SHIELD, DASH, POTION. States: normal, hover, pressed, selected (gold
-  frame), disabled. Cooldown badge, potion count badge, hotkey number slot.
+  frame), disabled. Mana cost badge, potion count badge, hotkey number slot.
 - Bottom bar: INVENTORY*, TALENTS*, SHOP* with notification badge*.
 - Sir Clickington speech bubble and goal card (not in the reference), left of the board: same frame
   language as the bottom bar.
@@ -251,7 +251,7 @@ The reward is committed the moment the chest is opened. Taps are presentation on
   produce all of the art now; hide those elements in the build until each system exists.
 - D2. Side banners vs. the WHAT HAPPENED / INSPECT panels.
   Default: restyle the panels as the reference banners and keep their function.
-- D3. Mana bar. Default: none (the Knight uses cooldowns).
+- D3. Mana bar. **DECIDED (D-032): mana replaces cooldowns**; the bar sits under HP (`ui_mana_fill`, `ui_icon_mana`).
 - D4. **DECIDED (2026-09-14): slice the reference images into temporary placeholders.** Placeholder
   sprites live in `Art/Runtime/Placeholders/`; any production file with the same key elsewhere under
   `Art/Runtime/` replaces its placeholder automatically. Reference slices are not final art (low

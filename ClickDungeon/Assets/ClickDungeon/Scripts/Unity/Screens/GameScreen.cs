@@ -50,6 +50,8 @@ namespace ClickDungeon.Unity.Screens
         Text _speech;
         Text _hpText;
         RectTransform _hpFill;
+        Text _manaText;
+        RectTransform _manaFill;
         Text _floorTitle;
         Text _floorName;
         /// <summary>The run's story, newest first; the menu's WHAT HAPPENED shows it.</summary>
@@ -307,7 +309,8 @@ namespace ClickDungeon.Unity.Screens
             }
             else if (mode == TargetMode.Dash && Commands.LegalTargets(Run, CommandKind.Dash, Catalog).Count == 0)
             {
-                Say(Run.Hero.DashCooldown > 0 ? $"Dash is recharging ({Run.Hero.DashCooldown})." : "No room to dash.", Expression.Worried);
+                int cost = Mana.DashCost(Run, Catalog.HeroClass(Run.Hero.ClassId));
+                Say(!Mana.CanPay(Run.Hero, cost) ? $"Not enough mana to dash ({Run.Hero.Mana}/{cost})." : "No room to dash.", Expression.Worried);
                 mode = TargetMode.Move;
             }
             else if (mode == TargetMode.Slash)
@@ -609,6 +612,10 @@ namespace ClickDungeon.Unity.Screens
 
             _hpText.text = $"{hero.Hp} / {hero.MaxHp}";
             _hpFill.anchorMax = new Vector2(Mathf.Clamp01(hero.Hp / (float)hero.MaxHp), 1f);
+            _manaText.text = $"{hero.Mana} / {hero.MaxMana}";
+            _manaFill.anchorMax = new Vector2(hero.MaxMana > 0 ? Mathf.Clamp01(hero.Mana / (float)hero.MaxMana) : 0f, 1f);
+            var heroClass = Catalog.HeroClass(hero.ClassId);
+            int shieldCost = Mana.ShieldCost(run, heroClass), dashCost = Mana.DashCost(run, heroClass);
             _levelBadge.text = Progression.Level(_app.Session.Profile).ToString();
             _goal.text = Goal(run);
             _status.text = $"TURN {run.Turn + 1}   ·   SLASH {hero.SlashDamage}   ·   KEY {(hero.HasKey ? "YES" : "NO")}"
@@ -622,9 +629,10 @@ namespace ClickDungeon.Unity.Screens
             bool live = run.Status == RunStatus.InProgress;
             SetAbility(CommandKind.Move, _mode == TargetMode.Move, live, null);
             SetAbility(CommandKind.Slash, _mode == TargetMode.Slash, live && Commands.LegalTargets(run, CommandKind.Slash, Catalog).Count > 0, null);
-            SetAbility(CommandKind.Shield, false, live && hero.ShieldCooldown == 0, hero.ShieldCooldown > 0 ? hero.ShieldCooldown.ToString() : null);
+            // SHIELD and DASH wear their mana price, dimmed while the pool cannot pay it (D-032).
+            SetAbility(CommandKind.Shield, false, live && Mana.CanPay(hero, shieldCost), shieldCost.ToString(), true);
             SetAbility(CommandKind.Dash, _mode == TargetMode.Dash, live && Commands.LegalTargets(run, CommandKind.Dash, Catalog).Count > 0,
-                hero.DashCooldown > 0 ? hero.DashCooldown.ToString() : null);
+                dashCost.ToString(), true);
             SetAbility(CommandKind.Potion, false, live && Commands.Validate(run, PlayerCommand.Potion(), Catalog, out _), hero.Potions.ToString());
 
             _threats = Threats.Compute(run, Catalog);
@@ -698,13 +706,15 @@ namespace ClickDungeon.Unity.Screens
             UpdateInspector();
         }
 
-        void SetAbility(CommandKind kind, bool selected, bool usable, string badge)
+        void SetAbility(CommandKind kind, bool selected, bool usable, string badge, bool manaCost = false)
         {
             var ability = _abilities[kind];
             ability.Selected.enabled = selected;
             ability.Group.alpha = usable || selected ? 1f : 0.45f;
             ability.BadgeBack.gameObject.SetActive(badge != null);
             if (badge != null) ability.Badge.text = badge;
+            // A mana price reads blue, a potion count white.
+            ability.Badge.color = manaCost ? Palette.ManaText : Color.white;
         }
 
         void UpdateInspector()
@@ -784,8 +794,9 @@ namespace ClickDungeon.Unity.Screens
                 var hero = run.Hero;
                 title = "SIR CLICKINGTON";
                 sb.AppendLine($"HP {hero.Hp}/{hero.MaxHp}   Slash {hero.SlashDamage}   Potions {hero.Potions}");
-                sb.AppendLine(hero.ShieldCooldown > 0 ? $"Shield recharging: {hero.ShieldCooldown}" : "Shield ready.");
-                sb.AppendLine(hero.DashCooldown > 0 ? $"Dash recharging: {hero.DashCooldown}" : "Dash ready.");
+                var heroClass = catalog.HeroClass(hero.ClassId);
+                sb.AppendLine($"Mana {hero.Mana}/{hero.MaxMana}: shield costs {Mana.ShieldCost(run, heroClass)}, dash {Mana.DashCost(run, heroClass)}.");
+                sb.AppendLine($"+{Mana.PerTurn} mana every turn, full on every new floor.");
                 sb.AppendLine("Tap him to wait a turn.");
                 var underfoot = UnderfootText(cell, floor, Board.ExitReadsOpen(run));
                 if (underfoot != null) sb.AppendLine(underfoot);
@@ -948,25 +959,8 @@ namespace ClickDungeon.Unity.Screens
             _levelBadge = UiFactory.Text(badge.rectTransform, "Level", "1", 28, Palette.TextLight, TextAnchor.MiddleCenter, FontStyle.Bold);
             _levelBadge.rectTransform.Stretch();
 
-            // HP in the reference's top bar slot. The slot under it is the reference's mana bar, which waits for its design.
-            var hp = UiFactory.Rect(Root, "Hp");
-            hp.Place(TopLeft, TopLeft, new Vector2(735f, -21f), new Vector2(367f, 48f));
-            var hpBack = UiFactory.Image(hp, "Back", Palette.HpBack, Shapes.Rounded, true);
-            hpBack.rectTransform.Stretch();
-            UiArt.Apply(hpBack, ArtKeys.HpBack);
-            var fillArea = UiFactory.Rect(hp, "FillArea");
-            fillArea.Stretch(36, 7, 7, 7);
-            var fill = UiFactory.Image(fillArea, "Fill", Palette.Hp, Shapes.Rounded, true);
-            _hpFill = fill.rectTransform;
-            _hpFill.anchorMin = Vector2.zero;
-            _hpFill.anchorMax = Vector2.one;
-            _hpFill.offsetMin = Vector2.zero;
-            _hpFill.offsetMax = Vector2.zero;
-            UiArt.Apply(fill, ArtKeys.HpFill);
-            var hpBorder = UiFactory.Image(hp, "Border", Palette.GoldDark, Shapes.Frame, true);
-            hpBorder.rectTransform.Stretch();
-            UiArt.Apply(hpBorder, ArtKeys.HpFrame);
-
+            // HP and mana in the reference's two bar slots (D-032).
+            var hp = Bar("Hp", -21f, Palette.Hp, ArtKeys.HpFill, out _hpFill, out _hpText);
             var heart = UiFactory.Rect(hp, "Heart");
             heart.Place(new Vector2(0f, 0.5f), Center, new Vector2(10f, 0f), new Vector2(58f, 58f));
             if (!Icons.TryArt(heart, ArtKeys.Heart, 58f))
@@ -977,9 +971,11 @@ namespace ClickDungeon.Unity.Screens
                 Icons.Shape(heart, Shapes.Triangle, heartColor, new Vector2(0f, -9f), new Vector2(44f, 32f), 180f);
             }
 
-            _hpText = UiFactory.Text(hp, "Text", "", 30, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-            _hpText.rectTransform.Stretch(36, 0, 0, 0);
-            UiFactory.Outline(_hpText, new Color(0f, 0f, 0f, 0.8f), 2f);
+            var mana = Bar("Mana", -78f, Palette.Mana, ArtKeys.ManaFill, out _manaFill, out _manaText);
+            var orb = UiFactory.Rect(mana, "Orb");
+            orb.Place(new Vector2(0f, 0.5f), Center, new Vector2(12f, 0f), new Vector2(52f, 52f));
+            if (!Icons.TryArt(orb, ArtKeys.ManaIcon, 52f))
+                Icons.Shape(orb, Shapes.Circle, Palette.Mana, Vector2.zero, new Vector2(40f, 40f));
 
             _coins = PurseRow("Coins", -21f, ArtKeys.CoinIcon, Palette.Gold);
             _gems = PurseRow("Gems", -78f, ArtKeys.GemIcon, Palette.Summon);
@@ -997,6 +993,32 @@ namespace ClickDungeon.Unity.Screens
             _floorTitle.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -6f), new Vector2(290f, 42f));
             _floorName = UiFactory.Text(plaque, "Name", "", 18, Palette.Ink, TextAnchor.MiddleCenter, FontStyle.Bold);
             _floorName.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(290f, 28f));
+        }
+
+        /// <summary>One of the two top bars: back, a fill sized by the caller, frame and the value as live text.</summary>
+        RectTransform Bar(string name, float y, Color color, string fillKey, out RectTransform fillRect, out Text value)
+        {
+            var bar = UiFactory.Rect(Root, name);
+            bar.Place(TopLeft, TopLeft, new Vector2(735f, y), new Vector2(367f, 48f));
+            var back = UiFactory.Image(bar, "Back", Palette.HpBack, Shapes.Rounded, true);
+            back.rectTransform.Stretch();
+            UiArt.Apply(back, ArtKeys.HpBack);
+            var fillArea = UiFactory.Rect(bar, "FillArea");
+            fillArea.Stretch(36, 7, 7, 7);
+            var fill = UiFactory.Image(fillArea, "Fill", color, Shapes.Rounded, true);
+            fillRect = fill.rectTransform;
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            UiArt.Apply(fill, fillKey);
+            var border = UiFactory.Image(bar, "Border", Palette.GoldDark, Shapes.Frame, true);
+            border.rectTransform.Stretch();
+            UiArt.Apply(border, ArtKeys.HpFrame);
+            value = UiFactory.Text(bar, "Text", "", 30, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            value.rectTransform.Stretch(36, 0, 0, 0);
+            UiFactory.Outline(value, new Color(0f, 0f, 0f, 0.8f), 2f);
+            return bar;
         }
 
         /// <summary>
@@ -1228,6 +1250,7 @@ namespace ClickDungeon.Unity.Screens
             "- Tap an enemy beside you to SLASH, a chest to open it (2-4 taps, each a turn), or Sir Clickington to wait.\n" +
             "- Uncovering an enemy wakes it. It shows its intent and only acts on the NEXT turn. Most must stand next to you to hit; Fire Imps shoot along a line and Lord Blobert slams from anywhere.\n" +
             "- Tiles marked -N will be hit next turn. Step off, SHIELD to block (staggers attackers), or DASH one or two tiles over traps.\n" +
+            "- SHIELD and DASH cost MANA (the blue bar; the price is on each button). You get 1 back every turn and a full bar on every new floor. Moving, slashing and potions are free.\n" +
             "- Find the KEY, reach the EXIT. Floor 5: defeat Lord Blobert.\n\n" +
             "Keys: WASD / arrows, Space = wait, 1-5 = abilities, Esc = menu, H = help.";
 
@@ -1291,8 +1314,8 @@ namespace ClickDungeon.Unity.Screens
                 sb.AppendLine($"<color=#F2C14E>{identity.DisplayName}</color> ({hero.DisplayName}){(identity.Id == current ? "  — chosen" : "")}");
                 sb.AppendLine(identity.Tagline);
                 sb.AppendLine($"{hero.MaxHp} hearts, slash {hero.SlashDamage}, potion heals {hero.PotionHeal}, " +
-                    $"{hero.StartingPotions} potions, shield every {hero.ShieldCooldown}, dash {hero.DashDistance} " +
-                    $"{(hero.DashDistance == 1 ? "tile" : "tiles")} every {hero.DashCooldown}.");
+                    $"{hero.StartingPotions} potions, {hero.MaxMana} mana: shield {hero.ShieldCost}, dash {hero.DashDistance} " +
+                    $"{(hero.DashDistance == 1 ? "tile" : "tiles")} for {hero.DashCost}.");
             }
             return sb.ToString();
         }

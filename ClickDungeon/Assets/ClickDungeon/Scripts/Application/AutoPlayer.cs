@@ -356,8 +356,7 @@ namespace ClickDungeon.Application
                 PotionHealBonus = run.PotionHealBonus,
                 BonusXpPerFloor = run.BonusXpPerFloor,
                 BonusCoinsPerChestReward = run.BonusCoinsPerChestReward,
-                ShieldCooldownCut = run.ShieldCooldownCut,
-                DashCooldownCut = run.DashCooldownCut,
+                DashCostCut = run.DashCostCut,
                 MonstersSlain = run.MonstersSlain,
                 ChestsOpened = run.ChestsOpened,
             };
@@ -366,8 +365,8 @@ namespace ClickDungeon.Application
         static HeroState Copy(HeroState h) => new HeroState
         {
             IdentityId = h.IdentityId, ClassId = h.ClassId, Pos = h.Pos, Hp = h.Hp, MaxHp = h.MaxHp, SlashDamage = h.SlashDamage,
-            Potions = h.Potions, HasKey = h.HasKey, SpecialKeys = h.SpecialKeys, Guard = h.Guard, ShieldCooldown = h.ShieldCooldown,
-            DashCooldown = h.DashCooldown,
+            Potions = h.Potions, HasKey = h.HasKey, SpecialKeys = h.SpecialKeys, Guard = h.Guard, Mana = h.Mana,
+            MaxMana = h.MaxMana,
         };
 
         static FloorState Copy(FloorState f)

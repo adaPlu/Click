@@ -165,6 +165,9 @@ namespace ClickDungeon.Unity.Ui
         public const string EnemyHpBack = "ui_enemy_hp_back";
         public const string EnemyHpFill = "ui_enemy_hp_fill";
         public const string HpFill = "ui_hp_fill";
+        /// <summary>The mana bar (D-032): the reference's blue fill and orb, on the HP bar's back and frame.</summary>
+        public const string ManaFill = "ui_mana_fill";
+        public const string ManaIcon = "ui_icon_mana";
         public const string HpFrame = "ui_hp_frame";
         public const string Heart = "ui_icon_heart";
         public const string Chip = "ui_chip";
@@ -390,7 +393,7 @@ namespace ClickDungeon.Unity.Ui
             keys.AddRange(new[]
             {
                 HighlightLegal, HighlightTarget, HighlightHover,
-                PortraitFrame, HpBack, HpFill, HpFrame, EnemyHpBack, EnemyHpFill, Heart, CoinIcon, GemIcon, Chip, FloorPlaque, Panel, SpeechStrip,
+                PortraitFrame, HpBack, HpFill, HpFrame, ManaFill, ManaIcon, EnemyHpBack, EnemyHpFill, Heart, CoinIcon, GemIcon, Chip, FloorPlaque, Panel, SpeechStrip,
                 AbilityButtonDefault, AbilitySelected, CountBadge, SettingsButton, HelpButton,
             });
             foreach (var kind in AbilityKinds) keys.Add(AbilityButton(kind));

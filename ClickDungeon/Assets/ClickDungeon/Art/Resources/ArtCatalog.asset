@@ -933,6 +933,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 001e9164323c4d74fbc59164141f5fe2, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: ui_mana_fill
+    Frames:
+    - {fileID: 21300000, guid: 026ea5bbd2e148c4cbf07a852e091e89, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: ui_nav_bar
     Frames:
     - {fileID: 21300000, guid: 486b85f60237a284f93ac7f19dccc085, type: 3}

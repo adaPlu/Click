@@ -172,6 +172,8 @@
     { "key": "portrait_goblin", "source": "ref-monster-pack", "rect": [400, 190, 118, 106], "mode": "icon", "size": 192, "folder": "Portraits", "wired": true },
     { "key": "portrait_slimelet", "source": "ref-monster-pack", "rect": [1096, 608, 120, 102], "mode": "icon", "size": 192, "folder": "Portraits", "wired": true },
     { "key": "ui_hp_fill", "source": "ref2-gameplay", "rect": [676, 26, 58, 32], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
+    { "key": "ui_mana_fill", "source": "ref2-gameplay", "rect": [676, 76, 58, 32], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
+    { "key": "ui_icon_mana", "source": "ref2-gameplay", "rect": [642, 66, 46, 46], "mode": "icon", "size": 128, "folder": "UI", "wired": true, "tolerance": 45, "largest_only": true },
     { "key": "ui_hp_back", "source": "ref2-gameplay", "rect": [898, 24, 36, 40], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
     { "key": "portrait_dawnward_neutral", "source": "ref-dawnward", "rect": [752, 300, 140, 150], "mode": "portrait", "size": 256, "folder": "Portraits", "wired": true },
     { "key": "portrait_dawnward_happy", "source": "ref-dawnward", "rect": [925, 305, 125, 140], "mode": "portrait", "size": 256, "folder": "Portraits", "wired": true },

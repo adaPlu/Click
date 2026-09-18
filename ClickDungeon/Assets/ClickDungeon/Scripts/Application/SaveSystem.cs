@@ -67,6 +67,7 @@ namespace ClickDungeon.Application
             Require(run.FloorCount >= 1 && floor.FloorIndex >= 1 && floor.FloorIndex <= run.FloorCount, "floor number out of range");
             Require(!string.IsNullOrEmpty(hero.ClassId) && !string.IsNullOrEmpty(hero.IdentityId), "hero has no class");
             Require(hero.MaxHp > 0 && hero.Hp >= 0 && hero.Hp <= hero.MaxHp, "hero health out of range");
+            Require(hero.MaxMana >= 0 && hero.Mana >= 0 && hero.Mana <= Math.Max(hero.MaxMana, 0), "hero mana out of range");
             Require(hero.Pos.InBounds, "hero off the board");
             // Hand-built boards may have no exit (Invalid); anything else must be a real tile.
             Require(floor.Exit == GridPos.Invalid || floor.Exit.InBounds, "exit off the board");

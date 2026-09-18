@@ -26,8 +26,9 @@ namespace ClickDungeon.Application
         {
             new TalentDefinition { Id = Tough, DisplayName = "TOUGH", PerRank = "+1 max heart", MaxRank = 3 },
             new TalentDefinition { Id = Stocked, DisplayName = "STOCKED", PerRank = "+1 starting potion", MaxRank = 2 },
-            new TalentDefinition { Id = QuickShield, DisplayName = "QUICK SHIELD", PerRank = "Shield recharges 1 turn sooner", MaxRank = 1 },
-            new TalentDefinition { Id = Fleet, DisplayName = "FLEET", PerRank = "Dash recharges 1 turn sooner", MaxRank = 1 },
+            // Kept under its old id so a point learned before mana (D-032) stays learned; it now deepens the pool.
+            new TalentDefinition { Id = QuickShield, DisplayName = "FOCUS", PerRank = "+1 max mana", MaxRank = 2 },
+            new TalentDefinition { Id = Fleet, DisplayName = "FLEET", PerRank = "Dash costs 1 less mana", MaxRank = 1 },
             new TalentDefinition { Id = Lucky, DisplayName = "LUCKY", PerRank = "+2 coins for every chest reward", MaxRank = 2 },
         };
 
@@ -99,7 +100,7 @@ namespace ClickDungeon.Application
 
         /// <summary>
         /// Turns learned talents into the new run's starting numbers. Talents stay learned: unlike shop provisions they are not
-        /// spent, so every run starts with them. Cooldowns never drop below one turn.
+        /// spent, so every run starts with them. The dash never costs less than one mana.
         /// </summary>
         public static void Apply(ProfileState profile, RunState run, ContentCatalog catalog)
         {
@@ -110,8 +111,10 @@ namespace ClickDungeon.Application
             hero.Hp += tough;
             hero.Potions += Rank(profile, Stocked);
             run.BonusCoinsPerChestReward = Rank(profile, Lucky) * LuckyCoins;
-            run.ShieldCooldownCut = Rank(profile, QuickShield);
-            run.DashCooldownCut = Rank(profile, Fleet);
+            int focus = Rank(profile, QuickShield);
+            hero.MaxMana += focus;
+            hero.Mana += focus;
+            run.DashCostCut = Rank(profile, Fleet);
         }
     }
 }

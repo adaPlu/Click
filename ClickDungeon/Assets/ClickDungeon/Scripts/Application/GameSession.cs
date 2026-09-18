@@ -105,6 +105,12 @@ namespace ClickDungeon.Application
             }
 
             UseCatalog(catalog);
+            // Saved before mana (ruleset 5): it continues with the class's full pool (D-032).
+            if (run.Hero.MaxMana <= 0)
+            {
+                run.Hero.MaxMana = catalog.HeroClass(run.Hero.ClassId).MaxMana;
+                run.Hero.Mana = run.Hero.MaxMana;
+            }
             Run = run;
             Telemetry?.RunResumed(Run);
             return true;

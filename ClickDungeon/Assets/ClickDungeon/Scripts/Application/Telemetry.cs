@@ -448,8 +448,8 @@ namespace ClickDungeon.Application
             "max_hp", hero.MaxHp,
             "potions", hero.Potions,
             "slash", hero.SlashDamage,
-            "shield_cd", hero.ShieldCooldown,
-            "dash_cd", hero.DashCooldown,
+            "mana", hero.Mana,
+            "max_mana", hero.MaxMana,
             "has_key", hero.HasKey);
 
         static List<Dictionary<string, object>> NearbyIntents(RunState run)

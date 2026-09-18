@@ -108,7 +108,7 @@ namespace ClickDungeon.Tests
             Assert.That(Has(result, GameEventKind.HeroBumped), Is.True);
             Assert.That(run.Hero.Pos, Is.EqualTo(P(0, 2)), "The dash stops: the hero stays put.");
             Assert.That(Enemy(run, "goblin").Awake, Is.True);
-            Assert.That(run.Hero.DashCooldown, Is.GreaterThan(0), "The dash was still spent.");
+            Assert.That(run.Hero.Mana, Is.LessThan(run.Hero.MaxMana), "The dash was still paid for.");
         }
 
         [Test]

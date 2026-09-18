@@ -26,6 +26,9 @@ namespace ClickDungeon.Unity.Ui
         public static readonly Color TextLight = Hex(0xF3E9D2);
         public static readonly Color TextDim = Hex(0xA69F93);
 
+        /// <summary>Mana (D-032): the reference's blue bar.</summary>
+        public static readonly Color Mana = new Color(0.16f, 0.52f, 0.95f);
+        public static readonly Color ManaText = new Color(0.3f, 0.68f, 1f);
         public static readonly Color Hp = Hex(0xD23A2E);
         public static readonly Color HpBack = Hex(0x3A1512);
         public static readonly Color PlayGreen = Hex(0x3E9B35);

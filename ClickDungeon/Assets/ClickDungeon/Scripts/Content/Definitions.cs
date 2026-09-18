@@ -12,8 +12,10 @@ namespace ClickDungeon.Content
         public int SlashDamage;
         public int StartingPotions;
         public int PotionHeal;
-        public int ShieldCooldown;
-        public int DashCooldown;
+        /// <summary>Mana (D-032): the pool a new floor starts full, and what SHIELD and DASH cost from it.</summary>
+        public int MaxMana;
+        public int ShieldCost;
+        public int DashCost;
         public int DashDistance;
         public int RevealRadius;
         public int SenseRadius;
@@ -150,8 +152,9 @@ namespace ClickDungeon.Content
         public int SlashDamage;
         public int MaxHp;
         public int PotionHeal;
-        public int ShieldCooldownCut;
-        public int DashCooldownCut;
+        /// <summary>Mana (D-032): more of it, and a cheaper dash.</summary>
+        public int MaxMana;
+        public int DashCostCut;
         public int CoinsPerChestReward;
         public int XpPerFloor;
     }

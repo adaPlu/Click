@@ -125,7 +125,7 @@ namespace ClickDungeon.Content
             {
                 Id = "knight", DisplayName = "Knight",
                 MaxHp = 10, SlashDamage = 2, StartingPotions = 2, PotionHeal = 4,
-                ShieldCooldown = 3, DashCooldown = 3, DashDistance = 2,
+                MaxMana = 6, ShieldCost = 2, DashCost = 3, DashDistance = 2,
                 RevealRadius = 1, SenseRadius = 2,
             };
             c.HeroIdentities[DefaultHeroId] = new HeroIdentityDefinition
@@ -133,14 +133,14 @@ namespace ClickDungeon.Content
                 Id = DefaultHeroId, DisplayName = "Sir Clickington", ClassId = "knight", Tagline = "Brave. Loyal. Clickable.",
             };
 
-            // The Paladin trades reach for staying power: more hearts, a shield that comes back sooner and a stronger
-            // potion, against a dash of a single tile that also recharges slower (rules §5.1). A softer slash was tried
-            // first and made boss fights drag: the sighted bot won 24 of 40 on Blobert's Wrath against the Knight's 40.
+            // The Paladin trades reach for staying power: more hearts, more mana for shields and a stronger potion,
+            // against a dash of a single tile that costs more (rules §5.1). A softer slash was tried first and made boss
+            // fights drag: the sighted bot won 24 of 40 on Blobert's Wrath against the Knight's 40.
             c.HeroClasses["paladin"] = new HeroClassDefinition
             {
                 Id = "paladin", DisplayName = "Paladin",
                 MaxHp = 12, SlashDamage = 2, StartingPotions = 2, PotionHeal = 6,
-                ShieldCooldown = 2, DashCooldown = 4, DashDistance = 1,
+                MaxMana = 8, ShieldCost = 2, DashCost = 4, DashDistance = 1,
                 RevealRadius = 1, SenseRadius = 2,
             };
             c.HeroIdentities["dawnward"] = new HeroIdentityDefinition
@@ -151,10 +151,10 @@ namespace ClickDungeon.Content
             c.Items.Add(new ItemDefinition { Id = "steel_sword", DisplayName = "Steel Sword", Slot = ItemSlot.Weapon, Effect = "+1 slash damage", SlashDamage = 1 });
             c.Items.Add(new ItemDefinition { Id = "lucky_wand", DisplayName = "Lucky Wand", Slot = ItemSlot.Weapon, Effect = "+3 coins for every chest reward", CoinsPerChestReward = 3 });
             c.Items.Add(new ItemDefinition { Id = "iron_shield", DisplayName = "Iron Shield", Slot = ItemSlot.Shield, Effect = "+1 max heart", MaxHp = 1 });
-            c.Items.Add(new ItemDefinition { Id = "gilded_shield", DisplayName = "Gilded Shield", Slot = ItemSlot.Shield, Effect = "Shield recharges 1 turn sooner", ShieldCooldownCut = 1 });
+            c.Items.Add(new ItemDefinition { Id = "gilded_shield", DisplayName = "Gilded Shield", Slot = ItemSlot.Shield, Effect = "+1 max mana", MaxMana = 1 });
             c.Items.Add(new ItemDefinition { Id = "iron_cuirass", DisplayName = "Iron Cuirass", Slot = ItemSlot.Armor, Effect = "+1 max heart", MaxHp = 1 });
             c.Items.Add(new ItemDefinition { Id = "royal_plate", DisplayName = "Royal Plate", Slot = ItemSlot.Armor, Effect = "+2 max hearts", MaxHp = 2 });
-            c.Items.Add(new ItemDefinition { Id = "swift_boots", DisplayName = "Swift Boots", Slot = ItemSlot.Boots, Effect = "Dash recharges 1 turn sooner", DashCooldownCut = 1 });
+            c.Items.Add(new ItemDefinition { Id = "swift_boots", DisplayName = "Swift Boots", Slot = ItemSlot.Boots, Effect = "Dash costs 1 less mana", DashCostCut = 1 });
             c.Items.Add(new ItemDefinition { Id = "healing_charm", DisplayName = "Healing Charm", Slot = ItemSlot.Trinket, Effect = "Potions heal 2 more", PotionHeal = 2 });
             c.Items.Add(new ItemDefinition { Id = "scholars_ring", DisplayName = "Scholar's Ring", Slot = ItemSlot.Trinket, Effect = "+5 XP for every floor walked down", XpPerFloor = 5 });
 

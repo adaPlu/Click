@@ -55,12 +55,12 @@ namespace ClickDungeon.Simulation
                 }
                 case CommandKind.Shield:
                     hero.Guard = true;
-                    hero.ShieldCooldown = Math.Max(1, heroClass.ShieldCooldown - run.ShieldCooldownCut);
+                    Mana.Spend(hero, Mana.ShieldCost(run, heroClass));
                     events.Add(GameEvent.Of(GameEventKind.HeroShielded, to: hero.Pos));
                     break;
                 case CommandKind.Dash:
                 {
-                    hero.DashCooldown = Math.Max(1, heroClass.DashCooldown - run.DashCooldownCut);
+                    Mana.Spend(hero, Mana.DashCost(run, heroClass));
                     var lurker = FirstLurkerOnDash(run, command.Target);
                     if (lurker.InBounds)
                     {
@@ -120,11 +120,10 @@ namespace ClickDungeon.Simulation
             Combat.ResolveDeaths(run, catalog, events);
             if (run.Status != RunStatus.InProgress) return result;
 
-            // 9. Declare next intents, expire guard, tick cooldowns
+            // 9. Declare next intents, expire guard, regain mana
             DeclareAll(run, catalog, events);
             hero.Guard = false;
-            if (hero.ShieldCooldown > 0) hero.ShieldCooldown--;
-            if (hero.DashCooldown > 0) hero.DashCooldown--;
+            Mana.Regain(hero);
             run.Turn++;
             return result;
         }

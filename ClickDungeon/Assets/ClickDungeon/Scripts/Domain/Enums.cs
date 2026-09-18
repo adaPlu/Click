@@ -11,8 +11,8 @@ namespace ClickDungeon.Domain
     public static class Versions
     {
         public const int SaveSchema = 1;
-        // Bumped for chest quality: opening a chest now costs several turns instead of one (D-022).
-        public const int Ruleset = 5;
+        // Bumped for mana: shield and dash cost mana instead of recharging on cooldowns (D-032).
+        public const int Ruleset = 6;
         // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
         public const int Generation = 2;
         /// <summary>The between-runs profile: coins, gems and the provisions bought with them (D-025).</summary>

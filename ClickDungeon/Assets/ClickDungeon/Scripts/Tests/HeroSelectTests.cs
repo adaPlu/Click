@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ClickDungeon.Application;
@@ -30,8 +31,9 @@ namespace ClickDungeon.Tests
                 Assert.That(hero.SlashDamage, Is.GreaterThan(0), identity.Id);
                 Assert.That(hero.PotionHeal, Is.GreaterThan(0), identity.Id);
                 Assert.That(hero.DashDistance, Is.GreaterThan(0), identity.Id);
-                Assert.That(hero.ShieldCooldown, Is.GreaterThan(0), identity.Id);
-                Assert.That(hero.DashCooldown, Is.GreaterThan(0), identity.Id);
+                Assert.That(hero.ShieldCost, Is.GreaterThan(0), identity.Id);
+                Assert.That(hero.DashCost, Is.GreaterThan(0), identity.Id);
+                Assert.That(hero.MaxMana, Is.GreaterThanOrEqualTo(Math.Max(hero.ShieldCost, hero.DashCost)), identity.Id);
             }
         }
 
@@ -57,7 +59,9 @@ namespace ClickDungeon.Tests
             Assert.That(paladin.MaxHp, Is.GreaterThan(knight.MaxHp), "The Paladin is the tougher of the two...");
             Assert.That(paladin.DashDistance, Is.LessThan(knight.DashDistance), "...and the slower to get around.");
             Assert.That(paladin.PotionHeal, Is.GreaterThan(knight.PotionHeal));
-            Assert.That(paladin.ShieldCooldown, Is.LessThan(knight.ShieldCooldown));
+            Assert.That(paladin.MaxMana, Is.GreaterThan(knight.MaxMana), "More mana for shields...");
+            Assert.That(paladin.DashCost, Is.GreaterThan(knight.DashCost), "...and a dearer dash.");
+            Assert.That(run.Hero.Mana, Is.EqualTo(paladin.MaxMana));
 
             // A dash of one tile is all it may do, whatever the Knight can reach.
             run.Hero.Pos = P(2, 2);

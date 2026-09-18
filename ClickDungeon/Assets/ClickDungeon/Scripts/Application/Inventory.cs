@@ -62,7 +62,7 @@ namespace ClickDungeon.Application
 
         public static void Unequip(ProfileState profile, ItemSlot slot) => profile?.Equipped?.Remove(slot.ToString());
 
-        /// <summary>Adds every worn item's numbers to the new run. Cooldown cuts add to talents' and never go under one turn.</summary>
+        /// <summary>Adds every worn item's numbers to the new run. A dash cost cut adds to the talent's and never goes under one.</summary>
         public static void Apply(ProfileState profile, RunState run, ContentCatalog catalog)
         {
             if (profile?.Equipped == null || run == null) return;
@@ -75,8 +75,9 @@ namespace ClickDungeon.Application
                 hero.MaxHp += item.MaxHp;
                 hero.Hp += item.MaxHp;
                 run.PotionHealBonus += item.PotionHeal;
-                run.ShieldCooldownCut += item.ShieldCooldownCut;
-                run.DashCooldownCut += item.DashCooldownCut;
+                hero.MaxMana += item.MaxMana;
+                hero.Mana += item.MaxMana;
+                run.DashCostCut += item.DashCostCut;
                 run.BonusCoinsPerChestReward += item.CoinsPerChestReward;
                 run.BonusXpPerFloor += item.XpPerFloor;
             }

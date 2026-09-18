@@ -45,8 +45,11 @@ namespace ClickDungeon.Simulation
                 }
 
                 case CommandKind.Shield:
-                    if (hero.ShieldCooldown > 0) return Fail(out reason, $"Shield is recharging ({hero.ShieldCooldown}).");
+                {
+                    int cost = Mana.ShieldCost(run, catalog.HeroClass(hero.ClassId));
+                    if (!Mana.CanPay(hero, cost)) return Fail(out reason, $"Not enough mana to shield ({hero.Mana}/{cost}).");
                     return true;
+                }
 
                 case CommandKind.Dash:
                     return ValidateDash(run, target, catalog.HeroClass(hero.ClassId), out reason);
@@ -75,7 +78,8 @@ namespace ClickDungeon.Simulation
         static bool ValidateDash(RunState run, GridPos target, HeroClassDefinition heroClass, out string reason)
         {
             var hero = run.Hero;
-            if (hero.DashCooldown > 0) return Fail(out reason, $"Dash is recharging ({hero.DashCooldown}).");
+            int cost = Mana.DashCost(run, heroClass);
+            if (!Mana.CanPay(hero, cost)) return Fail(out reason, $"Not enough mana to dash ({hero.Mana}/{cost}).");
             int distance = hero.Pos.Chebyshev(target);
             // One or two tiles in a straight line, diagonals included (rules §5).
             if (!target.InBounds
