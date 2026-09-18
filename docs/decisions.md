@@ -388,3 +388,14 @@ Rules referenced here live in `docs/rules.md`.
 - **TESTS**: `InventoryTests`, `InventoryOverlayTests`. Automation's `-cdDemoProfile 1` fills its in-memory profile so
   screenshots of these screens show something.
 
+## D-029 Daily reward
+- **DECISION**: One claim per calendar day from the title's DAILY REWARD panel, in the reference's place and art (frame,
+  glowing chest, CLAIM with its red "!"). A seven-day week of rewards the game already has (coins, a potion ration, a
+  heart token, gems, a special key); a missed day restarts the week. The date comes from the device clock and is passed
+  in, so the rules are testable; setting the clock back cannot repeat a day. HOW TO PLAY moves into the top-right menu,
+  which joins settings in the reference's top-right slots.
+- **WHY**: the reference title's DAILY REWARD panel and menu button.
+- **BALANCE**: a week is worth 160 coins, 15 gems and three provisions; the balance guards play an empty profile.
+- **TESTS**: `DailyRewardTests`.
+- **NOT YET**: the crown and mail buttons, whose systems do not exist; their slots stay empty.
+

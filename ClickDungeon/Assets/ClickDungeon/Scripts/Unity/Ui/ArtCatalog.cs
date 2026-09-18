@@ -194,7 +194,11 @@ namespace ClickDungeon.Unity.Ui
         public const string TitleBanner = "ui_title_banner";
         public const string TitleContinuePanel = "ui_title_continue_panel";
         public const string ContinuePreview = "ui_continue_preview";
-        public const string TitleHowToPanel = "ui_title_howto_panel";
+        /// <summary>The daily reward (D-029): the reference's panel frame, its glowing chest and its CLAIM button with the red "!".</summary>
+        public const string TitleDailyPanel = "ui_title_daily_panel";
+        public const string DailyRewardChest = "ui_daily_reward_chest";
+        public const string ButtonClaim = "ui_button_claim";
+        public const string MenuButton = "ui_button_menu";
         public const string TitleHero = "ui_title_hero";
         public const string TitleBlobert = "ui_title_blobert";
         public const string TitleGoblin = "ui_title_goblin";
@@ -386,7 +390,7 @@ namespace ClickDungeon.Unity.Ui
             {
                 ModalPanel, ButtonPrimary, ButtonSecondary, ButtonDanger,
                 ChestLargeClosed, ChestLargeOpen, ChestGlow, ChestProgressBack, ChestProgressFill, ChestRewardCard,
-                TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleHowToPanel,
+                TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleDailyPanel, DailyRewardChest, ButtonClaim, MenuButton,
                 TitleHero, TitleBlobert, TitleGoblin, ButtonPlay, ButtonTitleSettings, ButtonQuit, ButtonHeroSelect, ButtonShop, ButtonTalents, ButtonTalentsAlert, ButtonInventory, PlayIcon, SettingsIcon, QuitIcon,
             });
             foreach (var style in ModalStyles) keys.Add(ModalPanelStyle(style));

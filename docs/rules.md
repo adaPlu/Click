@@ -587,3 +587,23 @@ used up; cooldown cuts add to talents' and never go below one turn. The
 INVENTORY screen shows the five slots and every item (unfound ones as "?"); tap a
 found item to wear it, tap a worn slot to take it off.
 
+## 16. Daily reward *(D-029, tune numbers)*
+
+The title's DAILY REWARD panel pays once per calendar day (the player's own
+clock). Coming back every day walks through a week; missing a day starts the
+week over at day 1, and day 7 is followed by day 1 again.
+
+| Day | Reward |
+|---|---|
+| 1 | 30 coins |
+| 2 | a potion ration |
+| 3 | 50 coins |
+| 4 | a heart token |
+| 5 | 80 coins |
+| 6 | 15 gems |
+| 7 | a special key |
+
+Rations, tokens and keys are the shop's own and go into the next run like bought
+ones. After claiming, the panel shows the open chest and tomorrow's reward. A
+clock set back before the last claim cannot claim again until that day has
+passed. HOW TO PLAY, whose panel this place held, is now in the top-right menu.

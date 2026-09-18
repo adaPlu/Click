@@ -33,6 +33,11 @@ namespace ClickDungeon.Domain
         /// <summary>What is worn, by slot name. A worn item is one of <see cref="Items"/>.</summary>
         public Dictionary<string, string> Equipped = new Dictionary<string, string>();
 
+        /// <summary>The last day the daily reward was claimed (D-029), as yyyy-MM-dd on the player's own calendar; null for never.</summary>
+        public string LastDailyClaim;
+        /// <summary>Days claimed in a row, so the next claim knows which day of the week it is.</summary>
+        public int DailyStreak;
+
         /// <summary>Runs finished, so the shop can say something true about a first-time player.</summary>
         public int RunsFinished;
         public int RunsWon;
@@ -42,6 +47,7 @@ namespace ClickDungeon.Domain
             SchemaVersion = SchemaVersion, Coins = Coins, Gems = Gems,
             PotionRations = PotionRations, HeartTokens = HeartTokens, SpecialKeys = SpecialKeys,
             RunsFinished = RunsFinished, RunsWon = RunsWon, Xp = Xp,
+            LastDailyClaim = LastDailyClaim, DailyStreak = DailyStreak,
             Talents = Talents == null ? new Dictionary<string, int>() : new Dictionary<string, int>(Talents),
             Items = Items == null ? new List<string>() : new List<string>(Items),
             Equipped = Equipped == null ? new Dictionary<string, string>() : new Dictionary<string, string>(Equipped),

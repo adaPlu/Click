@@ -35,6 +35,8 @@ namespace ClickDungeon.Content
         /// <summary>Equipment, in drop-table order (D-028). A drop picks one by hash; a duplicate becomes coins at banking.</summary>
         public readonly List<ItemDefinition> Items = new List<ItemDefinition>();
         public int DuplicateItemCoins = 25;
+        /// <summary>The daily reward's week (D-029): day one after a missed day, and again after day seven.</summary>
+        public readonly List<DailyRewardDefinition> DailyRewards = new List<DailyRewardDefinition>();
 
         public ItemDefinition Item(string id)
         {
@@ -148,6 +150,14 @@ namespace ClickDungeon.Content
             c.Items.Add(new ItemDefinition { Id = "swift_boots", DisplayName = "Swift Boots", Slot = ItemSlot.Boots, Effect = "Dash recharges 1 turn sooner", DashCooldownCut = 1 });
             c.Items.Add(new ItemDefinition { Id = "healing_charm", DisplayName = "Healing Charm", Slot = ItemSlot.Trinket, Effect = "Potions heal 2 more", PotionHeal = 2 });
             c.Items.Add(new ItemDefinition { Id = "scholars_ring", DisplayName = "Scholar's Ring", Slot = ItemSlot.Trinket, Effect = "+5 XP for every floor walked down", XpPerFloor = 5 });
+
+            c.DailyRewards.Add(new DailyRewardDefinition { Label = "30 coins", Coins = 30 });
+            c.DailyRewards.Add(new DailyRewardDefinition { Label = "a potion ration", PotionRations = 1 });
+            c.DailyRewards.Add(new DailyRewardDefinition { Label = "50 coins", Coins = 50 });
+            c.DailyRewards.Add(new DailyRewardDefinition { Label = "a heart token", HeartTokens = 1 });
+            c.DailyRewards.Add(new DailyRewardDefinition { Label = "80 coins", Coins = 80 });
+            c.DailyRewards.Add(new DailyRewardDefinition { Label = "15 gems", Gems = 15 });
+            c.DailyRewards.Add(new DailyRewardDefinition { Label = "a special key", SpecialKeys = 1 });
 
             AddEnemy(c, new EnemyDefinition { Id = "goblin", DisplayName = "Goblin", Behavior = EnemyBehavior.Chaser, MaxHp = 3, Damage = 2 });
             AddEnemy(c, new EnemyDefinition { Id = "crowned_slime", DisplayName = "Crowned Slime", Behavior = EnemyBehavior.SlowChaser, MaxHp = 5, Damage = 3 });

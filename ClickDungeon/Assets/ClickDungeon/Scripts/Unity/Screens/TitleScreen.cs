@@ -9,8 +9,8 @@ namespace ClickDungeon.Unity.Screens
 {
     /// <summary>
     /// Title screen laid out after the reference title art: hero card top-left, big logo and tagline plank,
-    /// CONTINUE panel on the left, Sir Clickington under the arch, PLAY / SETTINGS / QUIT along the bottom.
-    /// Systems that don't exist yet (gems, shop, talents, mail, daily reward) are intentionally absent.
+    /// CONTINUE panel on the left, DAILY REWARD on the right, settings and the menu top-right, and the seven buttons along
+    /// the bottom. Systems that don't exist yet (mail, the crown's achievements) are intentionally absent.
     /// </summary>
     public sealed class TitleScreen
     {
@@ -31,6 +31,10 @@ namespace ClickDungeon.Unity.Screens
         Text _level;
         UiFactory.ButtonParts _talentsButton;
         InventoryOverlay _inventory;
+        RectTransform _dailyChest;
+        Text _dailyLine;
+        GameObject _claim;
+        GameObject _claimed;
         Text _heroName;
         Text _heroTagline;
         RunState _saved;
@@ -61,7 +65,8 @@ namespace ClickDungeon.Unity.Screens
             if (!compositeBackground) BuildCharacters();
 
             _continuePanel = BuildContinuePanel(out _continueFloor, out _continueName);
-            BuildHowTo();
+            BuildDailyReward();
+            BuildTopRight();
             BuildBottomBar();
 
             _flash = UiFactory.Text(Root, "Flash", "", 30, Palette.Danger, TextAnchor.MiddleCenter, FontStyle.Bold);
@@ -82,6 +87,7 @@ namespace ClickDungeon.Unity.Screens
             _flash.text = "";
             RefreshHeroCard();
             RefreshPurse();
+            RefreshDaily();
             _saved = null;
             if (_app.Store.TryLoad(out var run, out _) && run.Status == RunStatus.InProgress) _saved = run;
 
@@ -99,7 +105,8 @@ namespace ClickDungeon.Unity.Screens
         public void AutomationOverlay(string name)
         {
             if (name == "settings") Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting);
-            else if (name == "rules") _modal.Show("HOW TO PLAY", Menus.HelpText, _modal.Hide, Menus.B("GOT IT", Palette.PlayGreen, _modal.Hide));
+            else if (name == "rules") OpenHelp(_modal.Hide);
+            else if (name == "menu") OpenMenu();
             else if (name == "difficulty") ChooseDifficulty(_modal.Hide);
             else if (name == "heroes") OpenHeroSelect();
             else if (name == "shop") OpenShop();
@@ -431,22 +438,99 @@ namespace ClickDungeon.Unity.Screens
             return panel;
         }
 
-        void BuildHowTo()
+        void OpenHelp(System.Action back) =>
+            _modal.Show("HOW TO PLAY", Menus.HelpText, back, Menus.B("GOT IT", Palette.PlayGreen, back));
+
+        /// <summary>The reference's menu button: HOW TO PLAY lives here now that its panel's place is the daily reward's.</summary>
+        void OpenMenu() =>
+            _modal.Show("MENU", "", _modal.Hide,
+                Menus.B("HOW TO PLAY", Palette.NavyLight, () => OpenHelp(OpenMenu)),
+                Menus.B("SETTINGS", Palette.NavyLight, () => Menus.OpenSettings(_modal, OpenMenu, _app.ApplyTelemetrySetting)),
+                Menus.B("CLOSE", Palette.PlayGreen, _modal.Hide));
+
+        /// <summary>Settings and the menu in the reference's top-right slots, as on the game screen.</summary>
+        void BuildTopRight()
         {
-            var panel = UiFactory.Rect(Root, "HowTo");
-            panel.Place(Center, Center, new Vector2(760f, 150f), new Vector2(340f, 380f));
-            Panel(panel, Palette.Navy.WithAlpha(0.96f), Palette.Gold, ArtKeys.TitleHowToPanel);
-            var title = UiFactory.Text(panel, "Title", "HOW TO PLAY", 36, Palette.Gold, TextAnchor.MiddleCenter, FontStyle.Bold);
-            title.rectTransform.Place(TopCenter, TopCenter, new Vector2(0f, -12f), new Vector2(320f, 52f));
-            var body = UiFactory.Text(panel, "Body",
-                "Click a tile to uncover it.\nEvery tile hides something.\nWake enemies on purpose.\nGrab the key. Find the exit.\nBeat Lord Blobert on floor 5.",
-                24, Palette.TextLight, TextAnchor.UpperCenter);
-            body.rectTransform.Stretch(16, 76, 16, 76);
-            body.lineSpacing = 1.3f;
-            var more = UiFactory.Button(panel, "More", "FULL RULES", Palette.NavyLight, 26,
-                () => _modal.Show("HOW TO PLAY", Menus.HelpText, _modal.Hide, Menus.B("GOT IT", Palette.PlayGreen, _modal.Hide)));
-            more.Rect.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 18f), new Vector2(260f, 56f));
-            UiArt.ApplyPanel(more.Background, more.Border, ArtKeys.ButtonSecondary);
+            var topRight = new Vector2(1f, 1f);
+            var gear = UiFactory.Button(Root, "Settings", "", Palette.Navy, 10, () => Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting));
+            gear.Rect.Place(topRight, Center, new Vector2(-197f, -74f), new Vector2(88f, 88f));
+            if (!UiArt.ApplyPanel(gear.Background, gear.Border, ArtKeys.SettingsButton))
+                Icons.Gear(gear.Rect, Palette.Gold, 60f);
+
+            var menu = UiFactory.Button(Root, "Menu", "", Palette.Navy, 10, OpenMenu);
+            menu.Rect.Place(topRight, Center, new Vector2(-92f, -74f), new Vector2(88f, 88f));
+            if (!UiArt.ApplyPanel(menu.Background, menu.Border, ArtKeys.MenuButton))
+                for (int i = -1; i <= 1; i++)
+                    Icons.Shape(menu.Rect, Shapes.Rounded, Palette.Gold, new Vector2(0f, i * 16f), new Vector2(46f, 8f));
+        }
+
+        /// <summary>The reference's DAILY REWARD panel (D-029), on the right where it stands in the title art.</summary>
+        void BuildDailyReward()
+        {
+            var panel = UiFactory.Rect(Root, "DailyReward");
+            panel.Place(Center, Center, new Vector2(758f, 131f), new Vector2(308f, 388f));
+            Panel(panel, Palette.Navy.WithAlpha(0.96f), Palette.Gold, ArtKeys.TitleDailyPanel);
+            var title = UiFactory.Text(panel, "Title", "DAILY REWARD", 34, Palette.Parchment, TextAnchor.MiddleCenter, FontStyle.Bold);
+            title.rectTransform.Place(TopCenter, TopCenter, new Vector2(0f, -18f), new Vector2(290f, 50f));
+            UiFactory.Shadow(title, Color.black, 2f);
+
+            _dailyChest = UiFactory.Rect(panel, "Chest");
+            _dailyChest.Place(Center, Center, new Vector2(0f, 26f), new Vector2(210f, 196f));
+
+            _dailyLine = UiFactory.Text(panel, "Line", "", 24, Palette.TextLight, TextAnchor.MiddleCenter);
+            _dailyLine.rectTransform.Place(Center, Center, new Vector2(0f, -92f), new Vector2(290f, 36f));
+            UiFactory.Shadow(_dailyLine, Color.black, 2f);
+
+            var claim = UiFactory.Button(panel, "Claim", "CLAIM", Palette.PlayGreen, 34, ClaimDaily);
+            claim.Rect.Place(Center, Center, new Vector2(0f, -146f), new Vector2(236f, 70f));
+            // The sample button carries its label and its red "!", which is only true while there is something to claim.
+            if (UiArt.ApplyPanel(claim.Background, claim.Border, ArtKeys.ButtonClaim)) claim.Label.enabled = false;
+            _claim = claim.Rect.gameObject;
+
+            var claimed = UiFactory.Button(panel, "Claimed", "TOMORROW", Palette.StoneDark, 28, null);
+            claimed.Rect.Place(Center, Center, new Vector2(0f, -146f), new Vector2(236f, 62f));
+            claimed.Button.interactable = false;
+            claimed.Label.color = Palette.TextDim;
+            _claimed = claimed.Rect.gameObject;
+            RefreshDaily();
+        }
+
+        /// <summary>Claimable: the glowing chest and CLAIM. Claimed: the open chest and what tomorrow brings.</summary>
+        void RefreshDaily()
+        {
+            if (_dailyChest == null) return;
+            var today = System.DateTime.Now;
+            var profile = _app.Session.Profile;
+            bool ready = DailyReward.CanClaim(profile, today);
+            _claim.SetActive(ready);
+            _claimed.SetActive(!ready);
+
+            for (int i = _dailyChest.childCount - 1; i >= 0; i--) UiFactory.SafeDestroy(_dailyChest.GetChild(i).gameObject);
+            bool art = ready ? ArtAt(_dailyChest, Vector2.zero, 196f, ArtKeys.DailyRewardChest, ArtKeys.ChestLargeClosed)
+                             : ArtAt(_dailyChest, Vector2.zero, 170f, ArtKeys.ChestLargeOpen);
+            if (!art) Icons.Chest(Icons.Group(_dailyChest, Vector2.zero), !ready, 2.4f);
+
+            var next = DailyReward.Reward(_app.Catalog, DailyReward.NextDay(profile, _app.Catalog, ready ? today : today.AddDays(1)));
+            _dailyLine.text = ready ? "Claim Your Reward!" : $"Next: {next?.Label}";
+        }
+
+        void ClaimDaily()
+        {
+            var today = System.DateTime.Now;
+            var profile = _app.Session.Profile;
+            var reward = DailyReward.Claim(profile, _app.Catalog, today);
+            if (reward != null)
+            {
+                _app.Session.SaveProfile();
+                int week = _app.Catalog.DailyRewards.Count;
+                int tomorrow = DailyReward.NextDay(profile, _app.Catalog, today.AddDays(1));
+                string carried = reward.PotionRations + reward.HeartTokens + reward.SpecialKeys > 0 ? "\nIt goes with you into your next run." : "";
+                _modal.Show("DAILY REWARD", $"Day {profile.DailyStreak} of {week}: {reward.Label}.{carried}\n\n"
+                        + $"Come back tomorrow for day {tomorrow}: {DailyReward.Reward(_app.Catalog, tomorrow).Label}.\nMiss a day and the week starts over.",
+                    _modal.Hide, Menus.B("NICE!", Palette.PlayGreen, _modal.Hide));
+            }
+            RefreshPurse();
+            RefreshDaily();
         }
 
         // The reference title's bottom row, as left edge and width on a 1920-wide screen (its 1672-wide art scaled up).

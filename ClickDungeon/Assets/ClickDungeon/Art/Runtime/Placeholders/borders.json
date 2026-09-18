@@ -1,4 +1,6 @@
 {
   "comment": "key -> 9-slice border in pixels, written by slice_references.py",
-  "borders": {}
+  "borders": {
+    "ui_title_daily_panel": 15
+  }
 }

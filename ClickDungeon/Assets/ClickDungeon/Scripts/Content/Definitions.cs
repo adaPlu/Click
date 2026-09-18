@@ -156,6 +156,20 @@ namespace ClickDungeon.Content
         public int XpPerFloor;
     }
 
+    /// <summary>
+    /// One day of the daily reward (D-029, rules §16): what claiming it adds to the profile. Everything it gives is something
+    /// the shop sells or a run carries out, so the reward is never a currency of its own.
+    /// </summary>
+    public sealed class DailyRewardDefinition
+    {
+        public string Label;
+        public int Coins;
+        public int Gems;
+        public int PotionRations;
+        public int HeartTokens;
+        public int SpecialKeys;
+    }
+
     /// <summary>Experience a run earns (D-027, rules §14).</summary>
     public sealed class XpTuning
     {

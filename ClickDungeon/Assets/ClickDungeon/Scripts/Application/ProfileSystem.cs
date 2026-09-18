@@ -174,6 +174,7 @@ namespace ClickDungeon.Application
                 profile.HeartTokens = Math.Max(0, profile.HeartTokens);
                 profile.SpecialKeys = Math.Max(0, profile.SpecialKeys);
                 profile.Xp = Math.Max(0, profile.Xp);
+                profile.DailyStreak = Math.Max(0, profile.DailyStreak);
                 if (profile.Talents == null) profile.Talents = new System.Collections.Generic.Dictionary<string, int>();
                 if (profile.Items == null) profile.Items = new System.Collections.Generic.List<string>();
                 if (profile.Equipped == null) profile.Equipped = new System.Collections.Generic.Dictionary<string, string>();

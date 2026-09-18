@@ -77,7 +77,7 @@
     { "key": "ui_icon_gold", "source": "ref2-gameplay", "rect": [993, 18, 40, 40], "mode": "icon", "size": 128, "folder": "UI", "wired": true },
     { "key": "ui_icon_gem", "source": "ref2-gameplay", "rect": [990, 70, 40, 38], "mode": "icon", "size": 128, "folder": "UI", "wired": true },
     { "key": "ui_button_settings", "source": "ref2-gameplay", "rect": [1473, 15, 75, 75], "mode": "icon", "size": 128, "folder": "UI", "wired": true },
-    { "key": "ui_button_menu", "source": "ref2-gameplay", "rect": [1558, 15, 75, 75], "mode": "icon", "size": 128, "folder": "UI" },
+    { "key": "ui_button_menu", "source": "ref2-gameplay", "rect": [1558, 15, 75, 75], "mode": "icon", "size": 128, "folder": "UI", "wired": true },
     { "key": "ui_floor_plaque", "source": "ref2-gameplay", "rect": [108, 100, 272, 75], "mode": "wide", "size": 512, "folder": "UI", "note": "baked sample text; the game looks up ui_plaque_floor instead" },
     { "key": "ui_icon_inventory", "source": "ref2-gameplay", "rect": [458, 858, 72, 62], "mode": "icon", "size": 128, "folder": "UI" },
     { "key": "ui_icon_talents", "source": "ref2-gameplay", "rect": [775, 852, 70, 68], "mode": "icon", "size": 128, "folder": "UI" },
@@ -87,7 +87,7 @@
     { "key": "ui_icon_hero_select", "source": "ref1-title", "rect": [415, 788, 70, 55], "mode": "icon", "size": 128, "folder": "UI" },
     { "key": "ui_icon_play", "source": "ref1-title", "rect": [150, 790, 85, 65], "mode": "icon", "size": 128, "folder": "UI", "wired": true },
     { "key": "ui_icon_quit", "source": "ref1-title", "rect": [1460, 795, 70, 65], "mode": "icon", "size": 128, "folder": "UI", "wired": true },
-    { "key": "ui_daily_reward_chest", "source": "ref1-title", "rect": [1415, 260, 160, 150], "mode": "icon", "size": 256, "folder": "UI" },
+    { "key": "ui_daily_reward_chest", "source": "ref1-title", "rect": [1415, 260, 160, 150], "mode": "icon", "size": 256, "folder": "UI", "wired": true },
     { "key": "ui_continue_preview", "source": "ref1-title", "rect": [212, 272, 258, 140], "mode": "wide", "size": 512, "folder": "UI", "wired": true },
     { "key": "fx_chest_reward_anticipation", "source": "ref6-vertical-slice", "rect": [15, 878, 345, 200], "mode": "wide", "size": 512, "folder": "FX" },
     { "key": "fx_chest_reward_burst", "source": "ref6-vertical-slice", "rect": [370, 858, 345, 220], "mode": "wide", "size": 512, "folder": "FX" },
@@ -203,6 +203,8 @@
     { "key": "icon_item_royal_plate", "source": "ref-armor", "rect": [1265, 20, 230, 205], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
     { "key": "icon_item_swift_boots", "source": "ref-shields", "rect": [30, 480, 165, 155], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
     { "key": "icon_item_healing_charm", "source": "ref-trinkets", "rect": [50, 510, 135, 185], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
-    { "key": "icon_item_scholars_ring", "source": "ref-trinkets", "rect": [635, 50, 145, 125], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true }
+    { "key": "icon_item_scholars_ring", "source": "ref-trinkets", "rect": [635, 50, 145, 125], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
+    { "key": "ui_title_daily_panel", "source": "ref1-title", "rect": [1362, 187, 268, 338], "mode": "frame", "band": 16, "fill": [18, 22, 27], "size": 256, "folder": "UI", "wired": true },
+    { "key": "ui_button_claim", "source": "ref1-title", "rect": [1393, 449, 205, 61], "mode": "wide", "size": 410, "folder": "UI", "wired": true }
   ]
 }

@@ -237,7 +237,8 @@ def frame(crop: Image.Image, spec: dict) -> tuple:
     for y in range(border + 1, out.height - border, 2):
         ring += [px[x, y] for x in range(border + 1, out.width - border, 2)]
     # "clear" is for a frame that something else draws inside it (a portrait, an HP fill): its middle is see-through.
-    fill = (0, 0, 0, 0) if spec.get("clear") else (
+    # "fill" names the middle's colour outright, for a panel whose picture (a glowing chest) outweighs its own colour.
+    fill = (0, 0, 0, 0) if spec.get("clear") else tuple(spec["fill"]) + (255,) if "fill" in spec else (
         tuple(sorted(c[i] for c in ring)[len(ring) // 2] for i in range(4)) if ring else (0, 0, 0, 255))
     for y in range(border, out.height - border):
         for x in range(border, out.width - border):
