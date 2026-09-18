@@ -158,7 +158,7 @@
     { "key": "fx_spikes_trigger", "size": 256, "tint": [1.0, 0.55, 0.5], "source": "ref-treasure", "rect": [1184, 514, 32, 36], "mode": "icon", "tolerance": 40, "largest_only": true, "folder": "FX", "wired": true },
     { "key": "fx_bomb_fuse", "size": 128, "tint": [1.0, 0.7, 0.35], "source": "ref-treasure", "rect": [1184, 514, 32, 36], "mode": "icon", "tolerance": 40, "largest_only": true, "folder": "FX", "wired": true },
     { "key": "fx_chest_glow", "source": "ref-treasure", "rect": [1230, 530, 160, 140], "mode": "icon", "tolerance": 40, "size": 512, "folder": "FX", "wired": true },
-    { "key": "bg_gameplay", "source": "ref2-gameplay", "rect": [0, 0, 1672, 941], "mode": "scene", "blank": [[0, 0, 1672, 130], [110, 82, 320, 106], [424, 112, 834, 720], [424, 812, 834, 129], [680, 868, 620, 73], [48, 372, 220, 200], [1372, 170, 240, 220]], "blur": 38, "dim": 0.82, "size": 1280, "folder": "UI", "wired": true },
+    { "key": "bg_gameplay", "source": "ref2-gameplay", "rect": [0, 0, 1672, 941], "mode": "scene", "blank": [[0, 0, 1672, 130], [110, 82, 320, 106], [424, 112, 834, 720], [424, 812, 834, 129], [400, 660, 880, 190], [400, 660, 880, 190], [680, 868, 620, 73], [48, 372, 220, 200], [1372, 170, 240, 220]], "blur": 38, "dim": 0.82, "size": 1280, "folder": "UI", "wired": true },
     { "key": "bg_title", "source": "ref1-title", "rect": [0, 0, 1672, 941], "mode": "scene", "blank": [[0, 0, 540, 152], [1230, 0, 442, 120], [152, 172, 368, 356], [1345, 160, 316, 378], [398, 5, 884, 252], [0, 742, 1672, 199]], "blur": 42, "dim": 0.95, "size": 1280, "folder": "UI", "wired": true },
     { "key": "ui_enemy_hp_back", "source": "ref-core-ui", "rect": [1306, 658, 38, 38], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
     { "key": "ui_enemy_hp_fill", "source": "ref-core-ui", "rect": [1182, 668, 96, 20], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
@@ -177,6 +177,18 @@
     { "key": "tile_chest_premium_closed", "rect": [610, 215, 230, 190], "size": 256, "folder": "Tiles", "source": "ref-treasure", "mode": "icon", "tolerance": 35, "largest_only": true, "wired": true },
     { "key": "tile_chest_premium_open", "rect": [1175, 200, 240, 205], "size": 256, "folder": "Tiles", "source": "ref-treasure", "mode": "icon", "tolerance": 35, "largest_only": true, "wired": true },
     { "key": "icon_special_lock", "rect": [640, 525, 170, 185], "size": 128, "folder": "Icons", "source": "ref-treasure", "mode": "icon", "tolerance": 35, "largest_only": true, "wired": true },
-    { "key": "icon_key_special", "rect": [60, 220, 190, 180], "size": 128, "folder": "Icons", "source": "ref-treasure", "mode": "icon", "tolerance": 35, "largest_only": true, "wired": true }
+    { "key": "icon_key_special", "rect": [60, 220, 190, 180], "size": 128, "folder": "Icons", "source": "ref-treasure", "mode": "icon", "tolerance": 35, "largest_only": true, "wired": true },
+    { "key": "ui_button_ability_move", "source": "ref-core-ui", "rect": [122, 215, 112, 169], "mode": "wide", "size": 224, "folder": "UI", "wired": true },
+    { "key": "ui_button_ability_slash", "source": "ref-core-ui", "rect": [239, 215, 114, 169], "mode": "wide", "size": 228, "folder": "UI", "wired": true },
+    { "key": "ui_button_ability_shield", "source": "ref-core-ui", "rect": [359, 215, 112, 169], "mode": "wide", "size": 224, "folder": "UI", "wired": true },
+    { "key": "ui_button_ability_dash", "source": "ref-core-ui", "rect": [483, 215, 112, 169], "mode": "wide", "size": 224, "folder": "UI", "wired": true },
+    { "key": "ui_button_ability_potion", "source": "ref-core-ui", "rect": [605, 215, 112, 169], "mode": "wide", "size": 224, "folder": "UI", "wired": true },
+    { "key": "ui_button_play", "source": "ref1-title", "rect": [58, 777, 282, 134], "mode": "wide", "size": 564, "folder": "UI", "wired": true },
+    { "key": "ui_button_hero_select", "source": "ref1-title", "rect": [361, 777, 175, 134], "mode": "wide", "size": 350, "folder": "UI", "wired": true },
+    { "key": "ui_button_inventory", "source": "ref1-title", "rect": [554, 777, 187, 134], "mode": "wide", "size": 374, "folder": "UI" },
+    { "key": "ui_button_talents", "source": "ref1-title", "rect": [759, 777, 184, 134], "mode": "wide", "size": 368, "folder": "UI" },
+    { "key": "ui_button_shop", "source": "ref1-title", "rect": [961, 777, 180, 134], "mode": "wide", "size": 360, "folder": "UI", "wired": true },
+    { "key": "ui_button_title_settings", "source": "ref1-title", "rect": [1161, 777, 182, 134], "mode": "wide", "size": 364, "folder": "UI", "wired": true },
+    { "key": "ui_button_quit", "source": "ref1-title", "rect": [1369, 777, 239, 134], "mode": "wide", "size": 478, "folder": "UI", "wired": true }
   ]
 }

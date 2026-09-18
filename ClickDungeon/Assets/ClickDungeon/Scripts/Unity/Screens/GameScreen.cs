@@ -937,10 +937,15 @@ namespace ClickDungeon.Unity.Screens
             return body;
         }
 
+        /// <summary>The sample art's ability buttons: 112 × 169 on the sheet, drawn here at the same proportions.</summary>
+        static readonly Vector2 AbilityArtSize = new Vector2(106f, 160f);
+        const float AbilityPitch = 122f;
+
         void BuildAbilityBar()
         {
             var bar = UiFactory.Rect(Root, "AbilityBar");
-            bar.Place(Center, Center, new Vector2(0f, -378f), new Vector2(900f, 150f));
+            // Tucked between the board's bottom edge and the speech strip.
+            bar.Place(Center, Center, new Vector2(0f, -386f), new Vector2(900f, 160f));
 
             var kinds = new[] { CommandKind.Move, CommandKind.Slash, CommandKind.Shield, CommandKind.Dash, CommandKind.Potion };
             var labels = new[] { "MOVE", "SLASH", "SHIELD", "DASH", "POTION" };
@@ -950,18 +955,27 @@ namespace ClickDungeon.Unity.Screens
             {
                 var kind = kinds[i];
                 var parts = UiFactory.Button(bar, labels[i], labels[i], colors[i], 26, () => OnAbility(kind));
-                parts.Rect.Place(Center, Center, new Vector2((i - 2) * 178f, 0f), new Vector2(162f, 144f));
-                parts.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(156f, 34f));
                 var group = parts.Rect.gameObject.AddComponent<CanvasGroup>();
-                // Button art is frame and fill only; icon, label, hotkey and badge still draw on top.
-                UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.AbilityButton(kind), ArtKeys.AbilityButtonDefault);
 
-                var icon = UiFactory.Rect(parts.Rect, "Icon");
-                icon.Place(Center, Center, new Vector2(0f, 18f), new Vector2(90f, 90f));
-                Icons.Ability(icon, kind);
-
-                var hint = UiFactory.Text(parts.Rect, "Hotkey", (i + 1).ToString(), 18, Palette.TextDim, TextAnchor.UpperLeft, FontStyle.Bold);
-                hint.rectTransform.Stretch(12, 8, 0, 0);
+                // The sample art's own button carries its icon and label, at its own tall proportions. Without it, a bare frame
+                // (or the flat placeholder) keeps the drawn icon, label and hotkey.
+                bool whole = UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.AbilityButton(kind));
+                if (whole)
+                {
+                    parts.Rect.Place(Center, Center, new Vector2((i - 2) * AbilityPitch, 0f), AbilityArtSize);
+                    parts.Label.enabled = false;
+                }
+                else
+                {
+                    UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.AbilityButtonDefault);
+                    parts.Rect.Place(Center, Center, new Vector2((i - 2) * 178f, 0f), new Vector2(162f, 144f));
+                    parts.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(156f, 34f));
+                    var icon = UiFactory.Rect(parts.Rect, "Icon");
+                    icon.Place(Center, Center, new Vector2(0f, 18f), new Vector2(90f, 90f));
+                    Icons.Ability(icon, kind);
+                    var hint = UiFactory.Text(parts.Rect, "Hotkey", (i + 1).ToString(), 18, Palette.TextDim, TextAnchor.UpperLeft, FontStyle.Bold);
+                    hint.rectTransform.Stretch(12, 8, 0, 0);
+                }
 
                 var selected = UiFactory.Image(parts.Rect, "Selected", Palette.Gold, Shapes.Frame, true);
                 selected.pixelsPerUnitMultiplier = 1f;
@@ -984,7 +998,7 @@ namespace ClickDungeon.Unity.Screens
         void BuildSpeechStrip()
         {
             var strip = UiFactory.Rect(Root, "Speech");
-            strip.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(1060f, 80f));
+            strip.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(1060f, 64f));
             var stripBack = UiFactory.Image(strip, "Back", Palette.Navy.WithAlpha(0.95f), Shapes.Rounded, true);
             stripBack.rectTransform.Stretch();
             var stripBorder = UiFactory.Image(strip, "Border", Palette.GoldDark, Shapes.Frame, true);
@@ -992,7 +1006,7 @@ namespace ClickDungeon.Unity.Screens
             UiArt.ApplyPanel(stripBack, stripBorder, ArtKeys.SpeechStrip);
 
             var faceBack = UiFactory.Image(strip, "FaceBack", Palette.Parchment, Shapes.Circle);
-            faceBack.rectTransform.Place(new Vector2(0f, 0.5f), Center, new Vector2(48f, 0f), new Vector2(64f, 64f));
+            faceBack.rectTransform.Place(new Vector2(0f, 0.5f), Center, new Vector2(40f, 0f), new Vector2(52f, 52f));
             _speechFace = UiFactory.Text(faceBack.rectTransform, "Face", ":)", 24, Palette.Ink, TextAnchor.MiddleCenter, FontStyle.Bold);
             _speechFace.rectTransform.Stretch();
             _speechFace.horizontalOverflow = HorizontalWrapMode.Overflow;

@@ -404,50 +404,63 @@ namespace ClickDungeon.Unity.Screens
             UiArt.ApplyPanel(more.Background, more.Border, ArtKeys.ButtonSecondary);
         }
 
+        // The reference title's bottom row, as left edge and width on a 1920-wide screen (its 1672-wide art scaled up).
+        // INVENTORY and TALENTS keep their slots empty until those systems exist.
+        static readonly (float x, float w) PlaySlot = (67f, 324f), HeroSlot = (414f, 201f), ShopSlot = (1103f, 207f),
+            SettingsSlot = (1333f, 209f), QuitSlot = (1572f, 274f);
+        const float ButtonRowHeight = 154f, ButtonRowBottom = 33f;
+
+        /// <summary>
+        /// One bottom-row button in its reference slot. The sample art's button carries its own icon and label, so with art the
+        /// drawn label is hidden and the fallback icon is skipped; without it, the placeholder draws both.
+        /// </summary>
+        UiFactory.ButtonParts TitleButton(string name, string label, Color color, System.Action action, (float x, float w) slot,
+            string artKey, System.Action<RectTransform> drawIcon, int fontSize = 34)
+        {
+            var button = UiFactory.Button(Root, name, label, color, fontSize, action);
+            button.Rect.Place(Vector2.zero, Vector2.zero, new Vector2(slot.x, ButtonRowBottom), new Vector2(slot.w, ButtonRowHeight));
+            if (UiArt.ApplyPanel(button.Background, button.Border, artKey))
+            {
+                button.Label.enabled = false;
+                return button;
+            }
+            button.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(slot.w - 10f, 44f));
+            var icon = UiFactory.Rect(button.Rect, "Icon");
+            icon.Place(Center, Center, new Vector2(0f, 24f), new Vector2(72f, 72f));
+            drawIcon?.Invoke(icon);
+            return button;
+        }
+
         void BuildBottomBar()
         {
-            var play = UiFactory.Button(Root, "Play", "PLAY", Palette.PlayGreen, 60, Play);
-            play.Rect.Place(Vector2.zero, Vector2.zero, new Vector2(60f, 28f), new Vector2(320f, 136f));
+            var play = TitleButton("Play", "PLAY", Palette.PlayGreen, Play, PlaySlot, ArtKeys.ButtonPlay, icon =>
+            {
+                if (!ArtAt(icon, Vector2.zero, 64f, ArtKeys.PlayIcon))
+                    Icons.Ability(Icons.Group(icon, Vector2.zero, 0f, 0.8f), CommandKind.Slash);
+            }, 60);
             play.Border.color = Palette.Gold;
-            UiArt.ApplyPanel(play.Background, play.Border, ArtKeys.ButtonPlay);
-            var swords = UiFactory.Rect(play.Rect, "Swords");
-            swords.Place(new Vector2(0f, 0.5f), Center, new Vector2(54f, 0f), new Vector2(60f, 60f));
-            if (!ArtAt(swords, Vector2.zero, 64f, ArtKeys.PlayIcon))
-                Icons.Ability(Icons.Group(swords, Vector2.zero, 0f, 0.8f), CommandKind.Slash);
-            play.Label.rectTransform.Stretch(80, 4, 8, 4);
 
-            var heroes = UiFactory.Button(Root, "HeroSelect", "HERO SELECT", Palette.Navy, 34, OpenHeroSelect);
-            heroes.Rect.Place(Vector2.zero, Vector2.zero, new Vector2(400f, 28f), new Vector2(300f, 136f));
-            heroes.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(290f, 44f));
-            UiArt.ApplyPanel(heroes.Background, heroes.Border, ArtKeys.ButtonSecondary);
-            _heroButtonIcon = UiFactory.Rect(heroes.Rect, "Helm");
-            _heroButtonIcon.Place(Center, Center, new Vector2(0f, 22f), new Vector2(76f, 76f));
-            RefreshHeroCard();
+            TitleButton("HeroSelect", "HERO SELECT", Palette.Navy, OpenHeroSelect, HeroSlot, ArtKeys.ButtonHeroSelect, icon =>
+            {
+                // Without the sample button, the button shows whoever takes the next run.
+                _heroButtonIcon = icon;
+                RefreshHeroCard();
+            }, 30);
 
-            var shop = UiFactory.Button(Root, "Shop", "SHOP", Palette.Navy, 34, OpenShop);
-            shop.Rect.Place(Vector2.zero, Vector2.zero, new Vector2(720f, 28f), new Vector2(260f, 136f));
-            shop.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(250f, 44f));
-            UiArt.ApplyPanel(shop.Background, shop.Border, ArtKeys.ButtonSecondary);
-            var coinIcon = UiFactory.Rect(shop.Rect, "Coin");
-            coinIcon.Place(Center, Center, new Vector2(0f, 22f), new Vector2(72f, 72f));
-            if (!ArtAt(coinIcon, Vector2.zero, 72f, ArtKeys.CoinIcon, ArtKeys.ChestLargeClosed))
-                Icons.Shape(coinIcon, Shapes.Circle, Palette.Gold, Vector2.zero, new Vector2(52f, 52f));
+            TitleButton("Shop", "SHOP", Palette.Navy, OpenShop, ShopSlot, ArtKeys.ButtonShop, icon =>
+            {
+                if (!ArtAt(icon, Vector2.zero, 72f, ArtKeys.CoinIcon, ArtKeys.ChestLargeClosed))
+                    Icons.Shape(icon, Shapes.Circle, Palette.Gold, Vector2.zero, new Vector2(52f, 52f));
+            });
 
-            var settings = UiFactory.Button(Root, "Settings", "SETTINGS", Palette.Navy, 34, () => Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting));
-            settings.Rect.Place(new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-356f, 28f), new Vector2(280f, 136f));
-            settings.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(270f, 44f));
-            UiArt.ApplyPanel(settings.Background, settings.Border, ArtKeys.ButtonTitleSettings);
-            var gear = UiFactory.Rect(settings.Rect, "Gear");
-            gear.Place(Center, Center, new Vector2(0f, 22f), new Vector2(70f, 70f));
-            if (!ArtAt(gear, Vector2.zero, 70f, ArtKeys.SettingsIcon)) Icons.Gear(gear, Palette.Steel, 64f);
+            TitleButton("Settings", "SETTINGS", Palette.Navy, () => Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting),
+                SettingsSlot, ArtKeys.ButtonTitleSettings, icon =>
+                {
+                    if (!ArtAt(icon, Vector2.zero, 70f, ArtKeys.SettingsIcon)) Icons.Gear(icon, Palette.Steel, 64f);
+                });
 
 #if !UNITY_IOS
-            var quit = UiFactory.Button(Root, "Quit", "QUIT", Palette.QuitRed, 40, _app.Quit);
-            quit.Rect.Place(new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-60f, 28f), new Vector2(280f, 136f));
-            UiArt.ApplyPanel(quit.Background, quit.Border, ArtKeys.ButtonQuit);
-            // With an icon, QUIT matches SETTINGS: icon above, label along the bottom.
-            if (ArtAt(quit.Rect, new Vector2(0f, 22f), 70f, ArtKeys.QuitIcon))
-                quit.Label.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(270f, 44f));
+            TitleButton("Quit", "QUIT", Palette.QuitRed, _app.Quit, QuitSlot, ArtKeys.ButtonQuit, icon => ArtAt(icon, Vector2.zero, 70f, ArtKeys.QuitIcon), 40);
 #endif
         }
     }

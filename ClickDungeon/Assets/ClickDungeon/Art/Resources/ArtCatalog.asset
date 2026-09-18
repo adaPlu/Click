@@ -648,14 +648,74 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 51f8654fa7670ab42ba72b6c451d9fef, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: ui_button_ability_dash
+    Frames:
+    - {fileID: 21300000, guid: ef3e658e79b516646a4081d26ae74914, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_ability_move
+    Frames:
+    - {fileID: 21300000, guid: 2ac5ffa630c2fcf428ef73a4990cdf5b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_ability_potion
+    Frames:
+    - {fileID: 21300000, guid: c260cbbbc1b84b34e97a6526ffbec038, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_ability_shield
+    Frames:
+    - {fileID: 21300000, guid: 00c21c53459fd934a9804a5166148f3b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_ability_slash
+    Frames:
+    - {fileID: 21300000, guid: 7ddb851d7794d114ea1d49a3117ad86d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_hero_select
+    Frames:
+    - {fileID: 21300000, guid: 3cb6320eacc4b9a4395a194c1c76735e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_inventory
+    Frames:
+    - {fileID: 21300000, guid: 9c6e2fea9b635c74ebdaa8821634a50b, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: ui_button_menu
     Frames:
     - {fileID: 21300000, guid: cd1f005236c2d7d4b892178a80f704d0, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: ui_button_play
+    Frames:
+    - {fileID: 21300000, guid: e5f9d8800a32ff045af8b9d97562abb3, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_quit
+    Frames:
+    - {fileID: 21300000, guid: 1c9e21755a2aaf74c997c64471a354a6, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: ui_button_settings
     Frames:
     - {fileID: 21300000, guid: 07b7533ad88a31b4ea2e15069a36ea91, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_shop
+    Frames:
+    - {fileID: 21300000, guid: 2c7c7a42c6fe8844cb4a380fe511a876, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_talents
+    Frames:
+    - {fileID: 21300000, guid: d7b8432d3b5965947b7dda5882d261f8, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_button_title_settings
+    Frames:
+    - {fileID: 21300000, guid: f67b425680998734ba4f6428300acf95, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: ui_chest_large_closed
