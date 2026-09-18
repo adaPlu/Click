@@ -449,8 +449,8 @@ Rules referenced here live in `docs/rules.md`.
   shop one tap away. No real-money store: that needs a platform store account and payment provider.
 - **WHY**: "correct and remove the blurred out areas so the screen match"; "+ purchasable option for gold and gems".
 - **TOOLS**: the slicer gained `inpaint_text` / `inpaint_all` (OpenCV) and, for scenes, `erase_color`.
-- **AMENDED (D-034)**: the logo is no longer blurred: `remove_logo_two.py` removes the "2" from the reference itself
-  (rebuilding the wall behind it), so the background carries the reference logo reading "ClickDungeon".
+- **AMENDED (D-034), then REVERTED at the owner's request**: the title logo went back to the blurred box with our
+  logo over it. `remove_logo_two.py` is kept for the gameplay screen.
 - **TESTS**: `TheExchangeTradesOneCurrencyForTheOtherAtALoss`; screenshots with `-cdOverlay coins|gems`.
 
 ## D-034 The game screen matches the reference

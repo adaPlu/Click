@@ -464,11 +464,10 @@ namespace ClickDungeon.Unity.Screens
 
             if (_matched)
             {
-                // The background is the reference title with its logo's "2" painted out (remove_logo_two.py), so the
-                // logo and the tagline plank are already there: drawing ours would double them.
-                logo.enabled = false;
+                // Over the reference logo's place, which the background blurs because its logo reads "ClickDungeon2".
+                logo.rectTransform.Place(TopCenter, TopCenter, new Vector2(-2f, -24f), new Vector2(900f, 176f));
                 foreach (var art in Root.GetComponentsInChildren<Image>())
-                    if (art.name == "Art " + ArtKeys.Logo) art.enabled = false;
+                    if (art.name == "Art " + ArtKeys.Logo) art.rectTransform.Place(TopCenter, TopCenter, new Vector2(-2f, -24f), new Vector2(900f, 176f));
                 return;
             }
             var plank = UiFactory.Rect(Root, "Tagline");

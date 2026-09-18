@@ -183,7 +183,7 @@
     { "key": "fx_bomb_fuse", "size": 128, "tint": [1.0, 0.7, 0.35], "source": "ref-treasure", "rect": [1184, 514, 32, 36], "mode": "icon", "tolerance": 40, "largest_only": true, "folder": "FX", "wired": true },
     { "key": "fx_chest_glow", "source": "ref-treasure", "rect": [1230, 530, 160, 140], "mode": "icon", "tolerance": 40, "size": 512, "folder": "FX", "wired": true },
     { "key": "bg_gameplay", "source": "ref2-gameplay-no2", "rect": [0, 0, 1672, 941], "mode": "scene", "blank": [[468, 150, 744, 510]], "blur": 38, "dim": 0.82, "size": 1672, "folder": "UI", "wired": true },
-    { "key": "bg_title", "source": "ref1-title-no2", "rect": [0, 0, 1672, 941], "mode": "scene", "blank": [], "size": 1672, "folder": "UI", "wired": true },
+    { "key": "bg_title", "source": "ref1-title", "rect": [0, 0, 1672, 941], "mode": "scene", "erase_color": [{"rect": [1100, 20, 150, 180], "color": [150, 90, 215], "tolerance": 110, "grow": 7}], "blank": [[440, 15, 790, 168], [1122, 15, 108, 170]], "blur": 42, "dim": 0.95, "feather": 10, "size": 1672, "folder": "UI", "wired": true },
     { "key": "ui_enemy_hp_back", "source": "ref-core-ui", "rect": [1306, 658, 38, 38], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
     { "key": "ui_enemy_hp_fill", "source": "ref-core-ui", "rect": [1182, 668, 96, 20], "mode": "wide", "size": 256, "folder": "UI", "wired": true },
     { "key": "portrait_goblin", "source": "ref-monster-pack", "rect": [400, 190, 118, 106], "mode": "icon", "size": 192, "folder": "Portraits", "wired": true },
