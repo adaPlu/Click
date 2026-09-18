@@ -74,6 +74,7 @@ namespace ClickDungeon.Application
             // Provisions are spent into the run's own numbers, so the simulation stays a function of its inputs.
             ProfileSystem.Provision(Profile, Run, Catalog);
             Progression.Apply(Profile, Run, Catalog);
+            Inventory.Apply(Profile, Run, Catalog);
             SaveProfile();
             Persist();
             Telemetry?.RunStarted(Run, events);
@@ -115,6 +116,7 @@ namespace ClickDungeon.Application
             if (wasInProgress && Run.Status != RunStatus.InProgress)
             {
                 ProfileSystem.Bank(Profile, Run);
+                Inventory.Bank(Profile, Run, Catalog);
                 SaveProfile();
             }
             Telemetry?.Complete(pending, Run, result);
@@ -130,6 +132,7 @@ namespace ClickDungeon.Application
                 if (Run.Status == RunStatus.InProgress)
                 {
                     ProfileSystem.Bank(Profile, Run);
+                    Inventory.Bank(Profile, Run, Catalog);
                     SaveProfile();
                 }
             }

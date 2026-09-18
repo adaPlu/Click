@@ -30,6 +30,7 @@ namespace ClickDungeon.Unity.Screens
         Text _gems;
         Text _level;
         UiFactory.ButtonParts _talentsButton;
+        InventoryOverlay _inventory;
         Text _heroName;
         Text _heroTagline;
         RunState _saved;
@@ -68,6 +69,7 @@ namespace ClickDungeon.Unity.Screens
             UiFactory.Outline(_flash, Color.black, 2f);
 
             _modal = new ModalOverlay(Root, app);
+            _inventory = new InventoryOverlay(Root);
         }
 
         public RectTransform Root { get; }
@@ -76,6 +78,7 @@ namespace ClickDungeon.Unity.Screens
         {
             // A modal left open when a run started (for example CONTINUE INSTEAD) must not greet the player on return.
             if (_modal.IsOpen) _modal.Hide();
+            if (_inventory.IsOpen) _inventory.Hide();
             _flash.text = "";
             RefreshHeroCard();
             RefreshPurse();
@@ -101,6 +104,7 @@ namespace ClickDungeon.Unity.Screens
             else if (name == "heroes") OpenHeroSelect();
             else if (name == "shop") OpenShop();
             else if (name == "talents") OpenTalents();
+            else if (name == "inventory") OpenInventory();
         }
 
         public void Tick()
@@ -111,6 +115,11 @@ namespace ClickDungeon.Unity.Screens
             if (_modal.IsOpen)
             {
                 if (kb.escapeKey.wasPressedThisFrame) _modal.Back();
+                return;
+            }
+            if (_inventory.IsOpen)
+            {
+                if (kb.escapeKey.wasPressedThisFrame) _inventory.Hide();
                 return;
             }
             if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)
@@ -187,6 +196,9 @@ namespace ClickDungeon.Unity.Screens
             string id = UserPrefs.Hero;
             return _app.Catalog.HeroIdentities.ContainsKey(id) ? id : Content.ContentCatalog.DefaultHeroId;
         }
+
+        void OpenInventory() =>
+            _inventory.Open(_app.Catalog, _app.Session.Profile, () => _app.Session.SaveProfile());
 
         void OpenTalents()
         {
@@ -439,7 +451,7 @@ namespace ClickDungeon.Unity.Screens
 
         // The reference title's bottom row, as left edge and width on a 1920-wide screen (its 1672-wide art scaled up).
         // INVENTORY and TALENTS keep their slots empty until those systems exist.
-        static readonly (float x, float w) PlaySlot = (67f, 324f), HeroSlot = (414f, 201f), TalentsSlot = (871f, 212f), ShopSlot = (1103f, 207f),
+        static readonly (float x, float w) PlaySlot = (67f, 324f), HeroSlot = (414f, 201f), InventorySlot = (636f, 215f), TalentsSlot = (871f, 212f), ShopSlot = (1103f, 207f),
             SettingsSlot = (1333f, 209f), QuitSlot = (1572f, 274f);
         const float ButtonRowHeight = 154f, ButtonRowBottom = 33f;
 
@@ -479,6 +491,9 @@ namespace ClickDungeon.Unity.Screens
                 _heroButtonIcon = icon;
                 RefreshHeroCard();
             }, 30);
+
+            TitleButton("Inventory", "INVENTORY", Palette.Navy, OpenInventory, InventorySlot, ArtKeys.ButtonInventory, icon =>
+                Icons.Shape(icon, Shapes.Rounded, Palette.ChestWood, Vector2.zero, new Vector2(60f, 56f)));
 
             _talentsButton = TitleButton("Talents", "TALENTS", Palette.Navy, OpenTalents, TalentsSlot, ArtKeys.ButtonTalents, icon =>
                 Icons.Shape(icon, Shapes.Diamond, Palette.Gold, Vector2.zero, new Vector2(56f, 56f)));

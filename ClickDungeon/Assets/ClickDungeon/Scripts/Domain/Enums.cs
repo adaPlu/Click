@@ -71,4 +71,7 @@ namespace ClickDungeon.Domain
     public enum CommandKind { Move = 0, Wait, Slash, Shield, Dash, Potion, Interact }
 
     public enum RewardKind { Potion = 0, MaxHp, SlashDamage }
+
+    /// <summary>Where an item is worn (D-028). One item per slot.</summary>
+    public enum ItemSlot { Weapon = 0, Shield, Armor, Boots, Trinket }
 }

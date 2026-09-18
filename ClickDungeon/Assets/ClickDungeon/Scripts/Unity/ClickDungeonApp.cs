@@ -42,6 +42,8 @@ namespace ClickDungeon.Unity
                 ? (IProfileStore)new MemoryProfileStore()
                 : new FileProfileStore(Path.Combine(UnityEngine.Application.persistentDataPath, "saves"));
             Session = new GameSession(ContentCatalog.CreateDefault(), Store, null, profiles);
+            // Screenshots of the between-runs screens need something in them. Automation only: its profile is in memory.
+            if (AutomationMode && ArgValue("-cdDemoProfile") != null) FillDemoProfile(Session.Profile);
             ApplyTelemetrySetting();
 
             EnsureCamera();
@@ -135,6 +137,18 @@ namespace ClickDungeon.Unity
 
         JsonlTelemetrySink _telemetrySink;
         string _automationTelemetryDir;
+
+        static void FillDemoProfile(Domain.ProfileState profile)
+        {
+            profile.Coins = 1248;
+            profile.Gems = 152;
+            profile.Xp = Progression.XpForLevel(7);
+            profile.Items.AddRange(new[] { "steel_sword", "iron_shield", "royal_plate", "healing_charm", "lucky_wand" });
+            foreach (var id in new[] { "steel_sword", "iron_shield", "royal_plate", "healing_charm" })
+                Inventory.Equip(profile, ContentCatalog.CreateDefault(), id);
+            Progression.TryLearn(profile, Progression.Tough);
+            Progression.TryLearn(profile, Progression.Lucky);
+        }
 
         public string TelemetryDirectory => Path.Combine(UnityEngine.Application.persistentDataPath, "telemetry");
         public bool TelemetryActive => _telemetrySink != null;

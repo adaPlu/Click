@@ -79,7 +79,7 @@ namespace ClickDungeon.Simulation
                 {
                     int before = hero.Hp;
                     hero.Potions--;
-                    hero.Hp = Math.Min(hero.MaxHp, hero.Hp + heroClass.PotionHeal);
+                    hero.Hp = Math.Min(hero.MaxHp, hero.Hp + heroClass.PotionHeal + run.PotionHealBonus);
                     events.Add(GameEvent.Of(GameEventKind.HeroHealed, to: hero.Pos, amount: hero.Hp - before));
                     break;
                 }
@@ -211,7 +211,7 @@ namespace ClickDungeon.Simulation
             events.Add(GameEvent.Of(GameEventKind.FloorCompleted, amount: floor.FloorIndex));
             // Walking down the stairs pays; falling through a pit (above) skips the floor and pays nothing.
             Treasure.Coins(run, catalog.Treasure.CoinsPerFloor, hero.Pos, events);
-            run.XpEarned += catalog.Xp.PerFloor;
+            run.XpEarned += catalog.Xp.PerFloor + run.BonusXpPerFloor;
             run.Turn++;
             if (floor.FloorIndex >= run.FloorCount)
             {

@@ -149,6 +149,11 @@ namespace ClickDungeon.Domain
         public int XpEarned;
         /// <summary>Extra coins per chest reward, from the Lucky talent. Set when the run starts and never changed.</summary>
         public int BonusCoinsPerChestReward;
+        /// <summary>Items picked up this run (D-028), banked into the inventory when the run ends. They do not change this run.</summary>
+        public List<string> ItemsFound = new List<string>();
+        /// <summary>From equipment: extra healing per potion, and extra XP per floor walked down.</summary>
+        public int PotionHealBonus;
+        public int BonusXpPerFloor;
         /// <summary>Turns taken off the class's shield and dash cooldowns by talents (never below one turn).</summary>
         public int ShieldCooldownCut;
         public int DashCooldownCut;

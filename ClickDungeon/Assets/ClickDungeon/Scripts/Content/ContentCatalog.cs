@@ -32,6 +32,16 @@ namespace ClickDungeon.Content
         public readonly List<TopologyTemplate> Templates = new List<TopologyTemplate>();
         public readonly List<FloorProfile> FloorProfiles = new List<FloorProfile>();
         public readonly List<RewardEntry> ChestRewards = new List<RewardEntry>();
+        /// <summary>Equipment, in drop-table order (D-028). A drop picks one by hash; a duplicate becomes coins at banking.</summary>
+        public readonly List<ItemDefinition> Items = new List<ItemDefinition>();
+        public int DuplicateItemCoins = 25;
+
+        public ItemDefinition Item(string id)
+        {
+            foreach (var item in Items)
+                if (item.Id == id) return item;
+            return null;
+        }
 
         /// <summary>
         /// Rewards a regular chest grants when it opens, indexed by <see cref="ChestQuality"/> (D-022). Better chests cost
@@ -128,6 +138,16 @@ namespace ClickDungeon.Content
             {
                 Id = "dawnward", DisplayName = "Dawnward", ClassId = "paladin", Tagline = "Steadfast. Shielded. Unshaken.",
             };
+
+            c.Items.Add(new ItemDefinition { Id = "steel_sword", DisplayName = "Steel Sword", Slot = ItemSlot.Weapon, Effect = "+1 slash damage", SlashDamage = 1 });
+            c.Items.Add(new ItemDefinition { Id = "lucky_wand", DisplayName = "Lucky Wand", Slot = ItemSlot.Weapon, Effect = "+3 coins for every chest reward", CoinsPerChestReward = 3 });
+            c.Items.Add(new ItemDefinition { Id = "iron_shield", DisplayName = "Iron Shield", Slot = ItemSlot.Shield, Effect = "+1 max heart", MaxHp = 1 });
+            c.Items.Add(new ItemDefinition { Id = "gilded_shield", DisplayName = "Gilded Shield", Slot = ItemSlot.Shield, Effect = "Shield recharges 1 turn sooner", ShieldCooldownCut = 1 });
+            c.Items.Add(new ItemDefinition { Id = "iron_cuirass", DisplayName = "Iron Cuirass", Slot = ItemSlot.Armor, Effect = "+1 max heart", MaxHp = 1 });
+            c.Items.Add(new ItemDefinition { Id = "royal_plate", DisplayName = "Royal Plate", Slot = ItemSlot.Armor, Effect = "+2 max hearts", MaxHp = 2 });
+            c.Items.Add(new ItemDefinition { Id = "swift_boots", DisplayName = "Swift Boots", Slot = ItemSlot.Boots, Effect = "Dash recharges 1 turn sooner", DashCooldownCut = 1 });
+            c.Items.Add(new ItemDefinition { Id = "healing_charm", DisplayName = "Healing Charm", Slot = ItemSlot.Trinket, Effect = "Potions heal 2 more", PotionHeal = 2 });
+            c.Items.Add(new ItemDefinition { Id = "scholars_ring", DisplayName = "Scholar's Ring", Slot = ItemSlot.Trinket, Effect = "+5 XP for every floor walked down", XpPerFloor = 5 });
 
             AddEnemy(c, new EnemyDefinition { Id = "goblin", DisplayName = "Goblin", Behavior = EnemyBehavior.Chaser, MaxHp = 3, Damage = 2 });
             AddEnemy(c, new EnemyDefinition { Id = "crowned_slime", DisplayName = "Crowned Slime", Behavior = EnemyBehavior.SlowChaser, MaxHp = 5, Damage = 3 });

@@ -378,3 +378,13 @@ Rules referenced here live in `docs/rules.md`.
 - **BALANCE**: talents make later runs easier by design; the balance guards play an empty profile.
 - **TESTS**: `LevelAndTalentTests`, `SettingsMenuTests.TalentsShowTheLevelThePointsAndWhatCanBeLearned`.
 
+## D-028 Inventory and equipment
+- **DECISION**: Nine items in five slots (weapon, shield, armor, boots, trinket), each a set of starting numbers. Drops:
+  Lord Blobert, vault great chests and premium chests, one item each, chosen by hash. Banked at run end; duplicates become
+  25 coins; a first find fills an empty slot. Worn items apply at run start like talents. INVENTORY screen with the
+  sheets' item art; INVENTORY in its reference slot on the title, which now carries all seven reference buttons.
+- **WHY**: the reference's INVENTORY button, and the item sheets.
+- **BALANCE**: the balance guards play an empty profile; gear makes later runs easier by design.
+- **TESTS**: `InventoryTests`, `InventoryOverlayTests`. Automation's `-cdDemoProfile 1` fills its in-memory profile so
+  screenshots of these screens show something.
+

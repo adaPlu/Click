@@ -59,6 +59,7 @@ namespace ClickDungeon.Simulation
             if (bossDied)
             {
                 Treasure.Gems(run, catalog.Treasure.GemsForTheBoss, run.Hero.Pos, events);
+                Treasure.Item(run, catalog, run.Hero.Pos, 3UL, events);
                 foreach (var minion in floor.Enemies)
                     events.Add(GameEvent.Of(GameEventKind.EnemyDied, minion.Id, to: minion.Pos, source: minion.DefId));
                 floor.Enemies.Clear();

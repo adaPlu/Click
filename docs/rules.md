@@ -561,3 +561,29 @@ wears its red "!" only while a point is waiting. A run never reads the profile:
 talents become the hero's starting numbers, so bots and tier guards (which play
 an empty profile) still measure a first run.
 
+## 15. Inventory *(D-028, tune numbers)*
+
+Equipment is found in runs and worn between them. **Lord Blobert**, a vault's
+**great chest** and a **premium chest** each drop one item, picked from the table
+below by a hash of the run seed, the floor and the spot, so a run always finds
+the same item. A find joins the inventory when the run ends (won, lost or
+abandoned) and fills its slot if the slot is empty; an item already owned
+becomes 25 coins instead. Nothing found changes the run it was found in.
+
+| Slot | Item | Effect |
+|---|---|---|
+| Weapon | Steel Sword | +1 slash damage |
+| Weapon | Lucky Wand | +3 coins for every chest reward |
+| Shield | Iron Shield | +1 max heart |
+| Shield | Gilded Shield | Shield recharges 1 turn sooner |
+| Armor | Iron Cuirass | +1 max heart |
+| Armor | Royal Plate | +2 max hearts |
+| Boots | Swift Boots | Dash recharges 1 turn sooner |
+| Trinket | Healing Charm | Potions heal 2 more |
+| Trinket | Scholar's Ring | +5 XP for every floor walked down |
+
+One item per slot. What is worn shapes every run started afterwards and is never
+used up; cooldown cuts add to talents' and never go below one turn. The
+INVENTORY screen shows the five slots and every item (unfound ones as "?"); tap a
+found item to wear it, tap a worn slot to take it off.
+

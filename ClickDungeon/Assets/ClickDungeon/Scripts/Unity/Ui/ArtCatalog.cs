@@ -206,6 +206,7 @@ namespace ClickDungeon.Unity.Ui
         public const string ButtonShop = "ui_button_shop";
         /// <summary>TALENTS, and the same button with its red "!" for when a talent point is waiting (D-027).</summary>
         public const string ButtonTalents = "ui_button_talents";
+        public const string ButtonInventory = "ui_button_inventory";
         public const string ButtonTalentsAlert = "ui_button_talents_alert";
         public const string PlayIcon = "ui_icon_play";
         public const string SettingsIcon = "ui_icon_settings";
@@ -272,6 +273,9 @@ namespace ClickDungeon.Unity.Ui
             { "neutral", "happy", "confident", "worried", "shocked", "angry", "victorious", "defeated" };
 
         public static string Actor(string contentId, string state = "idle") => $"actor_{contentId}_{state}";
+
+        /// <summary>An item's icon (D-028), for the INVENTORY screen and the item found in a run.</summary>
+        public static string ItemIcon(string itemId) => $"icon_item_{itemId}";
 
         /// <summary>A monster's portrait icon, shown in the Inspect panel while hovering it (the monster pack's <c>*_icon</c>).</summary>
         public static string EnemyPortrait(string enemyId) => $"portrait_{enemyId}";
@@ -356,6 +360,7 @@ namespace ClickDungeon.Unity.Ui
             };
             foreach (var enemy in catalog.Enemies.Values) keys.Add(Actor(enemy.Id));
             foreach (var enemy in catalog.Enemies.Values) keys.Add(EnemyPortrait(enemy.Id));
+            foreach (var item in catalog.Items) keys.Add(ItemIcon(item.Id));
             foreach (var enemy in catalog.Enemies.Values)
             {
                 if (!enemy.IsBoss) continue;
@@ -382,7 +387,7 @@ namespace ClickDungeon.Unity.Ui
                 ModalPanel, ButtonPrimary, ButtonSecondary, ButtonDanger,
                 ChestLargeClosed, ChestLargeOpen, ChestGlow, ChestProgressBack, ChestProgressFill, ChestRewardCard,
                 TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleHowToPanel,
-                TitleHero, TitleBlobert, TitleGoblin, ButtonPlay, ButtonTitleSettings, ButtonQuit, ButtonHeroSelect, ButtonShop, ButtonTalents, ButtonTalentsAlert, PlayIcon, SettingsIcon, QuitIcon,
+                TitleHero, TitleBlobert, TitleGoblin, ButtonPlay, ButtonTitleSettings, ButtonQuit, ButtonHeroSelect, ButtonShop, ButtonTalents, ButtonTalentsAlert, ButtonInventory, PlayIcon, SettingsIcon, QuitIcon,
             });
             foreach (var style in ModalStyles) keys.Add(ModalPanelStyle(style));
             keys.AddRange(new[] { ChestRays, ChestCoin, ChestGem, ChestShimmer });

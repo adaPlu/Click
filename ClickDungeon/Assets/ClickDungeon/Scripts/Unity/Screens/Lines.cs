@@ -213,6 +213,9 @@ namespace ClickDungeon.Unity.Screens
                     return $"<color=#F2C94C>Chest: {RewardText(e.Reward)}</color>";
                 case GameEventKind.ExitUnlocked:
                     return "The exit is open.";
+                case GameEventKind.ItemFound:
+                    var item = catalog.Item(e.Source);
+                    return $"<color=#7BD88F>Found: {item?.DisplayName ?? e.Source}!</color> It joins your inventory when the run ends.";
                 case GameEventKind.CoinsFound:
                     return $"<color=#F2C94C>+{e.Amount} coins</color>";
                 case GameEventKind.GemFound:

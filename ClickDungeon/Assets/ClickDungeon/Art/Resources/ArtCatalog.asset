@@ -368,6 +368,51 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 7a22e3c0d8c52e540898cca7f3fa9958, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_item_gilded_shield
+    Frames:
+    - {fileID: 21300000, guid: 2cee1d5979a2cfc4a94f1c210f866880, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_healing_charm
+    Frames:
+    - {fileID: 21300000, guid: a73c02455406cd64896ba2179501fc43, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_iron_cuirass
+    Frames:
+    - {fileID: 21300000, guid: 7149948fcca3e294fa49680cd0dc4463, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_iron_shield
+    Frames:
+    - {fileID: 21300000, guid: f1a99c6b7bf27e944875e40e1b07dc3b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_lucky_wand
+    Frames:
+    - {fileID: 21300000, guid: b2c3154f87c675942b71874abcb3a9bd, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_royal_plate
+    Frames:
+    - {fileID: 21300000, guid: 28bf5423c5dc8764cb58855f7688bc9f, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_scholars_ring
+    Frames:
+    - {fileID: 21300000, guid: 3ab4603e23f35c74a810deeaaa69ae88, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_steel_sword
+    Frames:
+    - {fileID: 21300000, guid: 156ca0e221130a7458bba98f2e71ffb1, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_swift_boots
+    Frames:
+    - {fileID: 21300000, guid: e892506f99522a84dade6d84d10a713a, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_key_special
     Frames:
     - {fileID: 21300000, guid: 2737b6adcb215d84aaa37be136c8493c, type: 3}

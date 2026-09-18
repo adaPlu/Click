@@ -16,6 +16,10 @@
     "ref-monster-pack": { "file": "gobinslime.png", "size": [1448, 1086], "label": "Common encounter monster pack (goblin raider, slime minion)" },
     "ref-treasure": { "file": "Treasuyre.png", "size": [1448, 1086], "label": "Special chest and key system asset pack" },
     "ref-dawnward": { "file": "Dawnward.png", "size": [1122, 1402], "label": "Dawnward hero identity (Paladin)" },
+    "ref-weapons": { "file": "Swords and Wands.png", "size": [1536, 1024], "label": "Weapons (swords and wands)" },
+    "ref-shields": { "file": "Shield and Boots.png", "size": [1536, 1024], "label": "Shields and boots" },
+    "ref-armor": { "file": "Armor.png", "size": [1536, 1024], "label": "Armor" },
+    "ref-trinkets": { "file": "Rings and Necklaces.png", "size": [1536, 1024], "label": "Rings and necklaces" },
     "ref-core-ui": { "file": "CoreUI PAck.png", "size": [1448, 1086], "label": "Core ability and consumable UI pack" }
   },
   "slices": [
@@ -190,6 +194,15 @@
     { "key": "ui_button_title_settings", "source": "ref1-title", "rect": [1161, 777, 182, 134], "mode": "wide", "size": 364, "folder": "UI", "wired": true },
     { "key": "ui_button_quit", "source": "ref1-title", "rect": [1369, 777, 239, 134], "mode": "wide", "size": 478, "folder": "UI", "wired": true },
     { "key": "ui_button_talents_alert", "source": "ref1-title", "rect": [759, 777, 184, 134], "mode": "wide", "size": 368, "folder": "UI", "wired": true },
-    { "key": "ui_button_talents", "source": "ref1-title", "rect": [759, 777, 184, 134], "mode": "wide", "size": 368, "folder": "UI", "mirror_fix": [0.69, 0.0, 0.31, 0.4], "wired": true }
+    { "key": "ui_button_talents", "source": "ref1-title", "rect": [759, 777, 184, 134], "mode": "wide", "size": 368, "folder": "UI", "mirror_fix": [0.69, 0.0, 0.31, 0.4], "wired": true },
+    { "key": "icon_item_steel_sword", "source": "ref-weapons", "rect": [240, 40, 215, 245], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_item_lucky_wand", "source": "ref-weapons", "rect": [1200, 40, 200, 265], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_item_iron_shield", "source": "ref-shields", "rect": [40, 40, 135, 185], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_item_gilded_shield", "source": "ref-shields", "rect": [695, 40, 155, 185], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_item_iron_cuirass", "source": "ref-armor", "rect": [30, 20, 225, 195], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_item_royal_plate", "source": "ref-armor", "rect": [1265, 20, 230, 205], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_item_swift_boots", "source": "ref-shields", "rect": [30, 480, 165, 155], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_item_healing_charm", "source": "ref-trinkets", "rect": [50, 510, 135, 185], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true },
+    { "key": "icon_item_scholars_ring", "source": "ref-trinkets", "rect": [635, 50, 145, 125], "mode": "icon", "tolerance": 30, "largest_only": true, "size": 192, "folder": "Icons", "wired": true }
   ]
 }

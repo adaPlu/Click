@@ -137,6 +137,25 @@ namespace ClickDungeon.Content
     }
 
     /// <summary>What a vault room holds (D-018): either one great chest or a handful of ordinary ones.</summary>
+    /// <summary>
+    /// A piece of equipment (D-028, rules §15). What it does is a set of numbers added to the hero a run starts with, so an
+    /// item is never read during a run.
+    /// </summary>
+    public sealed class ItemDefinition
+    {
+        public string Id;
+        public string DisplayName;
+        public ItemSlot Slot;
+        public string Effect;
+        public int SlashDamage;
+        public int MaxHp;
+        public int PotionHeal;
+        public int ShieldCooldownCut;
+        public int DashCooldownCut;
+        public int CoinsPerChestReward;
+        public int XpPerFloor;
+    }
+
     /// <summary>Experience a run earns (D-027, rules §14).</summary>
     public sealed class XpTuning
     {
