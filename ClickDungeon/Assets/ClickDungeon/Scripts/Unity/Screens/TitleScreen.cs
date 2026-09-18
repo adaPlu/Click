@@ -55,7 +55,7 @@ namespace ClickDungeon.Unity.Screens
         {
             _app = app;
             Root = UiFactory.Rect(parent, "TitleScreen");
-            Root.Stretch();
+            RefLayout.Stage(Root);
 
             Backdrop.Build(Root, ArtKeys.TitleBackground, new[] { new Vector2(-345f, 120f), new Vector2(345f, 120f), new Vector2(-345f, -200f), new Vector2(345f, -200f) });
 

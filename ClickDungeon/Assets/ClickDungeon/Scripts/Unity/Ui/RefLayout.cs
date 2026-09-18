@@ -14,6 +14,25 @@ namespace ClickDungeon.Unity.Ui
         public const float Scale = 1920f / 1672f;
         static readonly Vector2 TopLeft = new Vector2(0f, 1f);
 
+        /// <summary>
+        /// Makes a screen's root the fixed 16:9 stage its layout is designed on, centred in the window. The canvas grows to
+        /// fit a wider or taller window, but the background art keeps its own shape; laying everything out on the stage keeps
+        /// every button and panel on the background's own. What lies outside the stage is filled by the backdrop's bleed.
+        /// </summary>
+        public static void Stage(RectTransform root)
+        {
+            root.Stretch();
+            var fitter = root.gameObject.AddComponent<AspectRatioFitter>();
+            fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            fitter.aspectRatio = 1920f / 1080f;
+        }
+
+        /// <summary>How far a full-screen layer reaches past the stage, so it still covers a window of any shape.</summary>
+        public const float Bleed = 1600f;
+
+        /// <summary>Stretches a full-screen layer (a dimmer, a backdrop) past the stage to cover the whole window.</summary>
+        public static void StretchPastStage(RectTransform rt) => rt.Stretch(-Bleed, -Bleed, -Bleed, -Bleed);
+
         /// <summary>A rectangle given in the reference's pixels, from its parent's top-left corner.</summary>
         public static RectTransform AtRef(Transform parent, string name, float x, float y, float w, float h)
         {

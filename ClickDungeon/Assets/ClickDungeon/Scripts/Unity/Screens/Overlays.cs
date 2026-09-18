@@ -31,7 +31,8 @@ namespace ClickDungeon.Unity.Screens
             _root = UiFactory.Rect(parent, "Modal");
             _root.Stretch();
             var dim = UiFactory.Image(_root, "Dim", new Color(0f, 0f, 0f, 0.72f));
-            dim.rectTransform.Stretch();
+            // Past the stage, so the whole window dims, whatever its shape.
+            RefLayout.StretchPastStage(dim.rectTransform);
             dim.raycastTarget = true;
 
             _panel = UiFactory.Rect(_root, "Panel");
@@ -166,7 +167,8 @@ namespace ClickDungeon.Unity.Screens
             _root = UiFactory.Rect(parent, "ChestOverlay");
             _root.Stretch();
             var dim = UiFactory.Image(_root, "Dim", new Color(0f, 0f, 0f, 0.78f));
-            dim.rectTransform.Stretch();
+            // Past the stage, so the whole window dims, whatever its shape.
+            RefLayout.StretchPastStage(dim.rectTransform);
             dim.raycastTarget = true;
             var button = dim.gameObject.AddComponent<Button>();
             button.transition = Selectable.Transition.None;

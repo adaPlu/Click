@@ -89,7 +89,7 @@ namespace ClickDungeon.Unity.Screens
         {
             _app = app;
             Root = UiFactory.Rect(parent, "GameScreen");
-            Root.Stretch();
+            RefLayout.Stage(Root);
 
             _matched = Art.Has(ArtKeys.GameplayBackground) && Art.Has(ArtKeys.HudPlaque) && Art.Has(ArtKeys.HudAbility(CommandKind.Move));
             Backdrop.Build(Root, ArtKeys.GameplayBackground, new[] { new Vector2(-420f, 220f), new Vector2(420f, 220f), new Vector2(-420f, -120f), new Vector2(420f, -120f) });
@@ -1602,6 +1602,11 @@ namespace ClickDungeon.Unity.Screens
             if (Art.TryGet(backgroundKey, out var background))
             {
                 var sprite = background.Frames[0];
+                // A darker copy reaches past the stage, filling a window that is wider or taller than 16:9 with the room.
+                var bleed = UiFactory.Image(wall, "Bleed " + backgroundKey, new Color(0.4f, 0.4f, 0.42f), sprite);
+                bleed.raycastTarget = false;
+                var reach = RefLayout.Bleed * 0.5f;
+                bleed.rectTransform.Stretch(-reach * 1920f / 1080f, -reach, -reach * 1920f / 1080f, -reach);
                 var image = UiFactory.Image(wall, "Art " + backgroundKey, Color.white, sprite);
                 image.rectTransform.Stretch();
                 var fitter = image.gameObject.AddComponent<AspectRatioFitter>();
