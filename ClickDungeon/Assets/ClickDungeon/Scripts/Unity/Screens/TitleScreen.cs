@@ -34,6 +34,14 @@ namespace ClickDungeon.Unity.Screens
         AchievementsOverlay _achievements;
         MailOverlay _mail;
         GameObject _mailBadge;
+        /// <summary>The reference's mail button without its "!", laid over the background's while nothing is waiting.</summary>
+        GameObject _mailClean;
+        Text _continueTitle;
+        /// <summary>
+        /// True when the background is the reference title itself (D-033): its card, CONTINUE panel and buttons are then
+        /// the background's own pixels, and the screen only adds live text and cleaned patches in their exact places.
+        /// </summary>
+        readonly bool _matched;
         RectTransform _dailyChest;
         Text _dailyLine;
         GameObject _claim;
@@ -63,13 +71,17 @@ namespace ClickDungeon.Unity.Screens
                 Banner(new Vector2(470f, -60f), "DUNGEONS\nMAKE\nBETTER\nHEROES");
             }
 
-            BuildHeroCard();
+            _matched = compositeBackground && Art.Has(ArtKeys.TitleNamePlate) && Art.Has(ArtKeys.TitleContinueClean);
+            if (_matched) BuildMatchedCard();
+            else BuildHeroCard();
             BuildLogo();
             if (!compositeBackground) BuildCharacters();
 
-            _continuePanel = BuildContinuePanel(out _continueFloor, out _continueName);
+            _continuePanel = _matched ? BuildMatchedContinue(out _continueFloor, out _continueName)
+                : BuildContinuePanel(out _continueFloor, out _continueName);
             BuildDailyReward();
-            BuildTopRight();
+            if (_matched) BuildMatchedTopRight();
+            else BuildTopRight();
             BuildBottomBar();
 
             _flash = UiFactory.Text(Root, "Flash", "", 30, Palette.Danger, TextAnchor.MiddleCenter, FontStyle.Bold);
@@ -98,12 +110,12 @@ namespace ClickDungeon.Unity.Screens
             _saved = null;
             if (_app.Store.TryLoad(out var run, out _) && run.Status == RunStatus.InProgress) _saved = run;
 
-            _continuePanel.gameObject.SetActive(_saved != null);
-            if (_saved != null)
-            {
-                _continueFloor.text = $"FLOOR {_saved.Floor.FloorIndex}";
-                _continueName.text = (_app.Catalog.ProfileFor(_saved.Floor.FloorIndex).Name ?? "").ToUpperInvariant();
-            }
+            // The reference always shows the panel; with no run to continue it offers a new one from floor 1.
+            _continuePanel.gameObject.SetActive(_saved != null || _matched);
+            int floor = _saved?.Floor.FloorIndex ?? 1;
+            _continueFloor.text = $"FLOOR {floor}";
+            _continueName.text = (_app.Catalog.ProfileFor(floor).Name ?? "").ToUpperInvariant();
+            if (_continueTitle != null) _continueTitle.text = _saved != null ? "CONTINUE" : "NEW RUN";
         }
 
         public void Flash(string message) => _flash.text = message;
@@ -119,6 +131,8 @@ namespace ClickDungeon.Unity.Screens
             else if (name == "shop") OpenShop();
             else if (name == "talents") OpenTalents();
             else if (name == "inventory") OpenInventory();
+            else if (name == "coins") OpenPurse(true);
+            else if (name == "gems") OpenPurse(false);
             else if (name == "crown") OpenAchievements();
             else if (name == "mail") OpenMail();
         }
@@ -246,6 +260,15 @@ namespace ClickDungeon.Unity.Screens
             }, _modal.Hide);
         }
 
+        void OpenPurse(bool coins)
+        {
+            Menus.OpenPurse(_modal, _app.Session.Profile, coins, item =>
+            {
+                if (Menus.Buy(_app.Session, item)) RefreshPurse();
+                OpenPurse(coins);
+            }, OpenShop, _modal.Hide);
+        }
+
         void OpenShop()
         {
             Menus.OpenShop(_modal, _app.Catalog, _app.Session.Profile, item =>
@@ -303,7 +326,8 @@ namespace ClickDungeon.Unity.Screens
             _heroName.text = identity.DisplayName;
             _heroTagline.text = identity.Tagline;
 
-            Face(_heroPortrait, id, 108f);
+            if (_matched) MatchedFace(id);
+            else Face(_heroPortrait, id, 108f);
             // The button carries the same face, so the choice reads without opening the menu.
             Face(_heroButtonIcon, id, 76f);
         }
@@ -327,10 +351,13 @@ namespace ClickDungeon.Unity.Screens
         void RefreshPurse()
         {
             var profile = _app.Session.Profile;
-            if (_coins != null) _coins.text = profile.Coins.ToString();
-            if (_gems != null) _gems.text = profile.Gems.ToString();
+            // Thousands separated, as the reference writes 1,248.
+            if (_coins != null) _coins.text = profile.Coins.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+            if (_gems != null) _gems.text = profile.Gems.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
             if (_level != null) _level.text = Progression.Level(profile).ToString();
             if (_mailBadge != null) _mailBadge.SetActive(Mailbox.Unread(profile) > 0);
+            // The background's mail button carries the reference's "!"; the clean copy hides it while nothing waits.
+            if (_mailClean != null) _mailClean.SetActive(Mailbox.Unread(profile) == 0);
             // The red "!" only when a talent point is waiting, as the reference's badge means.
             if (_talentsButton != null)
                 UiArt.ApplyPanel(_talentsButton.Background, _talentsButton.Border,
@@ -346,6 +373,122 @@ namespace ClickDungeon.Unity.Screens
                 Icons.Portrait(parent, size).text = ":D";
         }
 
+        // ------------------------------------------------------------------ matched to the reference (D-033)
+
+        /// <summary>The reference title is 1672 wide; the canvas is 1920.</summary>
+        const float RefScale = 1920f / 1672f;
+
+        /// <summary>A rectangle given in the reference title's own pixels.</summary>
+        static RectTransform AtRef(Transform parent, string name, float x, float y, float w, float h)
+        {
+            var rt = UiFactory.Rect(parent, name);
+            rt.Place(TopLeft, TopLeft, new Vector2(x * RefScale, -y * RefScale), new Vector2(w * RefScale, h * RefScale));
+            return rt;
+        }
+
+        /// <summary>A cleaned piece of the reference, laid exactly where it was cut from.</summary>
+        static Image PatchAt(Transform parent, string key, float x, float y, float w, float h)
+        {
+            var image = UiFactory.Image(AtRef(parent, key, x, y, w, h), "Art", Color.white);
+            image.rectTransform.Stretch();
+            image.raycastTarget = false;
+            UiArt.Apply(image, key);
+            return image;
+        }
+
+        /// <summary>An invisible button over a button the background already shows.</summary>
+        static Button HotspotAt(Transform parent, string name, float x, float y, float w, float h, System.Action action)
+        {
+            var parts = UiFactory.Button(parent, name, "", Color.clear, 10, action);
+            parts.Rect.Place(TopLeft, TopLeft, new Vector2(x * RefScale, -y * RefScale), new Vector2(w * RefScale, h * RefScale));
+            parts.Background.color = Color.clear;
+            parts.Border.enabled = false;
+            parts.Label.enabled = false;
+            return parts.Button;
+        }
+
+        static Text TextIn(RectTransform rt, string name, int size, Color color, TextAnchor anchor, FontStyle style = FontStyle.Bold)
+        {
+            var text = UiFactory.Text(rt, name, "", size, color, anchor, style);
+            text.rectTransform.Stretch();
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            UiFactory.Shadow(text, Color.black, 2f);
+            return text;
+        }
+
+        static readonly Color CardName = new Color(0.96f, 0.87f, 0.66f);
+        static readonly Color CardTagline = new Color(0.72f, 0.7f, 0.66f);
+
+        /// <summary>
+        /// The reference's hero card: its portrait frame, name plate, level shield and purse are the background's; the name,
+        /// tagline, level and amounts are live, and each "+" opens the exchange for that currency.
+        /// </summary>
+        void BuildMatchedCard()
+        {
+            _heroPortrait = AtRef(Root, "Portrait", 57f, 32f, 76f, 74f);
+            PatchAt(Root, ArtKeys.TitleNamePlate, 141f, 28f, 295f, 72f);
+            _heroName = TextIn(AtRef(Root, "Name", 152f, 30f, 280f, 38f), "Name", 34, CardName, TextAnchor.MiddleLeft);
+            _heroTagline = TextIn(AtRef(Root, "Tagline", 153f, 72f, 280f, 24f), "Tagline", 22, CardTagline, TextAnchor.MiddleLeft, FontStyle.Normal);
+
+            PatchAt(Root, ArtKeys.TitleLevelBadge, 46f, 80f, 44f, 50f);
+            _level = TextIn(AtRef(Root, "Level", 46f, 86f, 44f, 34f), "Level", 32, CardName, TextAnchor.MiddleCenter);
+
+            PatchAt(Root, ArtKeys.TitleCoinField, 176f, 104f, 72f, 30f);
+            _coins = TextIn(AtRef(Root, "Coins", 176f, 104f, 68f, 30f), "Coins", 25, Color.white, TextAnchor.MiddleRight);
+            PatchAt(Root, ArtKeys.TitleGemField, 332f, 104f, 46f, 30f);
+            _gems = TextIn(AtRef(Root, "Gems", 332f, 104f, 42f, 30f), "Gems", 25, Color.white, TextAnchor.MiddleRight);
+            HotspotAt(Root, "CoinsPlus", 252f, 103f, 32f, 33f, () => OpenPurse(true));
+            HotspotAt(Root, "GemsPlus", 382f, 103f, 32f, 33f, () => OpenPurse(false));
+            RefreshHeroCard();
+            RefreshPurse();
+        }
+
+        /// <summary>The background already shows Sir Clickington in the frame; another hero's face is laid over him.</summary>
+        void MatchedFace(string heroId)
+        {
+            for (int i = _heroPortrait.childCount - 1; i >= 0; i--) UiFactory.SafeDestroy(_heroPortrait.GetChild(i).gameObject);
+            if (heroId == Content.ContentCatalog.DefaultHeroId) return;
+            var back = UiFactory.Image(_heroPortrait, "Back", new Color(0.06f, 0.07f, 0.1f), Shapes.Rounded, true);
+            back.rectTransform.Stretch();
+            if (!ArtAt(_heroPortrait, Vector2.zero, 84f, ArtKeys.Portrait(heroId, "happy"), ArtKeys.Portrait(heroId, "neutral"), ArtKeys.Actor(heroId)))
+                Icons.Portrait(_heroPortrait, 84f).text = ":D";
+        }
+
+        /// <summary>
+        /// The reference's CONTINUE panel with its sample floor painted out. It is always there, as in the reference: with
+        /// no run to continue it reads NEW RUN and starts one.
+        /// </summary>
+        RectTransform BuildMatchedContinue(out Text floor, out Text name)
+        {
+            var panel = AtRef(Root, "Continue", 186f, 220f, 312f, 282f);
+            var art = UiFactory.Image(panel, "Art", Color.white);
+            art.rectTransform.Stretch();
+            UiArt.Apply(art, ArtKeys.TitleContinueClean);
+            var button = panel.gameObject.AddComponent<Button>();
+            button.targetGraphic = art;
+            button.onClick.AddListener(() =>
+            {
+                if (_saved != null) _app.ContinueRun();
+                else Play();
+            });
+
+            _continueTitle = TextIn(AtRef(panel, "Title", 40f, 11f, 232f, 40f), "Title", 38, CardName, TextAnchor.MiddleCenter);
+            floor = TextIn(AtRef(panel, "Floor", 40f, 199f, 230f, 32f), "Floor", 30, CardName, TextAnchor.MiddleCenter);
+            name = TextIn(AtRef(panel, "Name", 40f, 229f, 230f, 22f), "Name", 18, CardName, TextAnchor.MiddleCenter);
+            return panel;
+        }
+
+        /// <summary>The reference's crown, mail, settings and menu buttons are the background's; these are their taps.</summary>
+        void BuildMatchedTopRight()
+        {
+            _mailClean = PatchAt(Root, ArtKeys.TitleMailClean, 1356f, 20f, 98f, 86f).rectTransform.parent.gameObject;
+            HotspotAt(Root, "Crown", 1275f, 28f, 76f, 73f, OpenAchievements);
+            HotspotAt(Root, "MailButton", 1366f, 28f, 78f, 73f, OpenMail);
+            HotspotAt(Root, "Settings", 1462f, 28f, 77f, 73f, () => Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting));
+            HotspotAt(Root, "Menu", 1554f, 28f, 77f, 73f, OpenMenu);
+            RefreshPurse();
+        }
+
         void BuildLogo()
         {
             var logo = UiFactory.Text(Root, "Logo", "ClickDungeon", 164, Palette.Gold, TextAnchor.MiddleCenter, FontStyle.Bold);
@@ -359,6 +502,14 @@ namespace ClickDungeon.Unity.Screens
                 gem.rectTransform.Place(TopCenter, Center, new Vector2(40f, -52f), new Vector2(44f, 44f));
             }
 
+            if (_matched)
+            {
+                // Over the reference logo's place, which the background blurs because its logo reads "ClickDungeon2".
+                logo.rectTransform.Place(TopCenter, TopCenter, new Vector2(-2f, -24f), new Vector2(900f, 176f));
+                foreach (var art in Root.GetComponentsInChildren<Image>())
+                    if (art.name == "Art " + ArtKeys.Logo) art.rectTransform.Place(TopCenter, TopCenter, new Vector2(-2f, -24f), new Vector2(900f, 176f));
+                return;
+            }
             var plank = UiFactory.Rect(Root, "Tagline");
             plank.Place(TopCenter, TopCenter, new Vector2(40f, -250f), new Vector2(860f, 76f));
             Panel(plank, Palette.Stone, Palette.StoneLight, ArtKeys.TitlePlank);

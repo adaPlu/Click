@@ -943,8 +943,38 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 486b85f60237a284f93ac7f19dccc085, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: ui_title_coin_field
+    Frames:
+    - {fileID: 21300000, guid: 0f7fd97a030e5154cb9b70476229a5b9, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_title_continue_clean
+    Frames:
+    - {fileID: 21300000, guid: 7aae79ca15edcac4985f9039077ddb56, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: ui_title_daily_panel
     Frames:
     - {fileID: 21300000, guid: 1180abe30584d5d469fe3b4fee2e3bdd, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_title_gem_field
+    Frames:
+    - {fileID: 21300000, guid: b5e5bc3940b9d214097e4fcb471f894a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_title_level_badge
+    Frames:
+    - {fileID: 21300000, guid: eaa9e88fea01ae241947a2935e878f6c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_title_mail_clean
+    Frames:
+    - {fileID: 21300000, guid: cd77d31c37f85394984fdd42d025cd65, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_title_name_plate
+    Frames:
+    - {fileID: 21300000, guid: f3febd96113d6064f99031143b32f809, type: 3}
     Fps: 12
     Placeholder: 1

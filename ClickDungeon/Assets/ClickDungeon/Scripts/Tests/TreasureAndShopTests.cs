@@ -127,6 +127,25 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
+        public void TheExchangeTradesOneCurrencyForTheOtherAtALoss()
+        {
+            var profile = new ProfileState { Gems = Shop.CoinPouchGems };
+            Assert.That(Shop.TryBuy(profile, ShopItem.CoinPouch), Is.True);
+            Assert.That(profile.Gems, Is.Zero);
+            Assert.That(profile.Coins, Is.EqualTo(Shop.CoinPouchCoins));
+            Assert.That(Shop.TryBuy(profile, ShopItem.GemPouch), Is.False, "150 coins do not buy 10 gems back.");
+            Assert.That(profile.Coins, Is.EqualTo(Shop.CoinPouchCoins), "A refused trade changes nothing.");
+
+            profile.Coins = Shop.GemPouchCoins;
+            Assert.That(Shop.TryBuy(profile, ShopItem.GemPouch), Is.True);
+            Assert.That(profile.Gems, Is.EqualTo(Shop.GemPouchGems));
+            Assert.That(profile.Coins, Is.Zero);
+            // Trading back and forth never makes more of either.
+            Assert.That(Shop.GemPouchCoins, Is.GreaterThan(Shop.CoinPouchCoins * Shop.GemPouchGems / Shop.CoinPouchGems));
+            Assert.That(Shop.Stock, NUnit.Framework.Has.No.Member(ShopItem.CoinPouch), "The exchange is the purse's, not a provision.");
+        }
+
+        [Test]
         public void ProvisionsAreHandedToTheNextRunAndSpent()
         {
             var profile = new ProfileState { PotionRations = 1, HeartTokens = 2 };

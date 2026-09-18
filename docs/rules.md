@@ -516,13 +516,18 @@ A run carries treasure out; the **profile** keeps it between runs.
 | Opening a vault's great chest | 10 gems |
 
 What a run found is banked once, when it ends — won, lost or abandoned. The
-**shop** (title screen only) sells provisions for the *next* run:
+**shop** (the title's SHOP, or the game screen's during a run) sells provisions for the *next* run:
 
 | Item | Price | Effect |
 |---|---|---|
 | Potion ration | 60 coins | +1 potion at the start of the next run |
 | Heart token | 120 coins | +2 max hearts (full) at the start of the next run |
 | Special key | 150 gems | Hides one premium chest in the next run (D-026) |
+
+The **"+"** beside coins or gems (title card and game HUD) opens an exchange (D-033):
+**10 gems for 150 coins**, or **300 coins for 10 gems**. A round trip loses half, so
+it moves value between the two without making more of either. There is no
+real-money purchase.
 
 Provisions are spent when the next run starts. A run never reads the profile:
 provisions become the hero's starting numbers, so a run still follows only from

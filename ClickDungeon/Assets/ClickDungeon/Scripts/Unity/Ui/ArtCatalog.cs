@@ -199,6 +199,16 @@ namespace ClickDungeon.Unity.Ui
         public const string ContinuePreview = "ui_continue_preview";
         /// <summary>The daily reward (D-029): the reference's panel frame, its glowing chest and its CLAIM button with the red "!".</summary>
         public const string TitleDailyPanel = "ui_title_daily_panel";
+        /// <summary>
+        /// The reference title's own hero card, CONTINUE panel and mail button with their sample text painted out (D-033):
+        /// laid over the unblurred background in their exact places, with the live name, level, purse and floor on top.
+        /// </summary>
+        public const string TitleNamePlate = "ui_title_name_plate";
+        public const string TitleLevelBadge = "ui_title_level_badge";
+        public const string TitleCoinField = "ui_title_coin_field";
+        public const string TitleGemField = "ui_title_gem_field";
+        public const string TitleContinueClean = "ui_title_continue_clean";
+        public const string TitleMailClean = "ui_title_mail_clean";
         public const string DailyRewardChest = "ui_daily_reward_chest";
         public const string ButtonClaim = "ui_button_claim";
         public const string MenuButton = "ui_button_menu";
@@ -401,7 +411,7 @@ namespace ClickDungeon.Unity.Ui
             {
                 ModalPanel, ButtonPrimary, ButtonSecondary, ButtonDanger,
                 ChestLargeClosed, ChestLargeOpen, ChestGlow, ChestProgressBack, ChestProgressFill, ChestRewardCard,
-                TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleDailyPanel, DailyRewardChest, ButtonClaim, MenuButton, CrownButton, MailButton, AlertBadge, NavBar, PlusButton,
+                TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleDailyPanel, TitleNamePlate, TitleLevelBadge, TitleCoinField, TitleGemField, TitleContinueClean, TitleMailClean, DailyRewardChest, ButtonClaim, MenuButton, CrownButton, MailButton, AlertBadge, NavBar, PlusButton,
                 TitleHero, TitleBlobert, TitleGoblin, ButtonPlay, ButtonTitleSettings, ButtonQuit, ButtonHeroSelect, ButtonShop, ButtonTalents, ButtonTalentsAlert, ButtonInventory, PlayIcon, SettingsIcon, QuitIcon,
             });
             foreach (var style in ModalStyles) keys.Add(ModalPanelStyle(style));

@@ -534,6 +534,17 @@ namespace ClickDungeon.Unity.Screens
             }, _modal.Hide, found + NextRunNote);
         }
 
+        void OpenPurse(bool coins)
+        {
+            if (_chest.IsOpen || Run == null) return;
+            Menus.OpenPurse(_modal, _app.Session.Profile, coins, item =>
+            {
+                Menus.Buy(_app.Session, item);
+                RefreshPurse();
+                OpenPurse(coins);
+            }, OpenShop, _modal.Hide);
+        }
+
         void OpenHelp()
         {
             _modal.Show("HOW TO PLAY", Menus.HelpText, _modal.Hide, Menus.B("GOT IT", Palette.PlayGreen, _modal.Hide));
@@ -1043,7 +1054,8 @@ namespace ClickDungeon.Unity.Screens
             amount.rectTransform.Stretch(56, 0, 68, 0);
             UiFactory.Shadow(amount, Color.black, 2f);
 
-            var plus = UiFactory.Button(row, "Plus", "+", Palette.GoldDark, 34, OpenShop);
+            bool coins = name == "Coins";
+            var plus = UiFactory.Button(row, "Plus", "+", Palette.GoldDark, 34, () => OpenPurse(coins));
             plus.Rect.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), Vector2.zero, new Vector2(50f, 50f));
             if (UiArt.ApplyPanel(plus.Background, plus.Border, ArtKeys.PlusButton)) plus.Label.enabled = false;
             return amount;
@@ -1349,6 +1361,33 @@ namespace ClickDungeon.Unity.Screens
             sb.Append("Coins come out of chests and off every floor you finish. Gems come from Lord Blobert's hoard and vault chests.");
             sb.Append(note);
             modal.Show("SHOP", sb.ToString(), back, buttons.ToArray());
+        }
+
+        /// <summary>
+        /// The purse's "+" (D-033): what coins or gems are, where they come from, and the exchange between them. The
+        /// exchange spends only banked coins and gems, like the shop, and opens the shop from here too.
+        /// </summary>
+        public static void OpenPurse(ModalOverlay modal, ProfileState profile, bool coins, Action<ShopItem> buy, Action shop, Action back)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"<color=#F2C14E>{profile.Coins} coins</color>   <color=#B06BE6>{profile.Gems} gems</color>");
+            sb.AppendLine();
+            sb.AppendLine(coins
+                ? "Coins come out of chests, off every floor you finish, from the daily reward and from achievements."
+                : "Gems come from Lord Blobert's hoard, vault great chests, the daily reward and achievements.");
+            sb.AppendLine("Or trade one for the other:");
+            var buttons = new List<(string, Color, Action)>();
+            var first = coins ? ShopItem.CoinPouch : ShopItem.GemPouch;
+            foreach (var item in new[] { first, first == ShopItem.CoinPouch ? ShopItem.GemPouch : ShopItem.CoinPouch })
+            {
+                var stock = item;
+                bool afford = Shop.CanAfford(profile, stock);
+                buttons.Add(($"GET {Shop.DisplayName(stock)} FOR {Shop.Price(stock)} {Shop.Currency(stock)}{(afford ? "" : " (NOT ENOUGH)")}",
+                    afford ? Palette.PlayGreen : Palette.NavyLight, () => buy(stock)));
+            }
+            buttons.Add(B("SHOP", Palette.NavyLight, shop));
+            buttons.Add(B("DONE", Palette.NavyLight, back));
+            modal.Show(coins ? "COINS" : "GEMS", sb.ToString(), back, buttons.ToArray());
         }
 
         /// <summary>

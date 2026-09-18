@@ -439,3 +439,15 @@ Rules referenced here live in `docs/rules.md`.
 - **TESTS**: `ManaTests`, `ShieldCostsManaAndManaComesBackEachTurn`, `TheDashNeverCostsLessThanOneMana`, and the hero,
   talent and inventory tests.
 
+## D-033 The title matches the reference; the purse's "+"
+- **DECISION**: The title background is the reference title itself, blurred only over its logo (whose "2" is painted
+  out first, then covered by our logo). The hero card, CONTINUE panel and crown / mail / settings / menu buttons are
+  the background's own pixels: cleaned patches cut from the same places (sample name, level, amounts and floor
+  inpainted out, the mail "!" mirrored away) carry live text, and invisible buttons take the taps. The CONTINUE panel
+  is always shown, reading NEW RUN (floor 1) when there is nothing to continue, as in the reference. The "+" beside
+  coins and gems opens an exchange: 10 gems for 150 coins, 300 coins for 10 gems (a round trip loses half), with the
+  shop one tap away. No real-money store: that needs a platform store account and payment provider.
+- **WHY**: "correct and remove the blurred out areas so the screen match"; "+ purchasable option for gold and gems".
+- **TOOLS**: the slicer gained `inpaint_text` / `inpaint_all` (OpenCV) and, for scenes, `erase_color`.
+- **TESTS**: `TheExchangeTradesOneCurrencyForTheOtherAtALoss`; screenshots with `-cdOverlay coins|gems`.
+

@@ -277,6 +277,21 @@ def scene(crop: Image.Image, spec: dict) -> Image.Image:
     logo above all — may survive here.
     """
     out = crop.convert("RGBA")
+    # "erase_color" first paints out one colour inside a rectangle (the purple "2" of the reference logo), so the blur
+    # after it cannot leave that colour behind as a smudge.
+    for erase in spec.get("erase_color", []):
+        import cv2
+        import numpy as np
+        rgb = np.array(out)[..., :3]
+        x, y, w, h = erase["rect"]
+        region = rgb[y:y + h, x:x + w].astype(np.int32)
+        distance = np.sqrt(((region - np.array(erase["color"])) ** 2).sum(axis=2))
+        mask = np.zeros(rgb.shape[:2], np.uint8)
+        grow = int(erase.get("grow", 6))
+        mask[y:y + h, x:x + w] = cv2.dilate((distance < float(erase.get("tolerance", 90))).astype(np.uint8) * 255,
+                                             np.ones((grow * 2 + 1, grow * 2 + 1), np.uint8))
+        filled = cv2.inpaint(cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR), mask, 12, cv2.INPAINT_TELEA)
+        out = Image.fromarray(np.dstack([cv2.cvtColor(filled, cv2.COLOR_BGR2RGB), np.array(out)[..., 3]]), "RGBA")
     radius = float(spec.get("blur", 30))
     dim = float(spec.get("dim", 0.7))
     for rect in spec.get("blank", []):
@@ -328,6 +343,43 @@ def smear(image: Image.Image, spec: dict) -> Image.Image:
             for x in range(x0, x1):
                 px[x, y] = left
     return image
+
+
+def inpaint(image: Image.Image, spec: dict) -> Image.Image:
+    """
+    Removes sample text baked into a plate so the game can print its own: "inpaint_text" is a list of [x, y, w, h]
+    fractions of the output, and inside each only the text is rebuilt from the plate around it (pixels much brighter than
+    the region's median, grown a little to take their outline). "inpaint_all" rebuilds whole rectangles. Needs OpenCV;
+    row smearing ("smear") is the fallback that works without it but leaves bands on textured plates.
+    """
+    if "inpaint_text" not in spec and "inpaint_all" not in spec:
+        return image
+    import cv2
+    import numpy as np
+    rgba = np.array(image.convert("RGBA"))
+    bgr = cv2.cvtColor(rgba[..., :3], cv2.COLOR_RGB2BGR)
+    h, w = bgr.shape[:2]
+    lum = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY).astype(np.int16)
+    mask = np.zeros((h, w), np.uint8)
+    grow = max(3, round(min(w, h) * 0.012))
+
+    def box(rect):
+        fx, fy, fw, fh = rect
+        return max(0, round(fx * w)), max(0, round(fy * h)), min(w, round((fx + fw) * w)), min(h, round((fy + fh) * h))
+
+    for rect in spec.get("inpaint_text", []):
+        x0, y0, x1, y1 = box(rect)
+        region = lum[y0:y1, x0:x1]
+        text = (region > np.median(region) + float(spec.get("text_contrast", 45))).astype(np.uint8) * 255
+        # Baked text has a dark outline and shadow as wide as a fifth of its height: grow the mask over them.
+        g = max(grow, round((y1 - y0) * float(spec.get("text_grow", 0.14))))
+        mask[y0:y1, x0:x1] |= cv2.dilate(text, np.ones((g * 2 + 1, g * 2 + 1), np.uint8))[: y1 - y0, : x1 - x0]
+    for rect in spec.get("inpaint_all", []):
+        x0, y0, x1, y1 = box(rect)
+        mask[y0:y1, x0:x1] = 255
+    filled = cv2.inpaint(bgr, mask, grow * 2, cv2.INPAINT_TELEA)
+    rgba[..., :3] = cv2.cvtColor(filled, cv2.COLOR_BGR2RGB)
+    return Image.fromarray(rgba, "RGBA")
 
 
 def render(crop: Image.Image, spec: dict) -> Image.Image:
@@ -394,7 +446,7 @@ def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=Non
             rect = snap(rect, boxes[stem])
         x, y, w, h = rect
         crop = image.crop((max(0, x), max(0, y), min(image.width, x + w), min(image.height, y + h)))
-        result = smear(mirror_fix(tint(render(crop, spec).convert("RGBA"), spec), spec), spec)
+        result = inpaint(smear(mirror_fix(tint(render(crop, spec).convert("RGBA"), spec), spec), spec), spec)
 
         if spec.get("mode") == "frame":
             borders[key] = frame(crop, spec)[1]
