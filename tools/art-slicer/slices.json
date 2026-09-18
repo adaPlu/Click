@@ -173,6 +173,10 @@
     { "key": "actor_dawnward_hit", "rect": [480, 815, 160, 190], "source": "ref-dawnward", "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true },
     { "key": "actor_dawnward_victory", "rect": [690, 800, 170, 205], "source": "ref-dawnward", "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true },
     { "key": "actor_dawnward_defeat", "rect": [880, 840, 190, 165], "source": "ref-dawnward", "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true },
-    { "key": "actor_dawnward_guard", "rect": [30, 280, 380, 440], "source": "ref-dawnward", "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true }
+    { "key": "actor_dawnward_guard", "rect": [30, 280, 380, 440], "source": "ref-dawnward", "mode": "sprite", "tolerance": 30, "local_tolerance": 5, "min_island": 0.03, "size": 256, "folder": "Actors", "wired": true },
+    { "key": "tile_chest_premium_closed", "rect": [610, 215, 230, 190], "size": 256, "folder": "Tiles", "source": "ref-treasure", "mode": "icon", "tolerance": 35, "largest_only": true, "wired": true },
+    { "key": "tile_chest_premium_open", "rect": [1175, 200, 240, 205], "size": 256, "folder": "Tiles", "source": "ref-treasure", "mode": "icon", "tolerance": 35, "largest_only": true, "wired": true },
+    { "key": "icon_special_lock", "rect": [640, 525, 170, 185], "size": 128, "folder": "Icons", "source": "ref-treasure", "mode": "icon", "tolerance": 35, "largest_only": true, "wired": true },
+    { "key": "icon_key_special", "rect": [60, 220, 190, 180], "size": 128, "folder": "Icons", "source": "ref-treasure", "mode": "icon", "tolerance": 35, "largest_only": true, "wired": true }
   ]
 }

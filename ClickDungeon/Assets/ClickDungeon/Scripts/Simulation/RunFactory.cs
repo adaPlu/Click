@@ -101,6 +101,37 @@ namespace ClickDungeon.Simulation
         }
 
         /// <summary>Places the hero at the start, applies initial knowledge, and declares awake intents.</summary>
+        /// <summary>
+        /// One premium chest per special key carried in, one per floor from the first premium floor on (D-026). The tile is
+        /// drawn from a hash of the run seed, not the generator's stream, so floors from a seed are otherwise unchanged; it
+        /// is any plain, empty floor tile away from the start and exit, so it hides under a cover like everything else.
+        /// </summary>
+        static void PlacePremiumChest(RunState run, ContentCatalog catalog)
+        {
+            var floor = run.Floor;
+            var treasure = catalog.Treasure;
+            if (run.PremiumChestsToPlace <= 0 || floor.IsVault || floor.IsBossFloor) return;
+            if (floor.FloorIndex < treasure.PremiumFirstFloor || floor.FloorIndex > treasure.PremiumLastFloor) return;
+
+            var candidates = new List<GridPos>();
+            foreach (var p in Board.AllCells)
+            {
+                var cell = floor[p];
+                if (p == floor.Start || cell.IsExit || cell.Terrain != Terrain.Floor || cell.Hazard != HazardKind.None
+                    || cell.Content != ContentKind.None || floor.EnemyAt(p) != null) continue;
+                if (p.Manhattan(floor.Start) < 2) continue;
+                candidates.Add(p);
+            }
+            if (candidates.Count == 0) return;
+
+            var rng = new DeterministicRng(Hash.Of(run.RunSeed, Hash.PremiumSalt, (ulong)floor.FloorIndex));
+            var chest = floor[candidates[rng.Next(candidates.Count)]];
+            chest.Content = ContentKind.Chest;
+            chest.Premium = true;
+            chest.Quality = ChestQuality.Epic;
+            run.PremiumChestsToPlace--;
+        }
+
         public static void SetupFloor(RunState run, ContentCatalog catalog, List<GameEvent> events)
         {
             var floor = run.Floor;
@@ -121,6 +152,8 @@ namespace ClickDungeon.Simulation
                     ? ChestQuality.Epic
                     : Chests.RollQuality(run.RunSeed, floor.FloorIndex, p, floor.IsVault);
             }
+
+            PlacePremiumChest(run, catalog);
 
             // The exit is covered like every other tile until it is clicked (D-023).
             events.Add(GameEvent.Of(GameEventKind.FloorStarted, amount: floor.FloorIndex, to: floor.Start));

@@ -63,6 +63,9 @@ namespace ClickDungeon.Simulation
                     // A covered chest is just a cover: tapping it uncovers it like any other tile (D-023 amendment).
                     if (!floor[target].IsClosedChest || floor[target].Knowledge != Knowledge.Revealed)
                         return Fail(out reason, "Nothing to open there.");
+                    // A premium chest opens only with a special key (D-026).
+                    if (floor[target].Premium && hero.SpecialKeys <= 0)
+                        return Fail(out reason, "This chest needs a special key.");
                     return true;
             }
 

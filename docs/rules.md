@@ -507,7 +507,8 @@ A run carries treasure out; the **profile** keeps it between runs.
 |---|---|
 | Each reward a chest gives up | 4 coins |
 | Walking down the stairs off a floor | 10 coins (falling through a pit pays nothing) |
-| Defeating Lord Blobert | 1 gem |
+| Defeating Lord Blobert | 50 gems |
+| Opening a vault's great chest | 10 gems |
 
 What a run found is banked once, when it ends — won, lost or abandoned. The
 **shop** (title screen only) sells provisions for the *next* run:
@@ -516,9 +517,17 @@ What a run found is banked once, when it ends — won, lost or abandoned. The
 |---|---|---|
 | Potion ration | 60 coins | +1 potion at the start of the next run |
 | Heart token | 120 coins | +2 max hearts (full) at the start of the next run |
+| Special key | 150 gems | Hides one premium chest in the next run (D-026) |
 
 Provisions are spent when the next run starts. A run never reads the profile:
 provisions become the hero's starting numbers, so a run still follows only from
-its seed, tier, hero and provisions. Gems have no use yet; they are counted so
-the special-key shelf can price in them.
+its seed, tier, hero and provisions.
+
+**Premium chests (D-026).** Each special key carried in places one premium
+chest, one per floor from floor 2 to 4 (at most three keys are carried; the rest
+stay in the profile). It sits on a plain, empty floor tile at least two steps
+from the start, under a cover like everything else, and nothing else on its
+floor changes. It opens only with a special key — tapping it without one is
+refused — takes 4 taps like an Epic chest and gives 5 rewards; the key stays in
+the lock. A key whose chest was never reached goes back to the profile.
 

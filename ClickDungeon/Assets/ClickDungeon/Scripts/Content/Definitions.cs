@@ -144,8 +144,15 @@ namespace ClickDungeon.Content
         public int CoinsPerChestReward = 4;
         /// <summary>For walking down the stairs off a floor.</summary>
         public int CoinsPerFloor = 10;
-        /// <summary>Lord Blobert's crown jewel: the only gem in the game.</summary>
-        public int GemsForTheBoss = 1;
+        /// <summary>Lord Blobert's hoard (D-026): gems price the special key.</summary>
+        public int GemsForTheBoss = 50;
+        /// <summary>A vault's great chest also holds a few gems.</summary>
+        public int GemsPerGreatChest = 10;
+        /// <summary>Rewards in a premium chest, opened with a special key.</summary>
+        public int PremiumChestRewards = 5;
+        /// <summary>The earliest and latest floor a premium chest is placed on (never the boss floor).</summary>
+        public int PremiumFirstFloor = 2;
+        public int PremiumLastFloor = 4;
         /// <summary>What one bought potion ration is worth on the next run.</summary>
         public int PotionRationPotions = 1;
         /// <summary>What one bought heart token is worth on the next run.</summary>

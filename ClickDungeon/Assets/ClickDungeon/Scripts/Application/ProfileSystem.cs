@@ -8,33 +8,70 @@ using Newtonsoft.Json;
 namespace ClickDungeon.Application
 {
     /// <summary>The shop's stock (D-025, rules §13). Prices live here so the rules doc and the menu cannot drift apart.</summary>
-    public enum ShopItem { PotionRation, HeartToken }
+    public enum ShopItem { PotionRation, HeartToken, SpecialKey }
 
     public static class Shop
     {
         public const int PotionRationCoins = 60;
         public const int HeartTokenCoins = 120;
+        /// <summary>Priced in gems, as on the store card (D-026).</summary>
+        public const int SpecialKeyGems = 150;
 
-        public static int Price(ShopItem item) => item == ShopItem.HeartToken ? HeartTokenCoins : PotionRationCoins;
+        public static readonly ShopItem[] Stock = { ShopItem.PotionRation, ShopItem.HeartToken, ShopItem.SpecialKey };
 
-        public static string DisplayName(ShopItem item) =>
-            item == ShopItem.HeartToken ? "HEART TOKEN" : "POTION RATION";
+        public static int Price(ShopItem item)
+        {
+            switch (item)
+            {
+                case ShopItem.HeartToken: return HeartTokenCoins;
+                case ShopItem.SpecialKey: return SpecialKeyGems;
+                default: return PotionRationCoins;
+            }
+        }
+
+        /// <summary>The special key is the one item bought with gems.</summary>
+        public static bool PricedInGems(ShopItem item) => item == ShopItem.SpecialKey;
+
+        public static string Currency(ShopItem item) => PricedInGems(item) ? "GEMS" : "COINS";
+
+        public static string DisplayName(ShopItem item)
+        {
+            switch (item)
+            {
+                case ShopItem.HeartToken: return "HEART TOKEN";
+                case ShopItem.SpecialKey: return "SPECIAL KEY";
+                default: return "POTION RATION";
+            }
+        }
 
         /// <summary>What the item does, in the player's words.</summary>
-        public static string Describe(ShopItem item, ContentCatalog catalog) =>
-            item == ShopItem.HeartToken
-                ? $"+{catalog.Treasure.HeartTokenHearts} max hearts on your next run."
-                : $"+{catalog.Treasure.PotionRationPotions} potion on your next run.";
+        public static string Describe(ShopItem item, ContentCatalog catalog)
+        {
+            switch (item)
+            {
+                case ShopItem.HeartToken: return $"+{catalog.Treasure.HeartTokenHearts} max hearts on your next run.";
+                case ShopItem.SpecialKey:
+                    return $"Your next run hides a premium chest on a floor from {catalog.Treasure.PremiumFirstFloor} to " +
+                           $"{catalog.Treasure.PremiumLastFloor}; the key opens it for {catalog.Treasure.PremiumChestRewards} rewards.";
+                default: return $"+{catalog.Treasure.PotionRationPotions} potion on your next run.";
+            }
+        }
 
-        public static bool CanAfford(ProfileState profile, ShopItem item) => profile != null && profile.Coins >= Price(item);
+        public static bool CanAfford(ProfileState profile, ShopItem item) =>
+            profile != null && (PricedInGems(item) ? profile.Gems : profile.Coins) >= Price(item);
 
-        /// <summary>Buys one, or returns false and changes nothing when the coins are not there.</summary>
+        /// <summary>Buys one, or returns false and changes nothing when the coins or gems are not there.</summary>
         public static bool TryBuy(ProfileState profile, ShopItem item)
         {
             if (!CanAfford(profile, item)) return false;
-            profile.Coins -= Price(item);
-            if (item == ShopItem.HeartToken) profile.HeartTokens++;
-            else profile.PotionRations++;
+            if (PricedInGems(item)) profile.Gems -= Price(item);
+            else profile.Coins -= Price(item);
+            switch (item)
+            {
+                case ShopItem.HeartToken: profile.HeartTokens++; break;
+                case ShopItem.SpecialKey: profile.SpecialKeys++; break;
+                default: profile.PotionRations++; break;
+            }
             return true;
         }
     }
@@ -51,6 +88,8 @@ namespace ClickDungeon.Application
             if (profile == null || run == null) return;
             profile.Coins += Math.Max(0, run.CoinsFound);
             profile.Gems += Math.Max(0, run.GemsFound);
+            // A key whose chest was never reached is not lost: it goes back in the pocket for the next run.
+            if (run.Hero != null) profile.SpecialKeys += Math.Max(0, run.Hero.SpecialKeys);
             profile.RunsFinished++;
             if (run.Status == RunStatus.Won) profile.RunsWon++;
         }
@@ -73,6 +112,15 @@ namespace ClickDungeon.Application
             {
                 run.Hero.Potions += profile.PotionRations * catalog.Treasure.PotionRationPotions;
                 profile.PotionRations = 0;
+            }
+            if (profile.SpecialKeys > 0)
+            {
+                // One premium chest per key, on the floors that can hold one; any key beyond that stays in the pocket.
+                int floors = Math.Max(0, catalog.Treasure.PremiumLastFloor - catalog.Treasure.PremiumFirstFloor + 1);
+                int carried = Math.Min(profile.SpecialKeys, floors);
+                run.Hero.SpecialKeys += carried;
+                run.PremiumChestsToPlace += carried;
+                profile.SpecialKeys -= carried;
             }
         }
     }
@@ -123,6 +171,7 @@ namespace ClickDungeon.Application
                 profile.Gems = Math.Max(0, profile.Gems);
                 profile.PotionRations = Math.Max(0, profile.PotionRations);
                 profile.HeartTokens = Math.Max(0, profile.HeartTokens);
+                profile.SpecialKeys = Math.Max(0, profile.SpecialKeys);
                 return profile;
             }
             catch (Exception)

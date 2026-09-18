@@ -360,3 +360,12 @@ Rules referenced here live in `docs/rules.md`.
   Provisions make later runs easier by design.
 - **TESTS**: `TreasureAndShopTests`, `SettingsMenuTests.TheShopShowsThePurseAndOnlyOffersWhatTheCoinsCover`.
 
+## D-026 Special keys and premium chests
+- **DECISION**: The shop sells a special key for 150 gems (the store card's price). Gems now come from Lord Blobert (50)
+  and vault great chests (10). Each key carried into a run places one premium chest on floors 2-4 at a hash-chosen empty
+  tile, so the rest of the floor is unchanged. Only a key opens it: 4 taps, 5 rewards, key consumed. Unused keys return.
+- **WHY**: the chest-and-key pack; gives gems a use, which D-025 left pending.
+- **TESTS**: `PremiumChestTests` (priced in gems, carried one per floor, placed once and hidden, nothing else on the
+  floor changes, key required and consumed, unused key returns, great chests hold gems, keyed runs still winnable).
+- **NOT YET**: the premium key and mega chest from the same sheet.
+

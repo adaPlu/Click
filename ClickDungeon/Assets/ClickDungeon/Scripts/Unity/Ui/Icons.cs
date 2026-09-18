@@ -144,8 +144,14 @@ namespace ClickDungeon.Unity.Ui
         }
 
         /// <param name="useArt">False for scenery: chest tile art includes its stone floor frame.</param>
-        public static void Chest(Transform t, bool opened, float scale = 1f, bool useArt = true)
+        public static void Chest(Transform t, bool opened, float scale = 1f, bool useArt = true, bool premium = false)
         {
+            if (useArt && premium && TryArt(t, opened ? ArtKeys.PremiumChestOpen : ArtKeys.PremiumChestClosed, TileSize * scale))
+            {
+                // Until it opens it wears the special-key lock badge, so it reads as locked at a glance.
+                if (!opened) TryArt(t, ArtKeys.SpecialLockBadge, TileSize * 0.36f * scale, new Vector2(TileSize * 0.3f, -TileSize * 0.28f) * scale);
+                return;
+            }
             if (useArt && TryArt(t, opened ? ArtKeys.ChestOpen : ArtKeys.ChestClosed, TileSize * scale)) return;
             var g = Group(t, Vector2.zero, 0f, scale);
             var wood = opened ? Palette.ChestWood.Dim(0.55f) : Palette.ChestWood;

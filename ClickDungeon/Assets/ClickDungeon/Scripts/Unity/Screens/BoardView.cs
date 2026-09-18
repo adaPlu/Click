@@ -299,7 +299,7 @@ namespace ClickDungeon.Unity.Screens
             else if (cell.Content == ContentKind.Key) Icons.Key(view.Icons);
             else if (cell.Content == ContentKind.Chest)
             {
-                Icons.Chest(view.Icons, cell.ChestOpened);
+                Icons.Chest(view.Icons, cell.ChestOpened, premium: cell.Premium);
                 if (!cell.ChestOpened)
                 {
                     Icons.TryArt(view.Icons, ArtKeys.ChestShimmer, CellSize);

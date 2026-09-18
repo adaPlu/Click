@@ -22,6 +22,8 @@ namespace ClickDungeon.Domain
         public ChestQuality Quality;
         /// <summary>Taps already spent on this chest. Each one is a full player action.</summary>
         public int ChestTaps;
+        /// <summary>A premium chest: placed by a special key the hero carried in, and opened only with one (D-026).</summary>
+        public bool Premium;
         /// <summary>Set once a door has been opened by a pressure plate, or a fountain or teleport pad has been used.</summary>
         public bool Used;
         public Knowledge Knowledge;
@@ -62,6 +64,8 @@ namespace ClickDungeon.Domain
         public int SlashDamage;
         public int Potions;
         public bool HasKey;
+        /// <summary>Special keys carried in from the profile (D-026). Each opens one premium chest; unused ones go back.</summary>
+        public int SpecialKeys;
         public bool Guard;
         public int ShieldCooldown;
         public int DashCooldown;
@@ -141,6 +145,8 @@ namespace ClickDungeon.Domain
         /// <summary>Treasure carried out of the dungeon (D-025). Banked into the profile when the run ends.</summary>
         public int CoinsFound;
         public int GemsFound;
+        /// <summary>Premium chests still to be placed on the floors ahead (D-026), one per special key carried in.</summary>
+        public int PremiumChestsToPlace;
 
         public bool HasReward(string transactionId)
         {

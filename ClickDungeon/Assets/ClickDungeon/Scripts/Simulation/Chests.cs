@@ -55,6 +55,7 @@ namespace ClickDungeon.Simulation
         /// </summary>
         public static int RewardDraws(CellState chest, ContentCatalog catalog)
         {
+            if (chest.Premium) return Math.Max(1, catalog.Treasure.PremiumChestRewards);
             if (chest.GreatChest) return Math.Max(1, catalog.Vault.GreatChestRewards);
             var byQuality = catalog.ChestRewardsByQuality;
             int index = (int)chest.Quality;
@@ -142,6 +143,9 @@ namespace ClickDungeon.Simulation
             var state = run.Floor[cell];
             if (!state.IsClosedChest) return null;
             state.ChestOpened = true;
+            // The special key turns in the lock and stays there (D-026).
+            if (state.Premium && run.Hero.SpecialKeys > 0) run.Hero.SpecialKeys--;
+            if (state.GreatChest) Treasure.Gems(run, catalog.Treasure.GemsPerGreatChest, cell, events);
 
             int draws = RewardDraws(state, catalog);
             RewardRecord first = null;

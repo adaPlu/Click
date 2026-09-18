@@ -368,6 +368,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 7a22e3c0d8c52e540898cca7f3fa9958, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_key_special
+    Frames:
+    - {fileID: 21300000, guid: 2737b6adcb215d84aaa37be136c8493c, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_reward_maxhp
     Frames:
     - {fileID: 21300000, guid: 19796cca4a2ca3742830feb941b2c522, type: 3}
@@ -381,6 +386,11 @@ MonoBehaviour:
   - Key: icon_reward_slashdamage
     Frames:
     - {fileID: 21300000, guid: 004d44c7bf1aa114cb51271740a0b4fb, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_special_lock
+    Frames:
+    - {fileID: 21300000, guid: 0f7c54dcba12b36478bfb4486baa8236, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: icon_underfoot_bomb
@@ -491,6 +501,16 @@ MonoBehaviour:
   - Key: tile_chest_open
     Frames:
     - {fileID: 21300000, guid: ab4113891b7eb0c43b1dc3309e8e6b9d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_chest_premium_closed
+    Frames:
+    - {fileID: 21300000, guid: 3cc4522cae1dcbd489190638c71f6db7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_chest_premium_open
+    Frames:
+    - {fileID: 21300000, guid: 6afdb829bce316948bf8eac3303c47e0, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: tile_door_locked

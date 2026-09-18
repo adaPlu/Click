@@ -120,6 +120,11 @@ namespace ClickDungeon.Unity.Ui
         public const string Key = "tile_key";
         public const string ChestClosed = "tile_chest_closed";
         public const string ChestOpen = "tile_chest_open";
+        /// <summary>The premium chest a special key hides in a run (D-026), and the lock badge it wears until opened.</summary>
+        public const string PremiumChestClosed = "tile_chest_premium_closed";
+        public const string PremiumChestOpen = "tile_chest_premium_open";
+        public const string SpecialLockBadge = "icon_special_lock";
+        public const string SpecialKeyIcon = "icon_key_special";
         public const string Potion = "tile_potion";
         public const string ExitLocked = "tile_exit_locked";
         public const string ExitOpen = "tile_exit_open";
@@ -337,7 +342,8 @@ namespace ClickDungeon.Unity.Ui
         {
             var keys = new List<string>
             {
-                FloorStone, Wall, Pit, Spikes, Bomb, BombArmed, Key, ChestClosed, ChestOpen, Potion, ExitLocked, ExitOpen,
+                FloorStone, Wall, Pit, Spikes, Bomb, BombArmed, Key, ChestClosed, ChestOpen, PremiumChestClosed, PremiumChestOpen,
+                SpecialLockBadge, SpecialKeyIcon, Potion, ExitLocked, ExitOpen,
                 StairDownLocked, StairDown, StairUp, TrapPit, TrapSpike, TrapBomb, Lava, Water, Shadow, FloorCracked, FloorMoss,
                 WallCorner, TorchWall, DoorLocked, DoorOpen, PressurePlate, Teleport, FountainHeal,
                 Logo, TitleBackground, GameplayBackground,

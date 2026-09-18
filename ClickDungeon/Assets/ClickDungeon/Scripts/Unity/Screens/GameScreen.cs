@@ -531,6 +531,7 @@ namespace ClickDungeon.Unity.Screens
             _hpText.text = $"{hero.Hp} / {hero.MaxHp}";
             _hpFill.anchorMax = new Vector2(Mathf.Clamp01(hero.Hp / (float)hero.MaxHp), 1f);
             _keyChip.text = run.Floor.IsBossFloor ? "BOSS FLOOR" : hero.HasKey ? "KEY: YES" : "KEY: NO";
+            if (hero.SpecialKeys > 0) _keyChip.text += $" +{hero.SpecialKeys}";
             _keyChip.color = hero.HasKey || run.Floor.IsBossFloor ? Palette.Gold : Palette.TextLight;
             _slashChip.text = $"SLASH {hero.SlashDamage}";
             _turnChip.text = $"TURN {run.Turn + 1}";
@@ -761,10 +762,14 @@ namespace ClickDungeon.Unity.Screens
                 }
                 else if (cell.Content == ContentKind.Chest)
                 {
-                    title = "CHEST";
+                    title = cell.Premium ? "PREMIUM CHEST" : "CHEST";
                     sb.AppendLine(cell.ChestOpened
                         ? "Already opened."
                         : $"Tap it from its tile or beside it: {Chests.TapsToOpen(cell.Quality) - cell.ChestTaps} more tap(s), each a turn.");
+                    if (cell.Premium && !cell.ChestOpened)
+                        sb.AppendLine(run.Hero.SpecialKeys > 0
+                            ? $"Your special key opens it for {Chests.RewardDraws(cell, catalog)} rewards."
+                            : "Locked: it needs a special key.");
                 }
                 else if (cell.Content == ContentKind.Potion)
                 {
@@ -1085,11 +1090,11 @@ namespace ClickDungeon.Unity.Screens
         public static void OpenShop(ModalOverlay modal, ContentCatalog catalog, ProfileState profile, Action<ShopItem> buy, Action back)
         {
             var buttons = new List<(string, Color, Action)>();
-            foreach (ShopItem item in new[] { ShopItem.PotionRation, ShopItem.HeartToken })
+            foreach (ShopItem item in Shop.Stock)
             {
                 var stock = item;
                 bool afford = Shop.CanAfford(profile, stock);
-                buttons.Add(($"{Shop.DisplayName(stock)} — {Shop.Price(stock)} COINS{(afford ? "" : " (NOT ENOUGH)")}",
+                buttons.Add(($"{Shop.DisplayName(stock)} — {Shop.Price(stock)} {Shop.Currency(stock)}{(afford ? "" : " (NOT ENOUGH)")}",
                     afford ? Palette.PlayGreen : Palette.NavyLight, () => buy(stock)));
             }
             buttons.Add(B("DONE", Palette.NavyLight, back));
@@ -1097,12 +1102,13 @@ namespace ClickDungeon.Unity.Screens
             var sb = new StringBuilder();
             sb.AppendLine($"<color=#F2C14E>{profile.Coins} coins</color>   <color=#B06BE6>{profile.Gems} gems</color>");
             sb.AppendLine();
-            foreach (ShopItem item in new[] { ShopItem.PotionRation, ShopItem.HeartToken })
+            foreach (ShopItem item in Shop.Stock)
                 sb.AppendLine($"{Shop.DisplayName(item)}: {Shop.Describe(item, catalog)}");
             sb.AppendLine();
-            if (profile.PotionRations > 0 || profile.HeartTokens > 0)
-                sb.AppendLine($"Waiting for your next run: {profile.PotionRations} potion rations, {profile.HeartTokens} heart tokens.");
-            sb.AppendLine("Coins come out of chests and off every floor you finish. Gems are Lord Blobert's alone.");
+            if (profile.PotionRations > 0 || profile.HeartTokens > 0 || profile.SpecialKeys > 0)
+                sb.AppendLine($"Waiting for your next run: {profile.PotionRations} potion rations, {profile.HeartTokens} heart tokens, " +
+                    $"{profile.SpecialKeys} special keys.");
+            sb.AppendLine("Coins come out of chests and off every floor you finish. Gems come from Lord Blobert's hoard and vault chests.");
             modal.Show("SHOP", sb.ToString(), back, buttons.ToArray());
         }
 

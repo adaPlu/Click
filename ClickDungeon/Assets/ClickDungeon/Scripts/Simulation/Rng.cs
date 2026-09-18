@@ -12,6 +12,7 @@ namespace ClickDungeon.Simulation
         public const ulong GenerationSalt = 0x47454E5F464C4F52UL;
         public const ulong LootSalt = 0x4C4F4F545F434845UL;
         public const ulong VaultSalt = 0x5641554C545F524DUL;
+        public const ulong PremiumSalt = 0x5052454D49554D43UL;
 
         public static ulong Mix(ulong z)
         {

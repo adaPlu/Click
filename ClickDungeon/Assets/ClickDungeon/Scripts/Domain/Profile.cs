@@ -19,6 +19,9 @@ namespace ClickDungeon.Domain
         /// <summary>Bought and not yet spent: extra hearts the next run starts with.</summary>
         public int HeartTokens;
 
+        /// <summary>Special keys owned and not yet carried into a run (D-026).</summary>
+        public int SpecialKeys;
+
         /// <summary>Runs finished, so the shop can say something true about a first-time player.</summary>
         public int RunsFinished;
         public int RunsWon;
@@ -26,7 +29,7 @@ namespace ClickDungeon.Domain
         public ProfileState Copy() => new ProfileState
         {
             SchemaVersion = SchemaVersion, Coins = Coins, Gems = Gems,
-            PotionRations = PotionRations, HeartTokens = HeartTokens,
+            PotionRations = PotionRations, HeartTokens = HeartTokens, SpecialKeys = SpecialKeys,
             RunsFinished = RunsFinished, RunsWon = RunsWon,
         };
     }

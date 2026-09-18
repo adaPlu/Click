@@ -278,6 +278,7 @@ namespace ClickDungeon.Application
                 cell.Quality = ChestQuality.Common;
                 cell.ChestTaps = 0;
                 cell.Used = false;
+                cell.Premium = false;
             }
             // A sleeping monster is part of its cover; an awake one is drawn wherever it stands, so the player sees it.
             floor.Enemies.RemoveAll(e => !e.Awake && floor[e.Pos].Knowledge != Knowledge.Revealed);
@@ -349,13 +350,15 @@ namespace ClickDungeon.Application
                 Rewards = new List<RewardRecord>(run.Rewards),
                 CoinsFound = run.CoinsFound,
                 GemsFound = run.GemsFound,
+                PremiumChestsToPlace = run.PremiumChestsToPlace,
             };
         }
 
         static HeroState Copy(HeroState h) => new HeroState
         {
             IdentityId = h.IdentityId, ClassId = h.ClassId, Pos = h.Pos, Hp = h.Hp, MaxHp = h.MaxHp, SlashDamage = h.SlashDamage,
-            Potions = h.Potions, HasKey = h.HasKey, Guard = h.Guard, ShieldCooldown = h.ShieldCooldown, DashCooldown = h.DashCooldown,
+            Potions = h.Potions, HasKey = h.HasKey, SpecialKeys = h.SpecialKeys, Guard = h.Guard, ShieldCooldown = h.ShieldCooldown,
+            DashCooldown = h.DashCooldown,
         };
 
         static FloorState Copy(FloorState f)
@@ -372,7 +375,7 @@ namespace ClickDungeon.Application
                 copy.Cells[i] = new CellState
                 {
                     Terrain = c.Terrain, IsExit = c.IsExit, Hazard = c.Hazard, BombFuse = c.BombFuse, Content = c.Content,
-                    ChestOpened = c.ChestOpened, GreatChest = c.GreatChest, Quality = c.Quality, ChestTaps = c.ChestTaps,
+                    ChestOpened = c.ChestOpened, GreatChest = c.GreatChest, Premium = c.Premium, Quality = c.Quality, ChestTaps = c.ChestTaps,
                     Used = c.Used, Knowledge = c.Knowledge,
                 };
             }
