@@ -204,6 +204,15 @@ namespace ClickDungeon.Unity.Ui
         /// laid over the unblurred background in their exact places, with the live name, level, purse and floor on top.
         /// </summary>
         public const string TitleNamePlate = "ui_title_name_plate";
+        /// <summary>
+        /// The reference gameplay screen's own level shield, floor plaque, purse fields and ability buttons, sample text
+        /// painted out (D-034), laid over the unblurred background in their exact places.
+        /// </summary>
+        public const string HudLevelBadge = "ui_hud_level_badge";
+        public const string HudPlaque = "ui_hud_plaque";
+        public const string HudCoinField = "ui_hud_coin_field";
+        public const string HudGemField = "ui_hud_gem_field";
+        public static string HudAbility(CommandKind kind) => "ui_hud_ability_" + kind.ToString().ToLowerInvariant();
         public const string TitleLevelBadge = "ui_title_level_badge";
         public const string TitleCoinField = "ui_title_coin_field";
         public const string TitleGemField = "ui_title_gem_field";
@@ -407,11 +416,12 @@ namespace ClickDungeon.Unity.Ui
                 AbilityButtonDefault, AbilitySelected, CountBadge, SettingsButton, HelpButton,
             });
             foreach (var kind in AbilityKinds) keys.Add(AbilityButton(kind));
+            foreach (var kind in AbilityKinds) keys.Add(HudAbility(kind));
             keys.AddRange(new[]
             {
                 ModalPanel, ButtonPrimary, ButtonSecondary, ButtonDanger,
                 ChestLargeClosed, ChestLargeOpen, ChestGlow, ChestProgressBack, ChestProgressFill, ChestRewardCard,
-                TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleDailyPanel, TitleNamePlate, TitleLevelBadge, TitleCoinField, TitleGemField, TitleContinueClean, TitleMailClean, DailyRewardChest, ButtonClaim, MenuButton, CrownButton, MailButton, AlertBadge, NavBar, PlusButton,
+                TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleDailyPanel, TitleNamePlate, TitleLevelBadge, TitleCoinField, TitleGemField, TitleContinueClean, TitleMailClean, HudLevelBadge, HudPlaque, HudCoinField, HudGemField, DailyRewardChest, ButtonClaim, MenuButton, CrownButton, MailButton, AlertBadge, NavBar, PlusButton,
                 TitleHero, TitleBlobert, TitleGoblin, ButtonPlay, ButtonTitleSettings, ButtonQuit, ButtonHeroSelect, ButtonShop, ButtonTalents, ButtonTalentsAlert, ButtonInventory, PlayIcon, SettingsIcon, QuitIcon,
             });
             foreach (var style in ModalStyles) keys.Add(ModalPanelStyle(style));

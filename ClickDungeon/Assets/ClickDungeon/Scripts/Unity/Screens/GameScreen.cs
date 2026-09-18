@@ -9,6 +9,7 @@ using ClickDungeon.Unity.Ui;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using static ClickDungeon.Unity.Ui.RefLayout;
 using Terrain = ClickDungeon.Domain.Terrain;
 
 namespace ClickDungeon.Unity.Screens
@@ -68,6 +69,17 @@ namespace ClickDungeon.Unity.Screens
         Image _inspectPortrait;
         Text _levelBadge;
 
+        /// <summary>
+        /// True when the background is the reference gameplay screen itself (D-034): its logo, portrait, purse, buttons and
+        /// board frame are then the background's own pixels, and this screen adds live values and cleaned patches in place.
+        /// </summary>
+        readonly bool _matched;
+        GameObject _portraitRoot;
+        CanvasGroup _speechGroup;
+        Image _speechPortrait;
+        float _speechUntil;
+        const float SpeechSeconds = 5f;
+
         TargetMode _mode = TargetMode.Move;
         GridPos? _hover;
         List<Threat> _threats = new List<Threat>();
@@ -79,6 +91,7 @@ namespace ClickDungeon.Unity.Screens
             Root = UiFactory.Rect(parent, "GameScreen");
             Root.Stretch();
 
+            _matched = Art.Has(ArtKeys.GameplayBackground) && Art.Has(ArtKeys.HudPlaque) && Art.Has(ArtKeys.HudAbility(CommandKind.Move));
             Backdrop.Build(Root, ArtKeys.GameplayBackground, new[] { new Vector2(-420f, 220f), new Vector2(420f, 220f), new Vector2(-420f, -120f), new Vector2(420f, -120f) });
             BuildTopLeft();
             BuildTopRight();
@@ -92,8 +105,10 @@ namespace ClickDungeon.Unity.Screens
             _inspectPortrait.rectTransform.Place(new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-16f, -14f), new Vector2(44f, 44f));
             _inspectPortrait.gameObject.SetActive(false);
 
-            _board = new BoardView(Root, app, new Vector2(0f, BoardY));
+            _board = new BoardView(Root, app, _matched ? MatchedBoardCenter : new Vector2(0f, BoardY));
             _board.Root.localScale = new Vector3(BoardScale, BoardScale, 1f);
+            // Inside the reference's own stone frame, covering the sample tiles it shows there.
+            if (_matched) _board.FitInside(MatchedBoardInterior / BoardScale);
             _board.CellClicked += OnCellClicked;
             _board.CellEntered += p =>
             {
@@ -150,6 +165,8 @@ namespace ClickDungeon.Unity.Screens
 
         public void Tick()
         {
+            if (_speechGroup != null)
+                _speechGroup.alpha = Mathf.Clamp01((_speechUntil - Time.unscaledTime) / 0.5f);
             var kb = Keyboard.current;
             if (kb == null) return;
 
@@ -471,7 +488,7 @@ namespace ClickDungeon.Unity.Screens
             if (_chest.IsOpen || Run == null) return;
             var run = Run;
             _modal.Show("MENU",
-                $"Floor {run.Floor.FloorIndex}: {Catalog.ProfileFor(run.Floor.FloorIndex).Name}\nDifficulty: {DifficultyName(run)}\nMovement: {Menus.MovementName(run.Movement)}\nTurn {run.Turn + 1}    Seed {run.RunSeed}\nYour run is saved after every turn.{(_app.TelemetryActive ? "\nPlaytest log is on (saved on this device only)." : "")}",
+                $"{Goal(run)}\nFloor {run.Floor.FloorIndex}: {Catalog.ProfileFor(run.Floor.FloorIndex).Name}\nDifficulty: {DifficultyName(run)}\nMovement: {Menus.MovementName(run.Movement)}\nTurn {run.Turn + 1}    Seed {run.RunSeed}\nYour run is saved after every turn.{(_app.TelemetryActive ? "\nPlaytest log is on (saved on this device only)." : "")}",
                 _modal.Hide,
                 Menus.B("RESUME", Palette.PlayGreen, _modal.Hide),
                 Menus.B("WHAT HAPPENED", Palette.NavyLight, () => OpenLog(OpenPause)),
@@ -566,6 +583,7 @@ namespace ClickDungeon.Unity.Screens
         void Say(string line, Expression face)
         {
             _speech.text = line;
+            _speechUntil = Time.unscaledTime + SpeechSeconds;
             _speechFace.text = Lines.Face(face);
             _face.text = Lines.Face(face);
             // This hero's face for the expression, then its neutral one: a hero with few portraits must not borrow another's face.
@@ -574,6 +592,14 @@ namespace ClickDungeon.Unity.Screens
                     || Art.TryGetSprite(ArtKeys.Portrait(heroId, "neutral"), out portrait)
                     || Art.TryGetSprite(ArtKeys.Portrait(ArtKeys.HeroId, face.ToString()), out portrait)))
                 _portraitArt.sprite = portrait;
+            // The HUD portrait is the background's own when Sir Clickington plays, so his expression shows in the bubble.
+            if (_speechPortrait != null && Art.TryGetSprite(ArtKeys.Portrait(heroId, face.ToString()), out var bubbleFace)
+                    || _speechPortrait != null && Art.TryGetSprite(ArtKeys.Portrait(heroId, "neutral"), out bubbleFace))
+            {
+                _speechPortrait.sprite = bubbleFace;
+                _speechPortrait.enabled = true;
+                _speechFace.enabled = false;
+            }
         }
 
         void AppendLog(List<GameEvent> events, Discovery discovery)
@@ -628,8 +654,10 @@ namespace ClickDungeon.Unity.Screens
             var heroClass = Catalog.HeroClass(hero.ClassId);
             int shieldCost = Mana.ShieldCost(run, heroClass), dashCost = Mana.DashCost(run, heroClass);
             _levelBadge.text = Progression.Level(_app.Session.Profile).ToString();
-            _goal.text = Goal(run);
-            _status.text = $"TURN {run.Turn + 1}   ·   SLASH {hero.SlashDamage}   ·   KEY {(hero.HasKey ? "YES" : "NO")}"
+            // The reference shows Sir Clickington in its own portrait frame; another hero is drawn over it.
+            if (_portraitRoot != null) _portraitRoot.SetActive(!_matched || hero.IdentityId != ContentCatalog.DefaultHeroId);
+            if (_goal != null) _goal.text = Goal(run);
+            if (_status != null) _status.text = $"TURN {run.Turn + 1}   ·   SLASH {hero.SlashDamage}   ·   KEY {(hero.HasKey ? "YES" : "NO")}"
                            + (hero.SpecialKeys > 0 ? $"   ·   SPECIAL KEYS {hero.SpecialKeys}" : "");
             RefreshPurse();
             _floorTitle.text = $"FLOOR {run.Floor.FloorIndex}";
@@ -722,6 +750,7 @@ namespace ClickDungeon.Unity.Screens
             var ability = _abilities[kind];
             ability.Selected.enabled = selected;
             ability.Group.alpha = usable || selected ? 1f : 0.45f;
+            if (_matched && kind == CommandKind.Move) ability.Parts.Background.color = selected ? Color.white : new Color(0.62f, 0.62f, 0.66f);
             ability.BadgeBack.gameObject.SetActive(badge != null);
             if (badge != null) ability.Badge.text = badge;
             // A mana price reads blue, a potion count white.
@@ -808,6 +837,8 @@ namespace ClickDungeon.Unity.Screens
                 var heroClass = catalog.HeroClass(hero.ClassId);
                 sb.AppendLine($"Mana {hero.Mana}/{hero.MaxMana}: shield costs {Mana.ShieldCost(run, heroClass)}, dash {Mana.DashCost(run, heroClass)}.");
                 sb.AppendLine($"+{Mana.PerTurn} mana every turn, full on every new floor.");
+                sb.AppendLine($"Turn {run.Turn + 1}. Key: {(hero.HasKey ? "yes" : "no")}{(hero.SpecialKeys > 0 ? $". Special keys: {hero.SpecialKeys}" : "")}.");
+                sb.AppendLine(Goal(run));
                 sb.AppendLine("Tap him to wait a turn.");
                 var underfoot = UnderfootText(cell, floor, Board.ExitReadsOpen(run));
                 if (underfoot != null) sb.AppendLine(underfoot);
@@ -944,8 +975,17 @@ namespace ClickDungeon.Unity.Screens
         // 792 down, ability buttons under it, the INVENTORY / TALENTS / SHOP bar along the bottom.
         const float BoardY = 78f, BoardScale = 0.887f;
 
+        // The reference gameplay screen's board: its stone frame's inner edge, in its own pixels, and the same on the canvas.
+        static readonly Vector2 MatchedBoardCenter = new Vector2(840f * Scale - 960f, 540f - 405f * Scale);
+        static readonly Vector2 MatchedBoardInterior = new Vector2(744f * Scale, 510f * Scale);
+
         void BuildTopLeft()
         {
+            if (_matched)
+            {
+                BuildMatchedTopLeft();
+                return;
+            }
             var logo = UiFactory.Text(Root, "Logo", "ClickDungeon", 60, Palette.Gold, TextAnchor.MiddleLeft, FontStyle.Bold);
             logo.horizontalOverflow = HorizontalWrapMode.Overflow;
             logo.rectTransform.Place(TopLeft, TopLeft, new Vector2(40f, -14f), new Vector2(480f, 96f));
@@ -971,22 +1011,7 @@ namespace ClickDungeon.Unity.Screens
             _levelBadge.rectTransform.Stretch();
 
             // HP and mana in the reference's two bar slots (D-032).
-            var hp = Bar("Hp", -21f, Palette.Hp, ArtKeys.HpFill, out _hpFill, out _hpText);
-            var heart = UiFactory.Rect(hp, "Heart");
-            heart.Place(new Vector2(0f, 0.5f), Center, new Vector2(10f, 0f), new Vector2(58f, 58f));
-            if (!Icons.TryArt(heart, ArtKeys.Heart, 58f))
-            {
-                var heartColor = Palette.Hp.Dim(1.2f);
-                Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(-9f, 5f), new Vector2(30f, 30f));
-                Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(9f, 5f), new Vector2(30f, 30f));
-                Icons.Shape(heart, Shapes.Triangle, heartColor, new Vector2(0f, -9f), new Vector2(44f, 32f), 180f);
-            }
-
-            var mana = Bar("Mana", -78f, Palette.Mana, ArtKeys.ManaFill, out _manaFill, out _manaText);
-            var orb = UiFactory.Rect(mana, "Orb");
-            orb.Place(new Vector2(0f, 0.5f), Center, new Vector2(12f, 0f), new Vector2(52f, 52f));
-            if (!Icons.TryArt(orb, ArtKeys.ManaIcon, 52f))
-                Icons.Shape(orb, Shapes.Circle, Palette.Mana, Vector2.zero, new Vector2(40f, 40f));
+            BuildBars();
 
             _coins = PurseRow("Coins", -21f, ArtKeys.CoinIcon, Palette.Gold);
             _gems = PurseRow("Gems", -78f, ArtKeys.GemIcon, Palette.Summon);
@@ -1006,11 +1031,69 @@ namespace ClickDungeon.Unity.Screens
             _floorName.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 8f), new Vector2(290f, 28f));
         }
 
+        /// <summary>HP and mana in the reference's two bar slots (D-032), drawn over the background's sample bars.</summary>
+        void BuildBars()
+        {
+            var hp = Bar("Hp", 17f, Palette.Hp, ArtKeys.HpFill, out _hpFill, out _hpText);
+            var heart = UiFactory.Rect(hp, "Heart");
+            heart.Place(new Vector2(0f, 0.5f), Center, new Vector2(10f, 0f), new Vector2(58f, 58f));
+            if (!Icons.TryArt(heart, ArtKeys.Heart, 58f))
+            {
+                var heartColor = Palette.Hp.Dim(1.2f);
+                Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(-9f, 5f), new Vector2(30f, 30f));
+                Icons.Shape(heart, Shapes.Circle, heartColor, new Vector2(9f, 5f), new Vector2(30f, 30f));
+                Icons.Shape(heart, Shapes.Triangle, heartColor, new Vector2(0f, -9f), new Vector2(44f, 32f), 180f);
+            }
+
+            var mana = Bar("Mana", 67f, Palette.Mana, ArtKeys.ManaFill, out _manaFill, out _manaText);
+            var orb = UiFactory.Rect(mana, "Orb");
+            orb.Place(new Vector2(0f, 0.5f), Center, new Vector2(12f, 0f), new Vector2(52f, 52f));
+            if (!Icons.TryArt(orb, ArtKeys.ManaIcon, 52f))
+                Icons.Shape(orb, Shapes.Circle, Palette.Mana, Vector2.zero, new Vector2(40f, 40f));
+        }
+
+        static readonly Color PlaqueInk = new Color(0.16f, 0.1f, 0.05f);
+
+        /// <summary>
+        /// The reference's HUD, which the background already shows: the logo and Sir Clickington's portrait are its own; the
+        /// level shield, floor plaque and purse fields are cleaned patches with live text; the bars are drawn over its
+        /// sample bars; the "+" buttons are taps on its own.
+        /// </summary>
+        void BuildMatchedTopLeft()
+        {
+            // Another hero's face goes over the reference's Sir Clickington.
+            var portrait = AtRef(Root, "Portrait", 500f, 14f, 110f, 104f);
+            _portraitRoot = portrait.gameObject;
+            UiFactory.Image(portrait, "Back", new Color(0.06f, 0.07f, 0.1f), Shapes.Rounded, true).rectTransform.Stretch();
+            _face = Icons.Portrait(portrait, 110f * Scale);
+            _portraitArt = Icons.TryArtImage(portrait, ArtKeys.Portrait(ArtKeys.HeroId, "neutral"), 110f * Scale);
+            var portraitFrame = UiFactory.Image(portrait, "Frame", Palette.Gold, Shapes.Frame, true);
+            portraitFrame.rectTransform.Stretch();
+            UiArt.Apply(portraitFrame, ArtKeys.PortraitFrame);
+
+            PatchAt(Root, ArtKeys.HudLevelBadge, 496f, 76f, 46f, 50f);
+            _levelBadge = TextIn(AtRef(Root, "Level", 496f, 82f, 46f, 36f), "Level", 30, new Color(0.96f, 0.87f, 0.5f), TextAnchor.MiddleCenter);
+
+            BuildBars();
+
+            PatchAt(Root, ArtKeys.HudCoinField, 1030f, 17f, 145f, 40f);
+            _coins = TextIn(AtRef(Root, "Coins", 1030f, 17f, 116f, 40f), "Coins", 29, Color.white, TextAnchor.MiddleRight);
+            HotspotAt(Root, "CoinsPlus", 1174f, 15f, 46f, 44f, () => OpenPurse(true));
+            PatchAt(Root, ArtKeys.HudGemField, 1030f, 67f, 145f, 40f);
+            _gems = TextIn(AtRef(Root, "Gems", 1030f, 67f, 116f, 40f), "Gems", 29, Color.white, TextAnchor.MiddleRight);
+            HotspotAt(Root, "GemsPlus", 1174f, 65f, 46f, 44f, () => OpenPurse(false));
+
+            PatchAt(Root, ArtKeys.HudPlaque, 110f, 105f, 268f, 70f);
+            _floorTitle = UiFactory.Text(AtRef(Root, "FloorTitle", 110f, 112f, 268f, 34f), "Title", "", 34, PlaqueInk, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _floorTitle.rectTransform.Stretch();
+            _floorName = UiFactory.Text(AtRef(Root, "FloorName", 110f, 144f, 268f, 22f), "Name", "", 20, PlaqueInk, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _floorName.rectTransform.Stretch();
+        }
+
         /// <summary>One of the two top bars: back, a fill sized by the caller, frame and the value as live text.</summary>
         RectTransform Bar(string name, float y, Color color, string fillKey, out RectTransform fillRect, out Text value)
         {
-            var bar = UiFactory.Rect(Root, name);
-            bar.Place(TopLeft, TopLeft, new Vector2(735f, y), new Vector2(367f, 48f));
+            var bar = AtRef(Root, name, 640f, y, 322f, 41f);
             var back = UiFactory.Image(bar, "Back", Palette.HpBack, Shapes.Rounded, true);
             back.rectTransform.Stretch();
             UiArt.Apply(back, ArtKeys.HpBack);
@@ -1064,6 +1147,13 @@ namespace ClickDungeon.Unity.Screens
         /// <summary>Settings and the menu (☰) in the reference's top-right slots. WHAT HAPPENED and HOW TO PLAY live in the menu.</summary>
         void BuildTopRight()
         {
+            if (_matched)
+            {
+                // The reference's settings and menu buttons are the background's; these are their taps.
+                HotspotAt(Root, "Settings", 1472f, 20f, 72f, 72f, () => Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting));
+                HotspotAt(Root, "Menu", 1561f, 20f, 72f, 72f, OpenPause);
+                return;
+            }
             var settings = UiFactory.Button(Root, "Settings", "", Palette.Navy, 10,
                 () => Menus.OpenSettings(_modal, _modal.Hide, _app.ApplyTelemetrySetting));
             settings.Rect.Place(TopRight, Center, new Vector2(-188f, -67f), new Vector2(86f, 86f));
@@ -1105,6 +1195,13 @@ namespace ClickDungeon.Unity.Screens
             return body;
         }
 
+        /// <summary>The reference gameplay screen's five ability buttons, in its own pixels (MOVE with its selected glow).</summary>
+        static readonly Rect[] MatchedAbilityRects =
+        {
+            new Rect(440f, 686f, 142f, 142f), new Rect(599f, 686f, 143f, 142f), new Rect(761f, 686f, 143f, 142f),
+            new Rect(924f, 686f, 143f, 142f), new Rect(1081f, 684f, 146f, 144f),
+        };
+
         /// <summary>The sample art's ability buttons: 112 × 169 on the sheet, drawn here at the same proportions.</summary>
         static readonly Vector2 AbilityArtSize = new Vector2(110f, 166f);
         const float AbilityPitch = 150f;
@@ -1125,10 +1222,18 @@ namespace ClickDungeon.Unity.Screens
                 var parts = UiFactory.Button(bar, labels[i], labels[i], colors[i], 26, () => OnAbility(kind));
                 var group = parts.Rect.gameObject.AddComponent<CanvasGroup>();
 
-                // The sample art's own button carries its icon and label, at its own tall proportions. Without it, a bare frame
-                // (or the flat placeholder) keeps the drawn icon, label and hotkey.
-                bool whole = UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.AbilityButton(kind));
-                if (whole)
+                // Matched: the reference gameplay screen's own button, laid exactly over the background's. Otherwise the sample
+                // art's own button, at its tall proportions; without it, a bare frame keeps the drawn icon, label and hotkey.
+                bool matched = _matched && UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.HudAbility(kind));
+                bool whole = matched || UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.AbilityButton(kind));
+                if (matched)
+                {
+                    parts.Rect.SetParent(Root, false);
+                    var r = MatchedAbilityRects[i];
+                    RefLayout.Place(parts.Rect, r.x, r.y, r.width, r.height);
+                    parts.Label.enabled = false;
+                }
+                else if (whole)
                 {
                     parts.Rect.Place(Center, Center, new Vector2((i - 2) * AbilityPitch, 0f), AbilityArtSize);
                     parts.Label.enabled = false;
@@ -1156,6 +1261,15 @@ namespace ClickDungeon.Unity.Screens
                 var ring = UiFactory.Image(badgeBack.rectTransform, "Ring", Palette.Gold, Shapes.Ring);
                 ring.rectTransform.Stretch();
                 if (UiArt.Apply(badgeBack, ArtKeys.CountBadge)) ring.enabled = false;
+                // The reference potion button has its own count badge (its sample "2" painted out): the count goes in it.
+                if (matched && kind == CommandKind.Potion)
+                {
+                    RefLayout.Place(badgeBack.rectTransform, 102f, 4f, 28f, 31f);
+                    badgeBack.color = Color.clear;
+                    ring.enabled = false;
+                }
+                // The reference's MOVE is drawn selected (its gold glow); it dims while another ability is being aimed.
+                if (matched && kind == CommandKind.Move) selected.gameObject.SetActive(false);
                 var badge = UiFactory.Text(badgeBack.rectTransform, "Text", "", 26, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
                 badge.rectTransform.Stretch();
 
@@ -1188,6 +1302,20 @@ namespace ClickDungeon.Unity.Screens
             _speech.resizeTextForBestFit = true;
             _speech.resizeTextMinSize = 16;
             _speech.resizeTextMaxSize = 26;
+
+            if (_matched)
+            {
+                // The reference keeps the banners beside the board clear: Sir Clickington's line shows for a moment, with his
+                // face, and fades. The goal is on his INSPECT (hover him) and in the menu.
+                _speechGroup = strip.gameObject.AddComponent<CanvasGroup>();
+                _speechGroup.blocksRaycasts = false;
+                faceBack.gameObject.AddComponent<Mask>().showMaskGraphic = true;
+                _speechPortrait = UiFactory.Image(faceBack.rectTransform, "Portrait", Color.white, null);
+                _speechPortrait.rectTransform.Stretch();
+                _speechPortrait.preserveAspect = true;
+                _speechPortrait.enabled = false;
+                return;
+            }
 
             var goal = UiFactory.Rect(Root, "Goal");
             goal.Place(TopLeft, TopLeft, new Vector2(40f, -370f), new Vector2(460f, 104f));

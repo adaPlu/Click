@@ -449,5 +449,21 @@ Rules referenced here live in `docs/rules.md`.
   shop one tap away. No real-money store: that needs a platform store account and payment provider.
 - **WHY**: "correct and remove the blurred out areas so the screen match"; "+ purchasable option for gold and gems".
 - **TOOLS**: the slicer gained `inpaint_text` / `inpaint_all` (OpenCV) and, for scenes, `erase_color`.
+- **AMENDED (D-034)**: the logo is no longer blurred: `remove_logo_two.py` removes the "2" from the reference itself
+  (rebuilding the wall behind it), so the background carries the reference logo reading "ClickDungeon".
 - **TESTS**: `TheExchangeTradesOneCurrencyForTheOtherAtALoss`; screenshots with `-cdOverlay coins|gems`.
+
+## D-034 The game screen matches the reference
+- **DECISION**: The gameplay background is the reference gameplay screen itself, its logo's "2" removed by
+  `remove_logo_two.py`; only the sample tiles inside its stone board frame are covered, by the board's own dark floor.
+  The board sits inside that frame, with cells wider than tall (184 × 136, the reference's tile proportions) and
+  everything standing on them square. The reference board is 5 × 4; ours stays 5 × 5, so its cells are shorter. The
+  logo, Sir Clickington's portrait, settings and menu buttons and bottom bar are the background's; the level shield,
+  floor plaque and purse fields are cleaned patches with live text; HP and mana are drawn over the sample bars; the
+  five ability buttons are the reference's own (the potion's sample "2" painted out and the live count in its badge;
+  MOVE keeps its selected glow and dims while another ability is aimed). Another hero's face is drawn over the
+  portrait. The banners beside the board stay clear: Sir Clickington's line shows for five seconds in a bubble with his
+  face and fades; the goal, turn and key moved to his INSPECT (hover him) and the menu.
+- **WHY**: "change the main game screen as needed to match the reference main".
+- **TESTS**: the existing screen, board and effect tests; screenshots with `-cdOverlay hud`.
 

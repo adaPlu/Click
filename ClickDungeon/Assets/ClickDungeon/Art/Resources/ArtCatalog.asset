@@ -878,6 +878,51 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 2aff7eb353c557143802243503f0204c, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: ui_hud_ability_dash
+    Frames:
+    - {fileID: 21300000, guid: a1224c9df7a77634ba62a173e7564f6f, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_hud_ability_move
+    Frames:
+    - {fileID: 21300000, guid: 60060a2b0b35e4a44b364404bbacd3bc, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_hud_ability_potion
+    Frames:
+    - {fileID: 21300000, guid: c4941501ca52ca346a493ad79898731e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_hud_ability_shield
+    Frames:
+    - {fileID: 21300000, guid: 3051a1664a7eb4f40879341af0767810, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_hud_ability_slash
+    Frames:
+    - {fileID: 21300000, guid: 64a074c843f5ca344b45362c008ccf09, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_hud_coin_field
+    Frames:
+    - {fileID: 21300000, guid: 88204eed5795d784eb409572494ac1f2, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_hud_gem_field
+    Frames:
+    - {fileID: 21300000, guid: 9fd788a7e7b860948aab27e4c1f26b7b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_hud_level_badge
+    Frames:
+    - {fileID: 21300000, guid: 299fd54c1709fcb489655ff43224d310, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_hud_plaque
+    Frames:
+    - {fileID: 21300000, guid: e119eee07151def4186330ff94a11da9, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: ui_icon_gem
     Frames:
     - {fileID: 21300000, guid: 7a2910d9656ff35488440c027e9cb6c5, type: 3}

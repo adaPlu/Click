@@ -370,7 +370,10 @@ def inpaint(image: Image.Image, spec: dict) -> Image.Image:
     for rect in spec.get("inpaint_text", []):
         x0, y0, x1, y1 = box(rect)
         region = lum[y0:y1, x0:x1]
-        text = (region > np.median(region) + float(spec.get("text_contrast", 45))).astype(np.uint8) * 255
+        contrast = float(spec.get("text_contrast", 45))
+        # Light text on a dark plate by default; "text_dark" for dark lettering on parchment.
+        text = ((region < np.median(region) - contrast) if spec.get("text_dark")
+                else (region > np.median(region) + contrast)).astype(np.uint8) * 255
         # Baked text has a dark outline and shadow as wide as a fifth of its height: grow the mask over them.
         g = max(grow, round((y1 - y0) * float(spec.get("text_grow", 0.14))))
         mask[y0:y1, x0:x1] |= cv2.dilate(text, np.ones((g * 2 + 1, g * 2 + 1), np.uint8))[: y1 - y0, : x1 - x0]

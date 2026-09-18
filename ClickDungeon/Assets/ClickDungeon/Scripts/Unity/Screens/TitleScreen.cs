@@ -4,6 +4,7 @@ using ClickDungeon.Unity.Ui;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using static ClickDungeon.Unity.Ui.RefLayout;
 
 namespace ClickDungeon.Unity.Screens
 {
@@ -375,47 +376,6 @@ namespace ClickDungeon.Unity.Screens
 
         // ------------------------------------------------------------------ matched to the reference (D-033)
 
-        /// <summary>The reference title is 1672 wide; the canvas is 1920.</summary>
-        const float RefScale = 1920f / 1672f;
-
-        /// <summary>A rectangle given in the reference title's own pixels.</summary>
-        static RectTransform AtRef(Transform parent, string name, float x, float y, float w, float h)
-        {
-            var rt = UiFactory.Rect(parent, name);
-            rt.Place(TopLeft, TopLeft, new Vector2(x * RefScale, -y * RefScale), new Vector2(w * RefScale, h * RefScale));
-            return rt;
-        }
-
-        /// <summary>A cleaned piece of the reference, laid exactly where it was cut from.</summary>
-        static Image PatchAt(Transform parent, string key, float x, float y, float w, float h)
-        {
-            var image = UiFactory.Image(AtRef(parent, key, x, y, w, h), "Art", Color.white);
-            image.rectTransform.Stretch();
-            image.raycastTarget = false;
-            UiArt.Apply(image, key);
-            return image;
-        }
-
-        /// <summary>An invisible button over a button the background already shows.</summary>
-        static Button HotspotAt(Transform parent, string name, float x, float y, float w, float h, System.Action action)
-        {
-            var parts = UiFactory.Button(parent, name, "", Color.clear, 10, action);
-            parts.Rect.Place(TopLeft, TopLeft, new Vector2(x * RefScale, -y * RefScale), new Vector2(w * RefScale, h * RefScale));
-            parts.Background.color = Color.clear;
-            parts.Border.enabled = false;
-            parts.Label.enabled = false;
-            return parts.Button;
-        }
-
-        static Text TextIn(RectTransform rt, string name, int size, Color color, TextAnchor anchor, FontStyle style = FontStyle.Bold)
-        {
-            var text = UiFactory.Text(rt, name, "", size, color, anchor, style);
-            text.rectTransform.Stretch();
-            text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            UiFactory.Shadow(text, Color.black, 2f);
-            return text;
-        }
-
         static readonly Color CardName = new Color(0.96f, 0.87f, 0.66f);
         static readonly Color CardTagline = new Color(0.72f, 0.7f, 0.66f);
 
@@ -504,10 +464,11 @@ namespace ClickDungeon.Unity.Screens
 
             if (_matched)
             {
-                // Over the reference logo's place, which the background blurs because its logo reads "ClickDungeon2".
-                logo.rectTransform.Place(TopCenter, TopCenter, new Vector2(-2f, -24f), new Vector2(900f, 176f));
+                // The background is the reference title with its logo's "2" painted out (remove_logo_two.py), so the
+                // logo and the tagline plank are already there: drawing ours would double them.
+                logo.enabled = false;
                 foreach (var art in Root.GetComponentsInChildren<Image>())
-                    if (art.name == "Art " + ArtKeys.Logo) art.rectTransform.Place(TopCenter, TopCenter, new Vector2(-2f, -24f), new Vector2(900f, 176f));
+                    if (art.name == "Art " + ArtKeys.Logo) art.enabled = false;
                 return;
             }
             var plank = UiFactory.Rect(Root, "Tagline");

@@ -26,9 +26,16 @@ namespace ClickDungeon.Unity.Screens
     /// <summary>Draws the 5×5 board from state. Owns no rules: it renders what simulation already decided.</summary>
     public sealed class BoardView
     {
+        /// <summary>A cell's height, and the size of everything drawn on it: tokens, items and icons stay square.</summary>
         public const float CellSize = 136f;
+        /// <summary>
+        /// A cell's width. The reference's tiles are wider than tall (D-034), so the tile itself stretches while what stands
+        /// on it keeps its shape.
+        /// </summary>
+        public const float CellWidth = 184f;
         public const float Gap = 4f;
         public static readonly float FrameSize = BoardRules.Size * CellSize + (BoardRules.Size - 1) * Gap + 48f;
+        public static readonly float FrameWidth = BoardRules.Size * CellWidth + (BoardRules.Size - 1) * Gap + 48f;
         const int HeroTokenId = ActorAnimations.HeroToken;
         static readonly Color WallArtTint = new Color(0.5f, 0.4f, 0.33f);
         static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
@@ -75,14 +82,21 @@ namespace ClickDungeon.Unity.Screens
         {
             _host = host;
             Root = UiFactory.Rect(parent, "Board");
-            Root.Place(Center, Center, position, new Vector2(FrameSize, FrameSize));
+            Root.Place(Center, Center, position, new Vector2(FrameWidth, FrameSize));
 
             _shake = UiFactory.Rect(Root, "Shake");
             _shake.Stretch();
-            UiFactory.Image(_shake, "FrameShadow", new Color(0f, 0f, 0f, 0.5f), Shapes.Rounded, true).rectTransform.Stretch(-10, -4, -10, -16);
-            UiFactory.Image(_shake, "Frame", Palette.Stone, Shapes.Rounded, true).rectTransform.Stretch();
-            UiFactory.Image(_shake, "FrameEdge", Palette.StoneLight, Shapes.Frame, true).rectTransform.Stretch();
-            UiFactory.Image(_shake, "Inner", Palette.StoneDark, Shapes.Rounded, true).rectTransform.Stretch(16, 16, 16, 16);
+            _frame = new[]
+            {
+                UiFactory.Image(_shake, "FrameShadow", new Color(0f, 0f, 0f, 0.5f), Shapes.Rounded, true),
+                UiFactory.Image(_shake, "Frame", Palette.Stone, Shapes.Rounded, true),
+                UiFactory.Image(_shake, "FrameEdge", Palette.StoneLight, Shapes.Frame, true),
+            };
+            _frame[0].rectTransform.Stretch(-10, -4, -10, -16);
+            _frame[1].rectTransform.Stretch();
+            _frame[2].rectTransform.Stretch();
+            _inner = UiFactory.Image(_shake, "Inner", Palette.StoneDark, Shapes.Rounded, true);
+            _inner.rectTransform.Stretch(16, 16, 16, 16);
 
             var cellLayer = Layer("Cells");
             _tokenLayer = Layer("Tokens");
@@ -93,12 +107,28 @@ namespace ClickDungeon.Unity.Screens
         }
 
         public RectTransform Root { get; }
+
+        readonly Image[] _frame;
+        readonly Image _inner;
+
+        /// <summary>
+        /// Sits the board inside a frame the background already draws (the reference's stone walls, D-034): the board's own
+        /// frame goes, and its dark floor fills the given size, covering the background's sample tiles.
+        /// </summary>
+        public void FitInside(Vector2 size)
+        {
+            Root.sizeDelta = size;
+            foreach (var image in _frame) image.enabled = false;
+            _inner.rectTransform.Stretch();
+            _inner.sprite = null;
+            _inner.type = Image.Type.Simple;
+        }
         public event Action<GridPos> CellClicked;
         public event Action<GridPos> CellEntered;
         public event Action<GridPos> CellExited;
 
         public static Vector2 CellPosition(GridPos p) =>
-            new Vector2((p.X - 2) * (CellSize + Gap), (p.Y - 2) * (CellSize + Gap));
+            new Vector2((p.X - 2) * (CellWidth + Gap), (p.Y - 2) * (CellSize + Gap));
 
         RectTransform Layer(string name)
         {
@@ -110,7 +140,7 @@ namespace ClickDungeon.Unity.Screens
         CellParts BuildCell(RectTransform layer, GridPos p)
         {
             var rt = UiFactory.Rect(layer, $"Cell {p.X},{p.Y}");
-            rt.Place(Center, Center, CellPosition(p), new Vector2(CellSize, CellSize));
+            rt.Place(Center, Center, CellPosition(p), new Vector2(CellWidth, CellSize));
 
             var baseImage = rt.gameObject.AddComponent<Image>();
             baseImage.sprite = Shapes.Rounded;
@@ -128,7 +158,7 @@ namespace ClickDungeon.Unity.Screens
             overlay.Stretch();
 
             var labels = UiFactory.Rect(_labelLayer, $"Labels {p.X},{p.Y}");
-            labels.Place(Center, Center, CellPosition(p), new Vector2(CellSize, CellSize));
+            labels.Place(Center, Center, CellPosition(p), new Vector2(CellWidth, CellSize));
             var highlight = UiFactory.Image(labels, "Highlight", Palette.Legal, Shapes.Frame, true);
             highlight.pixelsPerUnitMultiplier = 1.4f;
             highlight.rectTransform.Stretch(-2, -2, -2, -2);
@@ -180,7 +210,7 @@ namespace ClickDungeon.Unity.Screens
                 // A token hides the tile art beneath it, so repeat a hazard or exit underfoot as a badge above the token.
                 bool occupied = run.Hero.Pos == p || floor.EnemyAt(p)?.Awake == true;
                 if (occupied && cell.Knowledge == Knowledge.Revealed && (cell.Hazard != HazardKind.None || cell.IsExit))
-                    Icons.Underfoot(Icons.Group(view.Labels, new Vector2(-CellSize * 0.5f + 22f, 0f)), cell, exitOpen);
+                    Icons.Underfoot(Icons.Group(view.Labels, new Vector2(-CellWidth * 0.5f + 22f, 0f)), cell, exitOpen);
 
                 ApplyHighlight(view, p, legal, strongHighlight, hover);
             }
@@ -345,10 +375,10 @@ namespace ClickDungeon.Unity.Screens
             {
                 var primary = slam ? ThreatKind.Slam : attack ? ThreatKind.Attack : fire ? ThreatKind.Fire : ThreatKind.BombBlast;
                 var fill = slam ? Palette.Slam : attack ? Palette.Danger : fire ? Palette.FireLane : Palette.Fuse;
-                if (Icons.TryArtImage(view.Overlay, ArtKeys.DangerOverlay(primary), CellSize) == null)
+                if (TileOverlay(view, ArtKeys.DangerOverlay(primary)) == null)
                 {
-                    Icons.Shape(view.Overlay, Shapes.Rounded, fill.WithAlpha(0.32f), Vector2.zero, new Vector2(CellSize - 6f, CellSize - 6f));
-                    var frame = Icons.Shape(view.Overlay, Shapes.Frame, fill, Vector2.zero, new Vector2(CellSize - 2f, CellSize - 2f));
+                    Icons.Shape(view.Overlay, Shapes.Rounded, fill.WithAlpha(0.32f), Vector2.zero, new Vector2(CellWidth - 6f, CellSize - 6f));
+                    var frame = Icons.Shape(view.Overlay, Shapes.Frame, fill, Vector2.zero, new Vector2(CellWidth - 2f, CellSize - 2f));
                     frame.type = Image.Type.Sliced;
                     frame.pixelsPerUnitMultiplier = 1.2f;
                 }
@@ -358,7 +388,7 @@ namespace ClickDungeon.Unity.Screens
                 float labelY = enemyHere ? CellSize * 0.5f - 38f : CellSize * 0.5f - 24f;
 
                 // Shape cue independent of colour: warning icon in the corner.
-                var corner = new Vector2(-CellSize * 0.5f + 20f, labelY);
+                var corner = new Vector2(-CellWidth * 0.5f + 20f, labelY);
                 if (!Icons.TryArt(view.Labels, ArtKeys.DangerWarning, 32f, corner))
                 {
                     Icons.Shape(view.Labels, Shapes.Triangle, fill, corner, new Vector2(30f, 28f));
@@ -374,8 +404,8 @@ namespace ClickDungeon.Unity.Screens
             }
             else if (armed)
             {
-                if (Icons.TryArtImage(view.Overlay, ArtKeys.DangerOverlay(ThreatKind.BombArmed), CellSize) == null)
-                    Icons.Shape(view.Overlay, Shapes.Rounded, Palette.Fuse.WithAlpha(0.14f), Vector2.zero, new Vector2(CellSize - 6f, CellSize - 6f));
+                if (TileOverlay(view, ArtKeys.DangerOverlay(ThreatKind.BombArmed)) == null)
+                    Icons.Shape(view.Overlay, Shapes.Rounded, Palette.Fuse.WithAlpha(0.14f), Vector2.zero, new Vector2(CellWidth - 6f, CellSize - 6f));
             }
 
             if (summon && Icons.TryArtImage(view.Overlay, ArtKeys.DangerOverlay(ThreatKind.Summon), CellSize) == null)
@@ -383,6 +413,16 @@ namespace ClickDungeon.Unity.Screens
                 Icons.Shape(view.Overlay, Shapes.Ring, Palette.Summon, Vector2.zero, new Vector2(CellSize - 20f, CellSize - 20f));
                 Icons.Label(view.Labels, "+", 40, Palette.Summon, Vector2.zero, new Vector2(40f, 40f));
             }
+        }
+
+        /// <summary>A danger overlay covers the whole tile, however wide.</summary>
+        static Image TileOverlay(CellParts view, string key)
+        {
+            var image = Icons.TryArtImage(view.Overlay, key, CellSize);
+            if (image == null) return null;
+            image.preserveAspect = false;
+            image.rectTransform.Stretch();
+            return image;
         }
 
         void RenderTokens(RunState run, ContentCatalog catalog, bool animate)
