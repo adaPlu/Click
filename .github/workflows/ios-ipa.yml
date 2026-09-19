@@ -1,0 +1,92 @@
+# Builds an UNSIGNED .ipa for iPhone. Run it from the Actions tab ("Run workflow").
+#
+# Apple's tools only run on macOS, so this does it in two steps: a Linux runner builds the Xcode project with Unity
+# (ProjectSetup.BuildIos, the same method as the ClickDungeon menu item), then a macOS runner compiles that project.
+#
+# It needs Unity licence secrets on this repository (Settings -> Secrets and variables -> Actions):
+#   UNITY_LICENSE   the contents of a Unity_v6000.x.ulf activation file  (Personal licence)
+#   UNITY_EMAIL     the Unity account's email
+#   UNITY_PASSWORD  the Unity account's password
+# For a Pro/Plus seat, add UNITY_SERIAL instead of UNITY_LICENSE.
+#
+# The .ipa it produces is not signed, so it cannot be installed by itself: sign it with an Apple ID using Sideloadly
+# or AltStore, or open the Xcode project on a Mac and Archive it there.
+name: iOS unsigned IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  xcode-project:
+    name: Xcode project (Unity)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Unity's import cache, so later runs do not re-import every asset.
+      - uses: actions/cache@v4
+        with:
+          path: ClickDungeon/Library
+          key: Library-iOS-${{ hashFiles('ClickDungeon/Assets/**', 'ClickDungeon/Packages/**', 'ClickDungeon/ProjectSettings/**') }}
+          restore-keys: Library-iOS-
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: ClickDungeon
+          unityVersion: 6000.5.9f1
+          targetPlatform: iOS
+          buildMethod: ClickDungeon.EditorTools.ProjectSetup.BuildIos
+          allowDirtyBuild: true
+
+      # A tar keeps the project's file permissions, which a plain artifact upload would drop.
+      - name: Pack the Xcode project
+        run: tar -C ClickDungeon/Builds -czf xcode-project.tar.gz iOS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcode-project
+          path: xcode-project.tar.gz
+          retention-days: 7
+
+  ipa:
+    name: Unsigned IPA (Xcode)
+    needs: xcode-project
+    runs-on: macos-14
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-xcode-project
+
+      - name: Unpack the Xcode project
+        run: tar -xzf xcode-project.tar.gz
+
+      - name: Build without signing
+        working-directory: iOS
+        run: |
+          xcodebuild archive \
+            -project Unity-iPhone.xcodeproj \
+            -scheme Unity-iPhone \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath "$RUNNER_TEMP/ClickDungeon.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            -allowProvisioningUpdates
+
+      # An .ipa is a zip with the built app inside a Payload folder; without signing, Xcode's own export refuses.
+      - name: Wrap the app as an .ipa
+        run: |
+          mkdir -p Payload
+          cp -R "$RUNNER_TEMP/ClickDungeon.xcarchive/Products/Applications/"*.app Payload/
+          zip -qry ClickDungeon-unsigned.ipa Payload
+          ls -lh ClickDungeon-unsigned.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ClickDungeon-unsigned-ipa
+          path: ClickDungeon-unsigned.ipa
+          retention-days: 14
