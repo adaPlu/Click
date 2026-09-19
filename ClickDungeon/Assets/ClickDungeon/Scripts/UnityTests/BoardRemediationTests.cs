@@ -90,7 +90,7 @@ namespace ClickDungeon.UnityTests
             board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
             var before = _root.GetComponentsInChildren<Transform>(true).ToList();
 
-            board.RenderHighlights(new HashSet<GridPos> { new GridPos(2, 3) }, false, new GridPos(1, 1));
+            board.RenderHighlights(new HashSet<GridPos> { new GridPos(2, 3) }, true, new GridPos(1, 1));
 
             // Same objects, in the same order: nothing was destroyed and recreated.
             var after = _root.GetComponentsInChildren<Transform>(true).ToList();

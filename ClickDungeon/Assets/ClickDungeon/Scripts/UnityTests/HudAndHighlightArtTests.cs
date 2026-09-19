@@ -115,7 +115,7 @@ namespace ClickDungeon.UnityTests
             UseArt((ArtKeys.HighlightLegal, legal), (ArtKeys.HighlightHover, hover), (ArtKeys.HighlightTarget, target));
 
             RenderBoard(_root, strong: false, legalCell: new GridPos(2, 3), hover: new GridPos(1, 2));
-            Assert.That(Highlight(_root, "Labels 2,3").sprite, Is.SameAs(legal));
+            Assert.That(Highlight(_root, "Labels 2,3").enabled, Is.False, "Plain movement outlines nothing.");
             Assert.That(Highlight(_root, "Labels 1,2").sprite, Is.SameAs(hover));
             Assert.That(Highlight(_root, "Labels 3,2").enabled, Is.False);
 

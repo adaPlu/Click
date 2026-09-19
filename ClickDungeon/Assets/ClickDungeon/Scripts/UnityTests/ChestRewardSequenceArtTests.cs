@@ -85,7 +85,7 @@ namespace ClickDungeon.UnityTests
         }
 
         [Test]
-        public void BurstShowsRevealIconRaysAndParticleArt()
+        public void BurstShowsRevealIconAndParticleArtButNoStarburst()
         {
             var reveal = MakeSprite("reveal");
             var icon = MakeSprite("maxhp");
@@ -103,8 +103,7 @@ namespace ClickDungeon.UnityTests
             Assert.That(rewardIcon.gameObject.activeSelf, Is.True);
             Assert.That(rewardIcon.sprite, Is.SameAs(icon));
             Assert.That(Named("RewardCard").Find("Text").GetComponent<Text>().text, Is.EqualTo("+2 MAX HP"), "Reward text stays live.");
-            Assert.That(Named("Rays").gameObject.activeSelf, Is.True);
-            Assert.That(Named("Rays").GetComponent<Image>().sprite, Is.SameAs(rays));
+            Assert.That(Named("Rays").gameObject.activeSelf, Is.False, "The starburst art is not used.");
             Assert.That(Named("Sparkles").GetComponentsInChildren<Image>(true).Any(i => i.sprite == coin), Is.True);
         }
 
@@ -126,33 +125,6 @@ namespace ClickDungeon.UnityTests
             bare.Tap();
             Assert.That(Named("RewardCard").Find("Icon").gameObject.activeSelf, Is.False);
             Assert.That(Named("Rays").gameObject.activeSelf, Is.False);
-        }
-
-        [Test]
-        public void ClosedBoardChestsGetShimmerArt()
-        {
-            var shimmer = MakeSprite("shimmer");
-            UseArt((ArtKeys.ChestShimmer, shimmer));
-
-            var floor = FloorState.CreateEmpty();
-            floor.FloorIndex = 1;
-            floor.Start = new GridPos(2, 2);
-            floor[new GridPos(2, 3)].Content = ContentKind.Chest;
-            var run = new RunState
-            {
-                RunSeed = 1,
-                FloorCount = Catalog.RunFloorCount,
-                Hero = RunFactory.CreateHero(Catalog, ContentCatalog.DefaultHeroId),
-                Floor = floor,
-            };
-            RunFactory.SetupFloor(run, Catalog, new List<GameEvent>());
-            // Tiles reveal only when clicked (D-023); a covered chest draws as a cover, not a chest.
-            floor[new GridPos(2, 3)].Knowledge = Knowledge.Revealed;
-
-            var board = new BoardView((RectTransform)_root.transform, _root.AddComponent<SpriteFrameAnimator>(), Vector2.zero);
-            board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
-
-            Assert.That(Named("Cell 2,3").Find("Icons").GetComponentsInChildren<Image>(true).Any(i => i.sprite == shimmer), Is.True);
         }
 
         [Test]
@@ -206,8 +178,10 @@ namespace ClickDungeon.UnityTests
             var wired = ArtKeys.Wired(Catalog);
             foreach (var step in ArtKeys.ChestReactionSteps) Assert.That(wired, Does.Contain(ArtKeys.ChestReaction(step)));
             foreach (var kind in ArtKeys.RewardKinds) Assert.That(wired, Does.Contain(ArtKeys.RewardIcon(kind)));
-            foreach (var key in new[] { ArtKeys.ChestRays, ArtKeys.ChestCoin, ArtKeys.ChestGem, ArtKeys.ChestShimmer })
+            foreach (var key in new[] { ArtKeys.ChestCoin, ArtKeys.ChestGem })
                 Assert.That(wired, Does.Contain(key));
+            foreach (var key in new[] { ArtKeys.ChestRays, ArtKeys.ChestShimmer, ArtKeys.ChestGlow })
+                Assert.That(wired, Does.Not.Contain(key), "Star art is not used.");
             Assert.That(ArtKeys.RewardIcon(RewardKind.SlashDamage), Is.EqualTo("icon_reward_slashdamage"));
             Assert.That(ArtKeys.ChestReactionFallback("reveal"), Is.EqualTo("shocked"));
         }

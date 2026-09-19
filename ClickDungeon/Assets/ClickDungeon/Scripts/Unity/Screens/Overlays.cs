@@ -174,9 +174,9 @@ namespace ClickDungeon.Unity.Screens
             button.transition = Selectable.Transition.None;
             button.onClick.AddListener(Tap);
 
+            // A soft plain glow: the reward-burst art (a star cluster cut from the treasure sheet) read as clutter, so it is not used.
             var glow = UiFactory.Image(_root, "Glow", Palette.Gold.WithAlpha(0.12f), Shapes.Circle);
             glow.rectTransform.Place(Center, Center, new Vector2(0f, 60f), new Vector2(620f, 620f));
-            UiArt.Apply(glow, ArtKeys.ChestGlow);
 
             _rays = UiFactory.Image(_root, "Rays", Color.white, null);
             _rays.rectTransform.Place(Center, Center, new Vector2(0f, 60f), new Vector2(760f, 760f));
@@ -319,11 +319,6 @@ namespace ClickDungeon.Unity.Screens
             _host.StartCoroutine(Tween.FadeScale(_rewardCard, _rewardCard.GetComponent<CanvasGroup>(), 0.6f, 0.22f));
             _prompt.text = "TAP TO COLLECT";
 
-            if (Art.TryGetSprite(ArtKeys.ChestRays, out var rays))
-            {
-                SetSprite(_rays, rays);
-                _rays.gameObject.SetActive(true);
-            }
 
             if (UserPrefs.ReducedMotion)
             {

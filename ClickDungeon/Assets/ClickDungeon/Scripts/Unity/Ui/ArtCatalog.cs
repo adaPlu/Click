@@ -452,7 +452,7 @@ namespace ClickDungeon.Unity.Ui
             keys.Add(DangerWarning);
             keys.AddRange(new[]
             {
-                HighlightLegal, HighlightTarget, HighlightHover,
+                HighlightTarget, HighlightHover,
                 PortraitFrame, HpBack, HpFill, HpFrame, ManaFill, ManaIcon, EnemyHpBack, EnemyHpFill, Heart, CoinIcon, GemIcon, Chip, FloorPlaque, Panel, SpeechStrip,
                 AbilityButtonDefault, AbilitySelected, CountBadge, SettingsButton, HelpButton,
             });
@@ -461,12 +461,12 @@ namespace ClickDungeon.Unity.Ui
             keys.AddRange(new[]
             {
                 ModalPanel, ButtonPrimary, ButtonSecondary, ButtonDanger,
-                ChestLargeClosed, ChestLargeOpen, ChestGlow, ChestProgressBack, ChestProgressFill, ChestRewardCard,
+                ChestLargeClosed, ChestLargeOpen, ChestProgressBack, ChestProgressFill, ChestRewardCard,
                 TitleHeroCard, TitlePlank, TitleBanner, TitleContinuePanel, ContinuePreview, TitleDailyPanel, TitleNamePlate, TitleLevelBadge, TitleCoinField, TitleGemField, TitleContinueClean, TitleMailClean, HudLevelBadge, HudPlaque, HudCoinField, HudGemField, DailyRewardChest, ButtonClaim, MenuButton, CrownButton, MailButton, AlertBadge, NavBar, PlusButton,
                 TitleHero, TitleBlobert, TitleGoblin, ButtonPlay, ButtonTitleSettings, ButtonQuit, ButtonHeroSelect, ButtonShop, ButtonTalents, ButtonTalentsAlert, ButtonInventory, PlayIcon, SettingsIcon, QuitIcon,
             });
             foreach (var style in ModalStyles) keys.Add(ModalPanelStyle(style));
-            keys.AddRange(new[] { ChestRays, ChestCoin, ChestGem, ChestShimmer });
+            keys.AddRange(new[] { ChestCoin, ChestGem });
             foreach (var step in ChestReactionSteps) keys.Add(ChestReaction(step));
             foreach (var kind in RewardKinds) keys.Add(RewardIcon(kind));
             keys.AddRange(new[] { UnderfootSpikes, UnderfootBomb, UnderfootBombArmed, UnderfootExitLocked, UnderfootExitOpen });

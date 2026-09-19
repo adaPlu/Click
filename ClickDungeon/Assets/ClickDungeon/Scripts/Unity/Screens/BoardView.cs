@@ -231,13 +231,14 @@ namespace ClickDungeon.Unity.Screens
 
         static void ApplyHighlight(CellParts view, GridPos p, HashSet<GridPos> legal, bool strongHighlight, GridPos? hover)
         {
-            bool isLegal = legal != null && legal.Contains(p);
+            // Plain movement marks nothing: only an aimed SLASH or DASH lights its targets, and the tile under the pointer.
+            bool isLegal = strongHighlight && legal != null && legal.Contains(p);
             bool isHover = hover.HasValue && hover.Value == p;
             bool showHighlight = isLegal || isHover;
             view.Highlight.enabled = showHighlight;
             if (!showHighlight) return;
 
-            string highlightKey = isHover ? ArtKeys.HighlightHover : strongHighlight ? ArtKeys.HighlightTarget : ArtKeys.HighlightLegal;
+            string highlightKey = isHover ? ArtKeys.HighlightHover : ArtKeys.HighlightTarget;
             if (UiArt.Apply(view.Highlight, highlightKey)) return;
             view.Highlight.sprite = Shapes.Frame;
             view.Highlight.type = Image.Type.Sliced;
@@ -332,7 +333,6 @@ namespace ClickDungeon.Unity.Screens
                 Icons.Chest(view.Icons, cell.ChestOpened, premium: cell.Premium);
                 if (!cell.ChestOpened)
                 {
-                    Icons.TryArt(view.Icons, ArtKeys.ChestShimmer, CellSize);
                     // Above the tokens: in Free Roam the hero often stands on the chest it is opening, and the token
                     // would hide a meter drawn on the tile itself.
                     Icons.ChestProgress(view.Labels, cell.ChestTaps, ClickDungeon.Simulation.Chests.TapsToOpen(run, cell));
