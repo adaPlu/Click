@@ -508,3 +508,12 @@ Rules referenced here live in `docs/rules.md`.
 - **TESTS**: `ClassTalentTests`, `SettingsMenuTests.TalentsShowTheTreeLockWhatIsNotOpenAndLearnOnConfirm`,
   `SettingsMenuTests.HeroSelectShowsEveryHeroLocksTheComingOnesAndChoosesAPlayableOne`.
 
+## D-038 A harder Knight's Trial
+- **DECISION**: Knight's Trial drops its trap softening (spikes, bombs and lava hit at full strength) and puts one more
+  monster on every normal floor. Blobert's Wrath's traps hit one harder than that, to keep the tiers apart.
+- **WHY**: "make medium harder". The blind casual bot had drifted to winning ~88% of Knight's Trial (novice ~90%, where
+  it was tuned to ~65%), and a ten-run playthrough with a growing profile won all ten.
+- **MEASURED**: `DifficultySweep`, 60 blind seeds, Free Roam, won: casual 95% / 70% / 53%, novice 100% / 67% / 33%
+  (easy / medium / hardcore). Lord Blobert still kills nobody in these runs; the deaths are on floors 3 and 4.
+- **TESTS**: `BalanceTests.KnightsTrialLetsANovicePlayerReachBlobert` (baseline 19/30 reach, guard 16), `TiersKeepTheirOrder`.
+

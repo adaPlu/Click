@@ -533,17 +533,17 @@ namespace ClickDungeon.Content
             };
             c.Difficulties[Difficulty.Medium] = new DifficultyDefinition
             {
-                Id = Difficulty.Medium, DisplayName = "Knight's Trial", Tagline = "The dungeon as designed. Click carefully.",
-                // Tuned for click-to-reveal (D-023), where every click is a blind step: traps blunted by one, no extra
-                // monsters or missing potions. Blind novice AutoPlayer wins ~65% (rules §10.2).
-                HazardDamage = -1,
+                Id = Difficulty.Medium, DisplayName = "Knight's Trial", Tagline = "Full-strength traps and an extra monster a floor. Click carefully.",
+                // D-038: the casual bot had come to win ~88% and a whole ten-run playthrough, so traps hit at full strength and
+                // each floor holds one more monster. Blind casual AutoPlayer wins ~70%, novice ~67% (rules §10.2).
+                ExtraEnemies = 1,
             };
             c.Difficulties[Difficulty.Hardcore] = new DifficultyDefinition
             {
-                Id = Difficulty.Hardcore, DisplayName = "Blobert's Wrath", Tagline = "Tougher monsters, a mightier Blobert, one potion. No mercy.",
-                // Tuned for click-to-reveal (D-023): blind traps and bumped monsters already hurt, so the pressure moved to
-                // Lord Blobert. Blind novice AutoPlayer wins ~23%, casual ~53% (rules §10.2).
-                StartingPotions = -1, EnemyHp = 1, BossHp = 4, BossSlamDamage = 1,
+                Id = Difficulty.Hardcore, DisplayName = "Blobert's Wrath", Tagline = "Sharper traps, tougher monsters, a mightier Blobert, one potion. No mercy.",
+                // D-038: with Knight's Trial harder, traps here hit one harder again to keep the tiers apart.
+                // Blind novice AutoPlayer wins ~33%, casual ~53% (rules §10.2).
+                StartingPotions = -1, EnemyHp = 1, BossHp = 4, BossSlamDamage = 1, HazardDamage = 1,
             };
             return c;
         }

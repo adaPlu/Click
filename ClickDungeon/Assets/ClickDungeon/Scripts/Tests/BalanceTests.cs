@@ -105,15 +105,15 @@ namespace ClickDungeon.Tests
         [Test]
         public void KnightsTrialLetsANovicePlayerReachBlobert()
         {
-            // Measured 30-seed blind baseline with a covered exit: 24 reach (rules §10.2).
+            // Measured 30-seed blind baseline after the D-038 retune (full traps, an extra monster a floor): 19 reach (rules §10.2).
             var medium = Measure(Difficulty.Medium, 30, NoviceMistakeRate, blind: true);
-            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(21), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
+            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(16), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
         }
 
         [Test]
         public void TiersKeepTheirOrder()
         {
-            // Blind novice. Measured 40-seed blind baseline with a covered exit: 39 / 21 / 10 won, 40 / 33 / 21 reached (rules §10.2).
+            // Blind novice. The 60-seed sweep after the D-038 retune: 100% / 67% / 33% won (rules §10.2).
             var easy = Measure(Difficulty.Easy, 40, NoviceMistakeRate, blind: true);
             var medium = Measure(Difficulty.Medium, 40, NoviceMistakeRate, blind: true);
             var hardcore = Measure(Difficulty.Hardcore, 40, NoviceMistakeRate, blind: true);
@@ -160,14 +160,18 @@ namespace ClickDungeon.Tests
                 // and scarcity added for adjacent-only melee, and soften hazards.
                 // Round 2. Knight's Trial is now "base, hazards -1" (65% novice wins in round 1). Blobert's Wrath was still at
                 // 13% at its softest round-1 candidate, so these walk it back further.
+                // Round 3 (D-038): Knight's Trial was won 10 of 10 by the casual bot across a playthrough. MB and HB were taken
+                // (casual 70% / novice 67%, and casual 53% / novice 33%); the rest were measured against the old numbers.
                 ("E0 current", Tier(Difficulty.Easy)),
                 ("M0 current", Tier(Difficulty.Medium)),
-                ("HD hero10 enem+1 haz0", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = 0; d.ExtraEnemies = 1; d.HazardDamage = 0; })),
-                ("HE hero10 enem0 haz0", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = 0; d.ExtraEnemies = 0; d.HazardDamage = 0; })),
-                ("HF HD potions0", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = 0; d.ExtraEnemies = 1; d.HazardDamage = 0; d.StartingPotions = 0; })),
-                ("HG HD dmg0", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = 0; d.ExtraEnemies = 1; d.HazardDamage = 0; d.EnemyDamage = 0; })),
-                ("HH HE potions0", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = 0; d.ExtraEnemies = 0; d.HazardDamage = 0; d.StartingPotions = 0; })),
-                ("HI HE dmg0", Tier(Difficulty.Hardcore, d => { d.HeroMaxHp = 0; d.ExtraEnemies = 0; d.HazardDamage = 0; d.EnemyDamage = 0; })),
+                ("H0 current", Tier(Difficulty.Hardcore)),
+                ("MA haz0", Tier(Difficulty.Medium, d => d.HazardDamage = 0)),
+                ("MB haz0 extra+1", Tier(Difficulty.Medium, d => { d.HazardDamage = 0; d.ExtraEnemies = 1; })),
+                ("MC haz0 hero-2", Tier(Difficulty.Medium, d => { d.HazardDamage = 0; d.HeroMaxHp = -2; })),
+                ("MD haz0 dmg+1", Tier(Difficulty.Medium, d => { d.HazardDamage = 0; d.EnemyDamage = 1; })),
+                ("ME haz0 enemyhp+1", Tier(Difficulty.Medium, d => { d.HazardDamage = 0; d.EnemyHp = 1; })),
+                ("HB H haz+1", Tier(Difficulty.Hardcore, d => d.HazardDamage = 1)),
+                ("HE H haz+1 extra+1", Tier(Difficulty.Hardcore, d => { d.HazardDamage = 1; d.ExtraEnemies = 1; })),
             };
 
             // Blind and in Free Roam, like the guards: this is the number that describes real play.
