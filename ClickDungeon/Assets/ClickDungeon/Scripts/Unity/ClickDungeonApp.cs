@@ -139,6 +139,8 @@ namespace ClickDungeon.Unity
             float pace = float.TryParse(ArgValue("-cdWatch"), System.Globalization.NumberStyles.Float,
                 System.Globalization.CultureInfo.InvariantCulture, out var p) && p > 0f ? p : 0.5f;
             int runs = int.TryParse(ArgValue("-cdRuns"), out var r) && r > 0 ? r : 5;
+            // The pauses for a chest, a new floor and a run's result shrink with a faster pace (full length at 0.5 s a move).
+            float Hold(float seconds) => Mathf.Max(0.15f, seconds * Mathf.Min(1f, pace / 0.5f));
             var heroes = new List<string>(Catalog.HeroIdentities.Keys);
             string fixedHero = ArgValue("-cdHero");
             var caption = UiFactory.Text(ScreenRoot, "WatchCaption", "", 24, Palette.Gold, TextAnchor.MiddleCenter, FontStyle.Bold);
@@ -169,7 +171,7 @@ namespace ClickDungeon.Unity
                 caption.transform.SetAsLastSibling();
                 caption.text = $"BOT WATCH  ·  run {run}/{runs}  ·  level {Progression.Level(profile)}"
                                + (learned.Count > 0 ? $"  ·  learned {string.Join(", ", learned)}" : "");
-                yield return new WaitForSecondsRealtime(learned.Count > 0 ? 3.5f : 2f);
+                yield return new WaitForSecondsRealtime(Hold(learned.Count > 0 ? 3.5f : 2f));
 
                 for (int i = 0; i < 1500 && Session.Run.Status == Domain.RunStatus.InProgress; i++)
                 {
@@ -183,10 +185,10 @@ namespace ClickDungeon.Unity
                     // A chest reveal plays out tap by tap; a new floor's banner gets its moment.
                     while (_game != null && _game.AutomationChestOpen)
                     {
-                        yield return new WaitForSecondsRealtime(0.7f);
+                        yield return new WaitForSecondsRealtime(Hold(0.7f));
                         _game.AutomationTapChest();
                     }
-                    if (Session.Run.Floor.FloorIndex != floor) yield return new WaitForSecondsRealtime(1.2f);
+                    if (Session.Run.Floor.FloorIndex != floor) yield return new WaitForSecondsRealtime(Hold(1.2f));
                 }
 
                 var end = Session.Run;
@@ -198,7 +200,7 @@ namespace ClickDungeon.Unity
                 log.AppendLine(line);
                 Debug.Log("[ClickDungeon] Watch " + line);
                 caption.text = $"BOT WATCH  ·  run {run}/{runs}: {end.Status.ToString().ToUpperInvariant()}  ·  {won} won so far";
-                yield return new WaitForSecondsRealtime(4f);
+                yield return new WaitForSecondsRealtime(Hold(4f));
             }
             Debug.Log($"[ClickDungeon] Watch finished: won {won} of {runs}.\n{log}");
             caption.text = $"BOT WATCH finished: won {won} of {runs}";
