@@ -20,7 +20,10 @@ namespace ClickDungeon.Tests
             var session = new GameSession(ContentCatalog.CreateDefault(), null);
             // CD_SEED picks another ten dungeons; without it the same ten play every time.
             ulong seedBase = ulong.TryParse(Environment.GetEnvironmentVariable("CD_SEED"), out var custom) ? custom : 20260918UL;
-            Console.WriteLine($"seed base {seedBase}");
+            // CD_HERO plays another hero (dawnward is the Paladin); its class's tree is the one learned.
+            string heroId = Environment.GetEnvironmentVariable("CD_HERO") ?? ContentCatalog.DefaultHeroId;
+            string classId = Progression.ClassOf(session.Catalog, heroId);
+            Console.WriteLine($"seed base {seedBase}, hero {heroId} ({classId})");
             Console.WriteLine("run  seed      result  floor  turns  hp     coins  gems  +xp  level  items  achievements");
             for (int i = 1; i <= 10; i++)
             {
@@ -30,12 +33,12 @@ namespace ClickDungeon.Tests
                 while (learned)
                 {
                     learned = false;
-                    foreach (var talent in session.Catalog.TalentsOf("knight"))
+                    foreach (var talent in session.Catalog.TalentsOf(classId))
                         if (Progression.TryLearn(session.Profile, session.Catalog, talent.Id)) { learned = true; break; }
                 }
 
                 ulong seed = seedBase + (ulong)i * 101UL;
-                session.StartNewRun(seed, Difficulty.Medium, MovementMode.Free);
+                session.StartNewRun(seed, Difficulty.Medium, MovementMode.Free, heroId);
                 var bot = new AutoPlayer(AutoPlayer.CasualMistakeRate, blind: true);
                 for (int c = 0; c < 1500 && session.Run.Status == RunStatus.InProgress; c++)
                     session.Submit(bot.Choose(session.Run, session.Catalog, seed * 7919UL + (ulong)c));
