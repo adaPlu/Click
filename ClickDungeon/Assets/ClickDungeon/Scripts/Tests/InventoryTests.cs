@@ -31,6 +31,8 @@ namespace ClickDungeon.Tests
         [Test]
         public void LordBlobertAGreatChestAndAPremiumChestEachDropAnItem()
         {
+            // Every source at a sure drop; how often each really drops is tested below (D-040).
+            using var sure = SureDrops();
             var boss = Run(Catalog.RunFloorCount, 1234UL, ".....", ".....", ".HB..", ".....", "....X");
             var blobert = Enemy(boss, "lord_blobert");
             blobert.Mode = EnemyMode.Normal;
@@ -58,6 +60,7 @@ namespace ClickDungeon.Tests
         [Test]
         public void TheSameRunAlwaysFindsTheSameItem()
         {
+            using var sure = SureDrops();
             string Drop()
             {
                 var vault = Run(".....", ".....", ".HW..", ".....", ".....");
@@ -66,6 +69,47 @@ namespace ClickDungeon.Tests
                 return vault.ItemsFound.Single();
             }
             Assert.That(Drop(), Is.EqualTo(Drop()));
+        }
+
+        /// <summary>Sets every item source to a sure drop until disposed.</summary>
+        static System.IDisposable SureDrops()
+        {
+            var t = Catalog.Treasure;
+            var (boss, great, premium) = (t.ItemChanceBoss, t.ItemChanceGreatChest, t.ItemChancePremium);
+            t.ItemChanceBoss = t.ItemChanceGreatChest = t.ItemChancePremium = 100;
+            return new Restore(() => (t.ItemChanceBoss, t.ItemChanceGreatChest, t.ItemChancePremium) = (boss, great, premium));
+        }
+
+        sealed class Restore : System.IDisposable
+        {
+            readonly System.Action _undo;
+            public Restore(System.Action undo) => _undo = undo;
+            public void Dispose() => _undo();
+        }
+
+        [Test]
+        public void GearDropsOnlySometimesExceptFromAPremiumChest()
+        {
+            // D-040: across many vaults about a third of great chests hold gear; a premium chest always does.
+            int great = 0, premium = 0;
+            for (ulong seed = 1; seed <= 200; seed++)
+            {
+                var vault = Run(".....", ".....", ".HW..", ".....", ".....");
+                vault.RunSeed = seed;
+                vault.Floor.IsVault = true;
+                OpenChest(vault, P(2, 2));
+                great += vault.ItemsFound.Count;
+
+                var paid = Run(".....", ".....", ".HC..", ".....", ".....");
+                paid.RunSeed = seed;
+                paid.Floor[P(2, 2)].Premium = true;
+                paid.Floor[P(2, 2)].Quality = ChestQuality.Epic;
+                paid.Hero.SpecialKeys = 1;
+                OpenChest(paid, P(2, 2));
+                premium += paid.ItemsFound.Count;
+            }
+            Assert.That(great, Is.InRange(40, 100), "Roughly 35% of great chests hold gear.");
+            Assert.That(premium, Is.EqualTo(200), "A premium chest always holds gear.");
         }
 
         [Test]

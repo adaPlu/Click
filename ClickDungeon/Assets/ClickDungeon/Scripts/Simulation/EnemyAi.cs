@@ -49,7 +49,7 @@ namespace ClickDungeon.Simulation
                     enemy.Intent = LaneIntent(run, enemy, def);
                     break;
                 case EnemyBehavior.Boss:
-                    enemy.Intent = BossIntent(run, enemy, events);
+                    enemy.Intent = BossIntent(run, enemy, def, events);
                     break;
             }
         }
@@ -71,7 +71,7 @@ namespace ClickDungeon.Simulation
             return Intent.Move();
         }
 
-        static Intent BossIntent(RunState run, EnemyState boss, List<GameEvent> events)
+        static Intent BossIntent(RunState run, EnemyState boss, EnemyDefinition def, List<GameEvent> events)
         {
             if (boss.Mode == EnemyMode.Puffed)
             {
@@ -91,19 +91,17 @@ namespace ClickDungeon.Simulation
                 boss.ModeTurns = 0;
             }
 
-            int step = boss.ActionCounter % 3;
+            // Slam, summon, (slam again, D-040), puff up.
+            int step = boss.ActionCounter % (def.DoubleSlam ? 4 : 3);
             boss.ActionCounter++;
-            switch (step)
+            if (step == 1)
             {
-                case 0:
-                    return Intent.Slam(run.Hero.Pos);
-                case 1:
-                    foreach (var cell in Board.Neighbours(boss.Pos))
-                        if (Board.EnemyCanEnter(run, cell)) return Intent.Summon(cell);
-                    return Intent.Slam(run.Hero.Pos);
-                default:
-                    return Intent.PuffUp();
+                foreach (var cell in Board.Neighbours(boss.Pos))
+                    if (Board.EnemyCanEnter(run, cell)) return Intent.Summon(cell);
+                return Intent.Slam(run.Hero.Pos);
             }
+            if (step == 0 || (def.DoubleSlam && step == 2)) return Intent.Slam(run.Hero.Pos);
+            return Intent.PuffUp();
         }
 
         /// <summary>
@@ -134,8 +132,9 @@ namespace ClickDungeon.Simulation
                     // A melee blow only lands from a neighbouring tile, on a hero still standing where it was aimed.
                     if (enemy.Pos.IsAdjacent(intent.Target) && run.Hero.Pos == intent.Target)
                     {
-                        events.Add(GameEvent.Of(GameEventKind.EnemyAttacked, enemy.Id, enemy.Pos, intent.Target, def.Damage, def.Id));
-                        bool blocked = Combat.DamageHero(run, def.Damage, def.Id, events);
+                        int hit = Renown.Hit(run, catalog, def.Damage);
+                        events.Add(GameEvent.Of(GameEventKind.EnemyAttacked, enemy.Id, enemy.Pos, intent.Target, hit, def.Id));
+                        bool blocked = Combat.DamageHero(run, hit, def.Id, events);
                         if (blocked && !def.IsBoss)
                         {
                             enemy.Staggered = true;
@@ -168,14 +167,14 @@ namespace ClickDungeon.Simulation
 
                 case IntentKind.Fire:
                 {
-                    var fired = GameEvent.Of(GameEventKind.EnemyFired, enemy.Id, enemy.Pos, amount: def.Damage, source: def.Id);
+                    var fired = GameEvent.Of(GameEventKind.EnemyFired, enemy.Id, enemy.Pos, amount: Renown.Hit(run, catalog, def.Damage), source: def.Id);
                     events.Add(fired);
                     if (Board.TraceLane(run, enemy.Pos, intent.Dir, def.Range, out var hit))
                     {
                         fired.To = hit;
                         if (run.Hero.Pos == hit)
                         {
-                            Combat.DamageHero(run, def.Damage, def.Id, events);
+                            Combat.DamageHero(run, Renown.Hit(run, catalog, def.Damage), def.Id, events);
                         }
                         else
                         {
@@ -187,9 +186,10 @@ namespace ClickDungeon.Simulation
                 }
 
                 case IntentKind.Slam:
-                    events.Add(GameEvent.Of(GameEventKind.BossSlammed, enemy.Id, enemy.Pos, intent.Target, def.SlamDamage, def.Id));
+                    int slam = Renown.Hit(run, catalog, def.SlamDamage);
+                    events.Add(GameEvent.Of(GameEventKind.BossSlammed, enemy.Id, enemy.Pos, intent.Target, slam, def.Id));
                     if (Board.SlamCells(intent.Target, def.SlamShakesLines).Contains(run.Hero.Pos))
-                        Combat.DamageHero(run, def.SlamDamage, def.Id, events);
+                        Combat.DamageHero(run, slam, def.Id, events);
                     break;
 
                 case IntentKind.Summon:

@@ -11,8 +11,8 @@ namespace ClickDungeon.Domain
     public static class Versions
     {
         public const int SaveSchema = 1;
-        // Bumped for a harder Lord Blobert: his slam shakes its row and column, and he summons two at a time (D-039).
-        public const int Ruleset = 7;
+        // Bumped for renown's threat, rarer gear and Blobert's second slam (D-040).
+        public const int Ruleset = 8;
         // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
         public const int Generation = 2;
         /// <summary>The between-runs profile: coins, gems and the provisions bought with them (D-025).</summary>

@@ -33,15 +33,15 @@ namespace ClickDungeon.Simulation
                 switch (intent.Kind)
                 {
                     case IntentKind.Attack:
-                        Add(threats, ThreatKind.Attack, intent.Target, def.Damage, enemy.Id);
+                        Add(threats, ThreatKind.Attack, intent.Target, Renown.Hit(run, catalog, def.Damage), enemy.Id);
                         break;
                     case IntentKind.Fire:
                         foreach (var cell in Board.LaneCells(run, enemy.Pos, intent.Dir, def.Range))
-                            Add(threats, ThreatKind.Fire, cell, def.Damage, enemy.Id);
+                            Add(threats, ThreatKind.Fire, cell, Renown.Hit(run, catalog, def.Damage), enemy.Id);
                         break;
                     case IntentKind.Slam:
                         foreach (var cell in Board.SlamCells(intent.Target, def.SlamShakesLines))
-                            Add(threats, ThreatKind.Slam, cell, def.SlamDamage, enemy.Id);
+                            Add(threats, ThreatKind.Slam, cell, Renown.Hit(run, catalog, def.SlamDamage), enemy.Id);
                         break;
                     case IntentKind.Summon:
                         Add(threats, ThreatKind.Summon, intent.Target, 0, enemy.Id);

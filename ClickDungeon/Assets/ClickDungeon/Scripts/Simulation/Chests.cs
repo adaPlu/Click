@@ -152,7 +152,8 @@ namespace ClickDungeon.Simulation
             if (state.Premium && run.Hero.SpecialKeys > 0) run.Hero.SpecialKeys--;
             if (state.GreatChest) Treasure.Gems(run, catalog.Treasure.GemsPerGreatChest, cell, events);
             // A vault's great chest and a premium chest each hold one piece of equipment (D-028).
-            if (state.GreatChest || state.Premium) Treasure.Item(run, catalog, cell, state.Premium ? 2UL : 1UL, events);
+            if (state.GreatChest || state.Premium) Treasure.Item(run, catalog, cell, state.Premium ? 2UL : 1UL,
+                state.Premium ? catalog.Treasure.ItemChancePremium : catalog.Treasure.ItemChanceGreatChest, events);
 
             int draws = RewardDraws(state, catalog);
             RewardRecord first = null;

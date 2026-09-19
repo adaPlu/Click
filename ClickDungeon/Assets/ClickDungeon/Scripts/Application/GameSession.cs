@@ -80,6 +80,8 @@ namespace ClickDungeon.Application
             ProfileSystem.Provision(Profile, Run, Catalog);
             Progression.Apply(Profile, Run, Catalog);
             Inventory.Apply(Profile, Run, Catalog);
+            // Renown's threat (D-040). Floor 1 is already laid out, and threat only reaches the deep floors.
+            Run.Threat = Progression.Threat(Profile, Catalog);
             RunFactory.RevealByTalents(Run, events);
             SaveProfile();
             Persist();

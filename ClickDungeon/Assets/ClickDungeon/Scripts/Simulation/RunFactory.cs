@@ -146,6 +146,18 @@ namespace ClickDungeon.Simulation
                 if (floor[p].Content == ContentKind.Key && floor[p].Knowledge != Knowledge.Revealed) Visibility.Reveal(floor, p, events);
         }
 
+        /// <summary>Renown's threat (D-040): extra hearts for every monster on the deep floors, more for Lord Blobert.</summary>
+        public static void ApplyThreat(RunState run, ContentCatalog catalog)
+        {
+            if (!Renown.Reaches(run, catalog)) return;
+            foreach (var enemy in run.Floor.Enemies)
+            {
+                int extra = run.Threat * (catalog.Enemy(enemy.DefId).IsBoss ? catalog.Renown.BossHpPerThreat : catalog.Renown.HpPerThreat);
+                enemy.MaxHp += extra;
+                enemy.Hp += extra;
+            }
+        }
+
         public static void SetupFloor(RunState run, ContentCatalog catalog, List<GameEvent> events)
         {
             var floor = run.Floor;
@@ -168,6 +180,7 @@ namespace ClickDungeon.Simulation
             }
 
             PlacePremiumChest(run, catalog);
+            ApplyThreat(run, catalog);
 
             // The exit is covered like every other tile until it is clicked (D-023).
             events.Add(GameEvent.Of(GameEventKind.FloorStarted, amount: floor.FloorIndex, to: floor.Start));

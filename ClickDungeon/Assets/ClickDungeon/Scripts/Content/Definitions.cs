@@ -107,6 +107,8 @@ namespace ClickDungeon.Content
         public int SummonCount = 1;
         /// <summary>The slam also shakes the target's whole row and column (D-039).</summary>
         public bool SlamShakesLines;
+        /// <summary>The script slams again after summoning: slam, summon, slam, puff up (D-040).</summary>
+        public bool DoubleSlam;
         public int DeflatedDamageMultiplier = 2;
     }
 
@@ -249,6 +251,23 @@ namespace ClickDungeon.Content
         public RewardBundle Reward;
     }
 
+    /// <summary>
+    /// Renown (D-040): the deep floors answer a hero's level and worn gear, so a built-up profile still meets a fight.
+    /// Renown is (level - 1) + items worn; every <see cref="RenownPerThreat"/> of it is one point of threat, up to
+    /// <see cref="MaxThreat"/>. From <see cref="FirstFloor"/> on, each monster gets threat extra hearts (Lord Blobert
+    /// <see cref="BossHpPerThreat"/> per point) and hits one harder per <see cref="ThreatPerExtraDamage"/> threat.
+    /// </summary>
+    public sealed class RenownTuning
+    {
+        public int RenownPerThreat = 2;
+        public int MaxThreat = 3;
+        public int FirstFloor = 3;
+        public int HpPerThreat = 1;
+        public int BossHpPerThreat = 2;
+        /// <summary>Monsters on those floors hit one harder per this much threat.</summary>
+        public int ThreatPerExtraDamage = 2;
+    }
+
     /// <summary>Experience a run earns (D-027, rules §14).</summary>
     public sealed class XpTuning
     {
@@ -267,6 +286,13 @@ namespace ClickDungeon.Content
         public int CoinsPerFloor = 10;
         /// <summary>Lord Blobert's hoard (D-026): gems price the special key.</summary>
         public int GemsForTheBoss = 5;
+        /// <summary>
+        /// Chances in percent that an item drops (D-040): gear is a find, not a given. A premium chest, opened with a bought
+        /// special key, always holds one.
+        /// </summary>
+        public int ItemChanceBoss = 50;
+        public int ItemChanceGreatChest = 35;
+        public int ItemChancePremium = 100;
         /// <summary>A vault's great chest also holds a few gems.</summary>
         public int GemsPerGreatChest = 1;
         /// <summary>Rewards in a premium chest, opened with a special key.</summary>

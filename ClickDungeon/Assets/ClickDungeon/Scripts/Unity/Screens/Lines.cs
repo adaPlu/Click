@@ -241,35 +241,35 @@ namespace ClickDungeon.Unity.Screens
             }
         }
 
-        public static string IntentBadge(EnemyState enemy, EnemyDefinition def)
+        public static string IntentBadge(EnemyState enemy, EnemyDefinition def, int extraDamage = 0)
         {
             switch (enemy.Intent.Kind)
             {
-                case IntentKind.Attack: return $"HIT {def.Damage}";
+                case IntentKind.Attack: return $"HIT {def.Damage + extraDamage}";
                 case IntentKind.Move: return "MOVE";
-                case IntentKind.Fire: return $"FIRE {def.Damage}";
+                case IntentKind.Fire: return $"FIRE {def.Damage + extraDamage}";
                 case IntentKind.Rest: return enemy.Mode == EnemyMode.Deflated ? "x2 DMG" : "REST";
                 case IntentKind.Recover: return "DAZED";
                 case IntentKind.Summon: return "SUMMON";
-                case IntentKind.Slam: return $"SLAM {def.SlamDamage}";
+                case IntentKind.Slam: return $"SLAM {def.SlamDamage + extraDamage}";
                 case IntentKind.PuffUp: return "PUFF UP";
                 default: return "";
             }
         }
 
-        public static string IntentExplain(EnemyState enemy, EnemyDefinition def)
+        public static string IntentExplain(EnemyState enemy, EnemyDefinition def, int extraDamage = 0)
         {
             string mode = enemy.Mode == EnemyMode.Puffed ? " Puffed up: immune to damage."
                 : enemy.Mode == EnemyMode.Deflated ? " Deflated: takes double damage!" : "";
             switch (enemy.Intent.Kind)
             {
-                case IntentKind.Attack: return $"Next turn: hits the marked tile for {def.Damage}. Step off it or Shield.{mode}";
+                case IntentKind.Attack: return $"Next turn: hits the marked tile for {def.Damage + extraDamage}. Step off it or Shield.{mode}";
                 case IntentKind.Move: return $"Next turn: moves toward you.{mode}";
-                case IntentKind.Fire: return $"Next turn: shoots fire {enemy.Intent.Dir.ToString().ToLowerInvariant()} for {def.Damage}. Leave the lane.{mode}";
+                case IntentKind.Fire: return $"Next turn: shoots fire {enemy.Intent.Dir.ToString().ToLowerInvariant()} for {def.Damage + extraDamage}. Leave the lane.{mode}";
                 case IntentKind.Rest: return $"Next turn: does nothing.{mode}";
                 case IntentKind.Recover: return "Staggered: does nothing next turn. Free hit!";
-                case IntentKind.Summon: return "Next turn: summons a slimelet on the marked tile.";
-                case IntentKind.Slam: return $"Next turn: slams the marked tiles for {def.SlamDamage}. Dash out or Shield!";
+                case IntentKind.Summon: return "Next turn: summons on the marked tiles.";
+                case IntentKind.Slam: return $"Next turn: slams the marked tiles for {def.SlamDamage + extraDamage}. Dash out or Shield!";
                 case IntentKind.PuffUp: return "Next turn: puffs up and becomes immune for 2 turns.";
                 default: return mode.Trim();
             }

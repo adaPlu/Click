@@ -162,6 +162,11 @@ namespace ClickDungeon.Domain
         /// <summary>Counted for the crown's achievements (D-030) and banked with the rest when the run ends.</summary>
         public int MonstersSlain;
         public int ChestsOpened;
+        /// <summary>
+        /// Threat from the hero's renown (D-040): set when the run starts from the profile's level and worn gear, never
+        /// changed. Monsters on the deep floors get extra hearts for it.
+        /// </summary>
+        public int Threat;
         /// <summary>Premium chests still to be placed on the floors ahead (D-026), one per special key carried in.</summary>
         public int PremiumChestsToPlace;
 

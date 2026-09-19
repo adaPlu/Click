@@ -528,3 +528,18 @@ Rules referenced here live in `docs/rules.md`.
   death on floor 5); the sharp bot is unchanged.
 - **TESTS**: `LordBlobertTests.SlamShakesItsRowAndColumn`, `SummonBringsTwoMinions`, `DashEscapesTheSlam`.
 
+## D-040 A profile that grows meets a dungeon that answers
+- **DECISION**: three changes together. (1) Lord Blobert slams twice a cycle: slam, summon, slam, puff up
+  (`EnemyDefinition.DoubleSlam`). (2) **Renown** = levels past the first + items worn; every 2 renown is a point of
+  threat (max 3), set on `RunState.Threat` when the run starts. From floor 3, monsters get +1 heart per threat
+  (Blobert +2) and +1 damage per 2 threat (`Simulation/Renown.cs`, `RunFactory.ApplyThreat`); telegraphs and the
+  inspect text show the raised numbers. (3) Gear is rarer: Blobert drops an item 50% of the time, a great chest 35%, a
+  premium chest (bought key) always (`TreasureTuning.ItemChance*`). Ruleset 8.
+- **WHY**: "do all three" after a ten-run playthrough still won 9 of 10: the profile snowballed (12 items and level 7)
+  and a careful player never gave Blobert an opening.
+- **MEASURED**: fresh profile, Knight's Trial, 60 blind seeds: casual wins 70% -> 65% (4 deaths to Blobert), novice
+  45% -> 37% (18). The ten-run casual playthrough still wins 9 of 10, now with 7 items instead of 12 and closer runs
+  (one won on 2 hearts): that bot dodges every telegraph, so its hearts go to hidden traps, which renown does not touch.
+- **TESTS**: `RenownTests`, `InventoryTests.GearDropsOnlySometimesExceptFromAPremiumChest`,
+  `LordBlobertTests.ScriptRunsSlamSummonPuffUp`.
+

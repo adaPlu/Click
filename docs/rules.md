@@ -181,9 +181,10 @@ under its covers. Repeating script:
    and that cell's whole row and column (D-039). Executes next phase for 4 damage.
 2. **Summon**: declares `Summon` on an empty cell adjacent to himself; two
    Slimelets appear next phase, the second on another free tile beside him (D-039).
-3. **Puff Up**: declares `PuffUp`. For the next 2 turns he is **Puffed**:
+3. **Slam again** (D-040): a second slam, as in step 1.
+4. **Puff Up**: declares `PuffUp`. For the next 2 turns he is **Puffed**:
    immune to damage, `Move`s toward the hero, attacks adjacent for 2.
-4. **Deflated**: 1 turn, no action, takes **double damage**.
+5. **Deflated**: 1 turn, no action, takes **double damage**.
 
 Then back to 1. The encounter is won when Blobert dies (minions vanish).
 
@@ -627,10 +628,17 @@ wears its red "!" only while a point is waiting. A run never reads the profile:
 talents become the hero's starting numbers, so bots and tier guards (which play
 an empty profile) still measure a first run.
 
+### 14.1 Renown *(D-040, tune numbers)*
+
+The deeper floors answer a built-up hero. **Renown** is levels past the first plus items worn; every
+**2** renown is one point of **threat**, up to **3**. From **floor 3** on, every monster has one extra
+heart per threat (Lord Blobert two), and every enemy blow (hits, fire, slams) deals one more per 2
+threat. A new hero has no threat. The telegraphs show the raised damage.
+
 ## 15. Inventory *(D-028, tune numbers)*
 
-Equipment is found in runs and worn between them. **Lord Blobert**, a vault's
-**great chest** and a **premium chest** each drop one item, picked from the table
+Equipment is found in runs and worn between them. **Lord Blobert** (50%), a vault's
+**great chest** (35%) and a **premium chest** (always) can each drop one item (D-040), picked from the table
 below by a hash of the run seed, the floor and the spot, so a run always finds
 the same item. A find joins the inventory when the run ends (won, lost or
 abandoned) and fills its slot if the slot is empty; an item already owned

@@ -32,6 +32,11 @@ namespace ClickDungeon.Tests
             var minion = Enemy(run, "slimelet");
             Assert.That(minion, Is.Not.Null);
             Assert.That(minion.Intent.Kind, Is.Not.EqualTo(IntentKind.None), "Summoned minions telegraph first.");
+            Assert.That(boss.Intent.Kind, Is.EqualTo(IntentKind.Slam), "A second slam follows the summon (D-040).");
+
+            run.Hero.Hp = 99;
+            run.Hero.MaxHp = 99;
+            DoOk(run, PlayerCommand.Wait());
             Assert.That(boss.Intent.Kind, Is.EqualTo(IntentKind.PuffUp));
 
             DoOk(run, PlayerCommand.Wait());
@@ -105,7 +110,7 @@ namespace ClickDungeon.Tests
             var boss = Enemy(run, "lord_blobert");
             boss.Mode = EnemyMode.Puffed;
             boss.ModeTurns = 2;
-            boss.ActionCounter = 3;
+            boss.ActionCounter = 4;  // a whole slam, summon, slam, puff cycle done
             var events = new List<GameEvent>();
 
             EnemyAi.Declare(run, boss, Catalog, events);

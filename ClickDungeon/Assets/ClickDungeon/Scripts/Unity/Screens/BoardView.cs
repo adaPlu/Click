@@ -441,7 +441,7 @@ namespace ClickDungeon.Unity.Screens
                 var def = catalog.Enemy(enemy.DefId);
                 var e = enemy;
                 UpsertToken(enemy.Id, def.Id + ":" + enemy.Mode + ":" + ActorAnimations.Pose(enemy, def), enemy.Pos, animate,
-                    body => Icons.Enemy(body, def, e.Mode, e.Intent.Kind), Lines.IntentBadge(enemy, def), ArtKeys.IntentIcon(enemy.Intent.Kind),
+                    body => Icons.Enemy(body, def, e.Mode, e.Intent.Kind), Lines.IntentBadge(enemy, def, Renown.Hit(run, catalog, 0)), ArtKeys.IntentIcon(enemy.Intent.Kind),
                     BadgeColor(enemy.Intent.Kind), enemy.Hp, enemy.MaxHp);
             }
 

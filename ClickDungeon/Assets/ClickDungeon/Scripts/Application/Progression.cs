@@ -27,6 +27,21 @@ namespace ClickDungeon.Application
 
         public static int Level(ProfileState profile) => Level(profile?.Xp ?? 0);
 
+        /// <summary>Renown (D-040): levels past the first plus items worn.</summary>
+        public static int Renown(ProfileState profile, ContentCatalog catalog)
+        {
+            if (profile == null) return 0;
+            int worn = 0;
+            if (profile.Equipped != null)
+                foreach (var id in profile.Equipped.Values)
+                    if (catalog.Item(id) != null && Inventory.Owns(profile, id)) worn++;
+            return Level(profile) - 1 + worn;
+        }
+
+        /// <summary>The threat a run starts with (D-040): one point per few renown, capped.</summary>
+        public static int Threat(ProfileState profile, ContentCatalog catalog) =>
+            Math.Min(catalog.Renown.MaxThreat, Renown(profile, catalog) / Math.Max(1, catalog.Renown.RenownPerThreat));
+
         /// <summary>Points every class has to spend: one per level past the first.</summary>
         public static int PointsEarned(ProfileState profile) => Level(profile) - 1;
 

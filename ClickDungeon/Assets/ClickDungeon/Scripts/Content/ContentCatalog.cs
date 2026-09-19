@@ -21,6 +21,7 @@ namespace ClickDungeon.Content
         public VaultTuning Vault = new VaultTuning();
         public TreasureTuning Treasure = new TreasureTuning();
         public XpTuning Xp = new XpTuning();
+        public RenownTuning Renown = new RenownTuning();
         /// <summary>The tier this catalog was built for. Every number in it already includes that tier's adjustments.</summary>
         public Difficulty Difficulty = Difficulty.Medium;
         /// <summary>HP restored when the hero arrives on the next floor.</summary>
@@ -382,6 +383,7 @@ namespace ClickDungeon.Content
                 // D-039: he never landed a blow (a telegraphed slam is always dodged in Free Roam), so he has more to chew
                 // through, a slam that shakes its row and column, two minions per summon, and covered traps on his floor.
                 MaxHp = 18, Damage = 2, SlamDamage = 4, PuffTurns = 2, SummonId = "slimelet", SummonCount = 2, SlamShakesLines = true,
+                DoubleSlam = true,  // D-040: a second slam in every cycle, so even careful play has to keep moving
             });
 
             AddTemplate(c, "pillars", false,

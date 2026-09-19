@@ -22,13 +22,16 @@ namespace ClickDungeon.Simulation
         /// One item from the drop table (D-028), picked by a hash of the run seed, the floor and where it dropped, so the same
         /// run always finds the same item. Whether it is a duplicate is the profile's business, settled at banking.
         /// </summary>
-        public static void Item(RunState run, ContentCatalog catalog, GridPos at, ulong source, List<GameEvent> events)
+        public static void Item(RunState run, ContentCatalog catalog, GridPos at, ulong source, int chancePercent, List<GameEvent> events)
         {
             if (catalog.Items.Count == 0) return;
             var rng = new DeterministicRng(Hash.Of(run.RunSeed, Hash.ItemSalt, (ulong)run.Floor.FloorIndex,
                 (ulong)(at.InBounds ? at.Index : 99), source, run.Floor.IsVault ? 1UL : 0UL));
+            // Not every source drops gear (D-040); the roll comes after the pick so the same run finds the same item.
+            ulong pick = rng.NextULong();
+            if ((int)(rng.NextULong() % 100UL) >= chancePercent) return;
             // Weighted by rarity (D-036): commons come often, legendaries seldom.
-            var item = catalog.PickItem(rng.NextULong());
+            var item = catalog.PickItem(pick);
             if (item == null) return;
             run.ItemsFound.Add(item.Id);
             events.Add(GameEvent.Of(GameEventKind.ItemFound, to: at, source: item.Id));

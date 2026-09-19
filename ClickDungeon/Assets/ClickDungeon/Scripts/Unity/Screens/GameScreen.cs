@@ -859,7 +859,7 @@ namespace ClickDungeon.Unity.Screens
                 var def = catalog.Enemy(enemy.DefId);
                 title = def.DisplayName.ToUpperInvariant();
                 sb.AppendLine($"HP {enemy.Hp}/{enemy.MaxHp}");
-                sb.AppendLine(Lines.IntentExplain(enemy, def));
+                sb.AppendLine(Lines.IntentExplain(enemy, def, Renown.Hit(run, catalog, 0)));
                 var underfoot = UnderfootText(cell, floor, Board.ExitReadsOpen(run));
                 if (underfoot != null) sb.AppendLine(underfoot);
             }
