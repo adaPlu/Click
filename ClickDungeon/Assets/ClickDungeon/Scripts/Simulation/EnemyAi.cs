@@ -106,6 +106,24 @@ namespace ClickDungeon.Simulation
             }
         }
 
+        /// <summary>
+        /// Where a summon's minions appear: the declared tile, then (D-039) the boss's other free neighbours until
+        /// <see cref="EnemyDefinition.SummonCount"/> are placed. A blocked declared tile cancels the summon. The threat
+        /// overlay marks the same tiles, so every minion is telegraphed.
+        /// </summary>
+        public static List<GridPos> SummonCells(RunState run, EnemyState boss, EnemyDefinition def, GridPos target)
+        {
+            var cells = new List<GridPos>();
+            if (!Board.EnemyCanEnter(run, target)) return cells;
+            cells.Add(target);
+            foreach (var cell in Board.Neighbours(boss.Pos))
+            {
+                if (cells.Count >= System.Math.Max(1, def.SummonCount)) break;
+                if (cell != target && Board.EnemyCanEnter(run, cell)) cells.Add(cell);
+            }
+            return cells;
+        }
+
         public static void Execute(RunState run, EnemyState enemy, ContentCatalog catalog, List<GameEvent> events)
         {
             var def = catalog.Enemy(enemy.DefId);
@@ -176,23 +194,11 @@ namespace ClickDungeon.Simulation
 
                 case IntentKind.Summon:
                     if (!catalog.HasEnemy(def.SummonId)) break;
-                    // The declared tile first, then (D-039) any further minions on the boss's other free neighbours.
-                    var summonCells = new List<GridPos> { intent.Target };
-                    foreach (var cell in Board.Neighbours(enemy.Pos))
-                        if (cell != intent.Target) summonCells.Add(cell);
-                    int summoned = 0;
-                    foreach (var cell in summonCells)
+                    foreach (var cell in SummonCells(run, enemy, def, intent.Target))
                     {
-                        if (summoned >= System.Math.Max(1, def.SummonCount)) break;
-                        if (!Board.EnemyCanEnter(run, cell))
-                        {
-                            if (cell == intent.Target) break;  // a blocked declared tile cancels the summon, as before
-                            continue;
-                        }
                         var minion = Spawn(run.Floor, catalog.Enemy(def.SummonId), cell, awake: true);
                         minion.JustWoken = true;
                         events.Add(GameEvent.Of(GameEventKind.EnemySummoned, minion.Id, enemy.Pos, cell, source: minion.DefId));
-                        summoned++;
                     }
                     break;
 

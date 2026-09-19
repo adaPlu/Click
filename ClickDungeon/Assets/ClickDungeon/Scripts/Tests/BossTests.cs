@@ -65,8 +65,13 @@ namespace ClickDungeon.Tests
             run.Hero.Hp = 99;
             run.Hero.MaxHp = 99;
             DoOk(run, PlayerCommand.Dash(P(2, 4)));
+            var boss = Enemy(run, "lord_blobert");
+            var marked = EnemyAi.SummonCells(run, boss, Catalog.Enemy("lord_blobert"), boss.Intent.Target);
+            Assert.That(marked.Count, Is.EqualTo(2), "Both minions' tiles are telegraphed.");
             DoOk(run, PlayerCommand.Wait());
-            Assert.That(run.Floor.Enemies.FindAll(e => e.DefId == "slimelet").Count, Is.EqualTo(2));
+            var minions = run.Floor.Enemies.FindAll(e => e.DefId == "slimelet");
+            Assert.That(minions.Count, Is.EqualTo(2));
+            Assert.That(minions.TrueForAll(m => marked.Contains(m.Pos)), Is.True, "They appear where they were marked.");
         }
 
         [Test]

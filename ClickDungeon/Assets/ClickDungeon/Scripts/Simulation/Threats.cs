@@ -45,6 +45,8 @@ namespace ClickDungeon.Simulation
                         break;
                     case IntentKind.Summon:
                         Add(threats, ThreatKind.Summon, intent.Target, 0, enemy.Id);
+                        foreach (var cell in EnemyAi.SummonCells(run, enemy, def, intent.Target))
+                            if (cell != intent.Target) Add(threats, ThreatKind.Summon, cell, 0, enemy.Id);
                         break;
                 }
             }
