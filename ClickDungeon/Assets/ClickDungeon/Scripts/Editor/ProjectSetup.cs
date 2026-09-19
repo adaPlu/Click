@@ -187,8 +187,7 @@ namespace ClickDungeon.EditorTools
             };
             var report = BuildPipeline.BuildPlayer(options);
             bool succeeded = report.summary.result == BuildResult.Succeeded;
-            if (succeeded) File.WriteAllText(Path.Combine(IosBuildPath, BuildStampFile), GitVersion() + "
-");
+            if (succeeded) File.WriteAllText(Path.Combine(IosBuildPath, BuildStampFile), GitVersion() + "\n");
             Debug.Log($"[ClickDungeon] iOS build {report.summary.result}: {report.summary.totalErrors} errors -> {IosBuildPath}");
             if (UnityEngine.Application.isBatchMode) EditorApplication.Exit(succeeded ? 0 : 1);
         }
