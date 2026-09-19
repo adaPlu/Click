@@ -134,6 +134,18 @@ namespace ClickDungeon.Simulation
             run.PremiumChestsToPlace--;
         }
 
+        /// <summary>
+        /// Guiding Light (D-037): the key's tile starts uncovered. Called for every floor, and once more when a run's talents
+        /// are applied, since the first floor is set up before they are.
+        /// </summary>
+        public static void RevealByTalents(RunState run, List<GameEvent> events)
+        {
+            var floor = run.Floor;
+            if (run.Perk(TalentEffect.GuidingLight) <= 0 || floor.IsVault) return;
+            foreach (var p in Board.AllCells)
+                if (floor[p].Content == ContentKind.Key && floor[p].Knowledge != Knowledge.Revealed) Visibility.Reveal(floor, p, events);
+        }
+
         public static void SetupFloor(RunState run, ContentCatalog catalog, List<GameEvent> events)
         {
             var floor = run.Floor;
@@ -141,6 +153,7 @@ namespace ClickDungeon.Simulation
             hero.Pos = floor.Start;
             hero.HasKey = false;
             hero.Guard = false;
+            hero.WardSpent = false;
             Mana.Refill(hero);
 
             // Chest quality (D-022). Assigned here rather than during generation so it draws on the run seed without
@@ -158,6 +171,7 @@ namespace ClickDungeon.Simulation
 
             // The exit is covered like every other tile until it is clicked (D-023).
             events.Add(GameEvent.Of(GameEventKind.FloorStarted, amount: floor.FloorIndex, to: floor.Start));
+            RevealByTalents(run, events);
             Visibility.Update(run, catalog, events);
             TurnResolver.DeclareAll(run, catalog, events);
         }

@@ -15,10 +15,24 @@ namespace ClickDungeon.Simulation
             if (blockable && hero.Guard)
             {
                 events.Add(GameEvent.Of(GameEventKind.HeroBlocked, to: hero.Pos, amount: amount, source: source));
+                // Holy Bulwark (D-037): a block gives mana back.
+                int mana = run.Perk(TalentEffect.HolyBulwark);
+                if (mana > 0) hero.Mana = Math.Min(hero.MaxMana, hero.Mana + mana);
                 return true;
             }
+            // Unyielding (D-037): at half hearts or fewer, every hit is softened, never below 1.
+            int soften = run.Perk(TalentEffect.Unyielding);
+            if (soften > 0 && hero.Hp * 2 <= hero.MaxHp) amount = Math.Max(1, amount - soften);
             hero.Hp = Math.Max(0, hero.Hp - amount);
             events.Add(GameEvent.Of(GameEventKind.HeroDamaged, to: hero.Pos, amount: amount, source: source));
+            // Divine Shield (D-037): once per floor, the last heart holds.
+            int ward = run.Perk(TalentEffect.DivineShield);
+            if (hero.Hp == 0 && ward > 0 && !hero.WardSpent)
+            {
+                hero.WardSpent = true;
+                hero.Hp = Math.Min(hero.MaxHp, 1 + ward);
+                events.Add(GameEvent.Of(GameEventKind.HeroHealed, to: hero.Pos, amount: hero.Hp, source: "divine_shield"));
+            }
             return false;
         }
 

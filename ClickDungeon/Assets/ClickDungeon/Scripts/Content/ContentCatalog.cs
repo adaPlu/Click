@@ -99,6 +99,28 @@ namespace ClickDungeon.Content
             return null;
         }
 
+        /// <summary>Class talents (D-037), each tree in path and tier order.</summary>
+        public readonly List<TalentDefinition> Talents = new List<TalentDefinition>();
+        /// <summary>Heroes shown locked on Hero Select (D-037).</summary>
+        public readonly List<HeroPreview> ComingSoon = new List<HeroPreview>();
+
+        static void Talent(ContentCatalog c, string id, string classId, string branch, int tier, int maxRank, string name, string summary,
+            string perRank, TalentEffect effect, int amount = 1, string requires = null) =>
+            c.Talents.Add(new TalentDefinition
+            {
+                Id = id, ClassId = classId, BranchId = branch, Tier = tier, MaxRank = maxRank, Name = name, Summary = summary,
+                PerRank = perRank, Effect = effect, Amount = amount, Requires = requires,
+            });
+
+        public TalentDefinition Talent(string id)
+        {
+            foreach (var talent in Talents)
+                if (talent.Id == id) return talent;
+            return null;
+        }
+
+        public List<TalentDefinition> TalentsOf(string classId) => Talents.FindAll(t => t.ClassId == classId);
+
         public ItemDefinition Item(string id)
         {
             foreach (var item in Items)
@@ -201,6 +223,94 @@ namespace ClickDungeon.Content
             {
                 Id = "dawnward", DisplayName = "Dawnward", ClassId = "paladin", Tagline = "Steadfast. Shielded. Unshaken.",
             };
+
+            // ------------------------------------------------------------------ class talent trees (D-037)
+            var knight = c.HeroClasses["knight"];
+            knight.Role = "Versatile vanguard";
+            knight.Playstyle = "Strikes first, moves fast and turns every chest into momentum. The Knight rewards picking fights on his own terms.";
+            knight.Difficulty = 1;
+            knight.Theme = "#D8433A";
+            knight.Branches = new[]
+            {
+                new TalentBranch { Id = "blade", Name = "BLADE", Focus = "First strikes and finishing blows", Color = "#E0533F" },
+                new TalentBranch { Id = "bulwark", Name = "BULWARK", Focus = "Shield work and hitting back", Color = "#4C8DE0" },
+                new TalentBranch { Id = "adventurer", Name = "ADVENTURER", Focus = "Dashes, chests and the long road", Color = "#6CC04A" },
+            };
+            var paladin = c.HeroClasses["paladin"];
+            paladin.Role = "Holy guardian";
+            paladin.Playstyle = "Outlasts everything. The Paladin blocks, punishes the staggered and turns faith into second chances.";
+            paladin.Difficulty = 2;
+            paladin.Theme = "#F2C14E";
+            paladin.Branches = new[]
+            {
+                new TalentBranch { Id = "hammer", Name = "HAMMER", Focus = "Punish the staggered and the mighty", Color = "#F2B233" },
+                new TalentBranch { Id = "aegis", Name = "AEGIS", Focus = "Blocks that give back", Color = "#7FB5F0" },
+                new TalentBranch { Id = "devotion", Name = "DEVOTION", Focus = "Potions, prayer and light", Color = "#F4E6B0" },
+            };
+
+            Talent(c, "k_opening_strike", "knight", "blade", 1, 3, "Opening Strike", "Hit hard before they hit back.",
+                "+1 slash damage against an enemy at full health", TalentEffect.OpeningStrike);
+            Talent(c, "k_cleave", "knight", "blade", 2, 1, "Cleave", "Your slash carries on into their friends.",
+                "A slash also deals 1 damage to every other awake enemy next to you", TalentEffect.Cleave, requires: "k_opening_strike");
+            Talent(c, "k_executioner", "knight", "blade", 3, 2, "Executioner", "Finish what you started.",
+                "+1 slash damage against an enemy at 2 hearts or fewer", TalentEffect.Executioner, requires: "k_cleave");
+            Talent(c, "k_relentless", "knight", "blade", 4, 1, "Relentless", "Every kill fuels the next.",
+                "Slaying an enemy with a slash restores 1 heart and 2 mana", TalentEffect.Relentless, requires: "k_executioner");
+            Talent(c, "k_sturdy", "knight", "bulwark", 1, 3, "Sturdy", "More knight to go around.",
+                "+1 max heart", TalentEffect.MaxHearts);
+            Talent(c, "k_shield_wall", "knight", "bulwark", 2, 1, "Shield Wall", "Raise it without a second thought.",
+                "SHIELD costs 1 less mana", TalentEffect.ShieldCostCut, requires: "k_sturdy");
+            Talent(c, "k_riposte", "knight", "bulwark", 3, 2, "Riposte", "Block, then answer.",
+                "An attack your shield blocks deals 1 damage back to the attacker", TalentEffect.Riposte, requires: "k_shield_wall");
+            Talent(c, "k_bastion", "knight", "bulwark", 4, 1, "Bastion", "Behind the shield, he mends.",
+                "Every SHIELD also restores 1 heart", TalentEffect.Bastion, requires: "k_riposte");
+            Talent(c, "k_light_step", "knight", "adventurer", 1, 2, "Light Step", "Travel light, dash often.",
+                "DASH costs 1 less mana (never below 1)", TalentEffect.DashCostCut);
+            Talent(c, "k_treasure_sense", "knight", "adventurer", 2, 1, "Treasure Sense", "He knows exactly where to kick.",
+                "Chests open with one tap fewer (never below 1)", TalentEffect.ChestTapCut, requires: "k_light_step");
+            Talent(c, "k_fortune", "knight", "adventurer", 3, 2, "Fortune's Favour", "The dungeon pays the bold.",
+                "+3 coins for every chest reward", TalentEffect.CoinsPerChestReward, amount: 3, requires: "k_treasure_sense");
+            Talent(c, "k_second_wind", "knight", "adventurer", 4, 1, "Second Wind", "Every staircase is a fresh start.",
+                "Arriving on a new floor restores 3 more hearts", TalentEffect.SecondWind, amount: 3, requires: "k_fortune");
+
+            Talent(c, "p_judgement", "paladin", "hammer", 1, 3, "Judgement", "Strike the one who faltered.",
+                "+1 slash damage against a staggered enemy", TalentEffect.Judgement);
+            Talent(c, "p_consecrate", "paladin", "hammer", 2, 1, "Consecrate", "Holy light bursts from the raised shield.",
+                "SHIELD deals 1 damage to every awake enemy next to you", TalentEffect.Consecrate, requires: "p_judgement");
+            Talent(c, "p_dawnstrike", "paladin", "hammer", 3, 2, "Dawnstrike", "The mighty fall hardest.",
+                "+1 slash damage against Lord Blobert", TalentEffect.Dawnstrike, requires: "p_consecrate");
+            Talent(c, "p_wrath_of_dawn", "paladin", "hammer", 4, 1, "Wrath of Dawn", "One falls, the rest reel.",
+                "Slaying an enemy with a slash staggers every other awake enemy next to you", TalentEffect.WrathOfDawn, requires: "p_dawnstrike");
+            Talent(c, "p_plated", "paladin", "aegis", 1, 3, "Plated", "Another layer of gold and faith.",
+                "+1 max heart", TalentEffect.MaxHearts);
+            Talent(c, "p_holy_bulwark", "paladin", "aegis", 2, 1, "Holy Bulwark", "Every block is answered by grace.",
+                "An attack your shield blocks restores 2 mana", TalentEffect.HolyBulwark, amount: 2, requires: "p_plated");
+            Talent(c, "p_unyielding", "paladin", "aegis", 3, 1, "Unyielding", "Wounded, never broken.",
+                "While at half hearts or fewer, every hit deals 1 less damage (never below 1)", TalentEffect.Unyielding, requires: "p_holy_bulwark");
+            Talent(c, "p_divine_shield", "paladin", "aegis", 4, 1, "Divine Shield", "Not today.",
+                "Once per floor, a blow that would end you leaves you at 1 heart and heals 3", TalentEffect.DivineShield, amount: 3, requires: "p_unyielding");
+            Talent(c, "p_blessed_draught", "paladin", "devotion", 1, 3, "Blessed Draught", "Every potion, a small miracle.",
+                "Potions heal 1 more", TalentEffect.PotionHeal);
+            Talent(c, "p_prayer", "paladin", "devotion", 2, 1, "Prayer", "Stillness restores the spirit.",
+                "Waiting a turn restores 1 extra mana", TalentEffect.Prayer, requires: "p_blessed_draught");
+            Talent(c, "p_guiding_light", "paladin", "devotion", 3, 1, "Guiding Light", "The way down is shown.",
+                "Each new floor starts with its key uncovered", TalentEffect.GuidingLight, requires: "p_prayer");
+            Talent(c, "p_sanctified", "paladin", "devotion", 4, 1, "Sanctified", "Blessed waters, blessed wine.",
+                "Potions also refill your mana, and fountains heal you fully", TalentEffect.Sanctified, requires: "p_guiding_light");
+
+            c.HeroIdentities[DefaultHeroId].Title = "The Brave...ish";
+            c.HeroIdentities[DefaultHeroId].Quote = "Adventure looks better together.";
+            c.HeroIdentities["dawnward"].Title = "Shield of the Dawn";
+            c.HeroIdentities["dawnward"].Quote = "Anchors the front line and turns faith into victory.";
+
+            // Heroes on the way (D-037): shown locked on Hero Select, with no class behind them yet.
+            c.ComingSoon.Add(new HeroPreview { Id = "ironheart", DisplayName = "Ironheart", ClassName = "Knight", Role = "Tank", Blurb = "Absorbs pressure and wins through durability." });
+            c.ComingSoon.Add(new HeroPreview { Id = "shadowcut", DisplayName = "Shadowcut", ClassName = "Rogue", Role = "Damage", Blurb = "Exploits openings and turns precision into burst damage." });
+            c.ComingSoon.Add(new HeroPreview { Id = "emberwisp", DisplayName = "Emberwisp", ClassName = "Wizard", Role = "Magic", Blurb = "Controls the battlefield with powerful magical effects." });
+            c.ComingSoon.Add(new HeroPreview { Id = "windsong", DisplayName = "Windsong", ClassName = "Ranger", Role = "Ranged", Blurb = "Controls distance and turns precision into ranged attacks." });
+            c.ComingSoon.Add(new HeroPreview { Id = "lightbringer", DisplayName = "Lightbringer", ClassName = "Cleric", Role = "Healer", Blurb = "Sustains, restores momentum and turns protection into victory." });
+            c.ComingSoon.Add(new HeroPreview { Id = "rageclaw", DisplayName = "Rageclaw", ClassName = "Berserker", Role = "Damage", Blurb = "Turns aggression into momentum and grows deadlier as the fight goes on." });
+            c.ComingSoon.Add(new HeroPreview { Id = "gearspark", DisplayName = "Gearspark", ClassName = "Engineer", Role = "Utility", Blurb = "Builds clever devices and turns machinery into tactical advantage." });
 
             // The equipment library (D-028, D-036): every piece is starting numbers, grouped by slot, rarer is stronger.
             Gear(c, "steel_sword", "Steel Sword", ItemSlot.Weapon, ItemRarity.Common, slash: 1);

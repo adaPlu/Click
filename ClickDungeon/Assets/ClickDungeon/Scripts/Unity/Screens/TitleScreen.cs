@@ -35,6 +35,8 @@ namespace ClickDungeon.Unity.Screens
         AchievementsOverlay _achievements;
         MailOverlay _mail;
         ShopOverlay _shop;
+        TalentOverlay _talents;
+        HeroSelectOverlay _heroes;
         GameObject _mailBadge;
         /// <summary>The reference's mail button without its "!", laid over the background's while nothing is waiting.</summary>
         GameObject _mailClean;
@@ -95,6 +97,8 @@ namespace ClickDungeon.Unity.Screens
             _achievements = new AchievementsOverlay(Root);
             _mail = new MailOverlay(Root);
             _shop = new ShopOverlay(Root);
+            _heroes = new HeroSelectOverlay(Root);
+            _talents = new TalentOverlay(Root);
         }
 
         public RectTransform Root { get; }
@@ -107,6 +111,8 @@ namespace ClickDungeon.Unity.Screens
             if (_achievements.IsOpen) _achievements.Hide();
             if (_mail.IsOpen) _mail.Hide();
             if (_shop.IsOpen) _shop.Hide();
+            if (_talents.IsOpen) _talents.Hide();
+            if (_heroes.IsOpen) _heroes.Hide();
             _flash.text = "";
             RefreshHeroCard();
             RefreshPurse();
@@ -134,6 +140,9 @@ namespace ClickDungeon.Unity.Screens
             else if (name == "heroes") OpenHeroSelect();
             else if (name == "shop") OpenShop();
             else if (name == "talents") OpenTalents();
+            else if (name == "talentspaladin") OpenTalents("paladin");
+            else if (name == "heroespaladin") { OpenHeroSelect(); _heroes.Show("dawnward"); }
+            else if (name == "heroeslocked") { OpenHeroSelect(); _heroes.Show("rageclaw"); }
             else if (name == "inventory") OpenInventory();
             else if (name == "coins") OpenPurse(true);
             else if (name == "shopgear") OpenShop(ShopTab.Gear);
@@ -153,10 +162,16 @@ namespace ClickDungeon.Unity.Screens
                 if (kb.escapeKey.wasPressedThisFrame) _modal.Back();
                 return;
             }
-            if (_inventory.IsOpen || _achievements.IsOpen || _mail.IsOpen || _shop.IsOpen)
+            if (_talents.IsOpen)
+            {
+                if (kb.escapeKey.wasPressedThisFrame) _talents.Hide();
+                return;
+            }
+            if (_inventory.IsOpen || _achievements.IsOpen || _mail.IsOpen || _shop.IsOpen || _heroes.IsOpen)
             {
                 if (kb.escapeKey.wasPressedThisFrame)
                 {
+                    _heroes.Hide();
                     _shop.Hide();
                     _inventory.Hide();
                     _achievements.Hide();
@@ -251,21 +266,15 @@ namespace ClickDungeon.Unity.Screens
         void OpenInventory() =>
             _inventory.Open(_app.Catalog, _app.Session.Profile, () => _app.Session.SaveProfile());
 
-        void OpenTalents()
-        {
-            Menus.OpenTalents(_modal, _app.Session.Profile, id =>
+        /// <summary>The talent tree of the chosen hero's class (D-037); the other classes are a tab away.</summary>
+        void OpenTalents() => OpenTalents(Progression.ClassOf(_app.Catalog, HeroChoice()));
+
+        void OpenTalents(string classId) =>
+            _talents.Open(_app.Catalog, _app.Session.Profile, classId, () =>
             {
-                if (Progression.TryLearn(_app.Session.Profile, id)) _app.Session.SaveProfile();
-                RefreshPurse();
-                OpenTalents();
-            }, () =>
-            {
-                Progression.Reset(_app.Session.Profile);
                 _app.Session.SaveProfile();
                 RefreshPurse();
-                OpenTalents();
-            }, _modal.Hide);
-        }
+            });
 
         /// <summary>The purse's "+" opens the shop on its exchange (D-036).</summary>
         void OpenPurse(bool coins) => OpenShop(ShopTab.Exchange);
@@ -279,15 +288,13 @@ namespace ClickDungeon.Unity.Screens
                 RefreshPurse();
             }, tab);
 
-        void OpenHeroSelect()
-        {
-            Menus.OpenHeroSelect(_modal, _app.Catalog, HeroChoice(), id =>
+        void OpenHeroSelect() =>
+            _heroes.Open(_app.Catalog, _app.Session.Profile, HeroChoice(), id =>
             {
                 UserPrefs.Hero = id;
                 RefreshHeroCard();
-                OpenHeroSelect();
-            }, _modal.Hide);
-        }
+                RefreshPurse();
+            }, OpenTalents);
 
         void BuildHeroCard()
         {
@@ -362,7 +369,8 @@ namespace ClickDungeon.Unity.Screens
             // The red "!" only when a talent point is waiting, as the reference's badge means.
             if (_talentsButton != null)
                 UiArt.ApplyPanel(_talentsButton.Background, _talentsButton.Border,
-                    Progression.PointsFree(profile) > 0 ? ArtKeys.ButtonTalentsAlert : ArtKeys.ButtonTalents);
+                    Progression.PointsFree(profile, _app.Catalog, Progression.ClassOf(_app.Catalog, HeroChoice())) > 0
+                        ? ArtKeys.ButtonTalentsAlert : ArtKeys.ButtonTalents);
         }
 
         void Face(RectTransform parent, string heroId, float size)

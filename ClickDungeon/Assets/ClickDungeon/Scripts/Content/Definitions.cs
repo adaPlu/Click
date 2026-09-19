@@ -19,6 +19,60 @@ namespace ClickDungeon.Content
         public int DashDistance;
         public int RevealRadius;
         public int SenseRadius;
+
+        /// <summary>How the class plays (D-037), for Hero Select and the talent screen.</summary>
+        public string Role;
+        public string Playstyle;
+        /// <summary>1 (forgiving) to 3 (demanding).</summary>
+        public int Difficulty = 1;
+        /// <summary>The class's colour on the talent screen, as #RRGGBB.</summary>
+        public string Theme = "#F2C14E";
+        /// <summary>The talent paths, left to right; the talents themselves are in the catalog.</summary>
+        public TalentBranch[] Branches = new TalentBranch[0];
+    }
+
+    /// <summary>One path of a class's talent tree (D-037).</summary>
+    public sealed class TalentBranch
+    {
+        public string Id;
+        public string Name;
+        /// <summary>One line on what the path is for.</summary>
+        public string Focus;
+        public string Color = "#F2C14E";
+    }
+
+    /// <summary>
+    /// One class talent (D-037). Tier 1 is open from the start; later tiers need the talent below them in the same path and
+    /// enough points spent in the class. Tier 4 is a capstone, and a class may take only one.
+    /// </summary>
+    public sealed class TalentDefinition
+    {
+        public string Id;
+        public string ClassId;
+        public string BranchId;
+        public int Tier;
+        public int MaxRank = 1;
+        public string Name;
+        /// <summary>A short description for the node.</summary>
+        public string Summary;
+        /// <summary>The exact effect of one rank.</summary>
+        public string PerRank;
+        public TalentEffect Effect;
+        /// <summary>What one rank adds to the effect.</summary>
+        public int Amount = 1;
+        /// <summary>The talent that must be learned first, or null.</summary>
+        public string Requires;
+        public bool Capstone => Tier >= 4;
+    }
+
+    /// <summary>A hero shown on Hero Select as coming soon: art and words only, no class yet (D-037).</summary>
+    public sealed class HeroPreview
+    {
+        public string Id;
+        public string DisplayName;
+        public string ClassName;
+        public string Role;
+        public string Blurb;
     }
 
     /// <summary>Who the hero is (name, personality). Several identities may share a class.</summary>
@@ -28,6 +82,9 @@ namespace ClickDungeon.Content
         public string DisplayName;
         public string ClassId;
         public string Tagline;
+        /// <summary>A title under the name on Hero Select, e.g. "The Brave...ish".</summary>
+        public string Title;
+        public string Quote;
     }
 
     public enum EnemyBehavior { Chaser, SlowChaser, Lane, Boss }

@@ -56,25 +56,28 @@ namespace ClickDungeon.UnityTests
         }
 
         [Test]
-        public void HeroSelectListsEveryHeroWithItsNumbersAndMarksTheChosenOne()
+        public void HeroSelectShowsEveryHeroLocksTheComingOnesAndChoosesAPlayableOne()
         {
-            // D-024: the hero is picked before a run; a run in progress keeps its own.
+            // D-024, D-037: the roster holds every hero; a locked one cannot be chosen; choosing hands the hero back.
             var catalog = ClickDungeon.Content.ContentCatalog.CreateDefault();
-            var modal = new ModalOverlay((RectTransform)_root.transform, _root.AddComponent<SpriteFrameAnimator>());
-            string picked = null;
-            Menus.OpenHeroSelect(modal, catalog, "dawnward", id => picked = id, () => { });
+            var overlay = new HeroSelectOverlay((RectTransform)_root.transform);
+            string chosen = null, talentsFor = null;
+            overlay.Open(catalog, new ClickDungeon.Domain.ProfileState(), "sir_clickington", id => chosen = id, c => talentsFor = c);
 
             var names = Buttons().Select(b => b.name).ToList();
-            foreach (var identity in catalog.HeroIdentities.Values)
-                Assert.That(names.Any(n => n.Contains(identity.DisplayName.ToUpperInvariant())), Is.True, identity.Id);
-            Assert.That(names.Any(n => n.StartsWith("> DAWNWARD")), Is.True, "The chosen hero is marked.");
+            foreach (var identity in catalog.HeroIdentities.Values) Assert.That(names, Does.Contain("Roster " + identity.Id));
+            foreach (var preview in catalog.ComingSoon) Assert.That(names, Does.Contain("Roster " + preview.Id));
+            Button Choose() => Buttons().First(b => b.name == "Choose");
+            Assert.That(Choose().interactable, Is.False, "Already chosen.");
 
-            var body = _root.GetComponentsInChildren<Text>(true).First(t => t.name == "Body").text;
-            Assert.That(body, Does.Contain("keeps its own hero"));
-            Assert.That(body, Does.Contain($"{catalog.HeroClass("paladin").MaxHp} hearts"), "The numbers that differ are shown.");
-
-            Buttons().First(b => b.name.Contains("SIR CLICKINGTON")).onClick.Invoke();
-            Assert.That(picked, Is.EqualTo("sir_clickington"));
+            overlay.Show("rageclaw");
+            Assert.That(Choose().interactable, Is.False, "Coming soon: locked.");
+            overlay.Show("dawnward");
+            Assert.That(Choose().interactable, Is.True);
+            Choose().onClick.Invoke();
+            Assert.That(chosen, Is.EqualTo("dawnward"));
+            Buttons().First(b => b.name == "ViewTalents").onClick.Invoke();
+            Assert.That(talentsFor, Is.EqualTo("paladin"));
         }
 
         [Test]
@@ -102,25 +105,31 @@ namespace ClickDungeon.UnityTests
         }
 
         [Test]
-        public void TalentsShowTheLevelThePointsAndWhatCanBeLearned()
+        public void TalentsShowTheTreeLockWhatIsNotOpenAndLearnOnConfirm()
         {
-            // D-027: one point per level; a talent at its top rank, or with no point free, is not offered as learnable.
+            // D-037: nodes are icons; tapping selects, LEARN confirms; a tier-2 node stays locked at level 2.
+            var catalog = ClickDungeon.Content.ContentCatalog.CreateDefault();
             var profile = new ClickDungeon.Domain.ProfileState { Xp = ClickDungeon.Application.Progression.XpForLevel(2) };
-            var modal = new ModalOverlay((RectTransform)_root.transform, _root.AddComponent<SpriteFrameAnimator>());
-            string learned = null;
-            bool reset = false;
-            Menus.OpenTalents(modal, profile, id => learned = id, () => reset = true, () => { });
+            int saved = 0;
+            var overlay = new TalentOverlay((RectTransform)_root.transform);
+            overlay.Open(catalog, profile, "knight", () => saved++);
 
-            var body = _root.GetComponentsInChildren<Text>(true).First(t => t.name == "Body").text;
-            Assert.That(body, Does.Contain("Level 2"));
-            Assert.That(body, Does.Contain("1 talent point"));
-            var names = Buttons().Select(b => b.name).ToList();
-            Assert.That(names.Any(n => n.StartsWith("TOUGH 0/3")), Is.True);
-            Assert.That(names.Any(n => n.StartsWith("RESET")), Is.False, "Nothing learned, nothing to reset.");
+            foreach (var talent in catalog.TalentsOf("knight"))
+                Assert.That(Buttons().Any(b => b.name == "Node " + talent.Id), Is.True, talent.Id);
+            Button Learn() => Buttons().First(b => b.name == "Learn");
 
-            Buttons().First(b => b.name.StartsWith("TOUGH")).onClick.Invoke();
-            Assert.That(learned, Is.EqualTo(ClickDungeon.Application.Progression.Tough));
-            Assert.That(reset, Is.False);
+            Buttons().First(b => b.name == "Node k_cleave").onClick.Invoke();
+            Assert.That(Learn().interactable, Is.False, "Tier 2 is not open yet.");
+            Buttons().First(b => b.name == "Node k_opening_strike").onClick.Invoke();
+            Assert.That(Learn().interactable, Is.True);
+            Learn().onClick.Invoke();
+            Assert.That(ClickDungeon.Application.Progression.Rank(profile, "k_opening_strike"), Is.EqualTo(1));
+            Assert.That(saved, Is.EqualTo(1));
+            Assert.That(Learn().interactable, Is.False, "Out of points.");
+
+            Buttons().First(b => b.name == "Class paladin").onClick.Invoke();
+            Assert.That(Buttons().Any(b => b.name == "Node p_judgement"), Is.True, "The Paladin's own tree, with its own point.");
+            Assert.That(Learn().interactable, Is.True);
         }
     }
 }

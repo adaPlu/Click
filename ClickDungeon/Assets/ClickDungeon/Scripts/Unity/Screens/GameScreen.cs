@@ -65,6 +65,7 @@ namespace ClickDungeon.Unity.Screens
         GameObject _inspectPanel;
         InventoryOverlay _inventory;
         ShopOverlay _shop;
+        TalentOverlay _talents;
         Text _inspectTitle;
         Text _inspectBody;
         Image _inspectPortrait;
@@ -132,13 +133,14 @@ namespace ClickDungeon.Unity.Screens
             _modal = new ModalOverlay(Root, app);
             _inventory = new InventoryOverlay(Root);
             _shop = new ShopOverlay(Root);
+            _talents = new TalentOverlay(Root);
         }
 
         public RectTransform Root { get; }
 
         RunState Run => _app.Session.Run;
         ContentCatalog Catalog => _app.Catalog;
-        bool Blocked => _modal.IsOpen || _chest.IsOpen || _inventory.IsOpen || _shop.IsOpen || Run == null || Run.Status != RunStatus.InProgress;
+        bool Blocked => _modal.IsOpen || _chest.IsOpen || _inventory.IsOpen || _shop.IsOpen || _talents.IsOpen || Run == null || Run.Status != RunStatus.InProgress;
 
         // ------------------------------------------------------------------ lifecycle
 
@@ -190,6 +192,11 @@ namespace ClickDungeon.Unity.Screens
             if (_shop.IsOpen)
             {
                 if (kb.escapeKey.wasPressedThisFrame) _shop.Hide();
+                return;
+            }
+            if (_talents.IsOpen)
+            {
+                if (kb.escapeKey.wasPressedThisFrame) _talents.Hide();
                 return;
             }
             if (kb.escapeKey.wasPressedThisFrame)
@@ -526,22 +533,15 @@ namespace ClickDungeon.Unity.Screens
             RefreshPurse();
         }
 
+        /// <summary>The playing class's tree (D-037). What is learned here shapes the next run, not this one.</summary>
         void OpenTalents()
         {
             if (_chest.IsOpen || Run == null) return;
-            var profile = _app.Session.Profile;
-            Menus.OpenTalents(_modal, profile, id =>
+            _talents.Open(Catalog, _app.Session.Profile, Run.Hero.ClassId, () =>
             {
-                if (Progression.TryLearn(profile, id)) _app.Session.SaveProfile();
-                RefreshPurse();
-                OpenTalents();
-            }, () =>
-            {
-                Progression.Reset(profile);
                 _app.Session.SaveProfile();
                 RefreshPurse();
-                OpenTalents();
-            }, _modal.Hide, NextRunNote);
+            }, "<color=#F2C14E>Talents learned now shape your NEXT run.</color>");
         }
 
         void OpenShop() => OpenShop(ShopTab.Boosts);
@@ -699,7 +699,7 @@ namespace ClickDungeon.Unity.Screens
             int coins = profile.Coins + (Run?.CoinsFound ?? 0), gems = profile.Gems + (Run?.GemsFound ?? 0);
             _coins.text = coins.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
             _gems.text = gems.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
-            _talentsBadge.SetActive(Progression.PointsFree(profile) > 0);
+            _talentsBadge.SetActive(Run != null && Progression.PointsFree(profile, Catalog, Run.Hero.ClassId) > 0);
             _levelBadge.text = Progression.Level(profile).ToString();
         }
 
@@ -924,7 +924,7 @@ namespace ClickDungeon.Unity.Screens
                     title = cell.Premium ? "PREMIUM CHEST" : "CHEST";
                     sb.AppendLine(cell.ChestOpened
                         ? "Already opened."
-                        : $"Tap it from its tile or beside it: {Chests.TapsToOpen(cell.Quality) - cell.ChestTaps} more tap(s), each a turn.");
+                        : $"Tap it from its tile or beside it: {Chests.TapsToOpen(run, cell) - cell.ChestTaps} more tap(s), each a turn.");
                     if (cell.Premium && !cell.ChestOpened)
                         sb.AppendLine(run.Hero.SpecialKeys > 0
                             ? $"Your special key opens it for {Chests.RewardDraws(cell, catalog)} rewards."
@@ -1418,82 +1418,6 @@ namespace ClickDungeon.Unity.Screens
         }
 
         public static string MovementName(MovementMode mode) => mode == MovementMode.Step ? "Step by Step" : "Free Roam";
-
-        /// <summary>
-        /// Picks the hero for the next new run (D-024). A run in progress keeps the hero it was started with, so this only
-        /// ever changes what the next run starts as.
-        /// </summary>
-        public static void OpenHeroSelect(ModalOverlay modal, ContentCatalog catalog, string current, Action<string> pick, Action back)
-        {
-            var buttons = new List<(string, Color, Action)>();
-            foreach (var identity in catalog.HeroIdentities.Values)
-            {
-                string id = identity.Id;
-                bool chosen = id == current;
-                buttons.Add(($"{(chosen ? "> " : "")}{identity.DisplayName.ToUpperInvariant()}: {HeroSummary(catalog, identity)}",
-                    chosen ? Palette.PlayGreen : Palette.NavyLight, () => pick(id)));
-            }
-            buttons.Add(B("BACK", Palette.NavyLight, back));
-            modal.Show("HERO SELECT",
-                "Who takes the next run down? A run already in progress keeps its own hero.\n" +
-                HeroLines(catalog, current), back, buttons.ToArray());
-        }
-
-        /// <summary>One line of numbers for a hero, so the pick is made on what actually changes.</summary>
-        static string HeroSummary(ContentCatalog catalog, HeroIdentityDefinition identity)
-        {
-            var hero = catalog.HeroClass(identity.ClassId);
-            return $"{hero.MaxHp} HP, slash {hero.SlashDamage}, {hero.StartingPotions} potions";
-        }
-
-        static string HeroLines(ContentCatalog catalog, string current)
-        {
-            var sb = new StringBuilder();
-            foreach (var identity in catalog.HeroIdentities.Values)
-            {
-                var hero = catalog.HeroClass(identity.ClassId);
-                sb.AppendLine();
-                sb.AppendLine($"<color=#F2C14E>{identity.DisplayName}</color> ({hero.DisplayName}){(identity.Id == current ? "  — chosen" : "")}");
-                sb.AppendLine(identity.Tagline);
-                sb.AppendLine($"{hero.MaxHp} hearts, slash {hero.SlashDamage}, potion heals {hero.PotionHeal}, " +
-                    $"{hero.StartingPotions} potions, {hero.MaxMana} mana: shield {hero.ShieldCost}, dash {hero.DashDistance} " +
-                    $"{(hero.DashDistance == 1 ? "tile" : "tiles")} for {hero.DashCost}.");
-            }
-            return sb.ToString();
-        }
-
-        /// <summary>
-        /// Levels and talents (D-027). Talents shape every new run and are never used up; resetting refunds every point, so
-        /// trying a build costs nothing. Like the shop, what is learned during a run applies from the next one.
-        /// </summary>
-        public static void OpenTalents(ModalOverlay modal, ProfileState profile, Action<string> learn, Action reset, Action back,
-            string note = null)
-        {
-            int level = Progression.Level(profile);
-            int free = Progression.PointsFree(profile);
-            int next = Progression.XpForLevel(level + 1);
-
-            var sb = new StringBuilder();
-            sb.AppendLine($"<color=#F2C14E>Level {level}</color>   {profile.Xp} / {next} XP to level {level + 1}");
-            sb.AppendLine(free > 0 ? $"<color=#7BD88F>{free} talent point{(free == 1 ? "" : "s")} to spend.</color>" : "No points to spend: each level gives one.");
-            sb.AppendLine();
-            sb.AppendLine("Experience comes from every run: monsters, floors walked down, Lord Blobert, and winning.");
-            sb.Append("Talents shape every run you start and are never used up.");
-            sb.Append(note);
-
-            var buttons = new List<(string, Color, Action)>();
-            foreach (var talent in Progression.Talents)
-            {
-                var id = talent.Id;
-                int rank = Progression.Rank(profile, id);
-                bool can = Progression.CanLearn(profile, id);
-                buttons.Add(($"{talent.DisplayName} {rank}/{talent.MaxRank}: {talent.PerRank}",
-                    can ? Palette.PlayGreen : Palette.NavyLight, () => learn(id)));
-            }
-            if (Progression.PointsSpent(profile) > 0) buttons.Add(B("RESET (FREE)", Palette.QuitRed, reset));
-            buttons.Add(B("DONE", Palette.NavyLight, back));
-            modal.Show("TALENTS", sb.ToString(), back, buttons.ToArray());
-        }
 
         /// <summary>Buys one item and writes the profile. False means the coins were not there and nothing changed.</summary>
         public static bool Buy(GameSession session, ShopItem item)

@@ -66,12 +66,16 @@ namespace ClickDungeon.Simulation
         /// One tap on a closed chest. The lid gives a little and the turn resolves around it like any other action, so
         /// every revealed monster gets its response (D-022). Returns true when this tap is the one that opened it.
         /// </summary>
+        /// <summary>Taps this chest needs in this run: Treasure Sense (D-037) takes one off, never below one.</summary>
+        public static int TapsToOpen(RunState run, CellState chest) =>
+            Math.Max(1, TapsToOpen(chest.Quality) - run.Perk(TalentEffect.ChestTapCut));
+
         public static bool Tap(RunState run, GridPos cell, ContentCatalog catalog, List<GameEvent> events)
         {
             var state = run.Floor[cell];
             if (!state.IsClosedChest) return false;
             state.ChestTaps++;
-            int needed = TapsToOpen(state.Quality);
+            int needed = TapsToOpen(run, state);
             if (state.ChestTaps >= needed)
             {
                 Open(run, cell, catalog, events);

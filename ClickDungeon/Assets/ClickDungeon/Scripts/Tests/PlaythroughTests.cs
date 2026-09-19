@@ -18,13 +18,18 @@ namespace ClickDungeon.Tests
         public void TenPlaythroughs()
         {
             var session = new GameSession(ContentCatalog.CreateDefault(), null);
-            var talents = new[] { Progression.Tough, Progression.QuickShield, Progression.Stocked, Progression.Fleet, Progression.Lucky };
             Console.WriteLine("run  seed      result  floor  turns  hp     coins  gems  +xp  level  items  achievements");
             for (int i = 1; i <= 10; i++)
             {
                 Mailbox.CollectAll(session.Profile);
-                for (int t = 0; Progression.PointsFree(session.Profile) > 0 && t < 20; t++)
-                    Progression.TryLearn(session.Profile, talents[t % talents.Length]);
+                // The first talent it can learn each time, path by path: a simple, repeatable build.
+                bool learned = true;
+                while (learned)
+                {
+                    learned = false;
+                    foreach (var talent in session.Catalog.TalentsOf("knight"))
+                        if (Progression.TryLearn(session.Profile, session.Catalog, talent.Id)) { learned = true; break; }
+                }
 
                 ulong seed = 20260918UL + (ulong)i * 101UL;
                 session.StartNewRun(seed, Difficulty.Medium, MovementMode.Free);

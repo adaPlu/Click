@@ -80,6 +80,7 @@ namespace ClickDungeon.Application
             ProfileSystem.Provision(Profile, Run, Catalog);
             Progression.Apply(Profile, Run, Catalog);
             Inventory.Apply(Profile, Run, Catalog);
+            RunFactory.RevealByTalents(Run, events);
             SaveProfile();
             Persist();
             Telemetry?.RunStarted(Run, events);

@@ -311,6 +311,14 @@ namespace ClickDungeon.Unity.Ui
         /// <summary>An item's icon (D-028), for the INVENTORY screen and the item found in a run.</summary>
         public static string ItemIcon(string itemId) => $"icon_item_{itemId}";
 
+        /// <summary>A class talent's picture (D-037).</summary>
+        public static string TalentIcon(string talentId) => $"icon_talent_{talentId}";
+
+        /// <summary>A hero's full-body art for Hero Select (D-037), playable or coming soon.</summary>
+        public static string HeroArt(string heroId) => $"portrait_{heroId}_full";
+
+        public const string LockIcon = "ui_icon_lock";
+
         /// <summary>The items library's rarity frames (D-036), clear in the middle so the item shows through.</summary>
         public static string RarityFrame(ItemRarity rarity) => "ui_frame_rarity_" + rarity.ToString().ToLowerInvariant();
 
@@ -419,6 +427,14 @@ namespace ClickDungeon.Unity.Ui
             foreach (var enemy in catalog.Enemies.Values) keys.Add(Actor(enemy.Id));
             foreach (var enemy in catalog.Enemies.Values) keys.Add(EnemyPortrait(enemy.Id));
             foreach (var item in catalog.Items) keys.Add(ItemIcon(item.Id));
+            foreach (var talent in catalog.Talents) keys.Add(TalentIcon(talent.Id));
+            foreach (var identity in catalog.HeroIdentities.Values) keys.Add(HeroArt(identity.Id));
+            foreach (var preview in catalog.ComingSoon)
+            {
+                keys.Add(HeroArt(preview.Id));
+                keys.Add(Portrait(preview.Id, "neutral"));
+            }
+            keys.Add(LockIcon);
             foreach (ItemRarity rarity in System.Enum.GetValues(typeof(ItemRarity))) keys.Add(RarityFrame(rarity));
             foreach (var enemy in catalog.Enemies.Values)
             {

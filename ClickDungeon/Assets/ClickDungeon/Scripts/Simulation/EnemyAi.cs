@@ -123,6 +123,9 @@ namespace ClickDungeon.Simulation
                             enemy.Staggered = true;
                             events.Add(GameEvent.Of(GameEventKind.EnemyStaggered, enemy.Id, to: enemy.Pos, subject: def.Id));
                         }
+                        // Riposte (D-037): a blocked blow is answered.
+                        if (blocked && run.Perk(TalentEffect.Riposte) > 0)
+                            Combat.DamageEnemy(run, enemy, run.Perk(TalentEffect.Riposte), "riposte", catalog, events);
                     }
                     else
                     {

@@ -204,7 +204,7 @@ namespace ClickDungeon.Unity.Screens
                 Clear(view.Overlay);
                 ClearExcept(view.Labels, view.Highlight.transform);
 
-                DrawCell(view, floor, cell, p, exitOpen);
+                DrawCell(view, run, floor, cell, p, exitOpen);
                 DrawThreats(view, threatKinds[p.Index], damage[p.Index], floor.EnemyAt(p)?.Awake == true);
 
                 // A token hides the tile art beneath it, so repeat a hazard or exit underfoot as a badge above the token.
@@ -276,7 +276,7 @@ namespace ClickDungeon.Unity.Screens
         /// <summary>Cover stones sit lighter and cooler than a revealed wall, so the two never read as the same tile.</summary>
         static readonly Color CoverTint = new Color(0.78f, 0.80f, 0.88f);
 
-        void DrawCell(CellParts view, FloorState floor, CellState cell, GridPos p, bool exitOpen)
+        void DrawCell(CellParts view, RunState run, FloorState floor, CellState cell, GridPos p, bool exitOpen)
         {
             // Everything is covered until the hero clicks it, and every cover is drawn exactly alike whatever is under it,
             // the exit included (D-023 amendment). Step by Step's sensing adds its clue marker on top; the cover itself never changes.
@@ -335,7 +335,7 @@ namespace ClickDungeon.Unity.Screens
                     Icons.TryArt(view.Icons, ArtKeys.ChestShimmer, CellSize);
                     // Above the tokens: in Free Roam the hero often stands on the chest it is opening, and the token
                     // would hide a meter drawn on the tile itself.
-                    Icons.ChestProgress(view.Labels, cell.ChestTaps, ClickDungeon.Simulation.Chests.TapsToOpen(cell.Quality));
+                    Icons.ChestProgress(view.Labels, cell.ChestTaps, ClickDungeon.Simulation.Chests.TapsToOpen(run, cell));
                 }
             }
             else if (cell.Content == ContentKind.Potion) Icons.Potion(view.Icons);

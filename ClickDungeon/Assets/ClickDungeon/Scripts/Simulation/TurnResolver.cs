@@ -44,12 +44,19 @@ namespace ClickDungeon.Simulation
                 }
                 case CommandKind.Wait:
                     events.Add(GameEvent.Of(GameEventKind.HeroWaited, to: hero.Pos));
+                    // Prayer (D-037): stillness restores extra mana.
+                    if (run.Perk(TalentEffect.Prayer) > 0) hero.Mana = Math.Min(hero.MaxMana, hero.Mana + run.Perk(TalentEffect.Prayer));
                     break;
                 case CommandKind.Slash:
                 {
-                    events.Add(GameEvent.Of(GameEventKind.HeroSlashed, from: hero.Pos, to: command.Target, amount: hero.SlashDamage));
                     var enemy = run.Floor.EnemyAt(command.Target);
-                    if (enemy != null) Combat.DamageEnemy(run, enemy, hero.SlashDamage, "slash", catalog, events);
+                    int damage = enemy != null ? Talents.SlashDamage(run, enemy, catalog) : hero.SlashDamage;
+                    events.Add(GameEvent.Of(GameEventKind.HeroSlashed, from: hero.Pos, to: command.Target, amount: damage));
+                    if (enemy != null)
+                    {
+                        Combat.DamageEnemy(run, enemy, damage, "slash", catalog, events);
+                        Talents.AfterSlash(run, enemy, catalog, events);
+                    }
                     else Hazards.Arm(run.Floor, command.Target, catalog.Hazards, events);
                     break;
                 }
@@ -57,6 +64,7 @@ namespace ClickDungeon.Simulation
                     hero.Guard = true;
                     Mana.Spend(hero, Mana.ShieldCost(run, heroClass));
                     events.Add(GameEvent.Of(GameEventKind.HeroShielded, to: hero.Pos));
+                    Talents.AfterShield(run, catalog, events);
                     break;
                 case CommandKind.Dash:
                 {
@@ -81,6 +89,8 @@ namespace ClickDungeon.Simulation
                     hero.Potions--;
                     hero.Hp = Math.Min(hero.MaxHp, hero.Hp + heroClass.PotionHeal + run.PotionHealBonus);
                     events.Add(GameEvent.Of(GameEventKind.HeroHealed, to: hero.Pos, amount: hero.Hp - before));
+                    // Sanctified (D-037): a potion also refills the mana pool.
+                    if (run.Perk(TalentEffect.Sanctified) > 0) Mana.Refill(hero);
                     break;
                 }
                 case CommandKind.Interact:
@@ -221,8 +231,8 @@ namespace ClickDungeon.Simulation
             }
             RunFactory.BeginFloor(run, floor.FloorIndex + 1, catalog, events);
 
-            // Difficulty breather: heal on arrival, never above max.
-            int heal = Math.Min(catalog.FloorClearHeal, hero.MaxHp - hero.Hp);
+            // Difficulty breather: heal on arrival, never above max. Second Wind (D-037) adds to it.
+            int heal = Math.Min(catalog.FloorClearHeal + run.Perk(TalentEffect.SecondWind), hero.MaxHp - hero.Hp);
             if (heal > 0)
             {
                 hero.Hp += heal;

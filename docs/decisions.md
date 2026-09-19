@@ -487,3 +487,24 @@ Rules referenced here live in `docs/rules.md`.
 - **BALANCE**: the balance guards play an empty profile; all shop effects reach only runs started afterwards.
 - **TESTS**: `ShopTests`, `SettingsMenuTests.TheShopShowsThePurseAndOnlyOffersWhatTheCoinsCover`, `InventoryOverlayTests`.
 
+## D-037 Class talent trees and an art-led Hero Select
+- **DECISION**: The five shared talents give way to a tree per class, defined as data (`TalentDefinition` in the
+  catalog: path, tier, ranks, prerequisite, effect and amount; `TalentBranch` for paths; class role, playstyle,
+  difficulty and colour on `HeroClassDefinition`). Knight: Blade / Bulwark / Adventurer; Paladin: Hammer / Aegis /
+  Devotion; 12 talents each, tiers opening at 0 / 2 / 4 / 7 points spent, one capstone per class. Every level's point
+  goes to every class. Stat talents become starting numbers; the rest become run perks (`RunState.Perks`, by
+  `TalentEffect`) that the rules read in `Simulation/Talents.cs`, `Combat`, `EnemyAi`, `Chests`, `Mana`, `Hazards` and
+  `RunFactory`. Old generic talents are refunded.
+- **UI**: the TALENTS screen is a constellation: three paths rise from tier 1 to the capstone, every talent an icon
+  node (lit / gold-ringed when learnable / dark and padlocked), with links lit as the path fills, rank pills, class tabs
+  and a detail panel that shows the effect, what learning changes, why it is locked and LEARN to confirm. Icons come
+  from the hero sheets' affinity panels and the core UI pack, baked round by the slicer (`"circle"`), since runtime UI
+  masks crashed the player on exit. HERO SELECT is rebuilt around the full-body hero art: name, title, class and role,
+  difficulty, playstyle, starting numbers, the three paths with their capstone icons and VIEW TALENTS, a roster strip,
+  and the roster's other heroes shown locked as COMING SOON (art and words only; no class exists for them).
+- **WHY**: "make each of the two existing classes feel mechanically unique through a visually rich class-specific
+  talent system, and redesign Hero Selection around the supplied full-character artwork".
+- **BALANCE**: the balance guards play an empty profile; talents reach only the class's own runs.
+- **TESTS**: `ClassTalentTests`, `SettingsMenuTests.TalentsShowTheTreeLockWhatIsNotOpenAndLearnOnConfirm`,
+  `SettingsMenuTests.HeroSelectShowsEveryHeroLocksTheComingOnesAndChoosesAPlayableOne`.
+

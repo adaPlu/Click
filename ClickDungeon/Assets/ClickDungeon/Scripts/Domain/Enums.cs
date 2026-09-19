@@ -76,6 +76,19 @@ namespace ClickDungeon.Domain
     /// <summary>Where an item is worn (D-028). Helmet came with the shop (D-036); the numbers never change, saves hold names.</summary>
     public enum ItemSlot { Weapon = 0, Shield, Armor, Boots, Trinket, Helmet }
 
+    /// <summary>
+    /// What a class talent does in play (D-037). Talents are data: each names one effect and how much a rank adds. Stat
+    /// effects become the hero's starting numbers; the rest are read by the rules through <c>RunState.Perk</c>.
+    /// </summary>
+    public enum TalentEffect
+    {
+        // Starting numbers
+        MaxHearts, DashCostCut, ShieldCostCut, CoinsPerChestReward, PotionHeal,
+        // Rules the simulation reads
+        OpeningStrike, Cleave, Executioner, Relentless, Riposte, Bastion, ChestTapCut, SecondWind,
+        Judgement, Consecrate, Dawnstrike, WrathOfDawn, HolyBulwark, Unyielding, DivineShield, Prayer, GuidingLight, Sanctified,
+    }
+
     /// <summary>How rare an item is (D-036): its drop weight, its shop price and the colour of its frame.</summary>
     public enum ItemRarity { Common = 0, Uncommon, Rare, Epic, Legendary }
 }

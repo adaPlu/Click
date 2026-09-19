@@ -69,11 +69,13 @@ namespace ClickDungeon.Tests
         public void TalentsAndBoostsAddUpRatherThanReplaceEachOther()
         {
             var profile = new ProfileState { Xp = Progression.XpForLevel(3), FortuneScrolls = 1 };
-            Progression.TryLearn(profile, Progression.Lucky);
+            profile.Talents["k_light_step"] = 1;
+            profile.Talents["k_treasure_sense"] = 1;
+            profile.Talents["k_fortune"] = 1;
             var run = RunFactory.NewRun(9UL, Catalog, new List<GameEvent>());
             ProfileSystem.Provision(profile, run, Catalog);
             Progression.Apply(profile, run, Catalog);
-            Assert.That(run.BonusCoinsPerChestReward, Is.EqualTo(Catalog.Treasure.FortuneScrollCoins + Progression.LuckyCoins));
+            Assert.That(run.BonusCoinsPerChestReward, Is.EqualTo(Catalog.Treasure.FortuneScrollCoins + Catalog.Talent("k_fortune").Amount));
         }
 
         [Test]

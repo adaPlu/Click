@@ -165,7 +165,7 @@ namespace ClickDungeon.Application
             {
                 var cell = run.Floor[p];
                 if (!cell.IsClosedChest || cell.Knowledge != Knowledge.Revealed) continue;
-                value += Chests.RewardDraws(cell, catalog) * RewardWorth * cell.ChestTaps / Chests.TapsToOpen(cell.Quality);
+                value += Chests.RewardDraws(cell, catalog) * RewardWorth * cell.ChestTaps / Chests.TapsToOpen(run, cell);
             }
             return value;
         }
@@ -357,6 +357,7 @@ namespace ClickDungeon.Application
                 BonusXpPerFloor = run.BonusXpPerFloor,
                 BonusCoinsPerChestReward = run.BonusCoinsPerChestReward,
                 DashCostCut = run.DashCostCut,
+                Perks = run.Perks == null ? new Dictionary<string, int>() : new Dictionary<string, int>(run.Perks),
                 MonstersSlain = run.MonstersSlain,
                 ChestsOpened = run.ChestsOpened,
             };
@@ -365,7 +366,7 @@ namespace ClickDungeon.Application
         static HeroState Copy(HeroState h) => new HeroState
         {
             IdentityId = h.IdentityId, ClassId = h.ClassId, Pos = h.Pos, Hp = h.Hp, MaxHp = h.MaxHp, SlashDamage = h.SlashDamage,
-            Potions = h.Potions, HasKey = h.HasKey, SpecialKeys = h.SpecialKeys, Guard = h.Guard, Mana = h.Mana,
+            Potions = h.Potions, HasKey = h.HasKey, SpecialKeys = h.SpecialKeys, Guard = h.Guard, Mana = h.Mana, WardSpent = h.WardSpent,
             MaxMana = h.MaxMana,
         };
 

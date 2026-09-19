@@ -54,7 +54,9 @@ namespace ClickDungeon.Simulation
             else if (cell.Content == ContentKind.Fountain && !cell.Used)
             {
                 cell.Used = true;
-                int healed = Math.Min(tuning.FountainHeal, run.Hero.MaxHp - run.Hero.Hp);
+                // Sanctified (D-037): fountains heal fully.
+                int fountain = run.Perk(TalentEffect.Sanctified) > 0 ? run.Hero.MaxHp : tuning.FountainHeal;
+                int healed = Math.Min(fountain, run.Hero.MaxHp - run.Hero.Hp);
                 if (healed > 0)
                 {
                     run.Hero.Hp += healed;

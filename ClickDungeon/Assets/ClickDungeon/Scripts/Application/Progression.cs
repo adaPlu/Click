@@ -5,35 +5,15 @@ using ClickDungeon.Domain;
 
 namespace ClickDungeon.Application
 {
-    /// <summary>One talent: what it is called, what a rank does, and how many ranks it has (D-027, rules §14).</summary>
-    public sealed class TalentDefinition
-    {
-        public string Id;
-        public string DisplayName;
-        public string PerRank;
-        public int MaxRank;
-    }
-
     /// <summary>
-    /// Levels and talents (D-027). Experience banked from runs sets the level; each level past the first is a talent point;
-    /// talents change the hero a new run starts with. A run never reads the profile: talents become starting numbers.
+    /// Levels and class talents (D-027, D-037). Experience banked from runs sets the level; each level past the first is a
+    /// talent point for every class, so each hero builds its own tree from the same level. Talents change the hero a new
+    /// run starts with, and a run never reads the profile: learned talents become starting numbers and perks.
     /// </summary>
     public static class Progression
     {
-        public const string Tough = "tough", Stocked = "stocked", QuickShield = "quick_shield", Fleet = "fleet", Lucky = "lucky";
-
-        public static readonly TalentDefinition[] Talents =
-        {
-            new TalentDefinition { Id = Tough, DisplayName = "TOUGH", PerRank = "+1 max heart", MaxRank = 3 },
-            new TalentDefinition { Id = Stocked, DisplayName = "STOCKED", PerRank = "+1 starting potion", MaxRank = 2 },
-            // Kept under its old id so a point learned before mana (D-032) stays learned; it now deepens the pool.
-            new TalentDefinition { Id = QuickShield, DisplayName = "FOCUS", PerRank = "+1 max mana", MaxRank = 2 },
-            new TalentDefinition { Id = Fleet, DisplayName = "FLEET", PerRank = "Dash costs 1 less mana", MaxRank = 1 },
-            new TalentDefinition { Id = Lucky, DisplayName = "LUCKY", PerRank = "+2 coins for every chest reward", MaxRank = 2 },
-        };
-
-        /// <summary>Bonus coins per chest reward for each rank of Lucky.</summary>
-        public const int LuckyCoins = 2;
+        /// <summary>Points spent in a class before each tier opens: tier 1 at once, then 2, 4 and 7.</summary>
+        public static readonly int[] TierPoints = { 0, 0, 2, 4, 7 };
 
         /// <summary>Experience needed to reach a level: 0, 50, 150, 300, 500... (50 × the triangle numbers).</summary>
         public static int XpForLevel(int level) => level <= 1 ? 0 : 50 * (level - 1) * level / 2;
@@ -47,48 +27,60 @@ namespace ClickDungeon.Application
 
         public static int Level(ProfileState profile) => Level(profile?.Xp ?? 0);
 
+        /// <summary>Points every class has to spend: one per level past the first.</summary>
         public static int PointsEarned(ProfileState profile) => Level(profile) - 1;
-
-        public static int PointsSpent(ProfileState profile)
-        {
-            int spent = 0;
-            if (profile?.Talents == null) return 0;
-            foreach (var rank in profile.Talents.Values) spent += Math.Max(0, rank);
-            return spent;
-        }
-
-        public static int PointsFree(ProfileState profile) => Math.Max(0, PointsEarned(profile) - PointsSpent(profile));
 
         public static int Rank(ProfileState profile, string talentId) =>
             profile?.Talents != null && profile.Talents.TryGetValue(talentId, out int rank) ? Math.Max(0, rank) : 0;
 
-        public static TalentDefinition Talent(string id)
+        /// <summary>Points spent in one class's tree. Ranks of talents no class has any more are ignored, so they come back.</summary>
+        public static int PointsSpent(ProfileState profile, ContentCatalog catalog, string classId)
         {
-            foreach (var talent in Talents)
-                if (talent.Id == id) return talent;
+            int spent = 0;
+            foreach (var talent in catalog.TalentsOf(classId)) spent += Math.Min(talent.MaxRank, Rank(profile, talent.Id));
+            return spent;
+        }
+
+        public static int PointsFree(ProfileState profile, ContentCatalog catalog, string classId) =>
+            Math.Max(0, PointsEarned(profile) - PointsSpent(profile, catalog, classId));
+
+        public static string ClassOf(ContentCatalog catalog, string heroId) =>
+            catalog.HeroIdentities.TryGetValue(heroId ?? "", out var identity) ? identity.ClassId : catalog.HeroIdentity(ContentCatalog.DefaultHeroId).ClassId;
+
+        /// <summary>Why a talent cannot be learned right now, or null when it can.</summary>
+        public static string Locked(ProfileState profile, ContentCatalog catalog, string talentId)
+        {
+            var talent = catalog.Talent(talentId);
+            if (talent == null || profile == null) return "Unknown talent.";
+            if (Rank(profile, talent.Id) >= talent.MaxRank) return "Fully learned.";
+            if (talent.Tier < TierPoints.Length && PointsSpent(profile, catalog, talent.ClassId) < TierPoints[talent.Tier])
+                return $"Needs {TierPoints[talent.Tier]} points spent in this tree.";
+            if (talent.Requires != null && Rank(profile, talent.Requires) <= 0)
+                return $"Needs {catalog.Talent(talent.Requires).Name} first.";
+            if (talent.Capstone)
+                foreach (var other in catalog.TalentsOf(talent.ClassId))
+                    if (other.Capstone && other.Id != talent.Id && Rank(profile, other.Id) > 0)
+                        return $"Only one capstone: {other.Name} is chosen. Reset to change it.";
+            if (PointsFree(profile, catalog, talent.ClassId) <= 0) return "No talent points. Each level gives one.";
             return null;
         }
 
-        public static bool CanLearn(ProfileState profile, string talentId)
-        {
-            var talent = Talent(talentId);
-            return talent != null && PointsFree(profile) > 0 && Rank(profile, talentId) < talent.MaxRank;
-        }
+        public static bool CanLearn(ProfileState profile, ContentCatalog catalog, string talentId) => Locked(profile, catalog, talentId) == null;
 
-        /// <summary>Learns one rank, or returns false and changes nothing (no free point, unknown talent, or at its top rank).</summary>
-        public static bool TryLearn(ProfileState profile, string talentId)
+        /// <summary>Learns one rank, or returns false and changes nothing.</summary>
+        public static bool TryLearn(ProfileState profile, ContentCatalog catalog, string talentId)
         {
-            if (!CanLearn(profile, talentId)) return false;
+            if (!CanLearn(profile, catalog, talentId)) return false;
             if (profile.Talents == null) profile.Talents = new Dictionary<string, int>();
             profile.Talents[talentId] = Rank(profile, talentId) + 1;
             return true;
         }
 
-        /// <summary>Unlearns everything and refunds every point: trying a build costs nothing.</summary>
-        public static void Reset(ProfileState profile)
+        /// <summary>Unlearns one class's talents and refunds their points: trying a build costs nothing.</summary>
+        public static void Reset(ProfileState profile, ContentCatalog catalog, string classId)
         {
-            if (profile == null) return;
-            profile.Talents = new Dictionary<string, int>();
+            if (profile?.Talents == null) return;
+            foreach (var talent in catalog.TalentsOf(classId)) profile.Talents.Remove(talent.Id);
         }
 
         /// <summary>Adds what the run earned. Called with the rest of the banking, once, when a run ends.</summary>
@@ -99,22 +91,34 @@ namespace ClickDungeon.Application
         }
 
         /// <summary>
-        /// Turns learned talents into the new run's starting numbers. Talents stay learned: unlike shop provisions they are not
-        /// spent, so every run starts with them. The dash never costs less than one mana.
+        /// Turns the playing class's learned talents into the new run's starting numbers and perks. Talents stay learned:
+        /// unlike shop boosts they are not spent, so every run of that class starts with them.
         /// </summary>
         public static void Apply(ProfileState profile, RunState run, ContentCatalog catalog)
         {
             if (profile == null || run == null) return;
             var hero = run.Hero;
-            int tough = Rank(profile, Tough);
-            hero.MaxHp += tough;
-            hero.Hp += tough;
-            hero.Potions += Rank(profile, Stocked);
-            run.BonusCoinsPerChestReward += Rank(profile, Lucky) * LuckyCoins;
-            int focus = Rank(profile, QuickShield);
-            hero.MaxMana += focus;
-            hero.Mana += focus;
-            run.DashCostCut += Rank(profile, Fleet);
+            if (run.Perks == null) run.Perks = new Dictionary<string, int>();
+            foreach (var talent in catalog.TalentsOf(hero.ClassId))
+            {
+                int rank = Math.Min(talent.MaxRank, Rank(profile, talent.Id));
+                if (rank <= 0) continue;
+                int value = rank * talent.Amount;
+                switch (talent.Effect)
+                {
+                    case TalentEffect.MaxHearts:
+                        hero.MaxHp += value;
+                        hero.Hp += value;
+                        break;
+                    case TalentEffect.DashCostCut: run.DashCostCut += value; break;
+                    case TalentEffect.CoinsPerChestReward: run.BonusCoinsPerChestReward += value; break;
+                    case TalentEffect.PotionHeal: run.PotionHealBonus += value; break;
+                    default:
+                        var key = talent.Effect.ToString();
+                        run.Perks[key] = (run.Perks.TryGetValue(key, out int had) ? had : 0) + value;
+                        break;
+                }
+            }
         }
     }
 }

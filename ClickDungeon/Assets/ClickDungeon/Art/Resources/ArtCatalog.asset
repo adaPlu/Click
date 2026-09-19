@@ -618,6 +618,126 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 0f7c54dcba12b36478bfb4486baa8236, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_talent_k_bastion
+    Frames:
+    - {fileID: 21300000, guid: 861e1e6868bf12c49b89e0add879a43b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_k_cleave
+    Frames:
+    - {fileID: 21300000, guid: 31d879122b6744c4aa5c314b3c0b6298, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_k_executioner
+    Frames:
+    - {fileID: 21300000, guid: 06119431197b05e4d81c05672902cad4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_k_fortune
+    Frames:
+    - {fileID: 21300000, guid: fa3abd816300b5e46b3654c8008cb92e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_k_light_step
+    Frames:
+    - {fileID: 21300000, guid: 83926fc85d4b15444b01f537dc4609ef, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_k_opening_strike
+    Frames:
+    - {fileID: 21300000, guid: c834a8d4e0b942d4d987eb550b91a0f0, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_k_relentless
+    Frames:
+    - {fileID: 21300000, guid: 2449662a4b02fe04886a41b6e61d7939, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_k_riposte
+    Frames:
+    - {fileID: 21300000, guid: e1ad2ae430575c84aa175aa968601b54, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_k_second_wind
+    Frames:
+    - {fileID: 21300000, guid: 542645e6cafe00c4abe1dda445ef674a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_k_shield_wall
+    Frames:
+    - {fileID: 21300000, guid: d2146beaefd48114897411aba4a5473f, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_k_sturdy
+    Frames:
+    - {fileID: 21300000, guid: f930cddd714a7ac4d97350896f8078bc, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_k_treasure_sense
+    Frames:
+    - {fileID: 21300000, guid: f21f2a67872861b4d9437c540c82fe45, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_p_blessed_draught
+    Frames:
+    - {fileID: 21300000, guid: 771d419029d94c747b2ac3ee7064b0e4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_p_consecrate
+    Frames:
+    - {fileID: 21300000, guid: d3effa76c7037694ab281b5e51bc7689, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_p_dawnstrike
+    Frames:
+    - {fileID: 21300000, guid: 8b166a723da2d6040ba7484898e956f7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_p_divine_shield
+    Frames:
+    - {fileID: 21300000, guid: 99d0f71e0ee7d104393d90aef3d869ad, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_p_guiding_light
+    Frames:
+    - {fileID: 21300000, guid: bfd7e2b41d72df14cbbc6bfb55d525cf, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_p_holy_bulwark
+    Frames:
+    - {fileID: 21300000, guid: 6dfed79b6fa64e6429dc292ff371bc5b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_p_judgement
+    Frames:
+    - {fileID: 21300000, guid: a089953215cabce429f1feddee34614b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_p_plated
+    Frames:
+    - {fileID: 21300000, guid: d93d1491e1b1af2409afb98fb4cbcf4c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_p_prayer
+    Frames:
+    - {fileID: 21300000, guid: bcd37328c7244bf4394e2772c18d57e4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_p_sanctified
+    Frames:
+    - {fileID: 21300000, guid: 53309c11637328e48bbd80d32a143aa8, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_p_unyielding
+    Frames:
+    - {fileID: 21300000, guid: d542c19181153ca44b109ce6b7636fd3, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_talent_p_wrath_of_dawn
+    Frames:
+    - {fileID: 21300000, guid: a318eb951ca02b4438e792ef10375ec2, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_underfoot_bomb
     Frames:
     - {fileID: 21300000, guid: 759b8e1bb17d91d45a1f2fea0047c19c, type: 3}
@@ -648,6 +768,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: fe2abc399562d9d4bab4fa48b0cfa9a3, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_dawnward_full
+    Frames:
+    - {fileID: 21300000, guid: c809e883ac7d7ce46852e81b933802b2, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_dawnward_happy
     Frames:
     - {fileID: 21300000, guid: 6fa18cd847219da48b45ad4f7221546f, type: 3}
@@ -658,9 +783,69 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 9da02b7b2aeada04c98f32d75addbe9c, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_emberwisp_full
+    Frames:
+    - {fileID: 21300000, guid: 00537e5f0cdd5c345a773b5b428033a1, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_emberwisp_neutral
+    Frames:
+    - {fileID: 21300000, guid: 902ee25f6c3a3f942b2b3eed7b98c4b7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_gearspark_full
+    Frames:
+    - {fileID: 21300000, guid: 96aa70533fb65e34ab6875c02f7e236b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_gearspark_neutral
+    Frames:
+    - {fileID: 21300000, guid: a14ddd5dca811eb4a9532cc4b4e642a5, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_goblin
     Frames:
     - {fileID: 21300000, guid: b131a50442f4ba244bc55328603873f4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_ironheart_full
+    Frames:
+    - {fileID: 21300000, guid: 1b0cb80e7aae53a4e821b5e5fce72469, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_ironheart_neutral
+    Frames:
+    - {fileID: 21300000, guid: 5383c82c267c1bf45a957f68c09fc9e8, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_lightbringer_full
+    Frames:
+    - {fileID: 21300000, guid: 81cc17b3a5881e944b6859bcd9432521, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_lightbringer_neutral
+    Frames:
+    - {fileID: 21300000, guid: 05cb14234e11a084688b90bc6e48bc85, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_rageclaw_full
+    Frames:
+    - {fileID: 21300000, guid: ca6a52cbdc7a0c0429c9a55c5062f0e0, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_rageclaw_neutral
+    Frames:
+    - {fileID: 21300000, guid: 9ddcc85ac54954246964b8c4f7f94061, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_shadowcut_full
+    Frames:
+    - {fileID: 21300000, guid: d5ec0c89b09193940abb19bbfa69f1ea, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_shadowcut_neutral
+    Frames:
+    - {fileID: 21300000, guid: 1723d6fdc22a244469b33bcdc36e11f5, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_sir_clickington_angry
@@ -676,6 +861,11 @@ MonoBehaviour:
   - Key: portrait_sir_clickington_defeated
     Frames:
     - {fileID: 21300000, guid: 7ff78aa1ad5f67441a412550579370f5, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_sir_clickington_full
+    Frames:
+    - {fileID: 21300000, guid: 1b1a09b6986146645ad9df7de1083782, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_sir_clickington_happy
@@ -706,6 +896,16 @@ MonoBehaviour:
   - Key: portrait_slimelet
     Frames:
     - {fileID: 21300000, guid: 05d00f36c220f9a42ace05c4a30af9ae, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_windsong_full
+    Frames:
+    - {fileID: 21300000, guid: b776a96a05fb9514ba9de088b2de4d7a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_windsong_neutral
+    Frames:
+    - {fileID: 21300000, guid: f969faa69b2e8e444b17530008d7f07b, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: tile_bomb
@@ -1151,6 +1351,11 @@ MonoBehaviour:
   - Key: ui_icon_inventory
     Frames:
     - {fileID: 21300000, guid: 885530b7c6229f345959452731940ad9, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_icon_lock
+    Frames:
+    - {fileID: 21300000, guid: f308e7130d834d64b9c07ce0508c1552, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: ui_icon_mana

@@ -556,7 +556,7 @@ floor changes. It opens only with a special key — tapping it without one is
 refused — takes 4 taps like an Epic chest and gives 5 rewards; the key stays in
 the lock. A key whose chest was never reached goes back to the profile.
 
-## 14. Levels and talents *(D-027, tune numbers)*
+## 14. Levels and class talents *(D-027, D-037, tune numbers)*
 
 Every run earns **experience**, banked with its coins when it ends:
 
@@ -569,17 +569,53 @@ Every run earns **experience**, banked with its coins when it ends:
 
 The **level** follows from the total: level 2 at 50 XP, 3 at 150, 4 at 300, 5 at
 500 (50 × the triangle numbers). Each level past the first gives one **talent
-point**. Talents are learned on the title screen and shape every run started
-afterwards; unlike shop provisions they are never used up. Resetting refunds
-every point for free.
+point** for **every class**: each class spends the level's points on its own tree
+(D-037), so switching heroes never costs a build. Talents shape every run that class
+starts; unlike shop boosts they are never used up. Resetting a tree is free.
 
-| Talent | Ranks | Per rank |
-|---|---|---|
-| Tough | 3 | +1 max heart |
-| Stocked | 2 | +1 starting potion |
-| Focus | 2 | +1 max mana |
-| Fleet | 1 | Dash costs 1 less mana (never below 1) |
-| Lucky | 2 | +2 coins for every chest reward |
+Each tree has three **paths** of four tiers. Tier 1 is open at once; tier 2 needs 2
+points spent in the class, tier 3 needs 4, and the tier-4 **capstone** needs 7. Every
+talent past tier 1 needs the talent below it in its path. A class takes **one
+capstone** only, so a build commits to a path.
+
+**Knight (Sir Clickington): versatile vanguard.**
+
+| Path | Tier | Talent | Ranks | Per rank |
+|---|---|---|---|---|
+| Blade | 1 | Opening Strike | 3 | +1 slash damage against an enemy at full health |
+| Blade | 2 | Cleave | 1 | A slash also deals 1 to every other awake enemy next to you |
+| Blade | 3 | Executioner | 2 | +1 slash damage against an enemy at 2 hearts or fewer |
+| Blade | 4 | Relentless | 1 | A slash kill restores 1 heart and 2 mana |
+| Bulwark | 1 | Sturdy | 3 | +1 max heart |
+| Bulwark | 2 | Shield Wall | 1 | SHIELD costs 1 less mana |
+| Bulwark | 3 | Riposte | 2 | A blocked attack deals 1 back to the attacker |
+| Bulwark | 4 | Bastion | 1 | Every SHIELD restores 1 heart |
+| Adventurer | 1 | Light Step | 2 | DASH costs 1 less mana (never below 1) |
+| Adventurer | 2 | Treasure Sense | 1 | Chests open with one tap fewer (never below 1) |
+| Adventurer | 3 | Fortune's Favour | 2 | +3 coins for every chest reward |
+| Adventurer | 4 | Second Wind | 1 | A new floor restores 3 more hearts |
+
+**Paladin (Dawnward): holy guardian.**
+
+| Path | Tier | Talent | Ranks | Per rank |
+|---|---|---|---|---|
+| Hammer | 1 | Judgement | 3 | +1 slash damage against a staggered enemy |
+| Hammer | 2 | Consecrate | 1 | SHIELD deals 1 to every awake enemy next to you |
+| Hammer | 3 | Dawnstrike | 2 | +1 slash damage against Lord Blobert |
+| Hammer | 4 | Wrath of Dawn | 1 | A slash kill staggers every other awake enemy next to you |
+| Aegis | 1 | Plated | 3 | +1 max heart |
+| Aegis | 2 | Holy Bulwark | 1 | A blocked attack restores 2 mana |
+| Aegis | 3 | Unyielding | 1 | At half hearts or fewer, every hit deals 1 less (never below 1) |
+| Aegis | 4 | Divine Shield | 1 | Once per floor, a killing blow leaves you at 1 heart and heals 3 |
+| Devotion | 1 | Blessed Draught | 3 | Potions heal 1 more |
+| Devotion | 2 | Prayer | 1 | Waiting restores 1 extra mana |
+| Devotion | 3 | Guiding Light | 1 | Each new floor starts with its key uncovered |
+| Devotion | 4 | Sanctified | 1 | Potions also refill mana; fountains heal fully |
+
+Paths meet: the Knight's Riposte and Bastion reward shielding, which Shield Wall makes
+cheap; the Paladin's Judgement hits hardest on the enemies a block staggers, and Holy
+Bulwark pays for the next shield. Talents learned before the trees (D-027) are
+refunded.
 
 The level shows as a badge on the portrait on both screens. The TALENTS button
 wears its red "!" only while a point is waiting. A run never reads the profile:

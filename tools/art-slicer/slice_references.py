@@ -385,6 +385,29 @@ def inpaint(image: Image.Image, spec: dict) -> Image.Image:
     return Image.fromarray(rgba, "RGBA")
 
 
+def circle(image: Image.Image, spec: dict) -> Image.Image:
+    """
+    "circle": the picture cut to a disc (a soft edge, transparent corners), for icons only ever shown in round nodes: the
+    game then needs no runtime mask to clip them. "circle_inset" trims the disc inside the picture's own frame.
+    """
+    if not spec.get("circle"):
+        return image
+    w, h = image.size
+    side = min(w, h)
+    left, top = (w - side) // 2, (h - side) // 2
+    square = image.crop((left, top, left + side, top + side)).convert("RGBA")
+    inset = round(side * float(spec.get("circle_inset", 0.0)))
+    if inset:
+        square = square.crop((inset, inset, side - inset, side - inset)).resize((side, side), Image.LANCZOS)
+    scale = 4
+    mask = Image.new("L", (side * scale, side * scale), 0)
+    ImageDraw.Draw(mask).ellipse([0, 0, side * scale - 1, side * scale - 1], fill=255)
+    mask = mask.resize((side, side), Image.LANCZOS)
+    alpha = Image.eval(square.split()[3], lambda v: v)
+    square.putalpha(Image.composite(alpha, Image.new("L", square.size, 0), mask))
+    return square
+
+
 def render(crop: Image.Image, spec: dict) -> Image.Image:
     mode = spec.get("mode", "tile")
     size = int(spec.get("size", 256))
@@ -451,7 +474,7 @@ def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=Non
             rect = snap(rect, boxes[stem])
         x, y, w, h = rect
         crop = image.crop((max(0, x), max(0, y), min(image.width, x + w), min(image.height, y + h)))
-        result = inpaint(smear(mirror_fix(tint(render(crop, spec).convert("RGBA"), spec), spec), spec), spec)
+        result = circle(inpaint(smear(mirror_fix(tint(render(crop, spec).convert("RGBA"), spec), spec), spec), spec), spec)
 
         if spec.get("mode") == "frame":
             borders[key] = frame(crop, spec)[1]

@@ -146,8 +146,9 @@ namespace ClickDungeon.Unity
             profile.Items.AddRange(new[] { "steel_sword", "iron_shield", "royal_plate", "healing_charm", "lucky_wand" });
             foreach (var id in new[] { "steel_sword", "iron_shield", "royal_plate", "healing_charm" })
                 Inventory.Equip(profile, ContentCatalog.CreateDefault(), id);
-            Progression.TryLearn(profile, Progression.Tough);
-            Progression.TryLearn(profile, Progression.Lucky);
+            var demo = ContentCatalog.CreateDefault();
+            foreach (var id in new[] { "k_opening_strike", "k_opening_strike", "k_sturdy", "k_cleave", "k_executioner" })
+                Progression.TryLearn(profile, demo, id);
             profile.RunsFinished = 14;
             profile.RunsWon = 2;
             profile.MonstersSlain = 61;

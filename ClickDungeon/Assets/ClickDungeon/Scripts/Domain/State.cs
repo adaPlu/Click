@@ -70,6 +70,8 @@ namespace ClickDungeon.Domain
         /// <summary>Mana (D-032): SHIELD and DASH spend it; +1 at the end of every turn, full on every new floor.</summary>
         public int Mana;
         public int MaxMana;
+        /// <summary>Divine Shield (D-037) has saved the hero on this floor; it comes back on the next.</summary>
+        public bool WardSpent;
     }
 
     [Serializable]
@@ -162,6 +164,14 @@ namespace ClickDungeon.Domain
         public int ChestsOpened;
         /// <summary>Premium chests still to be placed on the floors ahead (D-026), one per special key carried in.</summary>
         public int PremiumChestsToPlace;
+
+        /// <summary>
+        /// Class talents the rules read (D-037), by effect name: the total of rank × amount. Set when the run starts and never
+        /// changed, like every other starting number.
+        /// </summary>
+        public Dictionary<string, int> Perks = new Dictionary<string, int>();
+
+        public int Perk(TalentEffect effect) => Perks != null && Perks.TryGetValue(effect.ToString(), out int v) ? v : 0;
 
         public bool HasReward(string transactionId)
         {

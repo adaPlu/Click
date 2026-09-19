@@ -14,7 +14,8 @@ namespace ClickDungeon.Simulation
         /// <summary>Mana regained at the end of each turn.</summary>
         public const int PerTurn = 1;
 
-        public static int ShieldCost(RunState run, HeroClassDefinition heroClass) => Math.Max(1, heroClass.ShieldCost);
+        public static int ShieldCost(RunState run, HeroClassDefinition heroClass) =>
+            Math.Max(1, heroClass.ShieldCost - run.Perk(TalentEffect.ShieldCostCut));
 
         /// <summary>The class's price less any cut from talents and gear, never below one.</summary>
         public static int DashCost(RunState run, HeroClassDefinition heroClass) => Math.Max(1, heroClass.DashCost - run.DashCostCut);
