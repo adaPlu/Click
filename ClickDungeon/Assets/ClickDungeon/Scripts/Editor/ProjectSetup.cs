@@ -40,7 +40,8 @@ namespace ClickDungeon.EditorTools
             PlayerSettings.companyName = "Clickd";
             PlayerSettings.productName = "ClickDungeon";
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
-            PlayerSettings.allowedAutorotateToPortrait = false;
+            // Phones turn freely between landscape and upright portrait; each has its own layout.
+            PlayerSettings.allowedAutorotateToPortrait = true;
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
             PlayerSettings.allowedAutorotateToLandscapeLeft = true;
             PlayerSettings.allowedAutorotateToLandscapeRight = true;
@@ -128,8 +129,8 @@ namespace ClickDungeon.EditorTools
         public const string AndroidBuildPath = "Builds/Android/ClickDungeon.apk";
 
         /// <summary>
-        /// An APK to sideload on a phone: landscape only, 64-bit ARM (IL2CPP), signed with Unity's debug key. Uses the SDK, NDK
-        /// and JDK that ship with the editor's Android module.
+        /// An APK to sideload on a phone: landscape or upright portrait, 64-bit ARM (IL2CPP), signed with Unity's debug key.
+        /// Uses the SDK, NDK and JDK that ship with the editor's Android module.
         /// </summary>
         [MenuItem("ClickDungeon/Build Android APK")]
         public static void BuildAndroid()
@@ -158,6 +159,37 @@ namespace ClickDungeon.EditorTools
             bool succeeded = report.summary.result == BuildResult.Succeeded;
             if (succeeded) File.WriteAllText(Path.Combine(buildDir, BuildStampFile), GitVersion() + "\n");
             Debug.Log($"[ClickDungeon] Android build {report.summary.result}: {report.summary.totalErrors} errors -> {AndroidBuildPath}");
+            if (UnityEngine.Application.isBatchMode) EditorApplication.Exit(succeeded ? 0 : 1);
+        }
+
+        public const string IosBuildPath = "Builds/iOS";
+
+        /// <summary>
+        /// The iOS player as an Xcode project (Unity exports iOS this way on every OS): landscape or upright portrait, iOS 13
+        /// and later. Building, signing and installing it needs a Mac with Xcode and an Apple developer account.
+        /// </summary>
+        [MenuItem("ClickDungeon/Build iOS Xcode Project")]
+        public static void BuildIos()
+        {
+            if (!File.Exists(ScenePath)) CreateMainScene();
+            ApplyPlayerSettings();
+            PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.iOS, "com.clickd.clickdungeon");
+            PlayerSettings.iOS.targetOSVersionString = "13.0";
+            PlayerSettings.iOS.requiresFullScreen = false;
+
+            if (Directory.Exists(IosBuildPath)) Directory.Delete(IosBuildPath, true);
+            var options = new BuildPlayerOptions
+            {
+                scenes = new[] { ScenePath },
+                locationPathName = IosBuildPath,
+                target = BuildTarget.iOS,
+                options = BuildOptions.None,
+            };
+            var report = BuildPipeline.BuildPlayer(options);
+            bool succeeded = report.summary.result == BuildResult.Succeeded;
+            if (succeeded) File.WriteAllText(Path.Combine(IosBuildPath, BuildStampFile), GitVersion() + "
+");
+            Debug.Log($"[ClickDungeon] iOS build {report.summary.result}: {report.summary.totalErrors} errors -> {IosBuildPath}");
             if (UnityEngine.Application.isBatchMode) EditorApplication.Exit(succeeded ? 0 : 1);
         }
 

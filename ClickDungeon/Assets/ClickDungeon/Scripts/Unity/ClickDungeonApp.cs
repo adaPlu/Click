@@ -52,6 +52,7 @@ namespace ClickDungeon.Unity
 
             EnsureCamera();
             EnsureEventSystem();
+            RefLayout.Portrait = ScreenIsPortrait;
             ScreenRoot = CreateCanvas();
             _title = new TitleScreen(this, ScreenRoot);
             ShowTitle();
@@ -216,9 +217,41 @@ namespace ClickDungeon.Unity
 
         void Update()
         {
+            if (ScreenIsPortrait != RefLayout.Portrait) Relayout();
             if (_game != null) _game.Tick();
             else _title?.Tick();
         }
+
+        static bool ScreenIsPortrait => Screen.height > Screen.width;
+
+        /// <summary>
+        /// The device turned (or the window became taller than wide): both screens are built again for the new shape. The
+        /// run and the profile live in the session, so nothing is lost; an open menu closes.
+        /// </summary>
+        void Relayout()
+        {
+            RefLayout.Portrait = ScreenIsPortrait;
+            _scaler.referenceResolution = ReferenceFor(RefLayout.Portrait);
+            bool playing = _game != null;
+            Destroy(_title.Root.gameObject);
+            _title = new TitleScreen(this, ScreenRoot);
+            if (playing)
+            {
+                Destroy(_game.Root.gameObject);
+                _title.Root.gameObject.SetActive(false);
+                _game = new GameScreen(this, ScreenRoot);
+                _game.Reopen();
+            }
+            else
+            {
+                _title.Refresh();
+            }
+        }
+
+        static Vector2 ReferenceFor(bool portrait) =>
+            portrait ? new Vector2(RefLayout.PortraitWidth, RefLayout.PortraitHeight) : new Vector2(ReferenceWidth, ReferenceHeight);
+
+        CanvasScaler _scaler;
 
         JsonlTelemetrySink _telemetrySink;
         string _automationTelemetryDir;
@@ -364,10 +397,11 @@ namespace ClickDungeon.Unity
             var canvas = go.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-            // Expand keeps the whole 1920×1080 landscape layout visible on every aspect ratio.
+            // Expand keeps the whole layout visible on every aspect ratio: 1920×1080 in landscape, 1080×1920 in portrait.
             var scaler = go.GetComponent<CanvasScaler>();
+            _scaler = scaler;
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(ReferenceWidth, ReferenceHeight);
+            scaler.referenceResolution = ReferenceFor(RefLayout.Portrait);
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
 
             var background = UiFactory.Image(go.transform, "Background", Palette.Background);

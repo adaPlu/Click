@@ -60,7 +60,10 @@ namespace ClickDungeon.Unity.Screens
             Root = UiFactory.Rect(parent, "TitleScreen");
             RefLayout.Stage(Root);
 
-            Backdrop.Build(Root, ArtKeys.TitleBackground, new[] { new Vector2(-345f, 120f), new Vector2(345f, 120f), new Vector2(-345f, -200f), new Vector2(345f, -200f) });
+            // Portrait cannot use the reference's painted card, panels and buttons, so it builds them over the portrait scene.
+            bool portrait = RefLayout.Portrait;
+            Backdrop.Build(Root, portrait && Art.Has(ArtKeys.TitleBackgroundPortrait) ? ArtKeys.TitleBackgroundPortrait : ArtKeys.TitleBackground,
+                new[] { new Vector2(-345f, 120f), new Vector2(345f, 120f), new Vector2(-345f, -200f), new Vector2(345f, -200f) });
 
             // Placeholder scenery. A composite bg_title (arch, banners, characters) replaces all of it.
             bool compositeBackground = Art.Has(ArtKeys.TitleBackground);
@@ -75,7 +78,7 @@ namespace ClickDungeon.Unity.Screens
                 Banner(new Vector2(470f, -60f), "DUNGEONS\nMAKE\nBETTER\nHEROES");
             }
 
-            _matched = compositeBackground && Art.Has(ArtKeys.TitleNamePlate) && Art.Has(ArtKeys.TitleContinueClean);
+            _matched = !portrait && compositeBackground && Art.Has(ArtKeys.TitleNamePlate) && Art.Has(ArtKeys.TitleContinueClean);
             if (_matched) BuildMatchedCard();
             else BuildHeroCard();
             BuildLogo();
@@ -92,13 +95,46 @@ namespace ClickDungeon.Unity.Screens
             _flash.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 180f), new Vector2(1000f, 50f));
             UiFactory.Outline(_flash, Color.black, 2f);
 
-            _modal = new ModalOverlay(Root, app);
-            _inventory = new InventoryOverlay(Root);
-            _achievements = new AchievementsOverlay(Root);
-            _mail = new MailOverlay(Root);
-            _shop = new ShopOverlay(Root);
-            _heroes = new HeroSelectOverlay(Root);
-            _talents = new TalentOverlay(Root);
+            if (portrait) LayoutPortrait();
+
+            // Each menu's own panel width, so in portrait it fills the screen's width (RefLayout.OverlayStage).
+            _modal = new ModalOverlay(RefLayout.OverlayStage(Root, 760f), app);
+            _inventory = new InventoryOverlay(RefLayout.OverlayStage(Root, 1060f));
+            _achievements = new AchievementsOverlay(RefLayout.OverlayStage(Root, 1000f));
+            _mail = new MailOverlay(RefLayout.OverlayStage(Root, 1240f));
+            _shop = new ShopOverlay(RefLayout.OverlayStage(Root, 1340f));
+            _heroes = new HeroSelectOverlay(RefLayout.OverlayStage(Root, 1860f));
+            _talents = new TalentOverlay(RefLayout.OverlayStage(Root, 1840f));
+        }
+
+        /// <summary>
+        /// The phone-upright title on the 1080 × 1920 stage: hero card and the crown / mail / settings / menu row across the
+        /// top, the logo, the knight at the gate, CONTINUE and the daily reward under him, and the buttons in two rows.
+        /// </summary>
+        void LayoutPortrait()
+        {
+            RefLayout.Top(Root, "HeroCard", 24f, 24f, 430f, 136f);
+            RefLayout.Top(Root, "Crown", 674f, 38f, 88f, 88f);
+            RefLayout.Top(Root, "MailButton", 772f, 38f, 88f, 88f);
+            RefLayout.Top(Root, "Settings", 870f, 38f, 88f, 88f);
+            RefLayout.Top(Root, "Menu", 968f, 38f, 88f, 88f);
+            RefLayout.Top(Root, "Logo", 60f, 200f, 960f, 172f);
+            RefLayout.Top(Root, "Art " + ArtKeys.Logo, 60f, 200f, 960f, 172f);
+            // The portrait scene carries the reference's own EXPLORE. SURVIVE. LOOT. REPEAT. plank.
+            var tagline = Root.Find("Tagline");
+            if (tagline != null && Art.Has(ArtKeys.TitleBackgroundPortrait)) tagline.gameObject.SetActive(false);
+            RefLayout.Top(Root, "Continue", 30f, 1170f, 400f, 340f);
+            RefLayout.Top(Root, "DailyReward", 742f, 1146f, 308f, 388f);
+            RefLayout.Top(Root, "Flash", 40f, 1516f, 1000f, 44f);
+
+            bool quit = Root.Find("Quit") != null;
+            RefLayout.Top(Root, "Play", 34f, 1566f, 470f, 150f);
+            RefLayout.Top(Root, "HeroSelect", 516f, 1566f, quit ? 250f : 530f, 150f);
+            RefLayout.Top(Root, "Quit", 778f, 1566f, 268f, 150f);
+            RefLayout.Top(Root, "Inventory", 34f, 1728f, 244f, 150f);
+            RefLayout.Top(Root, "Talents", 290f, 1728f, 244f, 150f);
+            RefLayout.Top(Root, "Shop", 546f, 1728f, 244f, 150f);
+            RefLayout.Top(Root, "Settings", 802f, 1728f, 244f, 150f, 1);
         }
 
         public RectTransform Root { get; }

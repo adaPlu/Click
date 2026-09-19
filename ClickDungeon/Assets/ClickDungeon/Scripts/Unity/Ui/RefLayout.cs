@@ -13,18 +13,55 @@ namespace ClickDungeon.Unity.Ui
     {
         public const float Scale = 1920f / 1672f;
         static readonly Vector2 TopLeft = new Vector2(0f, 1f);
+        static readonly Vector2 Middle = new Vector2(0.5f, 0.5f);
 
         /// <summary>
-        /// Makes a screen's root the fixed 16:9 stage its layout is designed on, centred in the window. The canvas grows to
-        /// fit a wider or taller window, but the background art keeps its own shape; laying everything out on the stage keeps
-        /// every button and panel on the background's own. What lies outside the stage is filled by the backdrop's bleed.
+        /// True while the screen is taller than it is wide (a phone held upright). Screens are then built on a 1080 × 1920
+        /// stage with their portrait layout; the app rebuilds them when the device turns.
+        /// </summary>
+        public static bool Portrait;
+        public const float PortraitWidth = 1080f, PortraitHeight = 1920f;
+
+        /// <summary>
+        /// Makes a screen's root the fixed stage its layout is designed on, centred in the window: 16:9 in landscape, 9:16 in
+        /// portrait. The canvas grows to fit a wider or taller window, but the background art keeps its own shape; laying
+        /// everything out on the stage keeps every button and panel on the background's own. What lies outside the stage is
+        /// filled by the backdrop's bleed.
         /// </summary>
         public static void Stage(RectTransform root)
         {
             root.Stretch();
             var fitter = root.gameObject.AddComponent<AspectRatioFitter>();
             fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-            fitter.aspectRatio = 1920f / 1080f;
+            fitter.aspectRatio = Portrait ? PortraitWidth / PortraitHeight : 1920f / 1080f;
+        }
+
+        /// <summary>
+        /// Where one menu or pop-up goes. They are laid out on the 16:9 stage, so in portrait each gets a 16:9 stage of its
+        /// own, centred and scaled so its panel (<paramref name="panelWidth"/> wide) fills the screen's width: a small menu
+        /// grows to stay readable (up to 1.3×), a wide one shrinks to fit.
+        /// </summary>
+        public static RectTransform OverlayStage(RectTransform root, float panelWidth)
+        {
+            if (!Portrait) return root;
+            var stage = UiFactory.Rect(root, "OverlayStage");
+            stage.Place(Middle, Middle, Vector2.zero, new Vector2(1920f, 1080f));
+            stage.localScale = Vector3.one * Mathf.Min(1.3f, (PortraitWidth - 20f) / panelWidth);
+            return stage;
+        }
+
+        /// <summary>Puts a direct child of the stage at a rectangle in stage units, from the stage's top-left corner.</summary>
+        public static RectTransform Top(RectTransform stage, string name, float x, float y, float w, float h, int index = 0)
+        {
+            int seen = 0;
+            foreach (Transform child in stage)
+            {
+                if (child.name != name || seen++ != index) continue;
+                var rt = (RectTransform)child;
+                rt.Place(TopLeft, TopLeft, new Vector2(x, -y), new Vector2(w, h));
+                return rt;
+            }
+            return null;
         }
 
         /// <summary>How far a full-screen layer reaches past the stage, so it still covers a window of any shape.</summary>

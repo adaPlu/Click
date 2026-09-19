@@ -228,9 +228,19 @@ MonoBehaviour:
     - {fileID: 21300000, guid: cb60e94a3a724564ea3e97236ce59fa6, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: bg_gameplay_portrait
+    Frames:
+    - {fileID: 21300000, guid: d8c178701d9d0004f903d493e450e881, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: bg_title
     Frames:
     - {fileID: 21300000, guid: 2aebe6f7a91560a4eab40ba2861063b7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: bg_title_portrait
+    Frames:
+    - {fileID: 21300000, guid: 7b6342b65cee96e40a24084ce86885ed, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: fx_blobert_summon

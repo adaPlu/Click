@@ -152,6 +152,9 @@ namespace ClickDungeon.Unity.Ui
         public const string FountainHeal = "tile_fountain_heal";
         public const string Logo = "logo_clickdungeon";
         public const string TitleBackground = "bg_title";
+        /// <summary>Portrait backgrounds: the scene between the landscape art's painted HUD rows (make_portrait_backgrounds.py).</summary>
+        public const string TitleBackgroundPortrait = "bg_title_portrait";
+        public const string GameplayBackgroundPortrait = "bg_gameplay_portrait";
         public const string GameplayBackground = "bg_gameplay";
         public const string DangerWarning = "icon_danger_warning";
 
@@ -424,7 +427,7 @@ namespace ClickDungeon.Unity.Ui
                 SpecialLockBadge, SpecialKeyIcon, Potion, EntranceStairs, ExitLocked, ExitOpen,
                 StairDownLocked, StairDown, StairUp, TrapPit, TrapSpike, TrapBomb, Lava, Water, Shadow, FloorCracked, FloorMoss,
                 WallCorner, TorchWall, DoorLocked, DoorOpen, PressurePlate, Teleport, FountainHeal,
-                Logo, TitleBackground, GameplayBackground,
+                Logo, TitleBackground, GameplayBackground, TitleBackgroundPortrait, GameplayBackgroundPortrait,
             };
             foreach (var enemy in catalog.Enemies.Values) keys.Add(Actor(enemy.Id));
             foreach (var enemy in catalog.Enemies.Values) keys.Add(EnemyPortrait(enemy.Id));

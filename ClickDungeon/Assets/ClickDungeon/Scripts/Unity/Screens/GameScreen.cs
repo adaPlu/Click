@@ -93,8 +93,11 @@ namespace ClickDungeon.Unity.Screens
             Root = UiFactory.Rect(parent, "GameScreen");
             RefLayout.Stage(Root);
 
-            _matched = Art.Has(ArtKeys.GameplayBackground) && Art.Has(ArtKeys.HudPlaque) && Art.Has(ArtKeys.HudAbility(CommandKind.Move));
-            Backdrop.Build(Root, ArtKeys.GameplayBackground, new[] { new Vector2(-420f, 220f), new Vector2(420f, 220f), new Vector2(-420f, -120f), new Vector2(420f, -120f) });
+            // Portrait cannot use the reference's painted HUD, so it builds every piece itself over the portrait room.
+            bool portrait = RefLayout.Portrait;
+            _matched = !portrait && Art.Has(ArtKeys.GameplayBackground) && Art.Has(ArtKeys.HudPlaque) && Art.Has(ArtKeys.HudAbility(CommandKind.Move));
+            Backdrop.Build(Root, portrait && Art.Has(ArtKeys.GameplayBackgroundPortrait) ? ArtKeys.GameplayBackgroundPortrait : ArtKeys.GameplayBackground,
+                new[] { new Vector2(-420f, 220f), new Vector2(420f, 220f), new Vector2(-420f, -120f), new Vector2(420f, -120f) });
             BuildTopLeft();
             BuildTopRight();
             _logText = "<color=#A69F93>Nothing yet.\n\nEvery hit, discovery and wake-up will be explained here, newest first.</color>";
@@ -107,10 +110,12 @@ namespace ClickDungeon.Unity.Screens
             _inspectPortrait.rectTransform.Place(new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-16f, -14f), new Vector2(44f, 44f));
             _inspectPortrait.gameObject.SetActive(false);
 
-            _board = new BoardView(Root, app, _matched ? MatchedBoardCenter : new Vector2(0f, BoardY));
-            _board.Root.localScale = new Vector3(BoardScale, BoardScale, 1f);
-            // Inside the reference's own stone frame, covering the sample tiles it shows there.
+            _board = new BoardView(Root, app, portrait ? PortraitBoardCenter : _matched ? MatchedBoardCenter : new Vector2(0f, BoardY));
+            _board.Root.localScale = portrait ? Vector3.one * PortraitBoardScale : new Vector3(BoardScale, BoardScale, 1f);
+            // Inside the reference's own stone frame, covering the sample tiles it shows there (in portrait, the portrait
+            // room's copy of that frame).
             if (_matched) _board.FitInside(MatchedBoardInterior / BoardScale);
+            else if (portrait && Art.Has(ArtKeys.GameplayBackgroundPortrait)) _board.FitInside(PortraitBoardInterior / PortraitBoardScale);
             _board.CellClicked += OnCellClicked;
             _board.CellEntered += p =>
             {
@@ -127,14 +132,52 @@ namespace ClickDungeon.Unity.Screens
             BuildSpeechStrip();
             BuildNavBar();
 
+            if (portrait) LayoutPortrait();
+
             // Above the board, over the top HUD band, so it never hides board tiles.
-            _floorBanner = new FloorBanner(Root, app, new Vector2(0f, 482f));
-            _chest = new ChestOverlay(Root, app);
-            _modal = new ModalOverlay(Root, app);
-            _inventory = new InventoryOverlay(Root);
-            _shop = new ShopOverlay(Root);
-            _talents = new TalentOverlay(Root);
+            _floorBanner = new FloorBanner(Root, app, portrait ? new Vector2(0f, 590f) : new Vector2(0f, 482f));
+            // Each menu's own panel width, so in portrait it fills the screen's width (RefLayout.OverlayStage).
+            _chest = new ChestOverlay(RefLayout.OverlayStage(Root, 1200f), app);
+            _modal = new ModalOverlay(RefLayout.OverlayStage(Root, 760f), app);
+            _inventory = new InventoryOverlay(RefLayout.OverlayStage(Root, 1060f));
+            _shop = new ShopOverlay(RefLayout.OverlayStage(Root, 1340f));
+            _talents = new TalentOverlay(RefLayout.OverlayStage(Root, 1840f));
         }
+
+        // The portrait room's board frame (make_portrait_backgrounds.py): its inner edge, centred 612 below the stage's top.
+        static readonly Vector2 PortraitBoardCenter = new Vector2(0f, RefLayout.PortraitHeight / 2f - 612f);
+        static readonly Vector2 PortraitBoardInterior = new Vector2(893f, 612f);
+        /// <summary>The 5 × 5 grid scaled to fit that interior's height, as the landscape board fits its frame.</summary>
+        static readonly float PortraitBoardScale = PortraitBoardInterior.y / (BoardRules.Size * BoardView.CellSize + (BoardRules.Size - 1) * BoardView.Gap);
+
+        /// <summary>
+        /// The phone-upright layout on the 1080 × 1920 stage: portrait, bars and purse across the top; the floor plaque, logo,
+        /// settings and menu under them; the board in the room's frame; the abilities under it; Sir Clickington's line and the
+        /// goal below; INSPECT when there is something to inspect; the INVENTORY / TALENTS / SHOP bar along the bottom.
+        /// </summary>
+        void LayoutPortrait()
+        {
+            RefLayout.Top(Root, "Portrait", 24f, 20f, 128f, 128f);
+            RefLayout.Top(Root, "Hp", 172f, 26f, 370f, 47f);
+            RefLayout.Top(Root, "Mana", 172f, 86f, 370f, 47f);
+            RefLayout.Top(Root, "Coins", 792f, 24f, 264f, 48f);
+            RefLayout.Top(Root, "Gems", 792f, 84f, 264f, 48f);
+            RefLayout.Top(Root, "FloorPlaque", 24f, 166f, 306f, 84f);
+            RefLayout.Top(Root, "Logo", 348f, 172f, 410f, 74f);
+            RefLayout.Top(Root, "Art " + ArtKeys.Logo, 348f, 172f, 410f, 74f);
+            RefLayout.Top(Root, "Settings", 872f, 164f, 86f, 86f);
+            RefLayout.Top(Root, "Menu", 970f, 164f, 86f, 86f);
+            // The abilities a size up: they are the thumb's targets.
+            var abilities = RefLayout.Top(Root, "AbilityBar", 22f, 950f, 900f, 166f);
+            if (abilities != null) abilities.localScale = Vector3.one * 1.15f;
+            RefLayout.Top(Root, "Speech", 24f, 1162f, 1032f, 128f);
+            RefLayout.Top(Root, "Goal", 24f, 1304f, 1032f, 104f);
+            RefLayout.Top(Root, "Inspect", 24f, 1424f, 1032f, 356f);
+            RefLayout.Top(Root, "NavBar", 11f, 1800f, 1057f, 110f);
+        }
+
+        /// <summary>Rebuilt after the device turned: shows the run as it stands, without a greeting or animation.</summary>
+        public void Reopen() => Refresh(false);
 
         public RectTransform Root { get; }
 
