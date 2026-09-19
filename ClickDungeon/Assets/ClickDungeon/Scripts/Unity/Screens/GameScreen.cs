@@ -224,7 +224,10 @@ namespace ClickDungeon.Unity.Screens
             else if (kb.digit5Key.wasPressedThisFrame || kb.numpad5Key.wasPressedThisFrame) OnAbility(CommandKind.Potion);
         }
 
-        /// <summary>Automation hook (screenshots/smoke runs): same path as a player tap.</summary>
+        /// <summary>Watch mode: whether a chest reveal is on screen, and one tap on it, so the bot's chests play out visibly.</summary>
+        public bool AutomationChestOpen => _chest.IsOpen;
+        public void AutomationTapChest() => _chest.Tap();
+
         /// <summary>Automation hook: submits through the normal input path, first tapping through any open chest reveal.</summary>
         public void AutomationSubmit(PlayerCommand command)
         {

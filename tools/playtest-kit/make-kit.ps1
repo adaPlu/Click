@@ -42,7 +42,7 @@ New-Item -ItemType Directory $staging | Out-Null
 Get-ChildItem $BuildDir |
     Where-Object { $_.Name -notlike '*DoNotShip*' -and $_.Name -notlike '*BackUpThisFolder*' -and $_.Extension -ne '.pdb' } |
     Copy-Item -Destination $staging -Recurse
-Copy-Item (Join-Path $PSScriptRoot 'PLAYTEST-README.txt'), (Join-Path $PSScriptRoot 'collect-logs.bat'), (Join-Path $PSScriptRoot 'collect-logs.ps1') $staging
+Copy-Item (Join-Path $PSScriptRoot 'PLAYTEST-README.txt'), (Join-Path $PSScriptRoot 'collect-logs.bat'), (Join-Path $PSScriptRoot 'collect-logs.ps1'), (Join-Path $PSScriptRoot 'watch-bot.bat') $staging
 
 $buildTime = (Get-Item (Join-Path $BuildDir 'ClickDungeon_Data\Managed\ClickDungeon.Unity.dll')).LastWriteTime.ToString('yyyy-MM-dd HH:mm')
 @(

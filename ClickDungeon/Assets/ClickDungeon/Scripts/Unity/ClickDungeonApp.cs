@@ -8,6 +8,7 @@ using ClickDungeon.Unity.Screens;
 using ClickDungeon.Unity.Ui;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
@@ -28,13 +29,16 @@ namespace ClickDungeon.Unity
         public GameSession Session { get; private set; }
         public RectTransform ScreenRoot { get; private set; }
 
-        /// <summary>True when launched with -cdShot (automated screenshots). Uses a separate save folder.</summary>
+        /// <summary>
+        /// True when launched with -cdShot (automated screenshots) or -cdWatch (the bot plays on screen). Uses a separate
+        /// save folder and a profile in memory, so neither ever touches a real player's saves.
+        /// </summary>
         public bool AutomationMode { get; private set; }
 
         void Awake()
         {
             UnityEngine.Application.targetFrameRate = 60;
-            AutomationMode = ArgValue("-cdShot") != null;
+            AutomationMode = ArgValue("-cdShot") != null || ArgValue("-cdWatch") != null;
             _automationTelemetryDir = AutomationMode ? ArgValue("-cdTelemetryDir") : null;
             Store = new FileSaveStore(Path.Combine(UnityEngine.Application.persistentDataPath, AutomationMode ? "saves-automation" : "saves"));
             // Automation keeps its coins in memory, so screenshot runs never spend or bank a real player's profile.
@@ -63,7 +67,7 @@ namespace ClickDungeon.Unity
                 Debug.LogError("[ClickDungeon] Automation failed, quitting: " + message);
                 UnityEngine.Application.Quit(1);
             };
-            StartCoroutine(AutomationShot());
+            StartCoroutine(ArgValue("-cdWatch") != null ? WatchBot() : AutomationShot());
         }
 
         /// <summary>
@@ -117,6 +121,86 @@ namespace ClickDungeon.Unity
             for (int i = 0; i < 40; i++) yield return null;
             ScreenCapture.CaptureScreenshot(path);
             yield return new WaitForSecondsRealtime(1f);
+            Store.Delete();
+            UnityEngine.Application.Quit();
+        }
+
+        /// <summary>
+        /// Watch mode: -cdWatch [seconds per move, default 0.5] [-cdRuns n, default 5] [-cdHero id] [-cdDifficulty ..]
+        /// [-cdMovement ..] [-cdBot smart|casual] [-cdSighted 1]. The bot plays whole runs on screen at a pace a person can
+        /// follow, through the same input path as a player: it decides blind (only on what is uncovered) unless -cdSighted,
+        /// chest reveals and floor banners play out, and each end panel stays up a moment. The profile carries from run to
+        /// run, so coins, gear, levels and talents build up; between runs the bot collects its mail and learns the first
+        /// talent it can. Without -cdHero it alternates the playable heroes. Esc quits. Results go to the player log.
+        /// </summary>
+        IEnumerator WatchBot()
+        {
+            float pace = float.TryParse(ArgValue("-cdWatch"), System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out var p) && p > 0f ? p : 0.5f;
+            int runs = int.TryParse(ArgValue("-cdRuns"), out var r) && r > 0 ? r : 5;
+            var heroes = new List<string>(Catalog.HeroIdentities.Keys);
+            string fixedHero = ArgValue("-cdHero");
+            var caption = UiFactory.Text(ScreenRoot, "WatchCaption", "", 24, Palette.Gold, TextAnchor.MiddleCenter, FontStyle.Bold);
+            caption.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 118f), new Vector2(1200f, 34f));
+            caption.raycastTarget = false;
+            UiFactory.Outline(caption, Color.black, 2f);
+            int won = 0;
+            var log = new System.Text.StringBuilder();
+
+            for (int run = 1; run <= runs; run++)
+            {
+                var profile = Session.Profile;
+                Mailbox.CollectAll(profile);
+                string heroId = fixedHero != null ? LaunchOptions.ParseHero(fixedHero, Catalog, heroes[0]) : heroes[(run - 1) % heroes.Count];
+                string classId = Progression.ClassOf(Catalog, heroId);
+                for (bool learned = true; learned;)
+                {
+                    learned = false;
+                    foreach (var talent in Catalog.TalentsOf(classId))
+                        if (Progression.TryLearn(profile, Catalog, talent.Id)) { learned = true; break; }
+                }
+
+                Store.Delete();
+                ulong seed = 20260920UL + (ulong)run * 7919UL;
+                OpenGame(Session.StartNewRun(seed, LaunchOptions.ParseDifficulty(ArgValue("-cdDifficulty")),
+                    LaunchOptions.ParseMovement(ArgValue("-cdMovement")), heroId), null);
+                var bot = new AutoPlayer(ArgValue("-cdBot") == "casual" ? AutoPlayer.CasualMistakeRate : 0.0,
+                    blind: ArgValue("-cdSighted") == null);
+                caption.transform.SetAsLastSibling();
+                yield return new WaitForSecondsRealtime(2f);
+
+                for (int i = 0; i < 1500 && Session.Run.Status == Domain.RunStatus.InProgress; i++)
+                {
+                    if (Keyboard.current != null && Keyboard.current.escapeKey.isPressed) { UnityEngine.Application.Quit(); yield break; }
+                    var hero = Session.Run.Hero;
+                    caption.text = $"BOT WATCH  ·  run {run}/{runs}  ·  {Catalog.HeroIdentity(heroId).DisplayName}  ·  floor {Session.Run.Floor.FloorIndex}"
+                                   + $"  ·  turn {Session.Run.Turn + 1}  ·  {hero.Hp}/{hero.MaxHp} hearts  ·  Esc quits";
+                    int floor = Session.Run.Floor.FloorIndex;
+                    _game.AutomationSubmit(bot.Choose(Session.Run, Catalog, seed * 7919UL + (ulong)i));
+                    yield return new WaitForSecondsRealtime(pace);
+                    // A chest reveal plays out tap by tap; a new floor's banner gets its moment.
+                    while (_game != null && _game.AutomationChestOpen)
+                    {
+                        yield return new WaitForSecondsRealtime(0.7f);
+                        _game.AutomationTapChest();
+                    }
+                    if (Session.Run.Floor.FloorIndex != floor) yield return new WaitForSecondsRealtime(1.2f);
+                }
+
+                var end = Session.Run;
+                if (end.Status == Domain.RunStatus.InProgress) Session.Abandon();
+                if (end.Status == Domain.RunStatus.Won) won++;
+                string line = $"run {run}: {Catalog.HeroIdentity(heroId).DisplayName} seed {seed} {end.Status} on floor {end.Floor.FloorIndex} " +
+                              $"after {end.Turn} turns, {end.Hero.Hp}/{end.Hero.MaxHp} hearts, +{end.CoinsFound} coins, +{end.GemsFound} gems, " +
+                              $"+{end.XpEarned} XP; level {Progression.Level(Session.Profile)}, {Session.Profile.Items.Count} items";
+                log.AppendLine(line);
+                Debug.Log("[ClickDungeon] Watch " + line);
+                caption.text = $"BOT WATCH  ·  run {run}/{runs}: {end.Status.ToString().ToUpperInvariant()}  ·  {won} won so far";
+                yield return new WaitForSecondsRealtime(4f);
+            }
+            Debug.Log($"[ClickDungeon] Watch finished: won {won} of {runs}.\n{log}");
+            caption.text = $"BOT WATCH finished: won {won} of {runs}";
+            yield return new WaitForSecondsRealtime(3f);
             Store.Delete();
             UnityEngine.Application.Quit();
         }

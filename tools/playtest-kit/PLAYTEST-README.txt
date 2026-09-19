@@ -65,4 +65,11 @@ Prefer to do it by hand? The logs are in:
   %USERPROFILE%\AppData\LocalLow\Clickd\ClickDungeon\telemetry
 
 
+5. WATCH THE BOT (optional)
+---------------------------
+Double-click watch-bot.bat to watch the game's bot play five runs on its own,
+at a pace you can follow. It never touches your save or your coins. Press Esc to
+stop it. Handy for seeing a system you have not reached yet.
+
+
 See VERSION.txt for the build version. Thank you!
