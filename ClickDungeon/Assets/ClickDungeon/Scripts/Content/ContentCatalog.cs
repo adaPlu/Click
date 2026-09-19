@@ -45,6 +45,60 @@ namespace ClickDungeon.Content
         static void Achieve(ContentCatalog c, string id, string title, string description, AchievementStat stat, int target, RewardBundle reward) =>
             c.Achievements.Add(new AchievementDefinition { Id = id, Title = title, Description = description, Stat = stat, Target = target, Reward = reward });
 
+        static void Gear(ContentCatalog c, string id, string name, ItemSlot slot, ItemRarity rarity, int slash = 0, int hearts = 0,
+            int mana = 0, int heal = 0, int dashCut = 0, int coins = 0, int xp = 0)
+        {
+            var parts = new List<string>();
+            if (slash > 0) parts.Add($"+{slash} slash damage");
+            if (hearts > 0) parts.Add($"+{hearts} max heart{(hearts == 1 ? "" : "s")}");
+            if (mana > 0) parts.Add($"+{mana} max mana");
+            if (heal > 0) parts.Add($"potions heal {heal} more");
+            if (dashCut > 0) parts.Add($"dash costs {dashCut} less mana");
+            if (coins > 0) parts.Add($"+{coins} coins for every chest reward");
+            if (xp > 0) parts.Add($"+{xp} XP for every floor walked down");
+            var effect = string.Join(", ", parts);
+            c.Items.Add(new ItemDefinition
+            {
+                Id = id, DisplayName = name, Slot = slot, Rarity = rarity,
+                Effect = effect.Length > 0 ? char.ToUpperInvariant(effect[0]) + effect.Substring(1) : effect,
+                SlashDamage = slash, MaxHp = hearts, MaxMana = mana, PotionHeal = heal, DashCostCut = dashCut,
+                CoinsPerChestReward = coins, XpPerFloor = xp,
+            });
+        }
+
+        /// <summary>How often each rarity drops, relative to the others (D-036): a legendary is six times rarer than a common.</summary>
+        public static int DropWeight(ItemRarity rarity)
+        {
+            switch (rarity)
+            {
+                case ItemRarity.Common: return 6;
+                case ItemRarity.Uncommon: return 4;
+                case ItemRarity.Rare: return 3;
+                case ItemRarity.Epic: return 2;
+                default: return 1;
+            }
+        }
+
+        /// <summary>
+        /// One item by rarity weight from a random number the caller draws, so a run's drop stays a function of its seed. Only
+        /// items at or above <paramref name="atLeast"/> take part.
+        /// </summary>
+        public ItemDefinition PickItem(ulong roll, ItemRarity atLeast = ItemRarity.Common)
+        {
+            long total = 0;
+            foreach (var item in Items)
+                if (item.Rarity >= atLeast) total += DropWeight(item.Rarity);
+            if (total == 0) return null;
+            long at = (long)(roll % (ulong)total);
+            foreach (var item in Items)
+            {
+                if (item.Rarity < atLeast) continue;
+                at -= DropWeight(item.Rarity);
+                if (at < 0) return item;
+            }
+            return null;
+        }
+
         public ItemDefinition Item(string id)
         {
             foreach (var item in Items)
@@ -148,15 +202,45 @@ namespace ClickDungeon.Content
                 Id = "dawnward", DisplayName = "Dawnward", ClassId = "paladin", Tagline = "Steadfast. Shielded. Unshaken.",
             };
 
-            c.Items.Add(new ItemDefinition { Id = "steel_sword", DisplayName = "Steel Sword", Slot = ItemSlot.Weapon, Effect = "+1 slash damage", SlashDamage = 1 });
-            c.Items.Add(new ItemDefinition { Id = "lucky_wand", DisplayName = "Lucky Wand", Slot = ItemSlot.Weapon, Effect = "+3 coins for every chest reward", CoinsPerChestReward = 3 });
-            c.Items.Add(new ItemDefinition { Id = "iron_shield", DisplayName = "Iron Shield", Slot = ItemSlot.Shield, Effect = "+1 max heart", MaxHp = 1 });
-            c.Items.Add(new ItemDefinition { Id = "gilded_shield", DisplayName = "Gilded Shield", Slot = ItemSlot.Shield, Effect = "+1 max mana", MaxMana = 1 });
-            c.Items.Add(new ItemDefinition { Id = "iron_cuirass", DisplayName = "Iron Cuirass", Slot = ItemSlot.Armor, Effect = "+1 max heart", MaxHp = 1 });
-            c.Items.Add(new ItemDefinition { Id = "royal_plate", DisplayName = "Royal Plate", Slot = ItemSlot.Armor, Effect = "+2 max hearts", MaxHp = 2 });
-            c.Items.Add(new ItemDefinition { Id = "swift_boots", DisplayName = "Swift Boots", Slot = ItemSlot.Boots, Effect = "Dash costs 1 less mana", DashCostCut = 1 });
-            c.Items.Add(new ItemDefinition { Id = "healing_charm", DisplayName = "Healing Charm", Slot = ItemSlot.Trinket, Effect = "Potions heal 2 more", PotionHeal = 2 });
-            c.Items.Add(new ItemDefinition { Id = "scholars_ring", DisplayName = "Scholar's Ring", Slot = ItemSlot.Trinket, Effect = "+5 XP for every floor walked down", XpPerFloor = 5 });
+            // The equipment library (D-028, D-036): every piece is starting numbers, grouped by slot, rarer is stronger.
+            Gear(c, "steel_sword", "Steel Sword", ItemSlot.Weapon, ItemRarity.Common, slash: 1);
+            Gear(c, "battle_axe", "Battle Axe", ItemSlot.Weapon, ItemRarity.Uncommon, slash: 1, hearts: 1);
+            Gear(c, "lucky_wand", "Lucky Wand", ItemSlot.Weapon, ItemRarity.Uncommon, coins: 3);
+            Gear(c, "spiked_mace", "Spiked Mace", ItemSlot.Weapon, ItemRarity.Uncommon, slash: 1, coins: 2);
+            Gear(c, "frost_blade", "Frost Blade", ItemSlot.Weapon, ItemRarity.Rare, slash: 2);
+            Gear(c, "void_blade", "Void Blade", ItemSlot.Weapon, ItemRarity.Epic, slash: 2, hearts: 1);
+            Gear(c, "celestial_staff", "Celestial Staff", ItemSlot.Weapon, ItemRarity.Legendary, slash: 2, mana: 2);
+            Gear(c, "dragonslayer", "Dragonslayer", ItemSlot.Weapon, ItemRarity.Legendary, slash: 3);
+            Gear(c, "iron_helm", "Iron Helm", ItemSlot.Helmet, ItemRarity.Common, hearts: 1);
+            Gear(c, "horned_helm", "Horned Helm", ItemSlot.Helmet, ItemRarity.Uncommon, hearts: 1, mana: 1);
+            Gear(c, "cobalt_helm", "Cobalt Helm", ItemSlot.Helmet, ItemRarity.Rare, mana: 2);
+            Gear(c, "shadow_hood", "Shadow Hood", ItemSlot.Helmet, ItemRarity.Rare, dashCut: 1);
+            Gear(c, "void_helm", "Void Helm", ItemSlot.Helmet, ItemRarity.Epic, hearts: 2, mana: 1);
+            Gear(c, "crown_of_kings", "Crown of Kings", ItemSlot.Helmet, ItemRarity.Legendary, coins: 5, xp: 10);
+            Gear(c, "iron_cuirass", "Iron Cuirass", ItemSlot.Armor, ItemRarity.Common, hearts: 1);
+            Gear(c, "ranger_mail", "Ranger Mail", ItemSlot.Armor, ItemRarity.Uncommon, hearts: 1, heal: 1);
+            Gear(c, "sapphire_plate", "Sapphire Plate", ItemSlot.Armor, ItemRarity.Rare, hearts: 2, mana: 1);
+            Gear(c, "royal_plate", "Royal Plate", ItemSlot.Armor, ItemRarity.Epic, hearts: 3);
+            Gear(c, "void_plate", "Void Plate", ItemSlot.Armor, ItemRarity.Epic, hearts: 2, mana: 2);
+            Gear(c, "sunforged_plate", "Sunforged Plate", ItemSlot.Armor, ItemRarity.Legendary, slash: 1, hearts: 3);
+            Gear(c, "iron_shield", "Iron Shield", ItemSlot.Shield, ItemRarity.Common, hearts: 1);
+            Gear(c, "round_buckler", "Round Buckler", ItemSlot.Shield, ItemRarity.Common, heal: 1);
+            Gear(c, "star_shield", "Star Shield", ItemSlot.Shield, ItemRarity.Uncommon, hearts: 1, mana: 1);
+            Gear(c, "gilded_shield", "Gilded Shield", ItemSlot.Shield, ItemRarity.Rare, mana: 2);
+            Gear(c, "lion_shield", "Lion Shield", ItemSlot.Shield, ItemRarity.Rare, hearts: 2);
+            Gear(c, "aegis_of_dawn", "Aegis of Dawn", ItemSlot.Shield, ItemRarity.Legendary, hearts: 3, mana: 1);
+            Gear(c, "iron_greaves", "Iron Greaves", ItemSlot.Boots, ItemRarity.Common, hearts: 1);
+            Gear(c, "swift_boots", "Swift Boots", ItemSlot.Boots, ItemRarity.Uncommon, dashCut: 1);
+            Gear(c, "gold_treads", "Gold Treads", ItemSlot.Boots, ItemRarity.Rare, coins: 3);
+            Gear(c, "gem_treads", "Gem Treads", ItemSlot.Boots, ItemRarity.Rare, mana: 2);
+            Gear(c, "boots_of_swiftness", "Boots of Swiftness", ItemSlot.Boots, ItemRarity.Epic, mana: 1, dashCut: 1);
+            Gear(c, "emerald_ring", "Emerald Ring", ItemSlot.Trinket, ItemRarity.Common, coins: 2);
+            Gear(c, "ruby_ring", "Ruby Ring", ItemSlot.Trinket, ItemRarity.Uncommon, slash: 1);
+            Gear(c, "healing_charm", "Healing Charm", ItemSlot.Trinket, ItemRarity.Uncommon, heal: 2);
+            Gear(c, "scholars_ring", "Scholar's Ring", ItemSlot.Trinket, ItemRarity.Uncommon, xp: 5);
+            Gear(c, "amethyst_ring", "Amethyst Ring", ItemSlot.Trinket, ItemRarity.Rare, mana: 2);
+            Gear(c, "sapphire_amulet", "Sapphire Amulet", ItemSlot.Trinket, ItemRarity.Epic, hearts: 2, mana: 2);
+            Gear(c, "sun_amulet", "Sun Amulet", ItemSlot.Trinket, ItemRarity.Legendary, slash: 1, xp: 10);
 
             c.DailyRewards.Add(new RewardBundle { Label = "30 coins", Coins = 30 });
             c.DailyRewards.Add(new RewardBundle { Label = "a potion ration", PotionRations = 1 });

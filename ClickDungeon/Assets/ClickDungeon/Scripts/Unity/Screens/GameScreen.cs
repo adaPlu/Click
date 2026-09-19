@@ -64,6 +64,7 @@ namespace ClickDungeon.Unity.Screens
         GameObject _talentsBadge;
         GameObject _inspectPanel;
         InventoryOverlay _inventory;
+        ShopOverlay _shop;
         Text _inspectTitle;
         Text _inspectBody;
         Image _inspectPortrait;
@@ -130,13 +131,14 @@ namespace ClickDungeon.Unity.Screens
             _chest = new ChestOverlay(Root, app);
             _modal = new ModalOverlay(Root, app);
             _inventory = new InventoryOverlay(Root);
+            _shop = new ShopOverlay(Root);
         }
 
         public RectTransform Root { get; }
 
         RunState Run => _app.Session.Run;
         ContentCatalog Catalog => _app.Catalog;
-        bool Blocked => _modal.IsOpen || _chest.IsOpen || _inventory.IsOpen || Run == null || Run.Status != RunStatus.InProgress;
+        bool Blocked => _modal.IsOpen || _chest.IsOpen || _inventory.IsOpen || _shop.IsOpen || Run == null || Run.Status != RunStatus.InProgress;
 
         // ------------------------------------------------------------------ lifecycle
 
@@ -183,6 +185,11 @@ namespace ClickDungeon.Unity.Screens
             if (_inventory.IsOpen)
             {
                 if (kb.escapeKey.wasPressedThisFrame) CloseInventory();
+                return;
+            }
+            if (_shop.IsOpen)
+            {
+                if (kb.escapeKey.wasPressedThisFrame) _shop.Hide();
                 return;
             }
             if (kb.escapeKey.wasPressedThisFrame)
@@ -537,29 +544,24 @@ namespace ClickDungeon.Unity.Screens
             }, _modal.Hide, NextRunNote);
         }
 
-        void OpenShop()
-        {
-            if (_chest.IsOpen || Run == null) return;
-            string found = Run.CoinsFound + Run.GemsFound > 0
-                ? $"\n\nFound this run: {Run.CoinsFound} coins, {Run.GemsFound} gems. They are yours to spend once the run ends."
-                : "";
-            Menus.OpenShop(_modal, Catalog, _app.Session.Profile, item =>
-            {
-                Menus.Buy(_app.Session, item);
-                RefreshPurse();
-                OpenShop();
-            }, _modal.Hide, found + NextRunNote);
-        }
+        void OpenShop() => OpenShop(ShopTab.Boosts);
 
-        void OpenPurse(bool coins)
+        /// <summary>The purse's "+" opens the shop on its exchange (D-036).</summary>
+        void OpenPurse(bool coins) => OpenShop(ShopTab.Exchange);
+
+        /// <summary>
+        /// The shop spends banked coins and gems; what this run finds is banked when it ends, and what is bought here outfits
+        /// the next run.
+        /// </summary>
+        void OpenShop(ShopTab tab)
         {
             if (_chest.IsOpen || Run == null) return;
-            Menus.OpenPurse(_modal, _app.Session.Profile, coins, item =>
+            string found = Run.CoinsFound + Run.GemsFound > 0 ? $" This run's {Run.CoinsFound} coins and {Run.GemsFound} gems arrive when it ends." : "";
+            _shop.Open(Catalog, _app.Session.Profile, () => DateTime.Now, () =>
             {
-                Menus.Buy(_app.Session, item);
+                _app.Session.SaveProfile();
                 RefreshPurse();
-                OpenPurse(coins);
-            }, OpenShop, _modal.Hide);
+            }, tab, "<color=#F2C14E>Buys outfit your NEXT run.</color>" + found);
         }
 
         void OpenHelp()
@@ -1458,64 +1460,6 @@ namespace ClickDungeon.Unity.Screens
                     $"{(hero.DashDistance == 1 ? "tile" : "tiles")} for {hero.DashCost}.");
             }
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// Spends what runs carried out (D-025). Provisions outfit the next run: opened during a run (the game screen's SHOP),
-        /// what is bought waits for the next one.
-        /// </summary>
-        public static void OpenShop(ModalOverlay modal, ContentCatalog catalog, ProfileState profile, Action<ShopItem> buy, Action back,
-            string note = null)
-        {
-            var buttons = new List<(string, Color, Action)>();
-            foreach (ShopItem item in Shop.Stock)
-            {
-                var stock = item;
-                bool afford = Shop.CanAfford(profile, stock);
-                buttons.Add(($"{Shop.DisplayName(stock)} — {Shop.Price(stock)} {Shop.Currency(stock)}{(afford ? "" : " (NOT ENOUGH)")}",
-                    afford ? Palette.PlayGreen : Palette.NavyLight, () => buy(stock)));
-            }
-            buttons.Add(B("DONE", Palette.NavyLight, back));
-
-            var sb = new StringBuilder();
-            sb.AppendLine($"<color=#F2C14E>{profile.Coins} coins</color>   <color=#B06BE6>{profile.Gems} gems</color>");
-            sb.AppendLine();
-            foreach (ShopItem item in Shop.Stock)
-                sb.AppendLine($"{Shop.DisplayName(item)}: {Shop.Describe(item, catalog)}");
-            sb.AppendLine();
-            if (profile.PotionRations > 0 || profile.HeartTokens > 0 || profile.SpecialKeys > 0)
-                sb.AppendLine($"Waiting for your next run: {profile.PotionRations} potion rations, {profile.HeartTokens} heart tokens, " +
-                    $"{profile.SpecialKeys} special keys.");
-            sb.Append("Coins come out of chests and off every floor you finish. Gems come from Lord Blobert's hoard and vault chests.");
-            sb.Append(note);
-            modal.Show("SHOP", sb.ToString(), back, buttons.ToArray());
-        }
-
-        /// <summary>
-        /// The purse's "+" (D-033): what coins or gems are, where they come from, and the exchange between them. The
-        /// exchange spends only banked coins and gems, like the shop, and opens the shop from here too.
-        /// </summary>
-        public static void OpenPurse(ModalOverlay modal, ProfileState profile, bool coins, Action<ShopItem> buy, Action shop, Action back)
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine($"<color=#F2C14E>{profile.Coins} coins</color>   <color=#B06BE6>{profile.Gems} gems</color>");
-            sb.AppendLine();
-            sb.AppendLine(coins
-                ? "Coins come out of chests, off every floor you finish, from the daily reward and from achievements."
-                : "Gems come from Lord Blobert's hoard, vault great chests, the daily reward and achievements.");
-            sb.AppendLine("Or trade one for the other:");
-            var buttons = new List<(string, Color, Action)>();
-            var first = coins ? ShopItem.CoinPouch : ShopItem.GemPouch;
-            foreach (var item in new[] { first, first == ShopItem.CoinPouch ? ShopItem.GemPouch : ShopItem.CoinPouch })
-            {
-                var stock = item;
-                bool afford = Shop.CanAfford(profile, stock);
-                buttons.Add(($"GET {Shop.DisplayName(stock)} FOR {Shop.Price(stock)} {Shop.Currency(stock)}{(afford ? "" : " (NOT ENOUGH)")}",
-                    afford ? Palette.PlayGreen : Palette.NavyLight, () => buy(stock)));
-            }
-            buttons.Add(B("SHOP", Palette.NavyLight, shop));
-            buttons.Add(B("DONE", Palette.NavyLight, back));
-            modal.Show(coins ? "COINS" : "GEMS", sb.ToString(), back, buttons.ToArray());
         }
 
         /// <summary>

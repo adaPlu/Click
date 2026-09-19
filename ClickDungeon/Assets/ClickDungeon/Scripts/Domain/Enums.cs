@@ -73,5 +73,9 @@ namespace ClickDungeon.Domain
     public enum RewardKind { Potion = 0, MaxHp, SlashDamage }
 
     /// <summary>Where an item is worn (D-028). One item per slot.</summary>
-    public enum ItemSlot { Weapon = 0, Shield, Armor, Boots, Trinket }
+    /// <summary>Where an item is worn (D-028). Helmet came with the shop (D-036); the numbers never change, saves hold names.</summary>
+    public enum ItemSlot { Weapon = 0, Shield, Armor, Boots, Trinket, Helmet }
+
+    /// <summary>How rare an item is (D-036): its drop weight, its shop price and the colour of its frame.</summary>
+    public enum ItemRarity { Common = 0, Uncommon, Rare, Epic, Legendary }
 }

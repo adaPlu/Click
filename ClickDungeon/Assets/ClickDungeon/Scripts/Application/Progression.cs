@@ -110,11 +110,11 @@ namespace ClickDungeon.Application
             hero.MaxHp += tough;
             hero.Hp += tough;
             hero.Potions += Rank(profile, Stocked);
-            run.BonusCoinsPerChestReward = Rank(profile, Lucky) * LuckyCoins;
+            run.BonusCoinsPerChestReward += Rank(profile, Lucky) * LuckyCoins;
             int focus = Rank(profile, QuickShield);
             hero.MaxMana += focus;
             hero.Mana += focus;
-            run.DashCostCut = Rank(profile, Fleet);
+            run.DashCostCut += Rank(profile, Fleet);
         }
     }
 }

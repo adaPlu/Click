@@ -34,6 +34,7 @@ namespace ClickDungeon.Unity.Screens
         InventoryOverlay _inventory;
         AchievementsOverlay _achievements;
         MailOverlay _mail;
+        ShopOverlay _shop;
         GameObject _mailBadge;
         /// <summary>The reference's mail button without its "!", laid over the background's while nothing is waiting.</summary>
         GameObject _mailClean;
@@ -93,6 +94,7 @@ namespace ClickDungeon.Unity.Screens
             _inventory = new InventoryOverlay(Root);
             _achievements = new AchievementsOverlay(Root);
             _mail = new MailOverlay(Root);
+            _shop = new ShopOverlay(Root);
         }
 
         public RectTransform Root { get; }
@@ -104,6 +106,7 @@ namespace ClickDungeon.Unity.Screens
             if (_inventory.IsOpen) _inventory.Hide();
             if (_achievements.IsOpen) _achievements.Hide();
             if (_mail.IsOpen) _mail.Hide();
+            if (_shop.IsOpen) _shop.Hide();
             _flash.text = "";
             RefreshHeroCard();
             RefreshPurse();
@@ -133,6 +136,8 @@ namespace ClickDungeon.Unity.Screens
             else if (name == "talents") OpenTalents();
             else if (name == "inventory") OpenInventory();
             else if (name == "coins") OpenPurse(true);
+            else if (name == "shopgear") OpenShop(ShopTab.Gear);
+            else if (name == "shopchests") OpenShop(ShopTab.Chests);
             else if (name == "gems") OpenPurse(false);
             else if (name == "crown") OpenAchievements();
             else if (name == "mail") OpenMail();
@@ -148,10 +153,11 @@ namespace ClickDungeon.Unity.Screens
                 if (kb.escapeKey.wasPressedThisFrame) _modal.Back();
                 return;
             }
-            if (_inventory.IsOpen || _achievements.IsOpen || _mail.IsOpen)
+            if (_inventory.IsOpen || _achievements.IsOpen || _mail.IsOpen || _shop.IsOpen)
             {
                 if (kb.escapeKey.wasPressedThisFrame)
                 {
+                    _shop.Hide();
                     _inventory.Hide();
                     _achievements.Hide();
                     _mail.Hide();
@@ -261,23 +267,17 @@ namespace ClickDungeon.Unity.Screens
             }, _modal.Hide);
         }
 
-        void OpenPurse(bool coins)
-        {
-            Menus.OpenPurse(_modal, _app.Session.Profile, coins, item =>
-            {
-                if (Menus.Buy(_app.Session, item)) RefreshPurse();
-                OpenPurse(coins);
-            }, OpenShop, _modal.Hide);
-        }
+        /// <summary>The purse's "+" opens the shop on its exchange (D-036).</summary>
+        void OpenPurse(bool coins) => OpenShop(ShopTab.Exchange);
 
-        void OpenShop()
-        {
-            Menus.OpenShop(_modal, _app.Catalog, _app.Session.Profile, item =>
+        void OpenShop() => OpenShop(ShopTab.Boosts);
+
+        void OpenShop(ShopTab tab) =>
+            _shop.Open(_app.Catalog, _app.Session.Profile, () => System.DateTime.Now, () =>
             {
-                if (Menus.Buy(_app.Session, item)) RefreshPurse();
-                OpenShop();
-            }, _modal.Hide);
-        }
+                _app.Session.SaveProfile();
+                RefreshPurse();
+            }, tab);
 
         void OpenHeroSelect()
         {

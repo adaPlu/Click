@@ -429,7 +429,9 @@ def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=Non
         stem = spec["source"]
         if stem not in images:
             path = find_source(refs, stem, sources)
-            images[stem] = Image.open(path).convert("RGB") if path else None
+            # "alpha": the sheet is already cut out on transparency (the clean item sheets); keep it.
+            mode = "RGBA" if sources.get(stem, {}).get("alpha") else "RGB"
+            images[stem] = Image.open(path).convert(mode) if path else None
             if path and stem in sources:
                 ref_w, ref_h = sources[stem]["size"]
                 image = images[stem]

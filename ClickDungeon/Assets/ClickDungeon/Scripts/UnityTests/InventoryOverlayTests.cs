@@ -43,7 +43,7 @@ namespace ClickDungeon.UnityTests
             overlay.Open(catalog, profile, () => saved++);
 
             int unknown = _root.GetComponentsInChildren<Button>(true).Count(b => b.name == "Unknown");
-            Assert.That(unknown, Is.EqualTo(catalog.Items.Count - 2 + 5), "Every item not found is a question mark; every empty slot too.");
+            Assert.That(unknown, Is.EqualTo(catalog.Items.Count - 2 + Inventory.SlotOrder.Length), "Every item not found is a question mark; every empty slot too.");
 
             Tile("lucky_wand").onClick.Invoke();
             Assert.That(Inventory.Worn(profile, ItemSlot.Weapon), Is.EqualTo("lucky_wand"));

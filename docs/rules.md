@@ -523,6 +523,21 @@ What a run found is banked once, when it ends — won, lost or abandoned. The
 | Potion ration | 60 coins | +1 potion at the start of the next run |
 | Heart token | 120 coins | +2 max hearts (full) at the start of the next run |
 | Special key | 25 gems | Hides one premium chest in the next run (D-026) |
+| Mana tonic | 90 coins | +2 max mana at the start of the next run (D-036) |
+| Strength elixir | 150 coins | +1 slash damage on the next run |
+| Fortune scroll | 100 coins | +3 coins per chest reward on the next run |
+| Wisdom scroll | 100 coins | +10 XP per floor walked down on the next run |
+
+The shop (D-036) has four tabs. **BOOSTS** are the provisions above. **GEAR** sells
+four pieces of equipment a day, chosen by rarity weight from the calendar day:
+common 150 coins, uncommon 300, rare 600, epic 15 gems, legendary 30 gems; a piece
+already owned is not for sale. **CHESTS**: a gear chest (400 coins) holds one random
+piece of gear, a royal chest (20 gems) one rare or better; a piece already owned
+becomes 25 coins. **EXCHANGE** is the purse's trade below.
+
+Gear has a **rarity** (common, uncommon, rare, epic, legendary) and six slots
+(weapon, helmet, armor, shield, boots, trinket). Drops and chests pick by rarity
+weight 6 / 4 / 3 / 2 / 1, so a legendary piece is six times rarer than a common one.
 
 The **"+"** beside coins or gems (title card and game HUD) opens an exchange (D-033):
 **1 gem for 15 coins**, or **30 coins for 1 gem**. A round trip loses half, so

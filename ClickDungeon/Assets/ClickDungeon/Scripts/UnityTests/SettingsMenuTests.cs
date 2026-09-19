@@ -80,25 +80,25 @@ namespace ClickDungeon.UnityTests
         [Test]
         public void TheShopShowsThePurseAndOnlyOffersWhatTheCoinsCover()
         {
-            // D-025: coins come out of runs; the shop is the only place they go.
+            // D-025, D-036: the shop's cards dim what the purse cannot pay for, and a purchase is saved at once.
             var catalog = ClickDungeon.Content.ContentCatalog.CreateDefault();
             var profile = new ClickDungeon.Domain.ProfileState { Coins = ClickDungeon.Application.Shop.PotionRationCoins, Gems = 1 };
-            var modal = new ModalOverlay((RectTransform)_root.transform, _root.AddComponent<SpriteFrameAnimator>());
-            ClickDungeon.Application.ShopItem? bought = null;
-            Menus.OpenShop(modal, catalog, profile, item => bought = item, () => { });
+            int saved = 0;
+            var shop = new ShopOverlay((RectTransform)_root.transform);
+            shop.Open(catalog, profile, () => new System.DateTime(2026, 9, 18), () => saved++);
 
-            var body = _root.GetComponentsInChildren<Text>(true).First(t => t.name == "Body").text;
-            Assert.That(body, Does.Contain($"{profile.Coins} coins"));
-            Assert.That(body, Does.Contain("1 gems").Or.Contain("1 gem"));
+            Button Buy(string id) => _root.GetComponentsInChildren<Button>(true).First(b => b.name == "Buy " + id);
+            Assert.That(Buy("PotionRation").interactable, Is.True, "The ration is affordable...");
+            Assert.That(Buy("HeartToken").interactable, Is.False, "...the token is not.");
 
-            var names = Buttons().Select(b => b.name).ToList();
-            Assert.That(names.Any(n => n.StartsWith("POTION RATION") && !n.Contains("NOT ENOUGH")), Is.True,
-                "The ration is affordable...");
-            Assert.That(names.Any(n => n.StartsWith("HEART TOKEN") && n.Contains("NOT ENOUGH")), Is.True,
-                "...the token is not, and says so.");
+            Buy("PotionRation").onClick.Invoke();
+            Assert.That(profile.PotionRations, Is.EqualTo(1));
+            Assert.That(profile.Coins, Is.Zero);
+            Assert.That(saved, Is.EqualTo(1));
 
-            Buttons().First(b => b.name.StartsWith("POTION RATION")).onClick.Invoke();
-            Assert.That(bought, Is.EqualTo(ClickDungeon.Application.ShopItem.PotionRation));
+            shop.Show(ClickDungeon.Application.ShopTab.Gear);
+            var stock = ClickDungeon.Application.Shop.GearStock(catalog, new System.DateTime(2026, 9, 18));
+            foreach (var item in stock) Assert.That(Buy(item.Id).interactable, Is.False, "Nothing left to pay with.");
         }
 
         [Test]

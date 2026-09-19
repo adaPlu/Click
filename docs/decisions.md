@@ -475,3 +475,15 @@ Rules referenced here live in `docs/rules.md`.
 - **EFFECT**: the same ten runs now end with 62 gems, about two special keys; a key takes roughly five wins, or about
   750 coins through the exchange.
 
+## D-036 A richer shop, rarity and more gear
+- **DECISION**: 38 pieces of gear (was 9) in six slots (helmet added) with five rarities, cut from the clean item sheets;
+  rarer is stronger. Drops, and two new shop chests, pick by rarity weight (6 / 4 / 3 / 2 / 1). The SHOP becomes a
+  screen of cards in four tabs: BOOSTS for the next run (the old ration, token and key, plus mana tonic, strength
+  elixir, fortune and wisdom scrolls), GEAR (four pieces a day, priced by rarity, epic and legendary in gems), CHESTS
+  (gear chest in coins, royal chest in gems, rare or better) and EXCHANGE. The purse's "+" opens the exchange tab.
+  Shop chests roll on a counter kept in the profile, so reopening the game cannot re-roll one. Talent and boost bonuses
+  now add together instead of the later one replacing the earlier.
+- **WHY**: "a much more rich shop experience" with the supplied item, potion, scroll and chest art.
+- **BALANCE**: the balance guards play an empty profile; all shop effects reach only runs started afterwards.
+- **TESTS**: `ShopTests`, `SettingsMenuTests.TheShopShowsThePurseAndOnlyOffersWhatTheCoinsCover`, `InventoryOverlayTests`.
+

@@ -368,9 +368,69 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 7a22e3c0d8c52e540898cca7f3fa9958, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_item_aegis_of_dawn
+    Frames:
+    - {fileID: 21300000, guid: e2574394c528c0348886f588631410e3, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_amethyst_ring
+    Frames:
+    - {fileID: 21300000, guid: 3155f7309b65db549b3f26ca7c33ca86, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_battle_axe
+    Frames:
+    - {fileID: 21300000, guid: 3158a65310c0880409cf8e4e567f71ff, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_boots_of_swiftness
+    Frames:
+    - {fileID: 21300000, guid: f893da852fb72db409151f15e71053b9, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_celestial_staff
+    Frames:
+    - {fileID: 21300000, guid: aa283bc7088bfcf40851657cae3ad00b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_cobalt_helm
+    Frames:
+    - {fileID: 21300000, guid: fe55e1842018dfa499c7c97f61cbad4a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_crown_of_kings
+    Frames:
+    - {fileID: 21300000, guid: fd6e84aba7638884fbb159e6b71677fa, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_dragonslayer
+    Frames:
+    - {fileID: 21300000, guid: b9febc1a8017cdb47ab4743630960b87, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_emerald_ring
+    Frames:
+    - {fileID: 21300000, guid: ea71e68279f2ce145b7522204f07312d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_frost_blade
+    Frames:
+    - {fileID: 21300000, guid: bd6f1585554325f42be48b4cb373b9fa, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_gem_treads
+    Frames:
+    - {fileID: 21300000, guid: ea3ef06f0f607414481ad1e362526f2e, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_item_gilded_shield
     Frames:
     - {fileID: 21300000, guid: 2cee1d5979a2cfc4a94f1c210f866880, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_gold_treads
+    Frames:
+    - {fileID: 21300000, guid: f8fd2364caab0fb4d80fee8e46c3efca, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: icon_item_healing_charm
@@ -378,9 +438,24 @@ MonoBehaviour:
     - {fileID: 21300000, guid: a73c02455406cd64896ba2179501fc43, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_item_horned_helm
+    Frames:
+    - {fileID: 21300000, guid: c8f1eddafe8abd44d9450bd089be2131, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_item_iron_cuirass
     Frames:
     - {fileID: 21300000, guid: 7149948fcca3e294fa49680cd0dc4463, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_iron_greaves
+    Frames:
+    - {fileID: 21300000, guid: e5f9422b1fc07bd48a5d83be14e0a7b4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_iron_helm
+    Frames:
+    - {fileID: 21300000, guid: d69ed5d084ddc40498ad056b95219c60, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: icon_item_iron_shield
@@ -388,9 +463,24 @@ MonoBehaviour:
     - {fileID: 21300000, guid: f1a99c6b7bf27e944875e40e1b07dc3b, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_item_lion_shield
+    Frames:
+    - {fileID: 21300000, guid: a26c5ff17f5262a42a11377dc62925da, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_item_lucky_wand
     Frames:
     - {fileID: 21300000, guid: b2c3154f87c675942b71874abcb3a9bd, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_ranger_mail
+    Frames:
+    - {fileID: 21300000, guid: 9aad6fe59311f7940954e8e8fe29a995, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_round_buckler
+    Frames:
+    - {fileID: 21300000, guid: f5f6b2fc86708e94082275673ecd434f, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: icon_item_royal_plate
@@ -398,9 +488,39 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 28bf5423c5dc8764cb58855f7688bc9f, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_item_ruby_ring
+    Frames:
+    - {fileID: 21300000, guid: 5864fe36ede4f20498b986c57196a97e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_sapphire_amulet
+    Frames:
+    - {fileID: 21300000, guid: 137ea47dad5df6644bbf6973103a266c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_sapphire_plate
+    Frames:
+    - {fileID: 21300000, guid: 1411d64bc8ae13e409484255955d0861, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_item_scholars_ring
     Frames:
     - {fileID: 21300000, guid: 3ab4603e23f35c74a810deeaaa69ae88, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_shadow_hood
+    Frames:
+    - {fileID: 21300000, guid: 3f62c45f73b48284a83d1a39153d4dae, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_spiked_mace
+    Frames:
+    - {fileID: 21300000, guid: a2209d64b61c6434ca6a7fa7e25909ae, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_star_shield
+    Frames:
+    - {fileID: 21300000, guid: 3b1a6ba9ab572cd488a1c7ca320fea0b, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: icon_item_steel_sword
@@ -408,9 +528,34 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 156ca0e221130a7458bba98f2e71ffb1, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_item_sun_amulet
+    Frames:
+    - {fileID: 21300000, guid: 972da375e2cfaa9458423364a50dafb9, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_sunforged_plate
+    Frames:
+    - {fileID: 21300000, guid: ac556829b362feb41a87a6e68a8a6e25, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_item_swift_boots
     Frames:
     - {fileID: 21300000, guid: e892506f99522a84dade6d84d10a713a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_void_blade
+    Frames:
+    - {fileID: 21300000, guid: 8b0d4a0ecebb53d4c9c0cc2cbc13939b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_void_helm
+    Frames:
+    - {fileID: 21300000, guid: 3754215842a598346a9c3161acaa798e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_item_void_plate
+    Frames:
+    - {fileID: 21300000, guid: 28f637124ab23974cb22f863fa8ff161, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: icon_key_special
@@ -431,6 +576,41 @@ MonoBehaviour:
   - Key: icon_reward_slashdamage
     Frames:
     - {fileID: 21300000, guid: 004d44c7bf1aa114cb51271740a0b4fb, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_shop_fortune_scroll
+    Frames:
+    - {fileID: 21300000, guid: ddc9a389945dfe14fba221604e152efa, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_shop_gear_chest
+    Frames:
+    - {fileID: 21300000, guid: 3f3ed8fced564c64481797928a71241e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_shop_mana_tonic
+    Frames:
+    - {fileID: 21300000, guid: 0354461c90ebbbb42892e764dfa3bce3, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_shop_potion_ration
+    Frames:
+    - {fileID: 21300000, guid: 91f681b9b9f2a4b4ca00533c1c063780, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_shop_royal_chest
+    Frames:
+    - {fileID: 21300000, guid: 3f2fdc72359f49b4c94dcdbcb099e3b7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_shop_strength_elixir
+    Frames:
+    - {fileID: 21300000, guid: 401590d87529ad04e874ace3b07d9e13, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_shop_wisdom_scroll
+    Frames:
+    - {fileID: 21300000, guid: 180d0ebd502666147a5a0a7cc86e1575, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: icon_special_lock
@@ -851,6 +1031,31 @@ MonoBehaviour:
   - Key: ui_floor_plaque
     Frames:
     - {fileID: 21300000, guid: f210fc7ddc8093545afea8158d0d4ab2, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_frame_rarity_common
+    Frames:
+    - {fileID: 21300000, guid: ca1840a69317e874e90d0c6c2cb74fb9, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_frame_rarity_epic
+    Frames:
+    - {fileID: 21300000, guid: a39a768658868b54fbeabeb08f51d904, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_frame_rarity_legendary
+    Frames:
+    - {fileID: 21300000, guid: d1b090afa4bc07444b19436a35ab8eea, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_frame_rarity_rare
+    Frames:
+    - {fileID: 21300000, guid: 2e63d2996295b1b4abfa7546f9b0728e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: ui_frame_rarity_uncommon
+    Frames:
+    - {fileID: 21300000, guid: 647d953d3c9c6b04c9b2c9e3088577ba, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: ui_highlight_hover

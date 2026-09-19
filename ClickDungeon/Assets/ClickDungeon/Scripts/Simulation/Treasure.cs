@@ -27,7 +27,9 @@ namespace ClickDungeon.Simulation
             if (catalog.Items.Count == 0) return;
             var rng = new DeterministicRng(Hash.Of(run.RunSeed, Hash.ItemSalt, (ulong)run.Floor.FloorIndex,
                 (ulong)(at.InBounds ? at.Index : 99), source, run.Floor.IsVault ? 1UL : 0UL));
-            var item = catalog.Items[rng.Next(catalog.Items.Count)];
+            // Weighted by rarity (D-036): commons come often, legendaries seldom.
+            var item = catalog.PickItem(rng.NextULong());
+            if (item == null) return;
             run.ItemsFound.Add(item.Id);
             events.Add(GameEvent.Of(GameEventKind.ItemFound, to: at, source: item.Id));
         }

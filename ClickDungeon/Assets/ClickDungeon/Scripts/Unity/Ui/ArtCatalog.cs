@@ -311,6 +311,30 @@ namespace ClickDungeon.Unity.Ui
         /// <summary>An item's icon (D-028), for the INVENTORY screen and the item found in a run.</summary>
         public static string ItemIcon(string itemId) => $"icon_item_{itemId}";
 
+        /// <summary>The items library's rarity frames (D-036), clear in the middle so the item shows through.</summary>
+        public static string RarityFrame(ItemRarity rarity) => "ui_frame_rarity_" + rarity.ToString().ToLowerInvariant();
+
+        /// <summary>The picture on a shop card (D-036): the items library's potions, scrolls and chests, or the HUD's own icons.</summary>
+        public static string ShopIcon(ClickDungeon.Application.ShopItem item)
+        {
+            switch (item)
+            {
+                case ClickDungeon.Application.ShopItem.HeartToken: return Heart;
+                case ClickDungeon.Application.ShopItem.SpecialKey: return SpecialKeyIcon;
+                case ClickDungeon.Application.ShopItem.CoinPouch: return CoinIcon;
+                case ClickDungeon.Application.ShopItem.GemPouch: return GemIcon;
+                default:
+                    var name = item.ToString();
+                    var snake = new System.Text.StringBuilder();
+                    for (int i = 0; i < name.Length; i++)
+                    {
+                        if (i > 0 && char.IsUpper(name[i])) snake.Append('_');
+                        snake.Append(char.ToLowerInvariant(name[i]));
+                    }
+                    return "icon_shop_" + snake;
+            }
+        }
+
         /// <summary>A monster's portrait icon, shown in the Inspect panel while hovering it (the monster pack's <c>*_icon</c>).</summary>
         public static string EnemyPortrait(string enemyId) => $"portrait_{enemyId}";
 
@@ -395,6 +419,7 @@ namespace ClickDungeon.Unity.Ui
             foreach (var enemy in catalog.Enemies.Values) keys.Add(Actor(enemy.Id));
             foreach (var enemy in catalog.Enemies.Values) keys.Add(EnemyPortrait(enemy.Id));
             foreach (var item in catalog.Items) keys.Add(ItemIcon(item.Id));
+            foreach (ItemRarity rarity in System.Enum.GetValues(typeof(ItemRarity))) keys.Add(RarityFrame(rarity));
             foreach (var enemy in catalog.Enemies.Values)
             {
                 if (!enemy.IsBoss) continue;
@@ -443,6 +468,9 @@ namespace ClickDungeon.Unity.Ui
                 if (ActorExtras.TryGetValue(enemy.Id, out var extras))
                     foreach (var extra in extras) keys.Add(Actor(enemy.Id, extra));
             }
+            // Last: several shop cards reuse the HUD's own heart, coin, gem and key icons.
+            foreach (ClickDungeon.Application.ShopItem item in System.Enum.GetValues(typeof(ClickDungeon.Application.ShopItem)))
+                if (!keys.Contains(ShopIcon(item))) keys.Add(ShopIcon(item));
             return keys;
         }
     }

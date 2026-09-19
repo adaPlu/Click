@@ -16,7 +16,8 @@ namespace ClickDungeon.Unity.Screens
     public sealed class InventoryOverlay
     {
         static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
-        const float SlotSize = 132f, TileSize = 112f;
+        const float SlotSize = 120f, TileSize = 84f, TilePitch = 94f;
+        const int Columns = 10;
 
         readonly RectTransform _root;
         readonly RectTransform _slots;
@@ -36,7 +37,7 @@ namespace ClickDungeon.Unity.Screens
             dim.raycastTarget = true;
 
             var panel = UiFactory.Rect(_root, "Panel");
-            panel.Place(Center, Center, Vector2.zero, new Vector2(1000f, 860f));
+            panel.Place(Center, Center, Vector2.zero, new Vector2(1060f, 1000f));
             var back = UiFactory.Image(panel, "Back", Palette.Navy, Shapes.Rounded, true);
             back.rectTransform.Stretch();
             var border = UiFactory.Image(panel, "Border", Palette.Gold, Shapes.Frame, true);
@@ -55,10 +56,10 @@ namespace ClickDungeon.Unity.Screens
             var found = UiFactory.Text(panel, "FoundLabel", "FOUND — tap one to wear it", 22, Palette.TextDim, TextAnchor.MiddleCenter);
             found.rectTransform.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -336f), new Vector2(900f, 30f));
             _grid = UiFactory.Rect(panel, "Grid");
-            _grid.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -372f), new Vector2(900f, 280f));
+            _grid.Place(new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -372f), new Vector2(Columns * TilePitch, 400f));
 
             _detail = UiFactory.Text(panel, "Detail", "", 26, Palette.TextLight, TextAnchor.MiddleCenter);
-            _detail.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 136f), new Vector2(900f, 64f));
+            _detail.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 130f), new Vector2(980f, 64f));
 
             var done = UiFactory.Button(panel, "Done", "DONE", Palette.NavyLight, 30, Hide);
             done.Rect.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 48f), new Vector2(320f, 74f));
@@ -73,7 +74,7 @@ namespace ClickDungeon.Unity.Screens
             _catalog = catalog;
             _profile = profile;
             _changed = changed;
-            _detail.text = "Items come from Lord Blobert, vault great chests and premium chests.\nWhat you wear shapes every run you start.";
+            _detail.text = "Items come from Lord Blobert, vault great chests, premium chests and the SHOP.\nWhat you wear shapes every run you start.";
             _root.gameObject.SetActive(true);
             _root.SetAsLastSibling();
             Redraw();
@@ -86,13 +87,13 @@ namespace ClickDungeon.Unity.Screens
             Clear(_slots);
             Clear(_grid);
 
-            var slots = (ItemSlot[])Enum.GetValues(typeof(ItemSlot));
+            var slots = Inventory.SlotOrder;
             for (int i = 0; i < slots.Length; i++)
             {
                 var slot = slots[i];
                 var id = Inventory.Worn(_profile, slot);
                 var item = id == null ? null : _catalog.Item(id);
-                var pos = new Vector2((i - (slots.Length - 1) * 0.5f) * (SlotSize + 30f), 12f);
+                var pos = new Vector2((i - (slots.Length - 1) * 0.5f) * (SlotSize + 34f), 12f);
                 var cell = Tile(_slots, pos, SlotSize, item, true, item != null, () =>
                 {
                     if (item == null) return;
@@ -104,14 +105,13 @@ namespace ClickDungeon.Unity.Screens
                 label.rectTransform.Place(Center, Center, pos + new Vector2(0f, -SlotSize * 0.5f - 18f), new Vector2(SlotSize + 20f, 28f));
             }
 
-            const int columns = 5;
             for (int i = 0; i < _catalog.Items.Count; i++)
             {
                 var item = _catalog.Items[i];
                 bool owned = Inventory.Owns(_profile, item.Id);
-                int row = i / columns, column = i % columns;
-                int inRow = Math.Min(columns, _catalog.Items.Count - row * columns);
-                var pos = new Vector2((column - (inRow - 1) * 0.5f) * (TileSize + 24f), 64f - row * (TileSize + 24f));
+                int row = i / Columns, column = i % Columns;
+                int inRow = Math.Min(Columns, _catalog.Items.Count - row * Columns);
+                var pos = new Vector2((column - (inRow - 1) * 0.5f) * TilePitch, 200f - TilePitch * 0.5f - row * TilePitch);
                 Tile(_grid, pos, TileSize, owned ? item : null, owned, Inventory.IsWorn(_profile, item.Id), () =>
                 {
                     if (!owned)
@@ -120,7 +120,7 @@ namespace ClickDungeon.Unity.Screens
                         return;
                     }
                     Inventory.Equip(_profile, _catalog, item.Id);
-                    _detail.text = $"{item.DisplayName} ({item.Slot}): {item.Effect}.";
+                    _detail.text = $"{item.DisplayName} ({item.Rarity} {item.Slot.ToString().ToLowerInvariant()}): {item.Effect}.";
                     Changed();
                 });
             }
@@ -137,10 +137,16 @@ namespace ClickDungeon.Unity.Screens
         {
             var parts = UiFactory.Button(parent, item?.Id ?? "Unknown", "", known ? Palette.NavyLight : Palette.StoneDark, 20, click);
             parts.Rect.Place(Center, Center, pos, new Vector2(size, size));
-            parts.Border.color = worn ? Palette.Gold : Palette.GoldDark.WithAlpha(0.6f);
+            parts.Border.color = worn ? Palette.Gold : item != null ? ShopOverlay.RarityColor(item.Rarity) : Palette.GoldDark.WithAlpha(0.6f);
             if (item != null)
             {
-                if (Icons.TryArtImage(parts.Rect, ArtKeys.ItemIcon(item.Id), size - 18f) == null)
+                // The rarity's frame from the items library, with a gold ring on top while worn.
+                var frame = UiFactory.Image(parts.Rect, "Rarity", ShopOverlay.RarityColor(item.Rarity), Shapes.Frame, true);
+                frame.rectTransform.Stretch();
+                frame.raycastTarget = false;
+                UiArt.Apply(frame, ArtKeys.RarityFrame(item.Rarity));
+                if (worn) parts.Border.transform.SetAsLastSibling();
+                if (Icons.TryArtImage(parts.Rect, ArtKeys.ItemIcon(item.Id), size - 22f) == null)
                     parts.Label.text = item.DisplayName.ToUpperInvariant();
                 parts.Label.fontSize = 16;
             }

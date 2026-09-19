@@ -105,7 +105,7 @@ namespace ClickDungeon.Tests
             Inventory.Apply(profile, geared, Catalog);
 
             Assert.That(geared.Hero.SlashDamage, Is.EqualTo(plain.Hero.SlashDamage + 1));
-            Assert.That(geared.Hero.MaxHp, Is.EqualTo(plain.Hero.MaxHp + 2));
+            Assert.That(geared.Hero.MaxHp, Is.EqualTo(plain.Hero.MaxHp + Catalog.Item("royal_plate").MaxHp));
             Assert.That(geared.PotionHealBonus, Is.EqualTo(2));
             Assert.That(geared.DashCostCut, Is.EqualTo(1));
         }

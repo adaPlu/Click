@@ -20,6 +20,14 @@ namespace ClickDungeon.Domain
         /// <summary>Bought and not yet spent: extra hearts the next run starts with.</summary>
         public int HeartTokens;
 
+        /// <summary>The shop's boosts for the next run (D-036), bought and not yet spent.</summary>
+        public int ManaTonics;
+        public int StrengthElixirs;
+        public int FortuneScrolls;
+        public int WisdomScrolls;
+        /// <summary>Shop chests opened so far: each chest's roll draws on it, so the same profile opens the same chests.</summary>
+        public int ShopRolls;
+
         /// <summary>Special keys owned and not yet carried into a run (D-026).</summary>
         public int SpecialKeys;
 
@@ -58,6 +66,8 @@ namespace ClickDungeon.Domain
         {
             SchemaVersion = SchemaVersion, Coins = Coins, Gems = Gems,
             PotionRations = PotionRations, HeartTokens = HeartTokens, SpecialKeys = SpecialKeys,
+            ManaTonics = ManaTonics, StrengthElixirs = StrengthElixirs, FortuneScrolls = FortuneScrolls, WisdomScrolls = WisdomScrolls,
+            ShopRolls = ShopRolls,
             RunsFinished = RunsFinished, RunsWon = RunsWon, Xp = Xp,
             LastDailyClaim = LastDailyClaim, DailyStreak = DailyStreak,
             MonstersSlain = MonstersSlain, ChestsOpened = ChestsOpened, DeepestFloor = DeepestFloor, CoinsEarned = CoinsEarned,

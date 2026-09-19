@@ -148,6 +148,7 @@ namespace ClickDungeon.Content
         public string Id;
         public string DisplayName;
         public ItemSlot Slot;
+        public ItemRarity Rarity;
         public string Effect;
         public int SlashDamage;
         public int MaxHp;
@@ -216,6 +217,11 @@ namespace ClickDungeon.Content
         public int PotionRationPotions = 1;
         /// <summary>What one bought heart token is worth on the next run.</summary>
         public int HeartTokenHearts = 2;
+        /// <summary>The shop's other boosts for the next run (D-036), per one bought.</summary>
+        public int ManaTonicMana = 2;
+        public int StrengthElixirSlash = 1;
+        public int FortuneScrollCoins = 3;
+        public int WisdomScrollXp = 10;
     }
 
     public sealed class VaultTuning

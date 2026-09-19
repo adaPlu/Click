@@ -11,6 +11,30 @@ namespace ClickDungeon.Application
     /// </summary>
     public static class Inventory
     {
+        /// <summary>The slots in the order the INVENTORY screen shows them, head to toe.</summary>
+        public static readonly ItemSlot[] SlotOrder =
+            { ItemSlot.Weapon, ItemSlot.Helmet, ItemSlot.Armor, ItemSlot.Shield, ItemSlot.Boots, ItemSlot.Trinket };
+
+        /// <summary>
+        /// Gives the profile one item, however it was come by (a run's find, a shop purchase, a shop chest). A new item joins
+        /// the inventory and fills its slot if that slot is empty; one already owned becomes coins. Returns those coins.
+        /// </summary>
+        public static int Grant(ProfileState profile, ContentCatalog catalog, string itemId)
+        {
+            var item = catalog.Item(itemId);
+            if (profile == null || item == null) return 0;
+            if (profile.Items == null) profile.Items = new List<string>();
+            if (profile.Equipped == null) profile.Equipped = new Dictionary<string, string>();
+            if (profile.Items.Contains(itemId))
+            {
+                profile.Coins += catalog.DuplicateItemCoins;
+                return catalog.DuplicateItemCoins;
+            }
+            profile.Items.Add(itemId);
+            if (Worn(profile, item.Slot) == null) profile.Equipped[item.Slot.ToString()] = itemId;
+            return 0;
+        }
+
         public static bool Owns(ProfileState profile, string itemId) => profile?.Items != null && profile.Items.Contains(itemId);
 
         public static string Worn(ProfileState profile, ItemSlot slot) =>
@@ -31,22 +55,8 @@ namespace ClickDungeon.Application
         public static int Bank(ProfileState profile, RunState run, ContentCatalog catalog)
         {
             if (profile == null || run?.ItemsFound == null) return 0;
-            if (profile.Items == null) profile.Items = new List<string>();
-            if (profile.Equipped == null) profile.Equipped = new Dictionary<string, string>();
             int coins = 0;
-            foreach (var id in run.ItemsFound)
-            {
-                var item = catalog.Item(id);
-                if (item == null) continue;
-                if (profile.Items.Contains(id))
-                {
-                    coins += catalog.DuplicateItemCoins;
-                    continue;
-                }
-                profile.Items.Add(id);
-                if (Worn(profile, item.Slot) == null) profile.Equipped[item.Slot.ToString()] = id;
-            }
-            profile.Coins += coins;
+            foreach (var id in run.ItemsFound) coins += Grant(profile, catalog, id);
             return coins;
         }
 
