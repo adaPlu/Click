@@ -79,6 +79,42 @@ namespace ClickDungeon.EditorTools
             if (UnityEngine.Application.isBatchMode) EditorApplication.Exit(succeeded ? 0 : 1);
         }
 
+        public const string AndroidBuildPath = "Builds/Android/ClickDungeon.apk";
+
+        /// <summary>
+        /// An APK to sideload on a phone: landscape only, 64-bit ARM (IL2CPP), signed with Unity's debug key. Uses the SDK, NDK
+        /// and JDK that ship with the editor's Android module.
+        /// </summary>
+        [MenuItem("ClickDungeon/Build Android APK")]
+        public static void BuildAndroid()
+        {
+            if (!File.Exists(ScenePath)) CreateMainScene();
+            ApplyPlayerSettings();
+            PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Android, "com.clickd.clickdungeon");
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
+            PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
+            EditorUserBuildSettings.buildAppBundle = false;
+
+            var buildDir = Path.GetDirectoryName(AndroidBuildPath);
+            if (Directory.Exists(buildDir)) Directory.Delete(buildDir, true);
+            Directory.CreateDirectory(buildDir);
+
+            var options = new BuildPlayerOptions
+            {
+                scenes = new[] { ScenePath },
+                locationPathName = AndroidBuildPath,
+                target = BuildTarget.Android,
+                options = BuildOptions.None,
+            };
+            var report = BuildPipeline.BuildPlayer(options);
+            bool succeeded = report.summary.result == BuildResult.Succeeded;
+            if (succeeded) File.WriteAllText(Path.Combine(buildDir, BuildStampFile), GitVersion() + "\n");
+            Debug.Log($"[ClickDungeon] Android build {report.summary.result}: {report.summary.totalErrors} errors -> {AndroidBuildPath}");
+            if (UnityEngine.Application.isBatchMode) EditorApplication.Exit(succeeded ? 0 : 1);
+        }
+
         /// <summary>git describe of the working tree, marked -dirty for uncommitted or untracked files; "unknown" without git.</summary>
         static string GitVersion()
         {

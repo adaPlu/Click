@@ -15,6 +15,7 @@ ClickDungeon/.vscode/
 ClickDungeon/*.pidb
 ClickDungeon/*.userprefs
 ClickDungeon/crashlytics-buildid.txt
+ClickDungeon/.utmp/
 
 # Generated art coverage report (ClickDungeon -> Art -> Report Art Coverage)
 ClickDungeon/Art/art-coverage.md
