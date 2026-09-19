@@ -958,6 +958,16 @@ MonoBehaviour:
     - {fileID: 21300000, guid: f6bc3f1b2a8cf87488793792934ad313, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: tile_exit_stairs_locked
+    Frames:
+    - {fileID: 21300000, guid: 82b1a40fbbb2fab4cae7a22ed51f3436, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: tile_exit_stairs_open
+    Frames:
+    - {fileID: 21300000, guid: 952919e2ce68d3342b3c6bc544bafe64, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: tile_floor_cracked
     Frames:
     - {fileID: 21300000, guid: 0b70ae1e65aaf2d4ba6f35db2fdab91e, type: 3}

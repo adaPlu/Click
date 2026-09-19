@@ -114,7 +114,7 @@ namespace ClickDungeon.UnityTests
         {
             var locked = MakeSprite("locked");
             var open = MakeSprite("open");
-            UseArt((ArtKeys.ExitLocked, locked), (ArtKeys.ExitOpen, open));
+            UseArt((ArtKeys.ExitStairsLocked, locked), (ArtKeys.ExitStairsOpen, open), (ArtKeys.ExitLocked, MakeSprite("flat")), (ArtKeys.ExitOpen, MakeSprite("flat2")));
 
             var floor = FloorState.CreateEmpty();
             floor.FloorIndex = 1;

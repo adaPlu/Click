@@ -244,6 +244,12 @@ namespace ClickDungeon.Unity.Screens
                 case "menu": OpenPause(); break;
                 // The HUD as it looks between floors, without the floor banner that covers it for a moment.
                 case "hud": _floorBanner.Hide(); break;
+                // Screenshots of tile art: uncovers the whole board (automation only; the run is thrown away after).
+                case "revealall":
+                    _floorBanner.Hide();
+                    foreach (var p in Board.AllCells) Run.Floor[p].Knowledge = Knowledge.Revealed;
+                    Refresh(false);
+                    break;
                 case "log": OpenLog(_modal.Hide); break;
                 case "inventory": OpenInventory(); break;
                 case "talents": OpenTalents(); break;

@@ -474,7 +474,11 @@ def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=Non
             rect = snap(rect, boxes[stem])
         x, y, w, h = rect
         crop = image.crop((max(0, x), max(0, y), min(image.width, x + w), min(image.height, y + h)))
-        result = circle(inpaint(smear(mirror_fix(tint(render(crop, spec).convert("RGBA"), spec), spec), spec), spec), spec)
+        # "sharpen": a small reference detail scaled up a long way gets an unsharp mask so its edges hold.
+        rendered = render(crop, spec)
+        if spec.get("sharpen"):
+            rendered = rendered.convert("RGBA").filter(ImageFilter.UnsharpMask(2, 80, 2))
+        result = circle(inpaint(smear(mirror_fix(tint(rendered.convert("RGBA"), spec), spec), spec), spec), spec)
 
         if spec.get("mode") == "frame":
             borders[key] = frame(crop, spec)[1]

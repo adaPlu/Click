@@ -203,6 +203,8 @@
     { "key": "icon_talent_p_guiding_light", "source": "ref-core-ui", "rect": [681, 461, 95, 95], "mode": "wide", "size": 192, "folder": "Icons", "circle": true, "circle_inset": 0.08, "wired": true },
     { "key": "icon_talent_p_sanctified", "source": "ref-lightbringer-sheet", "rect": [562, 1150, 190, 222], "mode": "wide", "size": 192, "folder": "Icons", "circle": true, "circle_inset": 0.08, "wired": true },
     { "key": "ui_icon_lock", "source": "ref-core-ui", "rect": [578, 652, 84, 84], "mode": "wide", "size": 168, "folder": "UI", "wired": true },
+    { "key": "tile_exit_stairs_locked", "source": "ref5-implementation-plan", "rect": [264, 320, 80, 80], "mode": "tile", "size": 256, "folder": "Tiles", "sharpen": true, "wired": true },
+    { "key": "tile_exit_stairs_open", "source": "ref5-implementation-plan", "rect": [264, 320, 80, 80], "mode": "tile", "size": 256, "folder": "Tiles", "sharpen": true, "mirror_fix": [0.6, 0.4, 0.4, 0.44], "wired": true },
     { "key": "ui_badge_alert", "source": "ref1-title", "rect": [1424, 22, 31, 31], "mode": "sprite", "tolerance": 60, "largest_only": true, "size": 64, "folder": "UI", "wired": true },
     { "key": "ui_icon_hero_select", "source": "ref1-title", "rect": [415, 788, 70, 55], "mode": "icon", "size": 128, "folder": "UI" },
     { "key": "ui_icon_play", "source": "ref1-title", "rect": [150, 790, 85, 65], "mode": "icon", "size": 128, "folder": "UI", "wired": true },

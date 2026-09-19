@@ -261,6 +261,17 @@ namespace ClickDungeon.Unity.Ui
 
         public static void Exit(Transform t, bool unlocked)
         {
+            // The reference's raised stone staircase (padlocked until the key opens it) comes first, then the flat tile-sheet stairs.
+            if (TryArt(t, unlocked ? ArtKeys.ExitStairsOpen : ArtKeys.ExitStairsLocked, TileSize))
+            {
+                // Open, the exit is the same staircase as the way in: a gold arrow down tells them apart.
+                if (unlocked)
+                {
+                    Shape(t, Shapes.Circle, Palette.Ink.WithAlpha(0.55f), new Vector2(34f, -34f), new Vector2(44f, 44f));
+                    Shape(t, Shapes.Triangle, Palette.Gold, new Vector2(34f, -36f), new Vector2(28f, 24f), 180f);
+                }
+                return;
+            }
             if (TryArtFirst(t, TileSize, unlocked ? ArtKeys.ExitOpen : ArtKeys.ExitLocked, unlocked ? ArtKeys.StairDown : ArtKeys.StairDownLocked)) return;
             Shape(t, Shapes.Rounded, Palette.StoneDark, Vector2.zero, new Vector2(112f, 112f));
             for (int i = 0; i < 3; i++)
