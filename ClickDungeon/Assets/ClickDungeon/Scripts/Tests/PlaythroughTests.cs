@@ -23,13 +23,17 @@ namespace ClickDungeon.Tests
             // CD_HERO plays another hero (dawnward is the Paladin); its class's tree is the one learned.
             string heroId = Environment.GetEnvironmentVariable("CD_HERO") ?? ContentCatalog.DefaultHeroId;
             string classId = Progression.ClassOf(session.Catalog, heroId);
-            Console.WriteLine($"seed base {seedBase}, hero {heroId} ({classId})");
-            Console.WriteLine("run  seed      result  floor  turns  hp     coins  gems  +xp  level  items  achievements");
-            for (int i = 1; i <= 10; i++)
+            // CD_LEVEL starts the hero at that level (its points spent at once); CD_RUNS plays more or fewer than ten.
+            if (int.TryParse(Environment.GetEnvironmentVariable("CD_LEVEL"), out int startLevel) && startLevel > 1)
+                session.Profile.Xp = Progression.XpForLevel(startLevel);
+            int runs = int.TryParse(Environment.GetEnvironmentVariable("CD_RUNS"), out int n) && n > 0 ? n : 10;
+            Console.WriteLine($"seed base {seedBase}, hero {heroId} ({classId}), starting level {Progression.Level(session.Profile)}");
+            Console.WriteLine("run  seed      result  floor  turns  hp     coins  gems  +xp  level  items  achievements  talents learned before the run");
+            for (int i = 1; i <= runs; i++)
             {
                 Mailbox.CollectAll(session.Profile);
-                // Each point to the path with the fewest so far, so every path gets tried.
-                AutoPlayer.LearnTalents(session.Profile, session.Catalog, classId);
+                // A capstone when one opens, else the path with the fewest points climbs a tier (AutoPlayer.LearnTalents).
+                var learned = AutoPlayer.LearnTalents(session.Profile, session.Catalog, classId);
 
                 ulong seed = seedBase + (ulong)i * 101UL;
                 session.StartNewRun(seed, Difficulty.Medium, MovementMode.Free, heroId);
@@ -42,7 +46,7 @@ namespace ClickDungeon.Tests
                 var p = session.Profile;
                 Console.WriteLine($"{i,3}  {seed,-8}  {(run.Status == RunStatus.InProgress ? "STALL" : run.Status.ToString()),-6}  {run.Floor.FloorIndex,5}  " +
                                   $"{run.Turn,5}  {run.Hero.Hp,2}/{run.Hero.MaxHp,-3}  {p.Coins,5}  {p.Gems,4}  {run.XpEarned,3}  {Progression.Level(p),5}  " +
-                                  $"{p.Items.Count,5}  {Achievements.EarnedCount(p, session.Catalog)}");
+                                  $"{p.Items.Count,5}  {Achievements.EarnedCount(p, session.Catalog),12}  {string.Join(", ", learned)}");
             }
             var profile = session.Profile;
             Console.WriteLine($"\nWon {profile.RunsWon} of {profile.RunsFinished}. Deepest floor {profile.DeepestFloor}, monsters {profile.MonstersSlain}, " +

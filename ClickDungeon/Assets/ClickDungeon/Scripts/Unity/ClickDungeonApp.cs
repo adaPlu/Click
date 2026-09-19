@@ -126,7 +126,7 @@ namespace ClickDungeon.Unity
         }
 
         /// <summary>
-        /// Watch mode: -cdWatch [seconds per move, default 0.5] [-cdRuns n, default 5] [-cdHero id] [-cdDifficulty ..]
+        /// Watch mode: -cdWatch [seconds per move, default 0.5] [-cdRuns n, default 5] [-cdHero id] [-cdLevel n] [-cdDifficulty ..]
         /// [-cdMovement ..] [-cdBot smart|casual] [-cdSighted 1]. The bot plays whole runs on screen at a pace a person can
         /// follow, through the same input path as a player: it decides blind (only on what is uncovered) unless -cdSighted,
         /// chest reveals and floor banners play out, and each end panel stays up a moment. The profile carries from run to
@@ -146,6 +146,9 @@ namespace ClickDungeon.Unity
             UiFactory.Outline(caption, Color.black, 2f);
             int won = 0;
             var log = new System.Text.StringBuilder();
+            // -cdLevel N: the watched hero starts at level N, so the deeper talents come into play within a few runs.
+            if (int.TryParse(ArgValue("-cdLevel"), out int startLevel) && startLevel > 1)
+                Session.Profile.Xp = Progression.XpForLevel(startLevel);
 
             for (int run = 1; run <= runs; run++)
             {
@@ -153,7 +156,8 @@ namespace ClickDungeon.Unity
                 Mailbox.CollectAll(profile);
                 string heroId = fixedHero != null ? LaunchOptions.ParseHero(fixedHero, Catalog, heroes[0]) : heroes[(run - 1) % heroes.Count];
                 string classId = Progression.ClassOf(Catalog, heroId);
-                AutoPlayer.LearnTalents(profile, Catalog, classId);
+                var learned = AutoPlayer.LearnTalents(profile, Catalog, classId);
+                if (learned.Count > 0) log.AppendLine($"before run {run}, learned: {string.Join(", ", learned)}");
 
                 Store.Delete();
                 ulong seed = 20260920UL + (ulong)run * 7919UL;
@@ -162,7 +166,9 @@ namespace ClickDungeon.Unity
                 var bot = new AutoPlayer(ArgValue("-cdBot") == "casual" ? AutoPlayer.CasualMistakeRate : 0.0,
                     blind: ArgValue("-cdSighted") == null);
                 caption.transform.SetAsLastSibling();
-                yield return new WaitForSecondsRealtime(2f);
+                caption.text = $"BOT WATCH  ·  run {run}/{runs}  ·  level {Progression.Level(profile)}"
+                               + (learned.Count > 0 ? $"  ·  learned {string.Join(", ", learned)}" : "");
+                yield return new WaitForSecondsRealtime(learned.Count > 0 ? 3.5f : 2f);
 
                 for (int i = 0; i < 1500 && Session.Run.Status == Domain.RunStatus.InProgress; i++)
                 {

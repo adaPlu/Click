@@ -38,12 +38,11 @@ namespace ClickDungeon.Application
         public const double CasualMistakeRate = 0.2;
 
         /// <summary>
-        /// Spends a class's free talent points the way a player trying every path might: each point goes to the path with
-        /// the fewest points in it so far (ties in tree order), on the lowest-tier talent that path can take now; a path
-        /// with nothing open passes to the next. Points come one per level, so this spreads them across runs too.
-        /// Returns the points spent.
+        /// Spends a class's free talent points the way a player working through the whole tree might: a capstone as soon as
+        /// one opens; otherwise the point goes to the path with the fewest points so far (ties in tree order), on the
+        /// highest-tier talent that path can take now, so every path climbs tier by tier. Returns the names learned, in order.
         /// </summary>
-        public static int LearnTalents(ProfileState profile, ContentCatalog catalog, string classId)
+        public static List<string> LearnTalents(ProfileState profile, ContentCatalog catalog, string classId)
         {
             var branches = new List<string>();
             foreach (var talent in catalog.TalentsOf(classId))
@@ -57,25 +56,30 @@ namespace ClickDungeon.Application
                 return points;
             }
 
-            int spent = 0;
-            for (bool learned = true; learned;)
+            TalentDefinition Best(string branch)
             {
-                learned = false;
-                var order = new List<string>(branches);
-                order.Sort((a, b) => InBranch(a) != InBranch(b) ? InBranch(a).CompareTo(InBranch(b)) : branches.IndexOf(a).CompareTo(branches.IndexOf(b)));
-                foreach (var branch in order)
-                {
-                    TalentDefinition pick = null;
-                    foreach (var talent in catalog.TalentsOf(classId))
-                        if (talent.BranchId == branch && Progression.CanLearn(profile, catalog, talent.Id) && (pick == null || talent.Tier < pick.Tier))
-                            pick = talent;
-                    if (pick == null || !Progression.TryLearn(profile, catalog, pick.Id)) continue;
-                    learned = true;
-                    spent++;
-                    break;
-                }
+                TalentDefinition pick = null;
+                foreach (var talent in catalog.TalentsOf(classId))
+                    if ((branch == null ? talent.Capstone : talent.BranchId == branch) && Progression.CanLearn(profile, catalog, talent.Id)
+                        && (pick == null || talent.Tier > pick.Tier))
+                        pick = talent;
+                return pick;
             }
-            return spent;
+
+            var learned = new List<string>();
+            while (true)
+            {
+                var pick = Best(null);
+                if (pick == null)
+                {
+                    var order = new List<string>(branches);
+                    order.Sort((a, b) => InBranch(a) != InBranch(b) ? InBranch(a).CompareTo(InBranch(b)) : branches.IndexOf(a).CompareTo(branches.IndexOf(b)));
+                    foreach (var branch in order)
+                        if ((pick = Best(branch)) != null) break;
+                }
+                if (pick == null || !Progression.TryLearn(profile, catalog, pick.Id)) return learned;
+                learned.Add(pick.Name);
+            }
         }
 
         public AutoPlayer(double mistakeRate = 0, bool blind = false, bool loots = true)
