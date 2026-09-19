@@ -35,9 +35,12 @@ namespace ClickDungeon.Unity.Screens
         string _classId;
         string _selected;
         string _note;
+        /// <summary>Built for a phone held upright (D-042): header, tree and detail stacked on a 1080 × 1920 stage.</summary>
+        readonly bool _upright;
 
         public TalentOverlay(RectTransform parent)
         {
+            _upright = RefLayout.Portrait;
             _root = UiFactory.Rect(parent, "Talents");
             _root.Stretch();
             var dim = UiFactory.Image(_root, "Dim", new Color(0f, 0f, 0f, 0.8f));
@@ -103,7 +106,39 @@ namespace ClickDungeon.Unity.Screens
             _footer = UiFactory.Text(panel, "Footer", "", 20, Palette.TextDim, TextAnchor.MiddleLeft);
             _footer.rectTransform.Place(new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(40f, 14f), new Vector2(1140f, 40f));
 
+            if (_upright) LayoutPortrait(panel, detail, done);
             _root.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Upright phone: the header and class tabs on top, the tree (names under the nodes) filling the middle, and the chosen
+        /// talent's detail under it with RESET, LEARN and DONE along its foot.
+        /// </summary>
+        void LayoutPortrait(RectTransform panel, RectTransform detail, UiFactory.ButtonParts done)
+        {
+            panel.Place(Center, Center, Vector2.zero, new Vector2(1060f, 1900f));
+            RefLayout.Top(panel, "Title", 150f, 24f, 880f, 56f);
+            RefLayout.Top(panel, "Level", 152f, 84f, 880f, 32f);
+            RefLayout.Top(panel, "Points", 152f, 116f, 880f, 34f);
+            RefLayout.Top(panel, "ClassTabs", 436f, 166f, 600f, 80f);
+            RefLayout.Top(panel, "Tree", 24f, 256f, 1012f, 960f);
+            RefLayout.Top(panel, "Detail", 24f, 1230f, 1012f, 570f);
+            RefLayout.Top(panel, "Footer", 32f, 1808f, 996f, 80f);
+            _footer.alignment = TextAnchor.UpperLeft;
+            _footer.horizontalOverflow = HorizontalWrapMode.Wrap;
+
+            // The detail reads across: icon, then name, path and rank beside it; the rest full width below.
+            RefLayout.Top(detail, "Icon", 24f, 24f, 130f, 130f);
+            foreach (var (text, y, h) in new[] { (_detailName, 22f, 52f), (_detailPath, 80f, 30f), (_detailRank, 114f, 34f) })
+            {
+                text.rectTransform.Place(TopLeft, TopLeft, new Vector2(176f, -y), new Vector2(812f, h));
+                text.alignment = TextAnchor.UpperLeft;
+            }
+            foreach (var (text, y, h) in new[] { (_detailSummary, 172f, 60f), (_detailEffect, 238f, 84f), (_detailChange, 326f, 64f), (_detailLock, 394f, 56f) })
+                text.rectTransform.Place(TopLeft, TopLeft, new Vector2(24f, -y), new Vector2(964f, h));
+            _learn.Rect.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 22f), new Vector2(380f, 78f));
+            _reset.Rect.Place(Vector2.zero, Vector2.zero, new Vector2(24f, 26f), new Vector2(250f, 64f));
+            done.Rect.Place(new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-24f, 26f), new Vector2(250f, 64f));
         }
 
         static Text Line(RectTransform parent, string name, float y, int size, Color color, FontStyle style, float height)
@@ -212,7 +247,8 @@ namespace ClickDungeon.Unity.Screens
             {
                 float size = 2f + (float)rng.NextDouble() * 4f;
                 Icons.Shape(_tree, Shapes.Circle, theme.WithAlpha(0.08f + (float)rng.NextDouble() * 0.25f),
-                    new Vector2((float)rng.NextDouble() * 1120f - 560f, (float)rng.NextDouble() * 780f - 390f), new Vector2(size, size));
+                    _upright ? new Vector2((float)rng.NextDouble() * 980f - 490f, (float)rng.NextDouble() * 920f - 460f)
+                              : new Vector2((float)rng.NextDouble() * 1120f - 560f, (float)rng.NextDouble() * 780f - 390f), new Vector2(size, size));
             }
             var gate = UiFactory.Text(_tree, "Gates", "", 18, Palette.TextDim, TextAnchor.MiddleLeft);
             for (int tier = 1; tier <= 4; tier++)
@@ -220,7 +256,7 @@ namespace ClickDungeon.Unity.Screens
                 float y = TierY(tier);
                 var label = UiFactory.Text(_tree, "Tier " + tier, tier == 4 ? "CAPSTONE\nchoose one" : $"TIER {tier}\n{Progression.TierPoints[tier]} pts",
                     17, tier == 4 ? Palette.Gold : Palette.TextDim, TextAnchor.MiddleLeft, FontStyle.Bold);
-                label.rectTransform.Place(Center, Center, new Vector2(-490f, y), new Vector2(140f, 60f));
+                label.rectTransform.Place(Center, Center, new Vector2(_upright ? -436f : -490f, y), new Vector2(_upright ? 120f : 140f, 60f));
             }
             UiFactory.SafeDestroy(gate.gameObject);
 
@@ -229,7 +265,7 @@ namespace ClickDungeon.Unity.Screens
             {
                 var branch = heroClass.Branches[b];
                 Color color = Parse(branch.Color);
-                float x = (b - (heroClass.Branches.Length - 1) * 0.5f) * BranchPitch + 40f;
+                float x = (b - (heroClass.Branches.Length - 1) * 0.5f) * (_upright ? 290f : BranchPitch) + (_upright ? 70f : 40f);
                 var path = tree.FindAll(t => t.BranchId == branch.Id);
                 path.Sort((l, r) => l.Tier.CompareTo(r.Tier));
 
@@ -242,14 +278,20 @@ namespace ClickDungeon.Unity.Screens
                 foreach (var talent in path) Node(talent, new Vector2(x, TierY(talent.Tier)), color);
 
                 var name = UiFactory.Text(_tree, "Branch " + branch.Id, branch.Name, 30, color, TextAnchor.MiddleCenter, FontStyle.Bold);
-                name.rectTransform.Place(Center, Center, new Vector2(x, -364f), new Vector2(300f, 36f));
+                name.rectTransform.Place(Center, Center, new Vector2(x, _upright ? -410f : -364f), new Vector2(_upright ? 280f : 300f, 36f));
                 UiFactory.Shadow(name, Color.black, 2f);
                 var focus = UiFactory.Text(_tree, "Focus " + branch.Id, branch.Focus, 17, Palette.TextDim, TextAnchor.MiddleCenter);
-                focus.rectTransform.Place(Center, Center, new Vector2(x, -392f), new Vector2(310f, 24f));
+                focus.rectTransform.Place(Center, Center, new Vector2(x, _upright ? -440f : -392f), new Vector2(_upright ? 280f : 310f, 24f));
+                focus.resizeTextForBestFit = true;
+                focus.resizeTextMinSize = 12;
+                focus.resizeTextMaxSize = 17;
             }
         }
 
-        static float TierY(int tier) => -262f + (tier - 1) * TierPitch + (tier == 4 ? 14f : 0f);
+        // Portrait's tree is taller, and each name sits under its node, so the tiers stand further apart.
+        float TierY(int tier) => _upright
+            ? -268f + (tier - 1) * 205f + (tier == 4 ? 14f : 0f)
+            : -262f + (tier - 1) * TierPitch + (tier == 4 ? 14f : 0f);
 
         void Link(Vector2 from, Vector2 to, Color color, bool lit)
         {
@@ -321,7 +363,15 @@ namespace ClickDungeon.Unity.Screens
 
             var name = UiFactory.Text(_tree, "Name " + talent.Id, talent.Name, 18, learned ? Palette.TextLight : available ? Palette.Gold : Palette.TextDim,
                 TextAnchor.MiddleLeft, FontStyle.Bold);
-            name.rectTransform.Place(Center, Center, pos + new Vector2(size * 0.5f + 88f, 0f), new Vector2(160f, 44f));
+            if (_upright)
+            {
+                name.alignment = TextAnchor.MiddleCenter;
+                name.rectTransform.Place(Center, Center, pos + new Vector2(0f, -size * 0.5f - 34f), new Vector2(270f, 28f));
+            }
+            else
+            {
+                name.rectTransform.Place(Center, Center, pos + new Vector2(size * 0.5f + 88f, 0f), new Vector2(160f, 44f));
+            }
             name.raycastTarget = false;
         }
 

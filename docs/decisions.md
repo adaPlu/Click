@@ -560,13 +560,15 @@ Rules referenced here live in `docs/rules.md`.
   (`tools/art-slicer/make_portrait_backgrounds.py`: the gameplay room's board frame, the title's knight at the gate). The
   board sits in the portrait room's frame; the abilities are a size up. Menus keep their landscape design on a 16:9 stage
   of their own, scaled so each panel fills the screen's width (up to 1.3x): the pause menu, shop, mail and inventory read
-  well; talents and hero select, laid out edge to edge, are small. The app rebuilds both screens when the device turns
+  well. Talents and hero select have portrait layouts of their own on the screen's stage: the talent tree stacks header,
+  class tabs, tree (names under the nodes) and detail; hero select stacks the art, who they are, stats, paths, roster
+  and CHOOSE. The app rebuilds both screens when the device turns
   (`ClickDungeonApp.Relayout`); on a PC a window taller than wide gets the portrait layout too.
 - App icon from the wordmark (`tools/art-slicer/make_app_icon.py`), set for Windows and every Android icon kind.
 - Builds: `ProjectSetup.BuildAndroid` (APK, IL2CPP ARM64, debug-signed for sideloading) and `ProjectSetup.BuildIos`
   (an Xcode project; building and signing it needs a Mac, Xcode and an Apple developer account).
 - **WHY**: "build an android apk", "add an app icon using the clickdungeon logo", "rebuild it so it can do landscape and
   portrait mode", "we need to build an iOS version ... same as android version".
-- **LATER**: portrait designs for the talent tree and hero select; an iOS app icon set; a release keystore and an App Bundle
+- **LATER**: a release keystore and an App Bundle
   for the Play Store.
 

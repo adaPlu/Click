@@ -106,7 +106,35 @@ namespace ClickDungeon.Unity.Screens
             var back = UiFactory.Button(panel, "Back", "BACK", Palette.NavyLight, 30, Hide);
             back.Rect.Place(new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-40f, 40f), new Vector2(240f, 100f));
 
+            if (RefLayout.Portrait) LayoutPortrait(panel, prev, next, back);
             _root.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Upright phone (D-042): the full-body art on top between its arrows, then who they are, what they start with, their
+        /// talent paths and the roster, with CHOOSE and BACK at the foot.
+        /// </summary>
+        void LayoutPortrait(RectTransform panel, UiFactory.ButtonParts prev, UiFactory.ButtonParts next, UiFactory.ButtonParts back)
+        {
+            panel.Place(Center, Center, Vector2.zero, new Vector2(1060f, 1900f));
+            RefLayout.Top(panel, "Heading", 36f, 18f, 700f, 50f);
+            RefLayout.Top(panel, "ArtFrame", 130f, 76f, 800f, 700f);
+            prev.Rect.Place(TopLeft, TopLeft, new Vector2(30f, -366f), new Vector2(80f, 130f));
+            next.Rect.Place(TopLeft, TopLeft, new Vector2(950f, -366f), new Vector2(80f, 130f));
+            RefLayout.Top(panel, "Name", 40f, 790f, 980f, 84f);
+            RefLayout.Top(panel, "Title", 40f, 872f, 980f, 36f);
+            RefLayout.Top(panel, "Class", 40f, 914f, 700f, 34f);
+            RefLayout.Top(panel, "Difficulty", 780f, 914f, 240f, 34f);
+            RefLayout.Top(panel, "Playstyle", 40f, 956f, 980f, 110f);
+            RefLayout.Top(panel, "StartLabel", 40f, 1072f, 700f, 30f);
+            RefLayout.Top(panel, "Stats", 152f, 1106f, 760f, 150f);
+            RefLayout.Top(panel, "PathsLabel", 40f, 1270f, 720f, 30f);
+            RefLayout.Top(panel, "ViewTalents", 790f, 1262f, 230f, 46f);
+            RefLayout.Top(panel, "Paths", 146f, 1316f, 768f, 170f);
+            RefLayout.Top(panel, "Quote", 40f, 1494f, 980f, 40f);
+            RefLayout.Top(panel, "Roster", 40f, 1552f, 980f, 110f);
+            _choose.Rect.Place(TopLeft, TopLeft, new Vector2(40f, -1690f), new Vector2(640f, 110f));
+            back.Rect.Place(TopLeft, TopLeft, new Vector2(700f, -1690f), new Vector2(320f, 110f));
         }
 
         static Text Text(RectTransform parent, string name, float x, float y, float w, float h, int size, Color color, FontStyle style, TextAnchor anchor)

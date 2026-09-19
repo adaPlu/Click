@@ -141,7 +141,8 @@ namespace ClickDungeon.Unity.Screens
             _modal = new ModalOverlay(RefLayout.OverlayStage(Root, 760f), app);
             _inventory = new InventoryOverlay(RefLayout.OverlayStage(Root, 1060f));
             _shop = new ShopOverlay(RefLayout.OverlayStage(Root, 1340f));
-            _talents = new TalentOverlay(RefLayout.OverlayStage(Root, 1840f));
+            // The talent tree has a portrait layout of its own, on the screen's stage.
+            _talents = new TalentOverlay(RefLayout.Portrait ? Root : RefLayout.OverlayStage(Root, 1840f));
         }
 
         // The portrait room's board frame (make_portrait_backgrounds.py): its inner edge, centred 612 below the stage's top.

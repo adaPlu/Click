@@ -103,8 +103,9 @@ namespace ClickDungeon.Unity.Screens
             _achievements = new AchievementsOverlay(RefLayout.OverlayStage(Root, 1000f));
             _mail = new MailOverlay(RefLayout.OverlayStage(Root, 1240f));
             _shop = new ShopOverlay(RefLayout.OverlayStage(Root, 1340f));
-            _heroes = new HeroSelectOverlay(RefLayout.OverlayStage(Root, 1860f));
-            _talents = new TalentOverlay(RefLayout.OverlayStage(Root, 1840f));
+            // These two have portrait layouts of their own, on the screen's stage.
+            _heroes = new HeroSelectOverlay(RefLayout.Portrait ? Root : RefLayout.OverlayStage(Root, 1860f));
+            _talents = new TalentOverlay(RefLayout.Portrait ? Root : RefLayout.OverlayStage(Root, 1840f));
         }
 
         /// <summary>
