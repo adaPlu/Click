@@ -18,6 +18,9 @@ namespace ClickDungeon.Tests
         public void TenPlaythroughs()
         {
             var session = new GameSession(ContentCatalog.CreateDefault(), null);
+            // CD_SEED picks another ten dungeons; without it the same ten play every time.
+            ulong seedBase = ulong.TryParse(Environment.GetEnvironmentVariable("CD_SEED"), out var custom) ? custom : 20260918UL;
+            Console.WriteLine($"seed base {seedBase}");
             Console.WriteLine("run  seed      result  floor  turns  hp     coins  gems  +xp  level  items  achievements");
             for (int i = 1; i <= 10; i++)
             {
@@ -31,7 +34,7 @@ namespace ClickDungeon.Tests
                         if (Progression.TryLearn(session.Profile, session.Catalog, talent.Id)) { learned = true; break; }
                 }
 
-                ulong seed = 20260918UL + (ulong)i * 101UL;
+                ulong seed = seedBase + (ulong)i * 101UL;
                 session.StartNewRun(seed, Difficulty.Medium, MovementMode.Free);
                 var bot = new AutoPlayer(AutoPlayer.CasualMistakeRate, blind: true);
                 for (int c = 0; c < 1500 && session.Run.Status == RunStatus.InProgress; c++)
