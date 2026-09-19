@@ -467,3 +467,11 @@ Rules referenced here live in `docs/rules.md`.
 - **WHY**: "change the main game screen as needed to match the reference main".
 - **TESTS**: the existing screen, board and effect tests; screenshots with `-cdOverlay hud`.
 
+## D-035 Gems are rare
+- **DECISION**: Lord Blobert gives 5 gems (was 50), a vault great chest 1 (was 10). Everything priced or paid in gems
+  scales with it: the special key costs 25 gems (was 150), the exchange trades 1 gem for 15 coins or 30 coins for 1
+  gem, the daily reward's day 6 gives 3 gems, and the achievements' gem gifts are 5 / 3 / 4 / 3.
+- **WHY**: the ten-playthrough bot sat on 580 unspent gems after ten wins; the owner asked for about 5 per boss win.
+- **EFFECT**: the same ten runs now end with 62 gems, about two special keys; a key takes roughly five wins, or about
+  750 coins through the exchange.
+

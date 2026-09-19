@@ -72,7 +72,7 @@ namespace ClickDungeon.Tests
             Assert.That(profile.PotionRations, Is.EqualTo(1));
             Assert.That(profile.HeartTokens, Is.EqualTo(1));
             Assert.That(profile.SpecialKeys, Is.EqualTo(1));
-            Assert.That(profile.Gems, Is.EqualTo(15));
+            Assert.That(profile.Gems, Is.EqualTo(3));
         }
 
         [Test]

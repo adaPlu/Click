@@ -15,7 +15,7 @@ namespace ClickDungeon.Application
         public const int PotionRationCoins = 60;
         public const int HeartTokenCoins = 120;
         /// <summary>Priced in gems, as on the store card (D-026).</summary>
-        public const int SpecialKeyGems = 150;
+        public const int SpecialKeyGems = 25;
 
         public static readonly ShopItem[] Stock = { ShopItem.PotionRation, ShopItem.HeartToken, ShopItem.SpecialKey };
 
@@ -23,8 +23,8 @@ namespace ClickDungeon.Application
         /// The purse's "+" (D-033): trading one currency for the other. A round trip loses half, so neither is a way to
         /// make more of either; gems still come mainly from Lord Blobert and vaults.
         /// </summary>
-        public const int CoinPouchGems = 10, CoinPouchCoins = 150;
-        public const int GemPouchCoins = 300, GemPouchGems = 10;
+        public const int CoinPouchGems = 1, CoinPouchCoins = 15;
+        public const int GemPouchCoins = 30, GemPouchGems = 1;
 
         public static readonly ShopItem[] Exchanges = { ShopItem.CoinPouch, ShopItem.GemPouch };
 
@@ -43,7 +43,7 @@ namespace ClickDungeon.Application
         /// <summary>The special key and the coin pouch are bought with gems; everything else with coins.</summary>
         public static bool PricedInGems(ShopItem item) => item == ShopItem.SpecialKey || item == ShopItem.CoinPouch;
 
-        public static string Currency(ShopItem item) => PricedInGems(item) ? "GEMS" : "COINS";
+        public static string Currency(ShopItem item) => (PricedInGems(item) ? "GEM" : "COIN") + (Price(item) == 1 ? "" : "S");
 
         public static string DisplayName(ShopItem item)
         {
@@ -52,7 +52,7 @@ namespace ClickDungeon.Application
                 case ShopItem.HeartToken: return "HEART TOKEN";
                 case ShopItem.SpecialKey: return "SPECIAL KEY";
                 case ShopItem.CoinPouch: return $"{CoinPouchCoins} COINS";
-                case ShopItem.GemPouch: return $"{GemPouchGems} GEMS";
+                case ShopItem.GemPouch: return GemPouchGems == 1 ? "1 GEM" : $"{GemPouchGems} GEMS";
                 default: return "POTION RATION";
             }
         }
@@ -66,8 +66,8 @@ namespace ClickDungeon.Application
                 case ShopItem.SpecialKey:
                     return $"Your next run hides a premium chest on a floor from {catalog.Treasure.PremiumFirstFloor} to " +
                            $"{catalog.Treasure.PremiumLastFloor}; the key opens it for {catalog.Treasure.PremiumChestRewards} rewards.";
-                case ShopItem.CoinPouch: return $"Trade {CoinPouchGems} gems for {CoinPouchCoins} coins.";
-                case ShopItem.GemPouch: return $"Trade {GemPouchCoins} coins for {GemPouchGems} gems.";
+                case ShopItem.CoinPouch: return $"Trade {CoinPouchGems} gem{(CoinPouchGems == 1 ? "" : "s")} for {CoinPouchCoins} coins.";
+                case ShopItem.GemPouch: return $"Trade {GemPouchCoins} coins for {GemPouchGems} gem{(GemPouchGems == 1 ? "" : "s")}.";
                 default: return $"+{catalog.Treasure.PotionRationPotions} potion on your next run.";
             }
         }

@@ -512,8 +512,8 @@ A run carries treasure out; the **profile** keeps it between runs.
 |---|---|
 | Each reward a chest gives up | 4 coins |
 | Walking down the stairs off a floor | 10 coins (falling through a pit pays nothing) |
-| Defeating Lord Blobert | 50 gems |
-| Opening a vault's great chest | 10 gems |
+| Defeating Lord Blobert | 5 gems |
+| Opening a vault's great chest | 1 gem |
 
 What a run found is banked once, when it ends — won, lost or abandoned. The
 **shop** (the title's SHOP, or the game screen's during a run) sells provisions for the *next* run:
@@ -522,10 +522,10 @@ What a run found is banked once, when it ends — won, lost or abandoned. The
 |---|---|---|
 | Potion ration | 60 coins | +1 potion at the start of the next run |
 | Heart token | 120 coins | +2 max hearts (full) at the start of the next run |
-| Special key | 150 gems | Hides one premium chest in the next run (D-026) |
+| Special key | 25 gems | Hides one premium chest in the next run (D-026) |
 
 The **"+"** beside coins or gems (title card and game HUD) opens an exchange (D-033):
-**10 gems for 150 coins**, or **300 coins for 10 gems**. A round trip loses half, so
+**1 gem for 15 coins**, or **30 coins for 1 gem**. A round trip loses half, so
 it moves value between the two without making more of either. There is no
 real-money purchase.
 
@@ -610,7 +610,7 @@ week over at day 1, and day 7 is followed by day 1 again.
 | 3 | 50 coins |
 | 4 | a heart token |
 | 5 | 80 coins |
-| 6 | 15 gems |
+| 6 | 3 gems |
 | 7 | a special key |
 
 Rations, tokens and keys are the shop's own and go into the next run like bought
@@ -629,14 +629,14 @@ run is banked (won, lost or abandoned).
 | First Steps | Finish a run | 25 coins |
 | Deep Diver | Reach floor 3 | 40 coins |
 | Into the Lair | Reach floor 5 | a potion ration |
-| Blobert Bested | Defeat Lord Blobert | 25 gems |
+| Blobert Bested | Defeat Lord Blobert | 5 gems |
 | Champion | Win 5 runs | a special key |
 | Monster Hunter | Slay 25 monsters | 50 coins |
-| Monster Slayer | Slay 100 monsters | 15 gems |
+| Monster Slayer | Slay 100 monsters | 3 gems |
 | Treasure Seeker | Open 20 chests | 50 coins |
-| Hoarder | Carry out 1,000 coins | 20 gems |
+| Hoarder | Carry out 1,000 coins | 4 gems |
 | Seasoned | Reach level 5 | a heart token |
-| Collector | Own 5 pieces of gear | 15 gems |
+| Collector | Own 5 pieces of gear | 3 gems |
 
 **Mail** (next to the crown) holds letters: a welcome with a potion ration for a
 new profile, one for every level gained, and one for every achievement, carrying
