@@ -165,7 +165,7 @@ namespace ClickDungeon.EditorTools
         public const string IosBuildPath = "Builds/iOS";
 
         /// <summary>
-        /// The iOS player as an Xcode project (Unity exports iOS this way on every OS): landscape or upright portrait, iOS 13
+        /// The iOS player as an Xcode project (Unity exports iOS this way on every OS): landscape or upright portrait, iOS 15
         /// and later. Building, signing and installing it needs a Mac with Xcode and an Apple developer account.
         /// </summary>
         [MenuItem("ClickDungeon/Build iOS Xcode Project")]
@@ -174,7 +174,7 @@ namespace ClickDungeon.EditorTools
             if (!File.Exists(ScenePath)) CreateMainScene();
             ApplyPlayerSettings();
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.iOS, "com.clickd.clickdungeon");
-            PlayerSettings.iOS.targetOSVersionString = "13.0";
+            PlayerSettings.iOS.targetOSVersionString = "15.0";
             PlayerSettings.iOS.requiresFullScreen = false;
 
             if (Directory.Exists(IosBuildPath)) Directory.Delete(IosBuildPath, true);
