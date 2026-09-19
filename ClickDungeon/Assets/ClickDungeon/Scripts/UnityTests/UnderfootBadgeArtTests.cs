@@ -131,19 +131,23 @@ namespace ClickDungeon.UnityTests
             RunFactory.SetupFloor(run, Catalog, new List<GameEvent>());
             var board = new BoardView((RectTransform)_root.transform, _root.AddComponent<SpriteFrameAnimator>(), Vector2.zero);
 
+            // The entrance shows the open staircase too; only the exit's own tile is checked.
+            System.Collections.Generic.IEnumerable<Image> ExitImages() =>
+                _root.GetComponentsInChildren<Transform>(true).First(t => t.name == "Cell 1,0").GetComponentsInChildren<Image>(true);
+
             // D-023: a covered exit is a cover like any other tile; its art would give away where it is.
             board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
-            Assert.That(Images().Any(i => i.sprite == locked || i.sprite == open), Is.False, "A covered exit shows no exit art.");
+            Assert.That(ExitImages().Any(i => i.sprite == locked || i.sprite == open), Is.False, "A covered exit shows no exit art.");
 
             floor[floor.Exit].Knowledge = Knowledge.Revealed;
             board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
-            Assert.That(Images().Any(i => i.sprite == locked), Is.True);
-            Assert.That(Images().Any(i => i.sprite == open), Is.False);
+            Assert.That(ExitImages().Any(i => i.sprite == locked), Is.True);
+            Assert.That(ExitImages().Any(i => i.sprite == open), Is.False);
 
             run.Hero.HasKey = true;
             board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
-            Assert.That(Images().Any(i => i.sprite == open), Is.True, "Holding the key shows the exit as open.");
-            Assert.That(Images().Any(i => i.sprite == locked), Is.False);
+            Assert.That(ExitImages().Any(i => i.sprite == open), Is.True, "Holding the key shows the exit as open.");
+            Assert.That(ExitImages().Any(i => i.sprite == locked), Is.False);
         }
 
         [Test]
