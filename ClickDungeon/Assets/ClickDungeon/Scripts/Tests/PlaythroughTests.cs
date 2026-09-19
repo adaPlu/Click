@@ -28,14 +28,8 @@ namespace ClickDungeon.Tests
             for (int i = 1; i <= 10; i++)
             {
                 Mailbox.CollectAll(session.Profile);
-                // The first talent it can learn each time, path by path: a simple, repeatable build.
-                bool learned = true;
-                while (learned)
-                {
-                    learned = false;
-                    foreach (var talent in session.Catalog.TalentsOf(classId))
-                        if (Progression.TryLearn(session.Profile, session.Catalog, talent.Id)) { learned = true; break; }
-                }
+                // Each point to the path with the fewest so far, so every path gets tried.
+                AutoPlayer.LearnTalents(session.Profile, session.Catalog, classId);
 
                 ulong seed = seedBase + (ulong)i * 101UL;
                 session.StartNewRun(seed, Difficulty.Medium, MovementMode.Free, heroId);

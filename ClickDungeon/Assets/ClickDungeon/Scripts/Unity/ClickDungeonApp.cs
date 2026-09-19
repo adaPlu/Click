@@ -153,12 +153,7 @@ namespace ClickDungeon.Unity
                 Mailbox.CollectAll(profile);
                 string heroId = fixedHero != null ? LaunchOptions.ParseHero(fixedHero, Catalog, heroes[0]) : heroes[(run - 1) % heroes.Count];
                 string classId = Progression.ClassOf(Catalog, heroId);
-                for (bool learned = true; learned;)
-                {
-                    learned = false;
-                    foreach (var talent in Catalog.TalentsOf(classId))
-                        if (Progression.TryLearn(profile, Catalog, talent.Id)) { learned = true; break; }
-                }
+                AutoPlayer.LearnTalents(profile, Catalog, classId);
 
                 Store.Delete();
                 ulong seed = 20260920UL + (ulong)run * 7919UL;

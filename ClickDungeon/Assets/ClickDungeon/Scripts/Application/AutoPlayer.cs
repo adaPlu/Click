@@ -37,6 +37,47 @@ namespace ClickDungeon.Application
         /// <summary>Mistake rate used for balance targets: roughly a first-time player who mostly reads the telegraphs.</summary>
         public const double CasualMistakeRate = 0.2;
 
+        /// <summary>
+        /// Spends a class's free talent points the way a player trying every path might: each point goes to the path with
+        /// the fewest points in it so far (ties in tree order), on the lowest-tier talent that path can take now; a path
+        /// with nothing open passes to the next. Points come one per level, so this spreads them across runs too.
+        /// Returns the points spent.
+        /// </summary>
+        public static int LearnTalents(ProfileState profile, ContentCatalog catalog, string classId)
+        {
+            var branches = new List<string>();
+            foreach (var talent in catalog.TalentsOf(classId))
+                if (!branches.Contains(talent.BranchId)) branches.Add(talent.BranchId);
+
+            int InBranch(string branch)
+            {
+                int points = 0;
+                foreach (var talent in catalog.TalentsOf(classId))
+                    if (talent.BranchId == branch) points += Progression.Rank(profile, talent.Id);
+                return points;
+            }
+
+            int spent = 0;
+            for (bool learned = true; learned;)
+            {
+                learned = false;
+                var order = new List<string>(branches);
+                order.Sort((a, b) => InBranch(a) != InBranch(b) ? InBranch(a).CompareTo(InBranch(b)) : branches.IndexOf(a).CompareTo(branches.IndexOf(b)));
+                foreach (var branch in order)
+                {
+                    TalentDefinition pick = null;
+                    foreach (var talent in catalog.TalentsOf(classId))
+                        if (talent.BranchId == branch && Progression.CanLearn(profile, catalog, talent.Id) && (pick == null || talent.Tier < pick.Tier))
+                            pick = talent;
+                    if (pick == null || !Progression.TryLearn(profile, catalog, pick.Id)) continue;
+                    learned = true;
+                    spent++;
+                    break;
+                }
+            }
+            return spent;
+        }
+
         public AutoPlayer(double mistakeRate = 0, bool blind = false, bool loots = true)
         {
             MistakeRate = Math.Max(0, Math.Min(1, mistakeRate));
