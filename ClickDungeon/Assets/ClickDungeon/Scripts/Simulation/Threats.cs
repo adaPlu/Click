@@ -40,7 +40,7 @@ namespace ClickDungeon.Simulation
                             Add(threats, ThreatKind.Fire, cell, def.Damage, enemy.Id);
                         break;
                     case IntentKind.Slam:
-                        foreach (var cell in Board.SlamCells(intent.Target))
+                        foreach (var cell in Board.SlamCells(intent.Target, def.SlamShakesLines))
                             Add(threats, ThreatKind.Slam, cell, def.SlamDamage, enemy.Id);
                         break;
                     case IntentKind.Summon:

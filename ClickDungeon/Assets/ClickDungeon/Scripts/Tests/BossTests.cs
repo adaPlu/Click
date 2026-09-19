@@ -42,8 +42,31 @@ namespace ClickDungeon.Tests
         public void DashEscapesTheSlam()
         {
             var run = Court();
-            DoOk(run, PlayerCommand.Dash(P(0, 4)));
+            // Diagonally out of the 3x3 and off the slam's row and column (D-039).
+            DoOk(run, PlayerCommand.Dash(P(2, 4)));
             Assert.That(run.Hero.Hp, Is.EqualTo(10));
+        }
+
+        [Test]
+        public void SlamShakesItsRowAndColumn()
+        {
+            var run = Court();
+            DoOk(run, PlayerCommand.Dash(P(0, 4)));
+            Assert.That(run.Hero.Hp, Is.EqualTo(6), "Two tiles down the target's column still takes the slam (D-039).");
+            var shaken = Board.SlamCells(P(0, 2), true);
+            Assert.That(shaken.Contains(P(4, 2)) && shaken.Contains(P(0, 0)), Is.True, "The whole row and column shake.");
+            Assert.That(shaken.Contains(P(2, 4)), Is.False);
+        }
+
+        [Test]
+        public void SummonBringsTwoMinions()
+        {
+            var run = Court();
+            run.Hero.Hp = 99;
+            run.Hero.MaxHp = 99;
+            DoOk(run, PlayerCommand.Dash(P(2, 4)));
+            DoOk(run, PlayerCommand.Wait());
+            Assert.That(run.Floor.Enemies.FindAll(e => e.DefId == "slimelet").Count, Is.EqualTo(2));
         }
 
         [Test]
@@ -63,11 +86,11 @@ namespace ClickDungeon.Tests
             boss.ModeTurns = 2;
             var immune = DoOk(run, PlayerCommand.Slash(P(1, 2)));
             Assert.That(Has(immune, GameEventKind.EnemyImmune), Is.True);
-            Assert.That(boss.Hp, Is.EqualTo(12));
+            Assert.That(boss.Hp, Is.EqualTo(18));
 
             boss.Mode = EnemyMode.Deflated;
             DoOk(run, PlayerCommand.Slash(P(1, 2)));
-            Assert.That(boss.Hp, Is.EqualTo(8));
+            Assert.That(boss.Hp, Is.EqualTo(14));
         }
 
         [Test]

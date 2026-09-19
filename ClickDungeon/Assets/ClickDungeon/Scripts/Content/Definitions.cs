@@ -103,6 +103,10 @@ namespace ClickDungeon.Content
         public int SlamDamage;
         public int PuffTurns;
         public string SummonId;
+        /// <summary>Minions a summon brings, each on a free tile next to the boss (D-039).</summary>
+        public int SummonCount = 1;
+        /// <summary>The slam also shakes the target's whole row and column (D-039).</summary>
+        public bool SlamShakesLines;
         public int DeflatedDamageMultiplier = 2;
     }
 

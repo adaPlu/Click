@@ -170,16 +170,29 @@ namespace ClickDungeon.Simulation
 
                 case IntentKind.Slam:
                     events.Add(GameEvent.Of(GameEventKind.BossSlammed, enemy.Id, enemy.Pos, intent.Target, def.SlamDamage, def.Id));
-                    if (Board.SlamCells(intent.Target).Contains(run.Hero.Pos))
+                    if (Board.SlamCells(intent.Target, def.SlamShakesLines).Contains(run.Hero.Pos))
                         Combat.DamageHero(run, def.SlamDamage, def.Id, events);
                     break;
 
                 case IntentKind.Summon:
-                    if (Board.EnemyCanEnter(run, intent.Target) && catalog.HasEnemy(def.SummonId))
+                    if (!catalog.HasEnemy(def.SummonId)) break;
+                    // The declared tile first, then (D-039) any further minions on the boss's other free neighbours.
+                    var summonCells = new List<GridPos> { intent.Target };
+                    foreach (var cell in Board.Neighbours(enemy.Pos))
+                        if (cell != intent.Target) summonCells.Add(cell);
+                    int summoned = 0;
+                    foreach (var cell in summonCells)
                     {
-                        var minion = Spawn(run.Floor, catalog.Enemy(def.SummonId), intent.Target, awake: true);
+                        if (summoned >= System.Math.Max(1, def.SummonCount)) break;
+                        if (!Board.EnemyCanEnter(run, cell))
+                        {
+                            if (cell == intent.Target) break;  // a blocked declared tile cancels the summon, as before
+                            continue;
+                        }
+                        var minion = Spawn(run.Floor, catalog.Enemy(def.SummonId), cell, awake: true);
                         minion.JustWoken = true;
-                        events.Add(GameEvent.Of(GameEventKind.EnemySummoned, minion.Id, enemy.Pos, intent.Target, source: minion.DefId));
+                        events.Add(GameEvent.Of(GameEventKind.EnemySummoned, minion.Id, enemy.Pos, cell, source: minion.DefId));
+                        summoned++;
                     }
                     break;
 

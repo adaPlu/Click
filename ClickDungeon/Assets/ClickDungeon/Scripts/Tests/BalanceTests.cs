@@ -193,6 +193,33 @@ namespace ClickDungeon.Tests
             }
         }
 
+        [Test, Explicit("Tuning aid: candidate numbers for Lord Blobert on Knight's Trial")]
+        public void BlobertSweep()
+        {
+            const int runs = 60;
+            var candidates = new List<(string name, Action<ContentCatalog> tweak)>
+            {
+                ("B0 current", c => { }),
+                ("BB lines summon2 traps", c => { var b = c.Enemy("lord_blobert"); b.SlamShakesLines = true; b.SummonCount = 2; var f = c.ProfileFor(5); f.MinSpikes = f.MaxSpikes = 2; f.MinBombs = f.MaxBombs = 1; }),
+                ("BC BB hp16", c => { var b = c.Enemy("lord_blobert"); b.MaxHp = 16; b.SlamShakesLines = true; b.SummonCount = 2; var f = c.ProfileFor(5); f.MinSpikes = f.MaxSpikes = 2; f.MinBombs = f.MaxBombs = 1; }),
+                ("BD BB hp18", c => { var b = c.Enemy("lord_blobert"); b.MaxHp = 18; b.SlamShakesLines = true; b.SummonCount = 2; var f = c.ProfileFor(5); f.MinSpikes = f.MaxSpikes = 2; f.MinBombs = f.MaxBombs = 1; }),
+                ("BE BC summon3", c => { var b = c.Enemy("lord_blobert"); b.MaxHp = 16; b.SlamShakesLines = true; b.SummonCount = 3; var f = c.ProfileFor(5); f.MinSpikes = f.MaxSpikes = 2; f.MinBombs = f.MaxBombs = 1; }),
+            };
+            TestContext.Out.WriteLine($"Blobert sweep (Knight's Trial, blind, Free Roam): {runs} seeds, reach F5 / win / died on F5, avg turns");
+            foreach (var (name, tweak) in candidates)
+            {
+                var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
+                tweak(catalog);
+                var line = new System.Text.StringBuilder($"{name,-24}");
+                foreach (var (skill, rate) in new[] { ("sharp", 0.0), ("casual", AutoPlayer.CasualMistakeRate), ("novice", NoviceMistakeRate) })
+                {
+                    var t = Measure(catalog, runs, rate, MovementMode.Free, blind: true);
+                    line.Append($"  {skill} {Pct(t.ReachedBoss, runs),4}/{Pct(t.Won, runs),-4} F5 died {t.DeathsByFloor[5],2} stall {t.StalledByFloor[5],2}");
+                }
+                TestContext.Out.WriteLine(line.ToString());
+            }
+        }
+
         static string ByFloor(int[] counts) => $"{counts[1]} / {counts[2]} / {counts[3]} / {counts[4]} / {counts[5]}";
 
         [Test, Explicit("Tuning aid: prints the end of stalled or lost AutoPlayer runs")]

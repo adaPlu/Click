@@ -517,3 +517,14 @@ Rules referenced here live in `docs/rules.md`.
   (easy / medium / hardcore). Lord Blobert still kills nobody in these runs; the deaths are on floors 3 and 4.
 - **TESTS**: `BalanceTests.KnightsTrialLetsANovicePlayerReachBlobert` (baseline 19/30 reach, guard 16), `TiersKeepTheirOrder`.
 
+## D-039 A harder Lord Blobert
+- **DECISION**: Blobert has 18 HP (was 12), his slam also shakes the target's whole row and column, each summon brings two
+  Slimelets, and his court hides 2 spike traps and a bomb. Data on `EnemyDefinition` (`SummonCount`, `SlamShakesLines`)
+  and the floor-5 profile; `Board.SlamCells` takes the lines flag, so the telegraph shows every shaken tile. Ruleset 7.
+- **WHY**: "make blobert harder". No bot ever died on his floor: in Free Roam a telegraphed slam is always dodged, so
+  HP and damage alone changed nothing (`BalanceTests.BlobertSweep`). A wider slam on a trapped floor makes the dodge a
+  blind step, and the extra minions crowd it.
+- **MEASURED**: Knight's Trial, 60 blind seeds: novice wins 67% -> 45% with 12 deaths on floor 5 (was 0); casual 70% (1
+  death on floor 5); the sharp bot is unchanged.
+- **TESTS**: `LordBlobertTests.SlamShakesItsRowAndColumn`, `SummonBringsTwoMinions`, `DashEscapesTheSlam`.
+

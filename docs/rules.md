@@ -174,12 +174,13 @@ then lowest actor id). No RNG in AI.
 
 ### 3.6 Lord Blobert (floor 5 boss) *(tune numbers)*
 
-HP 12. Uses the same intent system. Repeating script:
+HP 18 (D-039). Uses the same intent system. His court hides 2 spike traps and a bomb
+under its covers. Repeating script:
 
-1. **Boast → Slam**: declares `Slam` on the hero's cell and its 4 orthogonal
-   neighbours. Executes next phase for 4 damage.
-2. **Summon**: declares `Summon` on an empty cell adjacent to himself; a
-   Slimelet appears next phase (and obeys first contact).
+1. **Boast → Slam**: declares `Slam` on the hero's cell, every tile touching it,
+   and that cell's whole row and column (D-039). Executes next phase for 4 damage.
+2. **Summon**: declares `Summon` on an empty cell adjacent to himself; two
+   Slimelets appear next phase, the second on another free tile beside him (D-039).
 3. **Puff Up**: declares `PuffUp`. For the next 2 turns he is **Puffed**:
    immune to damage, `Move`s toward the hero, attacks adjacent for 2.
 4. **Deflated**: 1 turn, no action, takes **double damage**.
@@ -367,7 +368,7 @@ above; only numbers change. §3–§8 describe the base content; Knight's Trial 
 | Starting potions                       | 3 (+1)                 | 2                       | 1 (−1)                     |
 | Goblin / Slime / Imp / Slimelet HP     | 3 / 5 / 2 / 1          | 3 / 5 / 2 / 1           | 4 / 6 / 3 / 2 (+1)         |
 | Goblin / Slime / Imp / Slimelet damage | 1 / 2 / 1 / 1 (−1)     | 2 / 3 / 2 / 1           | 2 / 3 / 2 / 1              |
-| Lord Blobert HP / Slam / puffed attack | 10 / 3 / 1             | 12 / 4 / 2              | 16 / 5 / 2                 |
+| Lord Blobert HP / Slam / puffed attack | 16 / 3 / 1             | 18 / 4 / 2              | 22 / 5 / 2                 |
 | Spikes / bomb damage                   | 1 / 3                  | 2 / 4                   | 3 / 5 (+1)                 |
 | Enemies on normal floors               | profile                | profile +1              | profile                    |
 | HP restored on arriving at a new floor | 3                      | 0                       | 0                          |

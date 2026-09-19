@@ -131,8 +131,11 @@ namespace ClickDungeon.Simulation
             return cells;
         }
 
-        /// <summary>The slam covers the target tile and everything touching it, diagonals included (rules §3.6).</summary>
-        public static List<GridPos> SlamCells(GridPos center)
+        /// <summary>
+        /// The slam covers the target tile and everything touching it, diagonals included (rules §3.6); with
+        /// <paramref name="lines"/> it also shakes the target's whole row and column (D-039).
+        /// </summary>
+        public static List<GridPos> SlamCells(GridPos center, bool lines = false)
         {
             var cells = new List<GridPos> { center };
             foreach (var step in Directions.Around)
@@ -140,6 +143,14 @@ namespace ClickDungeon.Simulation
                 var n = center.Offset(step);
                 if (n.InBounds) cells.Add(n);
             }
+            if (lines)
+                for (int i = 0; i < BoardRules.Size; i++)
+                {
+                    var row = new GridPos(i, center.Y);
+                    var column = new GridPos(center.X, i);
+                    if (!cells.Contains(row)) cells.Add(row);
+                    if (!cells.Contains(column)) cells.Add(column);
+                }
             return cells;
         }
 
