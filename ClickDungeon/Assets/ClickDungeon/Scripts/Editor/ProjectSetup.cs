@@ -49,6 +49,52 @@ namespace ClickDungeon.EditorTools
             PlayerSettings.defaultScreenHeight = 900;
             PlayerSettings.resizableWindow = true;
             PlayerSettings.runInBackground = true;
+            ApplyAppIcon();
+        }
+
+        public const string AppIconFolder = "Assets/ClickDungeon/Art/AppIcon";
+
+        /// <summary>
+        /// The app icon from the ClickDungeon wordmark (tools/art-slicer/make_app_icon.py): the full icon for Windows and as
+        /// the default, and on Android the legacy and round icons plus the adaptive icon's background and foreground layers.
+        /// Android icon kinds are found by name, so this compiles without the Android module installed.
+        /// </summary>
+        public static void ApplyAppIcon()
+        {
+            Texture2D Load(string name)
+            {
+                string path = $"{AppIconFolder}/{name}.png";
+                if (AssetImporter.GetAtPath(path) is TextureImporter importer &&
+                    (importer.mipmapEnabled || importer.textureCompression != TextureImporterCompression.Uncompressed || importer.maxTextureSize < 1024))
+                {
+                    importer.textureType = TextureImporterType.Default;
+                    importer.mipmapEnabled = false;
+                    importer.textureCompression = TextureImporterCompression.Uncompressed;
+                    importer.maxTextureSize = 1024;
+                    importer.SaveAndReimport();
+                }
+                return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            }
+
+            var icon = Load("app_icon");
+            var background = Load("app_icon_background");
+            var foreground = Load("app_icon_foreground");
+            if (icon == null) return;
+            PlayerSettings.SetIcons(UnityEditor.Build.NamedBuildTarget.Unknown, new[] { icon }, IconKind.Any);
+
+            var android = UnityEditor.Build.NamedBuildTarget.Android;
+            foreach (var kind in PlayerSettings.GetSupportedIconKinds(android))
+            {
+                var icons = PlayerSettings.GetPlatformIcons(android, kind);
+                foreach (var platformIcon in icons)
+                {
+                    if (kind.ToString() == "Adaptive" && background != null && foreground != null)
+                        platformIcon.SetTextures(background, foreground);
+                    else
+                        platformIcon.SetTexture(icon);
+                }
+                PlayerSettings.SetPlatformIcons(android, kind, icons);
+            }
         }
 
         /// <summary>Written next to the player; make-kit reads it to label the kit with the code the player was built from.</summary>
