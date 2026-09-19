@@ -266,6 +266,8 @@ namespace ClickDungeon.Content
         public int BossHpPerThreat = 2;
         /// <summary>Monsters on those floors hit one harder per this much threat.</summary>
         public int ThreatPerExtraDamage = 2;
+        /// <summary>Spikes, lava and bombs on those floors hurt one more per this much threat (D-041).</summary>
+        public int ThreatPerExtraTrapDamage = 2;
     }
 
     /// <summary>Experience a run earns (D-027, rules §14).</summary>

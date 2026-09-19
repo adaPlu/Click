@@ -49,5 +49,23 @@ namespace ClickDungeon.Tests
             RunFactory.ApplyThreat(court, Catalog);
             Assert.That(blobert.MaxHp, Is.EqualTo(bossHp + 2 * Catalog.Renown.BossHpPerThreat));
         }
+
+        [Test]
+        public void SpikesHurtMoreOnTheDeepFloorsForARenownedHero()
+        {
+            int Stepped(int floor, int threat)
+            {
+                var run = Run(floor, 7UL, ".....", ".....", ".H^..", ".....", ".....");
+                run.Threat = threat;
+                run.Hero.Hp = run.Hero.MaxHp = 30;
+                DoOk(run, PlayerCommand.Move(P(2, 2)));
+                return 30 - run.Hero.Hp;
+            }
+
+            int plain = Stepped(Catalog.Renown.FirstFloor, 0);
+            Assert.That(plain, Is.EqualTo(Catalog.Hazards.SpikeDamage));
+            Assert.That(Stepped(Catalog.Renown.FirstFloor - 1, 3), Is.EqualTo(plain), "Shallow floors keep their traps (D-041).");
+            Assert.That(Stepped(Catalog.Renown.FirstFloor, 3), Is.EqualTo(plain + 3 / Catalog.Renown.ThreatPerExtraTrapDamage));
+        }
     }
 }

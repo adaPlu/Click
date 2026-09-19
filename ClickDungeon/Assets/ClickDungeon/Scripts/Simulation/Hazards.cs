@@ -25,8 +25,9 @@ namespace ClickDungeon.Simulation
 
             if (cell.Hazard == HazardKind.Spikes)
             {
-                events.Add(GameEvent.Of(GameEventKind.SpikesTriggered, to: p, amount: tuning.SpikeDamage));
-                Combat.DamageHero(run, tuning.SpikeDamage, "spikes", events, blockable: false);
+                int spikes = Renown.Trap(run, catalog, tuning.SpikeDamage);
+                events.Add(GameEvent.Of(GameEventKind.SpikesTriggered, to: p, amount: spikes));
+                Combat.DamageHero(run, spikes, "spikes", events, blockable: false);
             }
             else if (cell.Hazard == HazardKind.Bomb)
             {
@@ -35,8 +36,9 @@ namespace ClickDungeon.Simulation
             else if (cell.Hazard == HazardKind.Lava)
             {
                 // Lava is permanent, like spikes, but hotter: enemies path around it and Guard does not help.
-                events.Add(GameEvent.Of(GameEventKind.LavaBurned, to: p, amount: tuning.LavaDamage));
-                Combat.DamageHero(run, tuning.LavaDamage, "lava", events, blockable: false);
+                int lava = Renown.Trap(run, catalog, tuning.LavaDamage);
+                events.Add(GameEvent.Of(GameEventKind.LavaBurned, to: p, amount: lava));
+                Combat.DamageHero(run, lava, "lava", events, blockable: false);
             }
 
             if (cell.Content == ContentKind.Key)
@@ -115,12 +117,13 @@ namespace ClickDungeon.Simulation
                 var cell = floor[p];
                 cell.Hazard = HazardKind.None;
                 cell.BombFuse = -1;
-                events.Add(GameEvent.Of(GameEventKind.BombExploded, to: p, amount: tuning.BombDamage));
+                int blast = Renown.Trap(run, catalog, tuning.BombDamage);
+                events.Add(GameEvent.Of(GameEventKind.BombExploded, to: p, amount: blast));
                 foreach (var q in Board.BlastCells(p, tuning.BombRadius))
                 {
-                    if (run.Hero.Pos == q) Combat.DamageHero(run, tuning.BombDamage, "bomb", events);
+                    if (run.Hero.Pos == q) Combat.DamageHero(run, blast, "bomb", events);
                     var enemy = floor.EnemyAt(q);
-                    if (enemy != null) Combat.DamageEnemy(run, enemy, tuning.BombDamage, "bomb", catalog, events);
+                    if (enemy != null) Combat.DamageEnemy(run, enemy, blast, "bomb", catalog, events);
                     if (q != p) Arm(floor, q, tuning, events);
                 }
             }

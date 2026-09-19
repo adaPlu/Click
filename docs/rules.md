@@ -633,7 +633,8 @@ an empty profile) still measure a first run.
 The deeper floors answer a built-up hero. **Renown** is levels past the first plus items worn; every
 **2** renown is one point of **threat**, up to **3**. From **floor 3** on, every monster has one extra
 heart per threat (Lord Blobert two), and every enemy blow (hits, fire, slams) deals one more per 2
-threat. A new hero has no threat. The telegraphs show the raised damage.
+threat. Spikes, lava and bombs there hurt one more per 2 threat too (D-041); a pit's fall does not
+change. A new hero has no threat. The telegraphs and the tile descriptions show the raised damage.
 
 ## 15. Inventory *(D-028, tune numbers)*
 

@@ -543,3 +543,13 @@ Rules referenced here live in `docs/rules.md`.
 - **TESTS**: `RenownTests`, `InventoryTests.GearDropsOnlySometimesExceptFromAPremiumChest`,
   `LordBlobertTests.ScriptRunsSlamSummonPuffUp`.
 
+## D-041 Traps answer renown too
+- **DECISION**: from the renown floors (3 on), spikes, lava and bombs deal +1 per 2 threat (`Renown.Trap`,
+  `RenownTuning.ThreatPerExtraTrapDamage`). Pits are a choice, not a trap, and keep their fall damage. The inspect text and
+  the bomb telegraph show the raised number.
+- **WHY**: "scale trap damage with renown too". After D-040 the careful playthrough bot still won 9 of 10: it dodges every
+  telegraph, and its hearts go to hidden traps, which renown did not touch.
+- **MEASURED**: the ten-run casual playthrough wins 8 of 10 (was 9), with four wins on 1-8 hearts and a loss to Blobert
+  in run 10. +1 per threat instead was tried and won 5 of 10, with four losses in a row mid-profile: too punishing.
+- **TESTS**: `RenownTests.SpikesHurtMoreOnTheDeepFloorsForARenownedHero`.
+

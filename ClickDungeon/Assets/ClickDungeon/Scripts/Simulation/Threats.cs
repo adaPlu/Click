@@ -58,7 +58,7 @@ namespace ClickDungeon.Simulation
                 if (!cell.BombArmed) continue;
                 bool imminent = cell.BombFuse == 0;
                 foreach (var blast in Board.BlastCells(p, tuning.BombRadius))
-                    Add(threats, imminent ? ThreatKind.BombBlast : ThreatKind.BombArmed, blast, imminent ? tuning.BombDamage : 0, 0);
+                    Add(threats, imminent ? ThreatKind.BombBlast : ThreatKind.BombArmed, blast, imminent ? Renown.Trap(run, catalog, tuning.BombDamage) : 0, 0);
             }
 
             return threats;

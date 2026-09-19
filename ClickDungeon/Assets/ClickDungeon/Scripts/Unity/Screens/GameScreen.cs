@@ -909,18 +909,18 @@ namespace ClickDungeon.Unity.Screens
                 if (cell.Hazard == HazardKind.Spikes)
                 {
                     title = "SPIKES";
-                    sb.AppendLine($"Stepping on costs {catalog.Hazards.SpikeDamage} HP. Dash jumps over. Enemies avoid spikes.");
+                    sb.AppendLine($"Stepping on costs {Renown.Trap(run, catalog, catalog.Hazards.SpikeDamage)} HP. Dash jumps over. Enemies avoid spikes.");
                 }
                 else if (cell.Hazard == HazardKind.Lava)
                 {
                     title = "LAVA";
-                    sb.AppendLine($"Wading through costs {catalog.Hazards.LavaDamage} HP, every time. Shield does not help. Dash jumps over.");
+                    sb.AppendLine($"Wading through costs {Renown.Trap(run, catalog, catalog.Hazards.LavaDamage)} HP, every time. Shield does not help. Dash jumps over.");
                 }
                 else if (cell.Hazard == HazardKind.Bomb)
                 {
                     title = cell.BombArmed ? "ARMED BOMB" : "BOMB";
                     sb.AppendLine(!cell.BombArmed
-                        ? $"Step on it or slash it to arm it. It explodes after your next action, hitting everything in a 3x3 for {catalog.Hazards.BombDamage}."
+                        ? $"Step on it or slash it to arm it. It explodes after your next action, hitting everything in a 3x3 for {Renown.Trap(run, catalog, catalog.Hazards.BombDamage)}."
                         : cell.BombFuse == 0 ? "Explodes after your next action! Get two tiles away or Shield." : "Explodes in two turns.");
                 }
                 if (cell.Content == ContentKind.Key)
