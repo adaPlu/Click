@@ -114,7 +114,8 @@ namespace ClickDungeon.UnityTests
         {
             var locked = MakeSprite("locked");
             var open = MakeSprite("open");
-            UseArt((ArtKeys.ExitStairsLocked, locked), (ArtKeys.ExitStairsOpen, open), (ArtKeys.ExitLocked, MakeSprite("flat")), (ArtKeys.ExitOpen, MakeSprite("flat2")));
+            var entrance = MakeSprite("entrance");
+            UseArt((ArtKeys.ExitLocked, locked), (ArtKeys.ExitOpen, open), (ArtKeys.EntranceStairs, entrance));
 
             var floor = FloorState.CreateEmpty();
             floor.FloorIndex = 1;
@@ -131,9 +132,9 @@ namespace ClickDungeon.UnityTests
             RunFactory.SetupFloor(run, Catalog, new List<GameEvent>());
             var board = new BoardView((RectTransform)_root.transform, _root.AddComponent<SpriteFrameAnimator>(), Vector2.zero);
 
-            // The entrance shows the open staircase too; only the exit's own tile is checked.
-            System.Collections.Generic.IEnumerable<Image> ExitImages() =>
-                _root.GetComponentsInChildren<Transform>(true).First(t => t.name == "Cell 1,0").GetComponentsInChildren<Image>(true);
+            System.Collections.Generic.IEnumerable<Image> CellImages(string name) =>
+                _root.GetComponentsInChildren<Transform>(true).First(t => t.name == name).GetComponentsInChildren<Image>(true);
+            System.Collections.Generic.IEnumerable<Image> ExitImages() => CellImages("Cell 1,0");
 
             // D-023: a covered exit is a cover like any other tile; its art would give away where it is.
             board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
@@ -148,6 +149,9 @@ namespace ClickDungeon.UnityTests
             board.Render(run, Catalog, new List<Threat>(), new HashSet<GridPos>(), false, null, false);
             Assert.That(ExitImages().Any(i => i.sprite == open), Is.True, "Holding the key shows the exit as open.");
             Assert.That(ExitImages().Any(i => i.sprite == locked), Is.False);
+            // The stairs down are the flat descending ones; the raised staircase is only the way in.
+            Assert.That(ExitImages().Any(i => i.sprite == entrance), Is.False);
+            Assert.That(CellImages("Cell 0,0").Any(i => i.sprite == entrance), Is.True, "The entrance shows the raised staircase.");
         }
 
         [Test]

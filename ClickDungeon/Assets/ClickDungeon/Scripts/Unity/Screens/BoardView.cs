@@ -321,7 +321,7 @@ namespace ClickDungeon.Unity.Screens
                 SetPlaceholderBase(view, Palette.FloorRevealed, Palette.StoneLight.Dim(1.2f));
             if (cell.IsExit) Icons.Exit(view.Icons, exitOpen);
             // The way in: the reference's raised stone staircase, then the flat stair-up tile.
-            else if (p == floor.Start && !floor.IsVault && !Icons.TryArt(view.Icons, ArtKeys.ExitStairsOpen, CellSize))
+            else if (p == floor.Start && !floor.IsVault && !Icons.TryArt(view.Icons, ArtKeys.EntranceStairs, CellSize))
                 Icons.TryArt(view.Icons, ArtKeys.StairUp, CellSize);
             if (cell.Hazard == HazardKind.Spikes) Icons.Spikes(view.Icons);
             else if (cell.Hazard == HazardKind.Bomb) Icons.Bomb(view.Icons, cell.BombArmed, cell.BombFuse);

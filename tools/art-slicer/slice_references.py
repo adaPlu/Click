@@ -328,6 +328,46 @@ def mirror_fix(image: Image.Image, spec: dict) -> Image.Image:
     return image
 
 
+def clone(crop: Image.Image, spec: dict) -> Image.Image:
+    """
+    Paints over part of the crop with another part of it: "clone" is a list of [x, y, w, h, dx, dy] in the crop's own
+    pixels, each box filled from the box shifted by (dx, dy). Lifts a baked-in badge (the padlock on the reference's
+    staircase) off art that repeats beside it.
+    """
+    if "clone" not in spec:
+        return crop
+    source = crop.copy()
+    for x, y, w, h, dx, dy in spec["clone"]:
+        crop.paste(source.crop((x + dx, y + dy, x + dx + w, y + dy + h)), (x, y))
+    return crop
+
+
+def upscale(crop: Image.Image, spec: dict) -> Image.Image:
+    """
+    "upscale": a detail far smaller than its output is doubled step by step, each step smoothed along edges (bilateral)
+    and unsharp-masked, then its edges are pushed toward their neighbours' light and dark (a mild shock filter), so it
+    reads crisper than one Lanczos stretch with an unsharp mask on top. Needs OpenCV.
+    """
+    if not spec.get("upscale"):
+        return crop
+    import cv2
+    import numpy as np
+    size = spec.get("size", 256)
+    a = np.array(crop.convert("RGB"))
+    while a.shape[0] < size or a.shape[1] < size:
+        a = cv2.resize(a, None, fx=2, fy=2, interpolation=cv2.INTER_LANCZOS4)
+        a = cv2.bilateralFilter(a, 5, 30, 3)
+        a = cv2.addWeighted(a, 1.8, cv2.GaussianBlur(a, (0, 0), 1.2), -0.8, 0)
+    a = cv2.resize(a, (round(size * crop.width / max(crop.width, crop.height)), round(size * crop.height / max(crop.width, crop.height))),
+                   interpolation=cv2.INTER_AREA).astype(np.float32)
+    for _ in range(2):
+        lap = cv2.Laplacian(cv2.cvtColor(cv2.GaussianBlur(a, (0, 0), 1.0), cv2.COLOR_RGB2GRAY), cv2.CV_32F)
+        light, dark = cv2.dilate(a, np.ones((3, 3))), cv2.erode(a, np.ones((3, 3)))
+        a = np.where((lap < 0)[..., None], a * 0.75 + light * 0.25, a * 0.75 + dark * 0.25)
+    a = cv2.bilateralFilter(np.clip(a, 0, 255).astype(np.uint8), 5, 20, 3)
+    return Image.fromarray(cv2.addWeighted(a, 1.5, cv2.GaussianBlur(a, (0, 0), 1.0), -0.5, 0))
+
+
 def smear(image: Image.Image, spec: dict) -> Image.Image:
     """
     Paints out a baked-in badge on a plain background: "smear" is a list of [x, y, w, h] fractions of the output, and each
@@ -475,7 +515,7 @@ def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=Non
         x, y, w, h = rect
         crop = image.crop((max(0, x), max(0, y), min(image.width, x + w), min(image.height, y + h)))
         # "sharpen": a small reference detail scaled up a long way gets an unsharp mask so its edges hold.
-        rendered = render(crop, spec)
+        rendered = render(upscale(clone(crop, spec), spec), spec)
         if spec.get("sharpen"):
             rendered = rendered.convert("RGBA").filter(ImageFilter.UnsharpMask(2, 80, 2))
         result = circle(inpaint(smear(mirror_fix(tint(rendered.convert("RGBA"), spec), spec), spec), spec), spec)

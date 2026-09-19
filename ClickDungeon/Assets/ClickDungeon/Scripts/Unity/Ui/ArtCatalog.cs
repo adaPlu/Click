@@ -127,9 +127,8 @@ namespace ClickDungeon.Unity.Ui
         public const string SpecialKeyIcon = "icon_key_special";
         public const string Potion = "tile_potion";
         public const string ExitLocked = "tile_exit_locked";
-        /// <summary>The exit as the reference draws it: a raised 3D stone staircase, padlocked until the key is found.</summary>
-        public const string ExitStairsLocked = "tile_exit_stairs_locked";
-        public const string ExitStairsOpen = "tile_exit_stairs_open";
+        /// <summary>The way in, as the reference draws it: a raised stone staircase climbing up out of the floor.</summary>
+        public const string EntranceStairs = "tile_entrance_stairs";
         public const string ExitOpen = "tile_exit_open";
         // Production tile set (rules §11). The sheets name the exit "stair down", so both spellings are accepted.
         public const string StairDownLocked = "tile_stair_down_locked";
@@ -422,7 +421,7 @@ namespace ClickDungeon.Unity.Ui
             var keys = new List<string>
             {
                 FloorStone, Wall, Pit, Spikes, Bomb, BombArmed, Key, ChestClosed, ChestOpen, PremiumChestClosed, PremiumChestOpen,
-                SpecialLockBadge, SpecialKeyIcon, Potion, ExitStairsLocked, ExitStairsOpen, ExitLocked, ExitOpen,
+                SpecialLockBadge, SpecialKeyIcon, Potion, EntranceStairs, ExitLocked, ExitOpen,
                 StairDownLocked, StairDown, StairUp, TrapPit, TrapSpike, TrapBomb, Lava, Water, Shadow, FloorCracked, FloorMoss,
                 WallCorner, TorchWall, DoorLocked, DoorOpen, PressurePlate, Teleport, FountainHeal,
                 Logo, TitleBackground, GameplayBackground,
