@@ -264,6 +264,7 @@ namespace ClickDungeon.Unity.Ui
         public const string UnderfootExitLocked = "icon_underfoot_exit_locked";
         public const string UnderfootExitOpen = "icon_underfoot_exit_open";
 
+        // Kept for later, not drawn since D-045: sparkle stars on every key, potion and spike step.
         public const string FxSpikesTrigger = "fx_spikes_trigger";
         public const string FxExplosion = "fx_explosion";
         public const string FxKeyCollect = "fx_key_collect";
@@ -475,7 +476,7 @@ namespace ClickDungeon.Unity.Ui
             foreach (var step in ChestReactionSteps) keys.Add(ChestReaction(step));
             foreach (var kind in RewardKinds) keys.Add(RewardIcon(kind));
             keys.AddRange(new[] { UnderfootSpikes, UnderfootBomb, UnderfootBombArmed, UnderfootExitLocked, UnderfootExitOpen });
-            keys.AddRange(new[] { FxSpikesTrigger, FxExplosion, FxKeyCollect, FxPotionCollect, FxExitUnlock, FxEnemyWake, BombFuse });
+            keys.AddRange(new[] { FxExplosion, FxExitUnlock, FxEnemyWake, BombFuse });
             keys.AddRange(new[] { FloorBanner, FloorBannerBoss });
             foreach (var identity in catalog.HeroIdentities.Values)
             {

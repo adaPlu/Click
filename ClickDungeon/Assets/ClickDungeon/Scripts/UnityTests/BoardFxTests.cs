@@ -84,14 +84,17 @@ namespace ClickDungeon.UnityTests
                 GameEvent.Of(GameEventKind.SpikesTriggered, to: new GridPos(1, 1)),
                 GameEvent.Of(GameEventKind.BombExploded, to: new GridPos(2, 2)),
                 GameEvent.Of(GameEventKind.KeyCollected, to: new GridPos(3, 3)),
+                GameEvent.Of(GameEventKind.PotionCollected, to: new GridPos(4, 3)),
+                GameEvent.Of(GameEventKind.EnemyWoke, to: new GridPos(0, 4)),
                 GameEvent.Of(GameEventKind.HeroMoved, to: new GridPos(0, 1)),
                 GameEvent.Of(GameEventKind.ExitUnlocked),
             });
 
-            Assert.That(effects.Select(e => e.Key), Is.EqualTo(new[] { ArtKeys.FxSpikesTrigger, ArtKeys.FxExplosion, ArtKeys.FxKeyCollect }),
-                "Unrelated events and events without a cell add nothing.");
-            Assert.That(effects[1].Tiles, Is.EqualTo(3));
-            Assert.That(effects[1].Cell, Is.EqualTo(new GridPos(2, 2)));
+            // D-045: keys, potions and spikes no longer sparkle — they happen every few turns and already have a popup.
+            Assert.That(effects.Select(e => e.Key), Is.EqualTo(new[] { ArtKeys.FxExplosion, ArtKeys.FxEnemyWake }),
+                "Only the once-in-a-while moments draw an effect; events without a cell add nothing.");
+            Assert.That(effects[0].Tiles, Is.EqualTo(3));
+            Assert.That(effects[0].Cell, Is.EqualTo(new GridPos(2, 2)));
         }
 
         [Test]
@@ -116,9 +119,9 @@ namespace ClickDungeon.UnityTests
         public void ReducedMotionSkipsBoardEffects()
         {
             UserPrefs.ReducedMotion = true;
-            UseArt((ArtKeys.FxKeyCollect, Frames("key", 2)));
-            RenderWith(new List<GameEvent> { GameEvent.Of(GameEventKind.KeyCollected, to: new GridPos(1, 0)) });
-            Assert.That(Effects().Find("FX " + ArtKeys.FxKeyCollect), Is.Null);
+            UseArt((ArtKeys.FxEnemyWake, Frames("wake", 2)));
+            RenderWith(new List<GameEvent> { GameEvent.Of(GameEventKind.EnemyWoke, to: new GridPos(1, 0)) });
+            Assert.That(Effects().Find("FX " + ArtKeys.FxEnemyWake), Is.Null);
         }
 
         [Test]
@@ -143,8 +146,7 @@ namespace ClickDungeon.UnityTests
         public void FxKeysAreWired()
         {
             var wired = ArtKeys.Wired(Catalog);
-            foreach (var key in new[] { ArtKeys.FxSpikesTrigger, ArtKeys.FxExplosion, ArtKeys.FxKeyCollect, ArtKeys.FxPotionCollect,
-                         ArtKeys.FxExitUnlock, ArtKeys.FxEnemyWake, ArtKeys.BombFuse })
+            foreach (var key in new[] { ArtKeys.FxExplosion, ArtKeys.FxExitUnlock, ArtKeys.FxEnemyWake, ArtKeys.BombFuse })
                 Assert.That(wired, Does.Contain(key));
             Assert.That(wired, Is.Unique);
         }

@@ -604,3 +604,12 @@ Rules referenced here live in `docs/rules.md`.
   proved by screenshot — `-cdRelayout 1` rebuilds both screens mid-run in a shot run — because no test harness constructs
   `ClickDungeonApp` yet (audit TEST-02, still open).
 
+## D-045 Fewer sparkle stars on the board
+- **DECISION**: the four-pointed sparkle star no longer plays for picking up a key, drinking a potion, or stepping on
+  spikes. Those happen every few turns and already announce themselves with a popup and a line in WHAT HAPPENED. What
+  still draws an effect is the bomb blast, the exit opening and a monster waking — each of which happens once.
+- The art (`fx_key_collect`, `fx_potion_collect`, `fx_spikes_trigger`) stays in the project, out of the wired list, so
+  putting any of it back is a one-line change.
+- **WHY**: "remove some of those star effects on main game screen".
+- **TESTS**: `BoardFxTests.EventsMapToBoardEffects` now pins which events draw an effect and which do not.
+

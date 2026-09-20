@@ -8,6 +8,10 @@ namespace ClickDungeon.Unity.Screens
     /// <summary>
     /// Board effects (art brief §8 FX row) chosen from events the simulation already produced. Presentation only:
     /// popups and the WHAT HAPPENED log still carry the information, so effects are purely additive.
+    ///
+    /// D-045: the sparkle stars for picking up a key or a potion and for stepping on spikes are gone — they fired on
+    /// ordinary turns, on top of a popup that already said the same thing. What is left marks something that happens
+    /// once: the blast of a bomb, the exit opening, and a monster waking up.
     /// </summary>
     public static class BoardFx
     {
@@ -33,10 +37,7 @@ namespace ClickDungeon.Unity.Screens
             {
                 switch (e.Kind)
                 {
-                    case GameEventKind.SpikesTriggered: Add(ArtKeys.FxSpikesTrigger, e.To, 1); break;
                     case GameEventKind.BombExploded: Add(ArtKeys.FxExplosion, e.To, 3); break;
-                    case GameEventKind.KeyCollected: Add(ArtKeys.FxKeyCollect, e.To, 1); break;
-                    case GameEventKind.PotionCollected: Add(ArtKeys.FxPotionCollect, e.To, 1); break;
                     case GameEventKind.ExitUnlocked: Add(ArtKeys.FxExitUnlock, e.To, 1); break;
                     case GameEventKind.EnemyWoke: Add(ArtKeys.FxEnemyWake, e.To, 1); break;
                 }
