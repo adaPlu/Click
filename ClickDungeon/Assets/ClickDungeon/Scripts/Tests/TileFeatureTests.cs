@@ -241,6 +241,42 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
+        public void AVaultsChestsGetTheirQualityLikeEveryOtherFloor()
+        {
+            // D-043: a vault arrives through EnterVault, not SetupFloor, which was the only place chest quality was
+            // assigned — so every vault chest kept the default Common and the great chest opened in two taps, not four.
+            int greatSeen = 0, rolledAboveCommon = 0, chestsSeen = 0;
+            for (ulong seed = 1; seed <= 24; seed++)
+            {
+                var run = Run(2, seed, ".....", ".....", "HdK.X", ".....", ".....");
+                run.Hero.HasKey = true;
+                DoOk(run, PlayerCommand.Move(P(1, 2)));
+                Assert.That(run.Floor.IsVault, Is.True, "Test setup: the hero is in the vault.");
+
+                foreach (var p in Board.AllCells.Where(p => run.Floor[p].IsClosedChest))
+                {
+                    var chest = run.Floor[p];
+                    chestsSeen++;
+                    if (chest.GreatChest)
+                    {
+                        greatSeen++;
+                        Assert.That(chest.Quality, Is.EqualTo(ChestQuality.Epic), "A vault's great chest is always Epic (rules 13).");
+                        Assert.That(Chests.TapsToOpen(run, chest), Is.EqualTo(Chests.TapsToOpen(ChestQuality.Epic)));
+                    }
+                    else
+                    {
+                        Assert.That(chest.Quality, Is.EqualTo(Chests.RollQuality(run.RunSeed, run.Floor.FloorIndex, p, true)),
+                            "An ordinary vault chest is rolled like any other.");
+                        if (chest.Quality != ChestQuality.Common) rolledAboveCommon++;
+                    }
+                }
+            }
+            Assert.That(chestsSeen, Is.GreaterThan(0), "Test setup: vaults hold chests.");
+            Assert.That(greatSeen, Is.GreaterThan(0), "Test setup: some of those vaults have a great chest.");
+            Assert.That(rolledAboveCommon, Is.GreaterThan(0), "Ordinary vault chests are rolled, not left at the default.");
+        }
+
+        [Test]
         public void GeneratedFloorsNeverHaveADoorWithoutItsPlate()
         {
             var catalog = ContentCatalog.CreateDefault();

@@ -73,6 +73,9 @@ namespace ClickDungeon.Application
     {
         ProfileState Load();
         void Save(ProfileState profile);
+
+        /// <summary>What to tell the player about the last <see cref="Load"/>, or null when it read cleanly.</summary>
+        string LoadNotice { get; }
     }
 
     /// <summary>A profile that only lives as long as the process: automation runs and tests never touch a real one.</summary>
@@ -82,13 +85,26 @@ namespace ClickDungeon.Application
 
         public ProfileState Load() => _profile;
         public void Save(ProfileState profile) => _profile = profile;
+        public string LoadNotice => null;
     }
 
-    /// <summary>Atomic local profile: temp → verify → replace, like the run save.</summary>
+    /// <summary>
+    /// The player's profile on disk, with the run save's protections (D-043): a write goes to a temp file, is read back to
+    /// prove it parses, and only then replaces the live file, keeping the copy it replaced as <c>profile.json.bak</c>. A
+    /// profile that cannot be read falls back to that backup; if neither can be read the damaged file is set aside as
+    /// <c>profile.json.broken</c> and never overwritten, because it is the only record of the player's progress.
+    /// </summary>
     public sealed class FileProfileStore : IProfileStore
     {
         public readonly string MainPath;
         public readonly string TempPath;
+        public readonly string BackupPath;
+        public readonly string BrokenPath;
+
+        /// <summary>False once a damaged profile could not be set aside: nothing may overwrite it until that is sorted out.</summary>
+        bool _mayOverwrite = true;
+
+        public string LoadNotice { get; private set; }
 
         static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
@@ -101,16 +117,74 @@ namespace ClickDungeon.Application
             Directory.CreateDirectory(directory);
             MainPath = Path.Combine(directory, fileName);
             TempPath = MainPath + ".tmp";
+            BackupPath = MainPath + ".bak";
+            BrokenPath = MainPath + ".broken";
         }
 
-        /// <summary>A missing or unreadable profile is an empty one: a broken file must never stop the game from starting.</summary>
+        /// <summary>
+        /// The profile, the backup if the profile cannot be read, or an empty one — a broken file must never stop the game
+        /// from starting, but it is kept rather than replaced, and <see cref="LoadNotice"/> says what happened.
+        /// </summary>
         public ProfileState Load()
+        {
+            LoadNotice = null;
+            _mayOverwrite = true;
+            if (!File.Exists(MainPath) && !File.Exists(BackupPath)) return new ProfileState();
+            if (TryRead(MainPath, out var loaded)) return loaded;
+            if (TryRead(BackupPath, out loaded))
+            {
+                LoadNotice = "Your profile could not be read, so its backup was used. Anything bought or earned in the last moments before that may be missing.";
+                return loaded;
+            }
+            KeepTheDamagedFile();
+            return new ProfileState();
+        }
+
+        /// <summary>
+        /// Moves an unreadable profile out of the way so a fresh one can be written without destroying it. If it cannot be
+        /// moved, nothing may overwrite it: <see cref="Save"/> then refuses rather than taking the player's progress with it.
+        /// </summary>
+        void KeepTheDamagedFile()
         {
             try
             {
-                if (!File.Exists(MainPath)) return new ProfileState();
-                var profile = JsonConvert.DeserializeObject<ProfileState>(File.ReadAllText(MainPath), Settings);
-                if (profile == null || profile.SchemaVersion != Versions.ProfileSchema) return new ProfileState();
+                if (File.Exists(MainPath))
+                {
+                    if (File.Exists(BrokenPath)) File.Delete(BrokenPath);
+                    File.Move(MainPath, BrokenPath);
+                }
+                if (File.Exists(BackupPath)) File.Delete(BackupPath);
+                LoadNotice = $"Your profile could not be read. It has been kept as {Path.GetFileName(BrokenPath)} and a new one started; nothing was thrown away.";
+            }
+            catch (Exception)
+            {
+                _mayOverwrite = false;
+                LoadNotice = $"Your profile could not be read, and could not be set aside either. It will not be overwritten: close the game and move {Path.GetFileName(MainPath)} somewhere safe.";
+            }
+        }
+
+        bool TryRead(string path, out ProfileState result)
+        {
+            result = null;
+            try
+            {
+                if (!File.Exists(path)) return false;
+                var profile = JsonConvert.DeserializeObject<ProfileState>(File.ReadAllText(path), Settings);
+                // A profile from a newer build may mean anything; an older one only lacks fields, which default safely.
+                if (profile == null || profile.SchemaVersion > Versions.ProfileSchema) return false;
+                profile.SchemaVersion = Versions.ProfileSchema;
+                result = Repair(profile);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>Clamps and fills a loaded profile, so a hand-edited file cannot carry negatives or null collections in.</summary>
+        static ProfileState Repair(ProfileState profile)
+        {
                 profile.Coins = Math.Max(0, profile.Coins);
                 profile.Gems = Math.Max(0, profile.Gems);
                 profile.PotionRations = Math.Max(0, profile.PotionRations);
@@ -129,19 +203,38 @@ namespace ClickDungeon.Application
                 if (profile.Mail == null) profile.Mail = new System.Collections.Generic.List<MailMessage>();
                 profile.Mail.RemoveAll(m => m == null);
                 return profile;
-            }
-            catch (Exception)
-            {
-                return new ProfileState();
-            }
         }
 
+        /// <summary>
+        /// Writes the profile the way the run save is written: to a temp file, read back to prove it parses, then put in
+        /// place of the live file, which becomes the backup. The live file is never deleted before its replacement exists.
+        /// </summary>
         public void Save(ProfileState profile)
         {
             if (profile == null) return;
+            if (!_mayOverwrite)
+                throw new IOException($"The unreadable profile could not be set aside, so it is not being overwritten. Move {MainPath} somewhere safe.");
+
             File.WriteAllText(TempPath, JsonConvert.SerializeObject(profile, Settings), new UTF8Encoding(false));
-            if (File.Exists(MainPath)) File.Delete(MainPath);
-            File.Move(TempPath, MainPath);
+            if (JsonConvert.DeserializeObject<ProfileState>(File.ReadAllText(TempPath), Settings) == null)
+                throw new IOException("The profile did not read back after it was written.");
+
+            if (!File.Exists(MainPath))
+            {
+                File.Move(TempPath, MainPath);
+                return;
+            }
+            try
+            {
+                File.Replace(TempPath, MainPath, BackupPath);
+            }
+            catch (Exception ex) when (ex is PlatformNotSupportedException || ex is IOException)
+            {
+                // Some file systems have no atomic replace; keep the old copy as the backup by hand.
+                File.Copy(MainPath, BackupPath, true);
+                File.Delete(MainPath);
+                File.Move(TempPath, MainPath);
+            }
         }
     }
 }

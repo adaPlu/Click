@@ -572,3 +572,22 @@ Rules referenced here live in `docs/rules.md`.
 - **LATER**: a release keystore and an App Bundle
   for the Play Store.
 
+## D-043 The profile is protected like the run save; vault chests get their quality
+- **DECISION**: `FileProfileStore` now writes the way `FileSaveStore` does: temp file → read back to prove it parses →
+  `File.Replace`, keeping the copy it replaced as `profile.json.bak` (with a copy/move fallback for file systems without an
+  atomic replace). `Load` falls back to that backup, and a profile that cannot be read at all is **kept** as
+  `profile.json.broken` rather than overwritten; if it cannot even be set aside, `Save` refuses instead of destroying it. A
+  profile from a newer build is treated as unreadable (kept), one from an older schema loads and is written back at the
+  current schema. `IProfileStore.LoadNotice` carries what happened to `GameSession.ProfileNotice`, which the title screen
+  shows once — and a failed profile write now sets it too, so a purchase that did not stick is no longer silent.
+- **DECISION**: chest quality is assigned by `RunFactory.AssignChestQuality`, called from `SetupFloor` **and** from
+  `EnterVault`. Vaults arrive through `EnterVault`, so their chests previously kept the default Common: the great chest
+  opened in 2 taps instead of the 4 that rules §13 promises, and ordinary vault chests were never rolled.
+- **WHY**: audit 2 (LLMHandOff.md) — DATA-07/DATA-08 were the only findings that could permanently destroy a player's
+  profile, and REL-19 was a rule the code did not keep.
+- **TESTS**: `ProfileStoreTests` (backup kept and used, damaged file kept and never overwritten, newer schema kept, older
+  schema loads, no delete before the replacement exists), `TileFeatureTests.AVaultsChestsGetTheirQualityLikeEveryOtherFloor`.
+  Both were checked load-bearing: reverting each fix turns its tests red.
+- **STILL OPEN from the audit**: REL-20 (vault guards take renown damage but get no renown hearts), REL-13/REL-14 (the
+  run-end panel is lost on rotation or when a chest reveal is destroyed), DATA-11 (abandon + failed delete banks twice).
+

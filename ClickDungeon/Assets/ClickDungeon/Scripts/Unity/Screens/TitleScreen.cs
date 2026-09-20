@@ -150,7 +150,10 @@ namespace ClickDungeon.Unity.Screens
             if (_shop.IsOpen) _shop.Hide();
             if (_talents.IsOpen) _talents.Hide();
             if (_heroes.IsOpen) _heroes.Hide();
-            _flash.text = "";
+            // Anything the player needs to know about their profile (read from a backup, unreadable, or a failed write),
+            // shown once on the screen where they would notice their coins were wrong (D-043).
+            _flash.text = _app.Session.ProfileNotice ?? "";
+            _app.Session.ProfileNotice = null;
             RefreshHeroCard();
             RefreshPurse();
             RefreshDaily();

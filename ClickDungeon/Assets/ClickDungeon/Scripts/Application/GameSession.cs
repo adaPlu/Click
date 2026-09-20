@@ -23,6 +23,7 @@ namespace ClickDungeon.Application
             _store = store;
             _profiles = profiles ?? new MemoryProfileStore();
             Profile = _profiles.Load();
+            ProfileNotice = _profiles.LoadNotice;
             Telemetry = telemetry;
             // A new profile gets its welcome letter; one from before the crown gets what it had already earned.
             int letters = Profile.NextMailId;
@@ -34,11 +35,20 @@ namespace ClickDungeon.Application
         /// <summary>What the player keeps between runs (D-025). Never read during a run: provisions become hero numbers at the start.</summary>
         public ProfileState Profile { get; private set; }
 
+        /// <summary>
+        /// What to tell the player about their profile: set when it had to be read from its backup or could not be read at
+        /// all (D-043), and when a write failed. The title screen shows it; clearing it is the reader's job.
+        /// </summary>
+        public string ProfileNotice { get; set; }
+
         /// <summary>Writes the profile. Presentation calls this after spending in the shop.</summary>
         public void SaveProfile()
         {
             if (_profiles == null || Profile == null) return;
-            Guarded(() => _profiles.Save(Profile));
+            // A profile write that fails is the one failure the player must hear about: what they just bought or earned
+            // is only in memory (D-043). The reason goes to the log; the notice stays free of file paths.
+            if (!Guarded(() => _profiles.Save(Profile)))
+                ProfileNotice = "Your profile could not be saved, so coins, gear and talents may be back as they were when you next start the game.";
         }
 
         /// <summary>Content tuned for the current run's difficulty. Changes when a run of another tier starts or resumes.</summary>

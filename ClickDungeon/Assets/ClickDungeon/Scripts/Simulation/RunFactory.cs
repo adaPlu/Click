@@ -59,6 +59,7 @@ namespace ClickDungeon.Simulation
             // The hero comes back out onto the tile they stepped in from: nobody ever stands in a doorway.
             run.ReturnPos = StepOutTile(outer, door, from);
             run.Floor = FloorGenerator.GenerateVault(run.RunSeed, outer.FloorIndex, door, catalog);
+            AssignChestQuality(run);
             events.Add(GameEvent.Of(GameEventKind.VaultEntered, from: door, to: run.Floor.Start, amount: outer.FloorIndex));
             ArriveOnFloor(run, catalog, events);
             run.Turn++;
@@ -90,6 +91,24 @@ namespace ClickDungeon.Simulation
                 if (n.InBounds && floor[n].Terrain == Terrain.Floor && !Board.BlocksMovement(floor[n])) return n;
             }
             return floor.Start;
+        }
+
+        /// <summary>
+        /// Chest quality (D-022). Assigned after generation rather than during it, so it draws on the run seed without
+        /// moving the generator's stream: floors from a given seed are unchanged. A great chest is always Epic. Every
+        /// floor that holds chests runs this, vaults included — they arrive through EnterVault, not SetupFloor (D-043).
+        /// </summary>
+        static void AssignChestQuality(RunState run)
+        {
+            var floor = run.Floor;
+            foreach (var p in Board.AllCells)
+            {
+                var cell = floor[p];
+                if (cell.Content != ContentKind.Chest) continue;
+                cell.Quality = cell.GreatChest
+                    ? ChestQuality.Epic
+                    : Chests.RollQuality(run.RunSeed, floor.FloorIndex, p, floor.IsVault);
+            }
         }
 
         /// <summary>Shared arrival work: clear guard, update sight and re-declare intents. The exit stays covered (D-023).</summary>
@@ -168,17 +187,7 @@ namespace ClickDungeon.Simulation
             hero.WardSpent = false;
             Mana.Refill(hero);
 
-            // Chest quality (D-022). Assigned here rather than during generation so it draws on the run seed without
-            // moving the generator's stream: floors from a given seed are unchanged. A vault's great chest is always Epic.
-            foreach (var p in Board.AllCells)
-            {
-                var cell = floor[p];
-                if (cell.Content != ContentKind.Chest) continue;
-                cell.Quality = cell.GreatChest
-                    ? ChestQuality.Epic
-                    : Chests.RollQuality(run.RunSeed, floor.FloorIndex, p, floor.IsVault);
-            }
-
+            AssignChestQuality(run);
             PlacePremiumChest(run, catalog);
             ApplyThreat(run, catalog);
 
