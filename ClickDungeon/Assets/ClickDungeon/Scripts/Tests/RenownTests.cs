@@ -51,6 +51,28 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
+        public void VaultGuardsGetRenownHeartsLikeTheFloorTheVaultHangsOff()
+        {
+            // D-046: a vault keeps its floor's index, so Renown.Hit already raised its guards' blows. The hearts come
+            // from ApplyThreat, which only SetupFloor used to run — and a vault arrives through EnterVault.
+            var run = Run(Catalog.Renown.FirstFloor, 5UL, ".....", ".....", "HdK.X", ".....", ".....");
+            run.Hero.HasKey = true;
+            run.Threat = 2;
+            DoOk(run, PlayerCommand.Move(P(1, 2)));
+            Assert.That(run.Floor.IsVault, Is.True, "Test setup: the hero is in the vault.");
+            Assert.That(run.Floor.Enemies.Count, Is.GreaterThan(0), "Test setup: a vault has guards.");
+
+            foreach (var guard in run.Floor.Enemies)
+            {
+                int baseHp = Catalog.Enemy(guard.DefId).MaxHp;
+                Assert.That(guard.MaxHp, Is.EqualTo(baseHp + 2 * Catalog.Renown.HpPerThreat), "A vault guard carries its renown hearts.");
+                Assert.That(guard.Hp, Is.EqualTo(guard.MaxHp));
+            }
+            // The blow and the hearts now come from the same rule.
+            Assert.That(Renown.Hit(run, Catalog, 2), Is.EqualTo(2 + 2 / Catalog.Renown.ThreatPerExtraDamage));
+        }
+
+        [Test]
         public void SpikesHurtMoreOnTheDeepFloorsForARenownedHero()
         {
             int Stepped(int floor, int threat)

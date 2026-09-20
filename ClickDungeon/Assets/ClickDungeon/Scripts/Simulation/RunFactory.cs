@@ -60,6 +60,9 @@ namespace ClickDungeon.Simulation
             run.ReturnPos = StepOutTile(outer, door, from);
             run.Floor = FloorGenerator.GenerateVault(run.RunSeed, outer.FloorIndex, door, catalog);
             AssignChestQuality(run);
+            // A vault hangs off its floor and keeps that floor's index, so renown reaches its guards' blows; their hearts
+            // have to come from the same place, or they hit for the raised number and die on the base one (D-046).
+            ApplyThreat(run, catalog);
             events.Add(GameEvent.Of(GameEventKind.VaultEntered, from: door, to: run.Floor.Start, amount: outer.FloorIndex));
             ArriveOnFloor(run, catalog, events);
             run.Turn++;

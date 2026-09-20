@@ -325,3 +325,12 @@ Results: Unity EditMode 337 passed / 0 failed / 12 skipped (349 total); headless
 Still open: TEST-02 (nothing constructs `ClickDungeonApp`, so rotation is proved only by screenshot), REL-16 (chest
 coroutines on a destroyed root), REL-17, REL-18, REL-20, DATA-09..DATA-14, SEC-03/SEC-04, CI-03..CI-06.
 
+### Repair 2026-09-19c (D-045, D-046)
+
+| ID | Status | Evidence | Change |
+|---|---|---|---|
+| REL-20 | FIXED | VERIFIED (revert → test red) | `EnterVault` calls `ApplyThreat`, so vault guards get the renown hearts that match the renown damage they already dealt. |
+| — | — | — | D-045 (cosmetic): the sparkle stars for key, potion and spike pickups no longer play; bomb blast, exit unlock and enemy wake still do. `BoardFxTests.EventsMapToBoardEffects` pins it. |
+
+Results: headless 261/261, Unity EditMode 338 passed / 0 failed / 12 skipped (350 total).
+

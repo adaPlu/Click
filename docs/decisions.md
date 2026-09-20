@@ -613,3 +613,12 @@ Rules referenced here live in `docs/rules.md`.
 - **WHY**: "remove some of those star effects on main game screen".
 - **TESTS**: `BoardFxTests.EventsMapToBoardEffects` now pins which events draw an effect and which do not.
 
+## D-046 Renown reaches a vault's guards whole
+- **DECISION**: `EnterVault` applies renown's threat as well as chest quality, so a vault's guards carry their extra
+  hearts. A vault keeps the index of the floor it hangs off, so `Renown.Hit` was already raising their blows; only the
+  hearts were missing, because `ApplyThreat` ran solely in `SetupFloor` and a vault never goes through it.
+- **WHY**: audit 2, REL-20 — rules §14.1 says every monster from floor 3 on has one extra heart per threat, and the vault
+  was the one room where that was not true, which made it the cheapest place for a built-up hero to farm.
+- **TESTS**: `RenownTests.VaultGuardsGetRenownHeartsLikeTheFloorTheVaultHangsOff` (load-bearing: removing the call turns
+  it red).
+
