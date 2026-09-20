@@ -201,7 +201,9 @@ namespace ClickDungeon.Content
             c.HeroClasses["knight"] = new HeroClassDefinition
             {
                 Id = "knight", DisplayName = "Knight",
-                MaxHp = 10, SlashDamage = 2, StartingPotions = 2, PotionHeal = 4,
+                // D-047: slash 3, not 2. The Paladin's hearts and potions beat the Knight's reach for a player who cannot
+                // see what is coming, so the Knight answers in his own lane: he kills in fewer turns and so takes fewer hits.
+                MaxHp = 10, SlashDamage = 3, StartingPotions = 2, PotionHeal = 4,
                 MaxMana = 6, ShieldCost = 2, DashCost = 3, DashDistance = 2,
                 RevealRadius = 1, SenseRadius = 2,
             };
@@ -213,10 +215,11 @@ namespace ClickDungeon.Content
             // The Paladin trades reach for staying power: more hearts, more mana for shields and a stronger potion,
             // against a dash of a single tile that costs more (rules §5.1). A softer slash was tried first and made boss
             // fights drag: the sighted bot won 24 of 40 on Blobert's Wrath against the Knight's 40.
+            // D-047: 11 hearts, not 12 — with the Knight hitting for 3 the classes now win about as often as each other.
             c.HeroClasses["paladin"] = new HeroClassDefinition
             {
                 Id = "paladin", DisplayName = "Paladin",
-                MaxHp = 12, SlashDamage = 2, StartingPotions = 2, PotionHeal = 6,
+                MaxHp = 11, SlashDamage = 2, StartingPotions = 2, PotionHeal = 6,
                 MaxMana = 8, ShieldCost = 2, DashCost = 4, DashDistance = 1,
                 RevealRadius = 1, SenseRadius = 2,
             };

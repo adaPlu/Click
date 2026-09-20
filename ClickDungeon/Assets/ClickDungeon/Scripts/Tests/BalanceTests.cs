@@ -220,6 +220,78 @@ namespace ClickDungeon.Tests
             }
         }
 
+        /// <summary>
+        /// D-047: the two classes should win about as often as each other. Before it, a blind novice won 11 of 40 as the
+        /// Knight and 22 as the Paladin — the same dungeons, twice the wins. This guard catches that gap coming back.
+        /// </summary>
+        [Test]
+        public void TheClassesWinAboutAsOftenAsEachOther()
+        {
+            const int runs = 40;
+            int Wins(string heroId, double mistakeRate)
+            {
+                var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
+                int won = 0;
+                for (ulong seed = 1; seed <= runs; seed++)
+                    if (AutoPlayer.PlayRun(catalog, seed, MaxCommands, mistakeRate, MovementMode.Free, true, heroId: heroId).Status == RunStatus.Won)
+                        won++;
+                return won;
+            }
+
+            // Measured after D-047: casual 33 / 34, novice 22 / 18. The guard allows drift but not a class that is twice
+            // the other, which is what the numbers were before.
+            foreach (var (skill, rate) in new[] { ("casual", AutoPlayer.CasualMistakeRate), ("novice", NoviceMistakeRate) })
+            {
+                int knight = Wins(ContentCatalog.DefaultHeroId, rate);
+                int paladin = Wins("dawnward", rate);
+                Assert.That(System.Math.Abs(knight - paladin), Is.LessThanOrEqualTo(8),
+                    $"{skill}: Knight won {knight}/{runs} and Paladin {paladin}/{runs} of the same dungeons.");
+            }
+        }
+
+        [Test, Explicit("Tuning aid: candidate numbers to even the Knight and the Paladin")]
+        public void ClassSweep()
+        {
+            const int runs = 40;
+            var candidates = new List<(string name, Action<ContentCatalog> tweak)>
+            {
+                ("C0 current", c => { }),
+                ("CW knight slash 3 + paladin hearts 11", c => { c.HeroClasses["knight"].SlashDamage += 1; c.HeroClasses["paladin"].MaxHp -= 1; }),
+                ("D1 CW + every enemy +1 heart", c => { c.HeroClasses["knight"].SlashDamage += 1; c.HeroClasses["paladin"].MaxHp -= 1;
+                    foreach (var e in c.Enemies.Values) if (!e.IsBoss) e.MaxHp += 1; }),
+                ("D2 CW + traps +1", c => { c.HeroClasses["knight"].SlashDamage += 1; c.HeroClasses["paladin"].MaxHp -= 1;
+                    c.Hazards.SpikeDamage += 1; c.Hazards.BombDamage += 1; c.Hazards.LavaDamage += 1; }),
+                ("D3 CW + boss +4 hearts", c => { c.HeroClasses["knight"].SlashDamage += 1; c.HeroClasses["paladin"].MaxHp -= 1;
+                    c.Enemies["lord_blobert"].MaxHp += 4; }),
+                ("D4 D1 + boss +4", c => { c.HeroClasses["knight"].SlashDamage += 1; c.HeroClasses["paladin"].MaxHp -= 1;
+                    foreach (var e in c.Enemies.Values) if (!e.IsBoss) e.MaxHp += 1; c.Enemies["lord_blobert"].MaxHp += 4; }),
+            };
+
+            TestContext.Out.WriteLine($"Class sweep (blind, Free Roam, Knight's Trial): {runs} seeds per hero, won / avg hearts left");
+            foreach (var (name, tweak) in candidates)
+            {
+                var line = new System.Text.StringBuilder($"{name,-32}");
+                foreach (var (skill, rate) in new[] { ("casual", AutoPlayer.CasualMistakeRate), ("novice", NoviceMistakeRate) })
+                {
+                    foreach (var heroId in new[] { ContentCatalog.DefaultHeroId, "dawnward" })
+                    {
+                        var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
+                        tweak(catalog);
+                        int won = 0;
+                        long hp = 0;
+                        for (ulong seed = 1; seed <= (ulong)runs; seed++)
+                        {
+                            var r = AutoPlayer.PlayRun(catalog, seed, MaxCommands, rate, MovementMode.Free, true, heroId: heroId);
+                            if (r.Status == RunStatus.Won) won++;
+                            hp += r.Hp;
+                        }
+                        line.Append($"  {skill[0]}/{(heroId == "dawnward" ? "pal" : "kni")} {won,2} ({hp / (float)runs,4:0.0}hp)");
+                    }
+                }
+                TestContext.Out.WriteLine(line.ToString());
+            }
+        }
+
         static string ByFloor(int[] counts) => $"{counts[1]} / {counts[2]} / {counts[3]} / {counts[4]} / {counts[5]}";
 
         [Test, Explicit("Tuning aid: prints the end of stalled or lost AutoPlayer runs")]

@@ -212,7 +212,7 @@ Then back to 1. The encounter is won when Blobert dies (minions vanish).
 
 ## 5. Hero: Sir Clickington (Knight) *(tune numbers)*
 
-Max HP 10. Slash damage 2. Starts each run with 2 potions. Another hero may take
+Max HP 10. Slash damage 3 (D-047). Starts each run with 2 potions. Another hero may take
 the run instead (§5.1); everything below is the Knight's, and the table's numbers
 come from whichever class is playing.
 
@@ -247,8 +247,8 @@ carries it. Every class plays by the same rules; only its numbers differ.
 
 | Class | Hearts | Slash | Potions (heal) | Mana | Shield | Dash |
 |---|---|---|---|---|---|---|
-| Knight (Sir Clickington) | 10 | 2 | 2 (heal 4) | 6 | 2 | 2 tiles for 3 |
-| Paladin (Dawnward) | 12 | 2 | 2 (heal 6) | 8 | 2 | **1 tile** for 4 |
+| Knight (Sir Clickington) | 10 | **3** | 2 (heal 4) | 6 | 2 | 2 tiles for 3 |
+| Paladin (Dawnward) | **11** | 2 | 2 (heal 6) | 8 | 2 | **1 tile** for 4 |
 
 The Paladin is the steadier of the two: more hearts, a stronger potion and a
 deeper mana pool for shields, paid for with a dash that moves one tile and costs

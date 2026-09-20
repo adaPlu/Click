@@ -100,7 +100,8 @@ namespace ClickDungeon.Tests
 
             boss.Mode = EnemyMode.Deflated;
             DoOk(run, PlayerCommand.Slash(P(1, 2)));
-            Assert.That(boss.Hp, Is.EqualTo(14));
+            // Deflated takes double, so the hero's own slash damage decides how much (D-047 raised the Knight's to 3).
+            Assert.That(boss.Hp, Is.EqualTo(18 - 2 * run.Hero.SlashDamage));
         }
 
         [Test]

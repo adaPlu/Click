@@ -622,3 +622,20 @@ Rules referenced here live in `docs/rules.md`.
 - **TESTS**: `RenownTests.VaultGuardsGetRenownHeartsLikeTheFloorTheVaultHangsOff` (load-bearing: removing the call turns
   it red).
 
+## D-047 The Knight hits for 3; the Paladin keeps 11 hearts
+- **DECISION**: the Knight's slash goes from 2 to 3, and the Paladin's hearts from 12 to 11. Nothing else moves: the
+  Paladin keeps the stronger potion (6), the larger mana pool (8) and the one-tile dash; the Knight keeps the two-tile
+  dash for 3 mana.
+- **WHY**: "make the paladin and knight more even". `HeroSweep` and a new `ClassSweep` showed the classes were not close:
+  blind novice, 40 seeds, Knight's Trial — Knight 11 wins, Paladin 22, on the same dungeons, and 3 against 8 on Blobert's
+  Wrath. The Paladin's hearts and potions beat the Knight's reach for a player who cannot see what is coming.
+- **WHY THIS LEVER**: four sweep rounds. Giving the Knight hearts or potions (the Paladin's own strengths) evened the
+  numbers but blurred the classes; matching both made the Paladin strictly worse. Damage keeps each class in its lane —
+  the Knight ends fights sooner and so takes fewer hits.
+- **MEASURED** (40 seeds, blind, Knight's Trial): casual 26 → 33 Knight against 35 → 34 Paladin; novice 11 → 22 against
+  22 → 18. Blobert's Wrath, novice: 3 → 7 against 8 → 8. Overall win rate rises about 8%: the classes were evened by
+  lifting the weaker one, not by cutting the stronger one down. Tightening the tier to compensate was swept (every enemy
+  +1 heart, traps +1, boss +4) and left for a separate decision — each of those re-opened the class gap or overshot.
+- **TESTS**: `BalanceTests.TheClassesWinAboutAsOftenAsEachOther` (a real guard: 40 seeds per class at two skill levels,
+  fails if one class wins more than 8 runs more than the other), `ClassSweep` as the tuning aid.
+
