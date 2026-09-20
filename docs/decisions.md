@@ -639,3 +639,22 @@ Rules referenced here live in `docs/rules.md`.
 - **TESTS**: `BalanceTests.TheClassesWinAboutAsOftenAsEachOther` (a real guard: 40 seeds per class at two skill levels,
   fails if one class wins more than 8 runs more than the other), `ClassSweep` as the tuning aid.
 
+## D-048 The balance bot stops walking into the same wall
+- **DECISION**: `AutoPlayer` remembers travel that got it nowhere. When a Move or Dash leaves the hero on the tile it
+  started from and uncovers nothing, that (tile, command) pair is not tried again on that floor. A bump that reveals what
+  blocked it counts as learning something, so it is not remembered; waiting, shielding and slashing in place never were
+  travel and are untouched. The memory is cleared on every new floor and on entering or leaving a vault.
+- **WHY**: MAINT-15. Watch-mode run 5 (seed 20300515) was traced turn by turn: the bot stood on a teleport pad, walked
+  onto its pair, was sent straight back, and repeated for ~200 turns until it died — with the key three steps away. That
+  same run now wins. The bot is the instrument behind every balance decision, so its stalls were being read as difficulty.
+- **RE-BASELINED** (60 blind seeds, `DifficultySweep`, won): casual 97% / **92%** / 48% and novice 95% / **55%** / 15%
+  for Easy / Knight's Trial / Blobert's Wrath — against 95% / 67% / 45% and 100% / 30% / 5% before the fix. **The game is
+  considerably easier than the old numbers said**: much of what D-038 and D-040 were tuning against was the bot failing,
+  not the dungeon winning. `HeroSweep` (40 blind novice seeds) keeps D-047's parity: Knight 37 / 20 / 9, Paladin 39 / 17 / 10.
+- **NOT DONE**: retuning the tiers to the honest numbers. That is a separate decision, and it should come with a view on
+  what win rate Knight's Trial is meant to have for a careful player.
+- **KNOWN REMAINDER**: the bot still wanders a floor it cannot solve (one traced run spends ~300 turns circling floor 2
+  without finding the key). That is weak exploration, not a loop, and it still inflates turn counts.
+- **TESTS**: guard thresholds and the rules §10.2 table re-measured; `TheClassesWinAboutAsOftenAsEachOther` re-checked
+  against the new numbers; `PlaythroughTests.TraceWatchRun` is the aid that found it.
+

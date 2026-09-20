@@ -356,3 +356,14 @@ the look-ahead a teleport's destination. Either way, re-measure `HeroSweep`, `Di
 alternation and between-run talent spending, then prints the chosen run turn by turn, the floor as it ended, the most
 stood-on tiles, and whether the key was reachable.
 
+### Repair 2026-09-20 (D-048) — MAINT-15 fixed, balance re-baselined
+
+| ID | Status | Evidence | Change |
+|---|---|---|---|
+| MAINT-15 | FIXED | VERIFIED (the traced run flips from a 587-turn loss to a 530-turn win) | `AutoPlayer` skips travel that previously left it on the same tile without uncovering anything; memory cleared per floor. |
+
+**Every balance number in this repo before 2026-09-20 was measured with a bot that could stall.** Re-measured: Knight's
+Trial casual 67% → 92% won, novice 30% → 55%; Blobert's Wrath novice 5% → 15%. The tiers are much easier than the
+documented targets, and retuning them is open (see D-048 "NOT DONE"). Class parity (D-047) survived the re-measure.
+Remaining bot weakness: aimless wandering on a floor whose key it has not found — inflates turn counts, not yet addressed.
+

@@ -427,6 +427,10 @@ next to the hero, §12) — reach F5 / win:
 | novice, sighted    | 40 / 40         | 40 / 40        | 40 / 40         |
 | novice, **blind**  | 40 / 39         | 33 / 21        | 21 / 10         |
 
+*D-048 re-measure* (the balance bot no longer loops between teleport pads, so these are the first numbers that measure
+the dungeon rather than the bot). `DifficultySweep`, 60 blind seeds, Free Roam, won: casual 97% / 92% / 48%, novice
+95% / 55% / 15%. `HeroSweep`, 40 blind novice seeds: Knight 37 / 20 / 9 won, Paladin 39 / 17 / 10.
+
 *D-038 retune* (full-strength traps and one more monster a floor on Knight's Trial; traps +1 on Blobert's
 Wrath). `DifficultySweep`, 60 blind seeds, Free Roam, won: casual 95% / 70% / 53%, novice 100% / 67% / 33%.
 Before it, casual won 88% of Knight's Trial and the ten-run playthrough won all ten.

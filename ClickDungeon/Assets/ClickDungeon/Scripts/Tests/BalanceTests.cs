@@ -105,15 +105,16 @@ namespace ClickDungeon.Tests
         [Test]
         public void KnightsTrialLetsANovicePlayerReachBlobert()
         {
-            // Measured 30-seed blind baseline after the D-038 retune (full traps, an extra monster a floor): 19 reach (rules §10.2).
+            // Re-measured after D-048 (the bot no longer loops between teleport pads): a blind novice reaches Blobert in
+            // 73% of 60 seeds (DifficultySweep). This 30-seed guard sits well below that, so it catches a real collapse.
             var medium = Measure(Difficulty.Medium, 30, NoviceMistakeRate, blind: true);
-            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(16), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
+            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(18), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
         }
 
         [Test]
         public void TiersKeepTheirOrder()
         {
-            // Blind novice. The 60-seed sweep after the D-038 retune: 100% / 67% / 33% won (rules §10.2).
+            // Blind novice, 60-seed sweep after D-048: 95% / 55% / 15% won (rules §10.2).
             var easy = Measure(Difficulty.Easy, 40, NoviceMistakeRate, blind: true);
             var medium = Measure(Difficulty.Medium, 40, NoviceMistakeRate, blind: true);
             var hardcore = Measure(Difficulty.Hardcore, 40, NoviceMistakeRate, blind: true);
@@ -238,8 +239,8 @@ namespace ClickDungeon.Tests
                 return won;
             }
 
-            // Measured after D-047: casual 33 / 34, novice 22 / 18. The guard allows drift but not a class that is twice
-            // the other, which is what the numbers were before.
+            // Measured after D-047 and re-measured after D-048: novice 20 / 17 on Knight's Trial, 9 / 10 on Blobert's
+            // Wrath. The guard allows drift but not a class that is twice the other, which is what the numbers were before.
             foreach (var (skill, rate) in new[] { ("casual", AutoPlayer.CasualMistakeRate), ("novice", NoviceMistakeRate) })
             {
                 int knight = Wins(ContentCatalog.DefaultHeroId, rate);

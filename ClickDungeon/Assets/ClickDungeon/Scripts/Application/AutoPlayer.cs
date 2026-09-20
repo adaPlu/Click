@@ -116,6 +116,28 @@ namespace ClickDungeon.Application
         long _bestProgress = long.MinValue;
         int _turnsWithoutProgress;
 
+        // Anti-stall (D-048): travel that puts the hero back where it started and teaches it nothing is not tried again
+        // from that tile. Without this the bot walks onto a teleport pad, arrives back on its pair, and repeats until it
+        // dies — 200 turns of one run, with the key three steps away. A bump that reveals what blocked it still counts as
+        // learning something, so it is not remembered.
+        readonly HashSet<long> _barren = new HashSet<long>();
+        GridPos _lastPos = GridPos.Invalid;
+        PlayerCommand _lastTravel;
+        bool _lastWasTravel;
+        int _lastKnown, _lastFloorStamp = int.MinValue;
+
+        static long BarrenKey(GridPos from, PlayerCommand command) =>
+            ((long)from.Index << 16) | ((long)command.Kind << 8) | (uint)(command.Target.InBounds ? command.Target.Index : 63);
+
+        /// <summary>How much of this floor the player has seen; a bump that uncovers a tile moves it.</summary>
+        static int KnownCells(RunState run)
+        {
+            int known = 0;
+            foreach (var p in Board.AllCells)
+                if (run.Floor[p].Knowledge != Knowledge.Unseen) known++;
+            return known;
+        }
+
         public static List<PlayerCommand> LegalCommands(RunState run, ContentCatalog catalog)
         {
             var commands = new List<PlayerCommand>();
@@ -136,6 +158,19 @@ namespace ClickDungeon.Application
             // A blind player reasons about the board they can see; a sighted one about all of it.
             var view = Blind ? Redact(run) : run;
             TrackProgress(view, catalog);
+
+            // A new floor (or a vault off it) is a new board: nothing learned about the old one applies.
+            int floorStamp = view.Floor.FloorIndex * 2 + (view.Floor.IsVault ? 1 : 0);
+            if (floorStamp != _lastFloorStamp)
+            {
+                _barren.Clear();
+                _lastFloorStamp = floorStamp;
+                _lastWasTravel = false;
+            }
+            int known = KnownCells(view);
+            if (_lastWasTravel && view.Hero.Pos == _lastPos && known == _lastKnown)
+                _barren.Add(BarrenKey(_lastPos, _lastTravel));
+            _lastWasTravel = false;
             // Caution drops from 1 to 0.15 as the player runs out of patience.
             double caution = 1.0 - 0.85 * Math.Min(1.0, _turnsWithoutProgress / (double)PatienceTurns);
 
@@ -151,6 +186,8 @@ namespace ClickDungeon.Application
             {
                 // Believing a move is legal is not enough: the real board still refuses it, exactly as it would a player.
                 if (Blind && !Commands.Validate(run, command, catalog, out _)) continue;
+                // Travel that has already led nowhere from this tile is not worth a second turn.
+                if (IsTravel(command) && _barren.Contains(BarrenKey(view.Hero.Pos, command))) continue;
                 var copy = Copy(view);
                 if (!TurnResolver.Apply(copy, command, catalog).Accepted) continue;
                 if (copy.Status != RunStatus.Lost) survivable.Add(command);
@@ -162,8 +199,19 @@ namespace ClickDungeon.Application
                     best = command;
                 }
             }
-            return slip && survivable.Count > 0 ? survivable[rng.Next(survivable.Count)] : best;
+            var chosen = slip && survivable.Count > 0 ? survivable[rng.Next(survivable.Count)] : best;
+            if (IsTravel(chosen))
+            {
+                _lastWasTravel = true;
+                _lastTravel = chosen;
+                _lastPos = view.Hero.Pos;
+                _lastKnown = known;
+            }
+            return chosen;
         }
+
+        /// <summary>Move and Dash exist to get somewhere; waiting, shielding or slashing in place is not a failed journey.</summary>
+        static bool IsTravel(PlayerCommand command) => command.Kind == CommandKind.Move || command.Kind == CommandKind.Dash;
 
         /// <summary>Plays a whole run headless, stopping after <paramref name="maxCommands"/> commands.</summary>
         public static AutoRunResult PlayRun(ContentCatalog catalog, ulong seed, int maxCommands, double mistakeRate = 0,
