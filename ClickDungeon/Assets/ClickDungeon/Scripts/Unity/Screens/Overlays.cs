@@ -287,6 +287,20 @@ namespace ClickDungeon.Unity.Screens
             Burst();
         }
 
+        /// <summary>
+        /// Closes the reveal without waiting to be tapped, and still runs what was waiting on it (D-044). The screen calls
+        /// this before it is torn down, so a run that ended on a chest turn still reports its end.
+        /// </summary>
+        public void CloseNow()
+        {
+            if (!IsOpen && _onClosed == null) return;
+            StopSequence();
+            if (_root != null) _root.gameObject.SetActive(false);
+            var closed = _onClosed;
+            _onClosed = null;
+            closed?.Invoke();
+        }
+
         /// <summary>Rewards of the same kind are added together: "+2 POTION   +6 MAX HP".</summary>
         static string RewardSummary(IReadOnlyList<RewardRecord> rewards)
         {

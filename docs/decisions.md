@@ -591,3 +591,16 @@ Rules referenced here live in `docs/rules.md`.
 - **STILL OPEN from the audit**: REL-20 (vault guards take renown damage but get no renown hearts), REL-13/REL-14 (the
   run-end panel is lost on rotation or when a chest reveal is destroyed), DATA-11 (abandon + failed delete banks twice).
 
+## D-044 A turn of the device keeps the run's end and its log
+- **DECISION**: rebuilding the screens for a new orientation no longer loses run state that only the screen held.
+  `GameScreen.Reopen` re-runs `CheckRunEnd`, so a finished run gets its VICTORY/DEFEATED panel back; `PrepareForRebuild`
+  closes a chest reveal through the new `ChestOverlay.CloseNow`, which runs whatever was waiting on it (the run-end check
+  rides that callback, and a destroyed overlay used to drop it); and `AdoptFrom` hands the new screen the WHAT HAPPENED
+  log and the last damage source, which live on the screen rather than in the session.
+- **WHY**: audit 2, REL-13/REL-14/REL-15. Turning the phone after a run ended hid the result screen, NEW RUN and WHAT
+  HAPPENED; the run was already banked, and the ☰ menu still worked, so it was recoverable but wrong.
+- **TESTS**: `ChestRewardSequenceArtTests.ClosingTheRevealWithoutATapStillRunsWhatWasWaitingOnIt` and
+  `TappingTheRevealClosedStillRunsItOnceOnly` (load-bearing: reverting the callback turns one red). The rebuild itself is
+  proved by screenshot — `-cdRelayout 1` rebuilds both screens mid-run in a shot run — because no test harness constructs
+  `ClickDungeonApp` yet (audit TEST-02, still open).
+

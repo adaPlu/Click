@@ -313,3 +313,15 @@ Results: headless 260/260, Unity EditMode 335 passed / 0 failed / 12 explicit sk
 Not touched this round: REL-20 (vault renown hearts — same function, deliberately left for a separate decision), REL-13/REL-14,
 DATA-09..DATA-14, SEC-03/SEC-04, CI-03..CI-06, TEST-02..TEST-05.
 
+### Repair 2026-09-19b (D-044)
+
+| ID | Status | Evidence | Change |
+|---|---|---|---|
+| REL-13 | FIXED | TESTED by screenshot (`-cdRelayout 1`: the VICTORY panel survives the rebuild) | `GameScreen.Reopen` re-runs `CheckRunEnd`. |
+| REL-14 | FIXED | VERIFIED (revert → test red) | `ChestOverlay.CloseNow` runs the pending callback once; `GameScreen.PrepareForRebuild` calls it before the screen is destroyed. |
+| REL-15 | FIXED | COMPILED (no harness constructs a GameScreen) | `GameScreen.AdoptFrom` carries the run log and last damage source to the rebuilt screen. |
+
+Results: Unity EditMode 337 passed / 0 failed / 12 skipped (349 total); headless unchanged at 260.
+Still open: TEST-02 (nothing constructs `ClickDungeonApp`, so rotation is proved only by screenshot), REL-16 (chest
+coroutines on a destroyed root), REL-17, REL-18, REL-20, DATA-09..DATA-14, SEC-03/SEC-04, CI-03..CI-06.
+

@@ -177,8 +177,34 @@ namespace ClickDungeon.Unity.Screens
             RefLayout.Top(Root, "NavBar", 11f, 1800f, 1057f, 110f);
         }
 
-        /// <summary>Rebuilt after the device turned: shows the run as it stands, without a greeting or animation.</summary>
-        public void Reopen() => Refresh(false);
+        /// <summary>
+        /// Rebuilt after the device turned: shows the run as it stands, without a greeting or animation. A finished run
+        /// gets its end panel back, because that panel lived on the screen this one replaces (D-044).
+        /// </summary>
+        public void Reopen()
+        {
+            Refresh(false);
+            CheckRunEnd();
+        }
+
+        /// <summary>
+        /// Called before this screen is torn down (a turn of the device): a chest reveal still on screen closes and runs
+        /// whatever was waiting on it, so the run's end is settled on the session rather than lost with the overlay.
+        /// </summary>
+        public void PrepareForRebuild() => _chest.CloseNow();
+
+        /// <summary>
+        /// Takes over what only a screen knows from the one it replaces: WHAT HAPPENED, which lives here rather than in the
+        /// session, and would otherwise read "Nothing yet." after a turn of the device (D-044).
+        /// </summary>
+        public void AdoptFrom(GameScreen previous)
+        {
+            if (previous == null || previous == this) return;
+            _log.Clear();
+            _log.AddRange(previous._log);
+            _logText = previous._logText;
+            _lastDamageSource = previous._lastDamageSource;
+        }
 
         public RectTransform Root { get; }
 

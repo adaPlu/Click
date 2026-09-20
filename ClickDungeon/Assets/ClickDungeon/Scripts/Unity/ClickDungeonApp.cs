@@ -119,6 +119,12 @@ namespace ClickDungeon.Unity
                 if (_game != null) _game.AutomationOverlay(overlay);
                 else _title.AutomationOverlay(overlay);
             }
+            // -cdRelayout 1: rebuild both screens the way turning the device does, then shoot what survives (D-044).
+            if (ArgValue("-cdRelayout") != null)
+            {
+                for (int i = 0; i < 10; i++) yield return null;
+                Relayout();
+            }
             for (int i = 0; i < 40; i++) yield return null;
             ScreenCapture.CaptureScreenshot(path);
             yield return new WaitForSecondsRealtime(1f);
@@ -239,9 +245,14 @@ namespace ClickDungeon.Unity
             _title = new TitleScreen(this, ScreenRoot);
             if (playing)
             {
-                Destroy(_game.Root.gameObject);
+                // Settle anything the old screen was still holding (a chest reveal) before it goes, then hand the new
+                // screen what only a screen knows: the run log (D-044).
+                var previous = _game;
+                previous.PrepareForRebuild();
+                Destroy(previous.Root.gameObject);
                 _title.Root.gameObject.SetActive(false);
                 _game = new GameScreen(this, ScreenRoot);
+                _game.AdoptFrom(previous);
                 _game.Reopen();
             }
             else

@@ -57,6 +57,38 @@ namespace ClickDungeon.UnityTests
         Image Pose() => Named("Reaction").Find("Pose").GetComponent<Image>();
 
         [Test]
+        public void ClosingTheRevealWithoutATapStillRunsWhatWasWaitingOnIt()
+        {
+            // D-044: the run-end check rides on this callback, and a turn of the device destroys the overlay rather than
+            // tapping it closed. CloseNow is what the screen calls before it is torn down.
+            int ran = 0;
+            var overlay = NewOverlay();
+            overlay.Open(new RewardRecord { Kind = RewardKind.Potion, Amount = 1 }, () => ran++);
+            Assert.That(overlay.IsOpen, Is.True);
+
+            overlay.CloseNow();
+
+            Assert.That(ran, Is.EqualTo(1), "What was waiting on the reveal still runs.");
+            Assert.That(overlay.IsOpen, Is.False);
+
+            overlay.CloseNow();
+            Assert.That(ran, Is.EqualTo(1), "And it runs once, however often the screen settles up.");
+        }
+
+        [Test]
+        public void TappingTheRevealClosedStillRunsItOnceOnly()
+        {
+            int ran = 0;
+            var overlay = NewOverlay();
+            overlay.Open(new RewardRecord { Kind = RewardKind.MaxHp, Amount = 2 }, () => ran++);
+            overlay.Tap();   // skips the anticipation beat to the burst
+            overlay.Tap();   // closes
+            Assert.That(ran, Is.EqualTo(1));
+            overlay.CloseNow();
+            Assert.That(ran, Is.EqualTo(1), "A reveal already tapped closed does not run it again.");
+        }
+
+        [Test]
         public void OpeningShowsTheAnticipationPose()
         {
             var anticipation = MakeSprite("anticipation");
