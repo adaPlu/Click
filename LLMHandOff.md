@@ -334,3 +334,25 @@ coroutines on a destroyed root), REL-17, REL-18, REL-20, DATA-09..DATA-14, SEC-0
 
 Results: headless 261/261, Unity EditMode 338 passed / 0 failed / 12 skipped (350 total).
 
+### Finding 2026-09-20 — MAINT-15 (the balance bot can loop between teleport pads)
+
+**MAINT-15 | Low (instrument quality, not player-facing) | CONFIRMED (reproduced exactly)**
+`AutoPlayer` has no memory of a move that got it nowhere, and its look-ahead does not model teleports. Watch-mode run 5
+(seed 20300515, Knight, Medium) was replayed headlessly turn by turn and reproduced to the turn: lost on floor 4 after
+587 turns. The floor held a teleport pair at (4,1) and (4,4); the hero stood on (4,4), chose `Move(4,1)`, was teleported
+straight back to (4,4), and repeated that for roughly 200 turns before dying. The key was three steps away on clear
+floor — the dungeon was winnable throughout. The same run shows a second loop on floor 2 (88 turns standing on one tile).
+Files: `Application/AutoPlayer.cs` (Choose / look-ahead), `Simulation/TurnResolver.cs` (teleport on entry).
+
+**Why it matters:** this bot is the instrument behind every balance decision (D-038, D-040, D-041, D-047) and behind the
+guards in `BalanceTests`. A stall of this kind understates win rates and inflates turn counts, so some share of the
+"losses" in every sweep is the bot failing rather than the dungeon winning.
+
+**Fix direction (not applied — it re-baselines every balance number and the D-047 class guard):** give `Choose` a short
+memory keyed on (position, command) that skips a command which last produced neither movement nor new knowledge, or teach
+the look-ahead a teleport's destination. Either way, re-measure `HeroSweep`, `DifficultySweep` and the guards afterwards.
+
+**Aid added:** `PlaythroughTests.TraceWatchRun` ([Explicit], `CD_RUN=n`) replays a watch batch with the same seeds, hero
+alternation and between-run talent spending, then prints the chosen run turn by turn, the floor as it ended, the most
+stood-on tiles, and whether the key was reachable.
+
