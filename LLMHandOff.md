@@ -367,3 +367,12 @@ Trial casual 67% → 92% won, novice 30% → 55%; Blobert's Wrath novice 5% → 
 documented targets, and retuning them is open (see D-048 "NOT DONE"). Class parity (D-047) survived the re-measure.
 Remaining bot weakness: aimless wandering on a floor whose key it has not found — inflates turn counts, not yet addressed.
 
+### Repair 2026-09-20b (D-049, D-050)
+
+| ID | Status | Evidence | Change |
+|---|---|---|---|
+| MAINT-15 | FIXED (remainder open) | VERIFIED (traced run 587 → 317 turns) | Vault-door memory stops the bot re-entering a vault it has already looted; a pit becomes the goal when a floor is fully uncovered and the key is still not held. Aimless shuffling on an unsolved floor remains — see D-049 "KNOWN REMAINDER". |
+
+Knight's Trial retuned with the honest bot (D-050): traps +1. 60 blind seeds, won — Easy 97%/100%, **Knight's Trial
+78%/35%** (was 90%/52%), Blobert's Wrath 45%/15%. Class parity holds (Knight 12, Paladin 14 on 40 novice seeds).
+

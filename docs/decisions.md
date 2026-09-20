@@ -658,3 +658,30 @@ Rules referenced here live in `docs/rules.md`.
 - **TESTS**: guard thresholds and the rules §10.2 table re-measured; `TheClassesWinAboutAsOftenAsEachOther` re-checked
   against the new numbers; `PlaythroughTests.TraceWatchRun` is the aid that found it.
 
+## D-049 The bot visits a vault once, and takes a pit when a floor has nothing left to give
+- **DECISION**: two more fixes to `AutoPlayer`, both found by tracing watch-mode run 5 (seed 20300515). It now remembers
+  the doorway of a vault it has already been inside, so it stops walking back in every time it feels healthy — that run
+  crossed the same doorway three times and spent 430 turns on one floor. And when every tile on a floor is uncovered and
+  the key is still not in hand (it is under an actor, or across lava), a pit becomes the goal: the only way down without
+  a key, instead of circling. The vault memory is cleared on a real floor change, not on stepping in and out of a vault.
+- **MEASURED**: that run falls from 587 turns to 317. Tier numbers barely move (Knight's Trial casual 92% → 90%), so the
+  fix removes wasted turns rather than changing how hard the game is.
+- **REJECTED**: a general "uncover urgency" that paid the bot for revealing tiles. At every weight that stopped the
+  wandering it also made the bot walk onto unknown tiles heedlessly — Knight's Trial casual wins fell 90% → 47% at 120,
+  and to 25% at 200. A bot that dies exploring is a worse stand-in for a careful player than one that dawdles.
+- **KNOWN REMAINDER**: on a floor whose key it cannot find, the bot still shuffles between tiles it has already seen. It
+  survives, but it burns turns; fixing it needs a real exploration plan, not a score tweak.
+
+## D-050 Knight's Trial: traps bite
+- **DECISION**: Knight's Trial's traps hit one harder (spikes 3, bombs 5, lava 3) on top of D-038's extra monster a
+  floor. Blobert's Wrath is unchanged: its gap is now the tougher monsters, the mightier boss and the missing potion
+  rather than the traps, and its tagline says so.
+- **WHY**: "make medium harder", now that D-048/D-049 made the bot an honest instrument. A careful player was winning
+  90% of Knight's Trial, which is not a trial.
+- **MEASURED** (60 blind seeds, `DifficultySweep`, won): Easy 97% casual / 100% novice · **Knight's Trial 78% / 35%**
+  (was 90% / 52%) · Blobert's Wrath 45% / 15%. Deaths spread across floors 1-5 rather than piling on the boss, which is
+  why traps were chosen over more monster hearts (`M1`) or damage (`M2`) in the sweep.
+- **CLASS PARITY HOLDS** (`HeroSweep`, 40 blind novice seeds): Knight 12 wins on Knight's Trial, Paladin 14.
+- **TESTS**: `KnightsTrialLetsANovicePlayerReachBlobert` re-baselined to the 52% reach measured now;
+  `TiersKeepTheirOrder` and `TheClassesWinAboutAsOftenAsEachOther` re-checked.
+

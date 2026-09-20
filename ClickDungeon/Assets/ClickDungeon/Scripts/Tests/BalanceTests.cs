@@ -105,16 +105,16 @@ namespace ClickDungeon.Tests
         [Test]
         public void KnightsTrialLetsANovicePlayerReachBlobert()
         {
-            // Re-measured after D-048 (the bot no longer loops between teleport pads): a blind novice reaches Blobert in
-            // 73% of 60 seeds (DifficultySweep). This 30-seed guard sits well below that, so it catches a real collapse.
+            // Re-measured after D-050 (harder traps on Knight's Trial, honest bot): a blind novice reaches Blobert in
+            // 52% of 60 seeds (DifficultySweep). This 30-seed guard sits below that, so it catches a real collapse.
             var medium = Measure(Difficulty.Medium, 30, NoviceMistakeRate, blind: true);
-            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(18), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
+            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(11), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
         }
 
         [Test]
         public void TiersKeepTheirOrder()
         {
-            // Blind novice, 60-seed sweep after D-048: 95% / 55% / 15% won (rules §10.2).
+            // Blind novice, 60-seed sweep after D-050: 100% / 35% / 15% won (rules §10.2).
             var easy = Measure(Difficulty.Easy, 40, NoviceMistakeRate, blind: true);
             var medium = Measure(Difficulty.Medium, 40, NoviceMistakeRate, blind: true);
             var hardcore = Measure(Difficulty.Hardcore, 40, NoviceMistakeRate, blind: true);
@@ -166,13 +166,9 @@ namespace ClickDungeon.Tests
                 ("E0 current", Tier(Difficulty.Easy)),
                 ("M0 current", Tier(Difficulty.Medium)),
                 ("H0 current", Tier(Difficulty.Hardcore)),
-                ("MA haz0", Tier(Difficulty.Medium, d => d.HazardDamage = 0)),
-                ("MB haz0 extra+1", Tier(Difficulty.Medium, d => { d.HazardDamage = 0; d.ExtraEnemies = 1; })),
-                ("MC haz0 hero-2", Tier(Difficulty.Medium, d => { d.HazardDamage = 0; d.HeroMaxHp = -2; })),
-                ("MD haz0 dmg+1", Tier(Difficulty.Medium, d => { d.HazardDamage = 0; d.EnemyDamage = 1; })),
-                ("ME haz0 enemyhp+1", Tier(Difficulty.Medium, d => { d.HazardDamage = 0; d.EnemyHp = 1; })),
-                ("HB H haz+1", Tier(Difficulty.Hardcore, d => d.HazardDamage = 1)),
-                ("HE H haz+1 extra+1", Tier(Difficulty.Hardcore, d => { d.HazardDamage = 1; d.ExtraEnemies = 1; })),
+                ("M4 traps +1 (chosen)", Tier(Difficulty.Medium, d => d.HazardDamage += 1)),
+                ("H1 hardcore traps +2", Tier(Difficulty.Hardcore, d => d.HazardDamage += 1)),
+                ("H2 hardcore traps +2 hp0", Tier(Difficulty.Hardcore, d => { d.HazardDamage += 1; d.EnemyHp = 0; })),
             };
 
             // Blind and in Free Roam, like the guards: this is the number that describes real play.

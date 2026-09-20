@@ -79,6 +79,7 @@ namespace ClickDungeon.Tests
                 var bot = new AutoPlayer(AutoPlayer.CasualMistakeRate, blind: true);
 
                 var lines = new List<string>();
+                int lastFloor = -1;
                 var visits = new Dictionary<string, int>();
                 for (int i = 0; i < 1500 && session.Run.Status == RunStatus.InProgress; i++)
                 {
@@ -86,6 +87,17 @@ namespace ClickDungeon.Tests
                     var live = session.Run;
                     string where = $"F{live.Floor.FloorIndex}:{live.Hero.Pos}";
                     visits[where] = visits.TryGetValue(where, out int n) ? n + 1 : 1;
+                    if (run == target && (i % 25 == 0 || live.Floor.FloorIndex != lastFloor))
+                    {
+                        int unseen = 0, revealedKey = 0;
+                        foreach (var at in Board.AllCells)
+                        {
+                            if (live.Floor[at].Knowledge == Knowledge.Unseen) unseen++;
+                            else if (live.Floor[at].Content == ContentKind.Key) revealedKey++;
+                        }
+                        Console.WriteLine($"    turn {i,4}: F{live.Floor.FloorIndex}{(live.Floor.IsVault ? "v" : " ")} hp {live.Hero.Hp,2} key {(live.Hero.HasKey ? "held" : revealedKey > 0 ? "seen" : "hidden")} unseen {unseen,2} exit {(live.Floor.ExitUnlocked ? "open" : "shut")}");
+                        lastFloor = live.Floor.FloorIndex;
+                    }
                     if (run == target)
                         lines.Add($"#{i,4} F{live.Floor.FloorIndex} {live.Hero.Pos} hp {live.Hero.Hp,2}/{live.Hero.MaxHp} mana {live.Hero.Mana} key {(live.Hero.HasKey ? "y" : "n")} "
                                   + $"-> {command} | awake {live.Floor.Enemies.FindAll(e => e.Awake).Count} of {live.Floor.Enemies.Count}");
@@ -97,7 +109,9 @@ namespace ClickDungeon.Tests
 
                 if (run != target) continue;
                 Console.WriteLine($"\n--- run {run} trace: {lines.Count} commands ---");
-                foreach (var line in lines.GetRange(Math.Max(0, lines.Count - 45), Math.Min(45, lines.Count))) Console.WriteLine("  " + line);
+                int from = int.TryParse(Environment.GetEnvironmentVariable("CD_FROM"), out var f) ? f : Math.Max(0, lines.Count - 45);
+                int count = Math.Min(int.TryParse(Environment.GetEnvironmentVariable("CD_COUNT"), out var c) ? c : 45, Math.Max(0, lines.Count - from));
+                foreach (var line in lines.GetRange(from, count)) Console.WriteLine("  " + line);
 
                 // What the floor looked like when it ended, and whether the key could be reached at all.
                 var floor = end.Floor;

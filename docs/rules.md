@@ -370,7 +370,7 @@ above; only numbers change. §3–§8 describe the base content; Knight's Trial 
 | Goblin / Slime / Imp / Slimelet HP     | 3 / 5 / 2 / 1          | 3 / 5 / 2 / 1           | 4 / 6 / 3 / 2 (+1)         |
 | Goblin / Slime / Imp / Slimelet damage | 1 / 2 / 1 / 1 (−1)     | 2 / 3 / 2 / 1           | 2 / 3 / 2 / 1              |
 | Lord Blobert HP / Slam / puffed attack | 16 / 3 / 1             | 18 / 4 / 2              | 22 / 5 / 2                 |
-| Spikes / bomb damage                   | 1 / 3                  | 2 / 4                   | 3 / 5 (+1)                 |
+| Spikes / bomb damage                   | 1 / 3                  | 3 / 5 (+1)              | 3 / 5 (+1)                 |
 | Enemies on normal floors               | profile                | profile +1              | profile                    |
 | HP restored on arriving at a new floor | 3                      | 0                       | 0                          |
 
@@ -426,6 +426,9 @@ next to the hero, §12) — reach F5 / win:
 |--------------------|-----------------|----------------|-----------------|
 | novice, sighted    | 40 / 40         | 40 / 40        | 40 / 40         |
 | novice, **blind**  | 40 / 39         | 33 / 21        | 21 / 10         |
+
+*D-050 retune* (Knight's Trial traps hit one harder). `DifficultySweep`, 60 blind seeds, won: casual 97% / 78% / 45%,
+novice 100% / 35% / 15%. `HeroSweep`, 40 blind novice seeds: Knight 40 / 12 / 8 won, Paladin 40 / 14 / 14.
 
 *D-048 re-measure* (the balance bot no longer loops between teleport pads, so these are the first numbers that measure
 the dungeon rather than the bot). `DifficultySweep`, 60 blind seeds, Free Roam, won: casual 97% / 92% / 48%, novice

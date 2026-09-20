@@ -121,6 +121,11 @@ namespace ClickDungeon.Application
         // dies — 200 turns of one run, with the key three steps away. A bump that reveals what blocked it still counts as
         // learning something, so it is not remembered.
         readonly HashSet<long> _barren = new HashSet<long>();
+        // Doors whose vault has already been visited (D-049). A vault keeps its door open, so without this the bot walks
+        // back in every time it feels healthy: one traced run crossed the same doorway three times and spent 430 turns
+        // on one floor.
+        readonly HashSet<int> _vaultsVisited = new HashSet<int>();
+        bool _wasInVault;
         GridPos _lastPos = GridPos.Invalid;
         PlayerCommand _lastTravel;
         bool _lastWasTravel;
@@ -164,6 +169,8 @@ namespace ClickDungeon.Application
             if (floorStamp != _lastFloorStamp)
             {
                 _barren.Clear();
+                // Going down a floor leaves its vaults behind; stepping in and out of one does not.
+                if (view.Floor.FloorIndex != _lastFloorStamp / 2) _vaultsVisited.Clear();
                 _lastFloorStamp = floorStamp;
                 _lastWasTravel = false;
             }
@@ -171,6 +178,10 @@ namespace ClickDungeon.Application
             if (_lastWasTravel && view.Hero.Pos == _lastPos && known == _lastKnown)
                 _barren.Add(BarrenKey(_lastPos, _lastTravel));
             _lastWasTravel = false;
+
+            // The doorway that led into a vault is remembered on the way in, so the way back out is not an invitation.
+            if (view.Floor.IsVault && !_wasInVault && _lastTravel.Target.InBounds) _vaultsVisited.Add(_lastTravel.Target.Index);
+            _wasInVault = view.Floor.IsVault;
             // Caution drops from 1 to 0.15 as the player runs out of patience.
             double caution = 1.0 - 0.85 * Math.Min(1.0, _turnsWithoutProgress / (double)PatienceTurns);
 
@@ -188,6 +199,9 @@ namespace ClickDungeon.Application
                 if (Blind && !Commands.Validate(run, command, catalog, out _)) continue;
                 // Travel that has already led nowhere from this tile is not worth a second turn.
                 if (IsTravel(command) && _barren.Contains(BarrenKey(view.Hero.Pos, command))) continue;
+                // A vault is worth one visit. Its door stays open, and its loot does not come back.
+                if (!view.Floor.IsVault && command.Target.InBounds && _vaultsVisited.Contains(command.Target.Index)
+                    && view.Floor[command.Target].Terrain == Terrain.Door) continue;
                 var copy = Copy(view);
                 if (!TurnResolver.Apply(copy, command, catalog).Accepted) continue;
                 if (copy.Status != RunStatus.Lost) survivable.Add(command);
@@ -403,6 +417,11 @@ namespace ClickDungeon.Application
                 if (goals.Count == 0)
                     foreach (var p in Board.AllCells)
                         if (floor[p].Knowledge != Knowledge.Revealed) goals.Add(p);
+                // Every tile uncovered and still no key in hand (it is under an actor, or across lava): a pit is the only
+                // way down without one, so take it rather than circle the floor (D-049).
+                if (goals.Count == 0)
+                    foreach (var p in Board.AllCells)
+                        if (floor[p].Terrain == Terrain.Pit) goals.Add(p);
             }
             if (goals.Count == 0 && floor.Exit.InBounds) goals.Add(floor.Exit);
             // Holding the key with the exit still covered: search for it the same way as for the key (D-023).

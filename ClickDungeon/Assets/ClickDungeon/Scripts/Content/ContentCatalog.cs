@@ -541,16 +541,16 @@ namespace ClickDungeon.Content
             };
             c.Difficulties[Difficulty.Medium] = new DifficultyDefinition
             {
-                Id = Difficulty.Medium, DisplayName = "Knight's Trial", Tagline = "Full-strength traps and an extra monster a floor. Click carefully.",
-                // D-038: the casual bot had come to win ~88% and a whole ten-run playthrough, so traps hit at full strength and
-                // each floor holds one more monster. Blind casual AutoPlayer wins ~70%, novice ~67% (rules §10.2).
-                ExtraEnemies = 1,
+                Id = Difficulty.Medium, DisplayName = "Knight's Trial", Tagline = "Biting traps and an extra monster a floor. Click carefully.",
+                // D-038: each floor holds one more monster. D-050: traps hit one harder again, measured with a bot that no
+                // longer stalls (D-048/D-049) — blind casual wins ~78%, novice ~35% (rules §10.2).
+                ExtraEnemies = 1, HazardDamage = 1,
             };
             c.Difficulties[Difficulty.Hardcore] = new DifficultyDefinition
             {
-                Id = Difficulty.Hardcore, DisplayName = "Blobert's Wrath", Tagline = "Sharper traps, tougher monsters, a mightier Blobert, one potion. No mercy.",
-                // D-038: with Knight's Trial harder, traps here hit one harder again to keep the tiers apart.
-                // Blind novice AutoPlayer wins ~33%, casual ~53% (rules §10.2).
+                Id = Difficulty.Hardcore, DisplayName = "Blobert's Wrath", Tagline = "Tougher monsters, a mightier Blobert, one potion. No mercy.",
+                // D-050: Knight's Trial caught up on traps, so the gap here is the monsters, the boss and the missing potion.
+                // Blind casual AutoPlayer wins ~45%, novice ~15% (rules §10.2).
                 StartingPotions = -1, EnemyHp = 1, BossHp = 4, BossSlamDamage = 1, HazardDamage = 1,
             };
             return c;
