@@ -134,15 +134,14 @@ namespace ClickDungeon.Simulation
                     {
                         int hit = Renown.Hit(run, catalog, def.Damage);
                         events.Add(GameEvent.Of(GameEventKind.EnemyAttacked, enemy.Id, enemy.Pos, intent.Target, hit, def.Id));
-                        bool blocked = Combat.DamageHero(run, hit, def.Id, events);
-                        if (blocked && !def.IsBoss)
+                        // Riposte is answered inside DamageHero now, so every blocked blow pays alike (D-052).
+                        bool blocked = Combat.DamageHero(run, hit, def.Id, events, attacker: enemy, catalog: catalog);
+                        // The riposte inside DamageHero may already have killed it; nothing is dazed after it dies.
+                        if (blocked && !def.IsBoss && enemy.Hp > 0)
                         {
                             enemy.Staggered = true;
                             events.Add(GameEvent.Of(GameEventKind.EnemyStaggered, enemy.Id, to: enemy.Pos, subject: def.Id));
                         }
-                        // Riposte (D-037): a blocked blow is answered.
-                        if (blocked && run.Perk(TalentEffect.Riposte) > 0)
-                            Combat.DamageEnemy(run, enemy, run.Perk(TalentEffect.Riposte), "riposte", catalog, events);
                     }
                     else
                     {
@@ -174,7 +173,8 @@ namespace ClickDungeon.Simulation
                         fired.To = hit;
                         if (run.Hero.Pos == hit)
                         {
-                            Combat.DamageHero(run, Renown.Hit(run, catalog, def.Damage), def.Id, events);
+                            Combat.DamageHero(run, Renown.Hit(run, catalog, def.Damage), def.Id, events,
+                                attacker: enemy, catalog: catalog);
                         }
                         else
                         {
@@ -189,7 +189,7 @@ namespace ClickDungeon.Simulation
                     int slam = Renown.Hit(run, catalog, def.SlamDamage);
                     events.Add(GameEvent.Of(GameEventKind.BossSlammed, enemy.Id, enemy.Pos, intent.Target, slam, def.Id));
                     if (Board.SlamCells(intent.Target, def.SlamShakesLines).Contains(run.Hero.Pos))
-                        Combat.DamageHero(run, slam, def.Id, events);
+                        Combat.DamageHero(run, slam, def.Id, events, attacker: enemy, catalog: catalog);
                     break;
 
                 case IntentKind.Summon:

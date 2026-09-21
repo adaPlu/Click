@@ -16,7 +16,10 @@ namespace ClickDungeon.Simulation
             int damage = run.Hero.SlashDamage;
             if (enemy.Hp >= enemy.MaxHp) damage += run.Perk(TalentEffect.OpeningStrike);
             if (enemy.Hp <= 2) damage += run.Perk(TalentEffect.Executioner);
-            if (enemy.Staggered) damage += run.Perk(TalentEffect.Judgement);
+            // A stagger lasts exactly as long as the turn that caused it: EnemyAi.Declare clears the flag in step 9 and turns
+            // it into Intent.Recover, which is the "does nothing next turn, free hit" the player is shown. Judgement has to read
+            // that durable state, or it can never fire on the player's turn (REL-23).
+            if (enemy.Staggered || enemy.Intent.Kind == IntentKind.Recover) damage += run.Perk(TalentEffect.Judgement);
             if (catalog.Enemy(enemy.DefId).IsBoss) damage += run.Perk(TalentEffect.Dawnstrike);
             return damage;
         }

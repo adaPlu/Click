@@ -15,13 +15,27 @@ namespace ClickDungeon.Application
         /// <summary>Points spent in a class before each tier opens: tier 1 at once, then 2, 4 and 7.</summary>
         public static readonly int[] TierPoints = { 0, 0, 2, 4, 7 };
 
-        /// <summary>Experience needed to reach a level: 0, 50, 150, 300, 500... (50 × the triangle numbers).</summary>
-        public static int XpForLevel(int level) => level <= 1 ? 0 : 50 * (level - 1) * level / 2;
+        /// <summary>
+        /// The highest level the game counts to (DATA-17). Without a ceiling the level search walks up one level at a time
+        /// for as long as the curve keeps rising, and the curve cannot rise past 2^30 in <c>int</c>, so a profile carrying a
+        /// billion experience would never stop climbing. The cap is far beyond any real run; experience past it is kept but
+        /// buys no more levels.
+        /// </summary>
+        public const int MaxLevel = 500;
+
+        /// <summary>Experience needed to reach a level: 0, 50, 150, 300, 500... (50 × the triangle numbers), flat past <see cref="MaxLevel"/>.</summary>
+        public static int XpForLevel(int level)
+        {
+            if (level <= 1) return 0;
+            if (level > MaxLevel) level = MaxLevel;
+            // Widened so the product cannot wrap; at MaxLevel the result is still a few million.
+            return (int)(50L * (level - 1) * level / 2L);
+        }
 
         public static int Level(int xp)
         {
             int level = 1;
-            while (xp >= XpForLevel(level + 1)) level++;
+            while (level < MaxLevel && xp >= XpForLevel(level + 1)) level++;
             return level;
         }
 

@@ -32,6 +32,22 @@ namespace ClickDungeon.Tests
             Assert.That(Progression.Level(300), Is.EqualTo(4));
         }
 
+        /// <summary>
+        /// DATA-17: the curve is built from a product that wraps past level 6554, so above about a billion experience it
+        /// stops rising and the level search — one level at a time, on the main thread, inside the session's constructor —
+        /// never finds a level it cannot afford. The ceiling is what makes it stop. The timeout is the regression's alarm:
+        /// without a bound this test does not fail, it hangs.
+        /// </summary>
+        [Test, Timeout(20000)]
+        public void TheLevelCurveStopsAtACeilingRatherThanClimbingForEver()
+        {
+            Assert.That(Progression.Level(int.MaxValue), Is.EqualTo(Progression.MaxLevel));
+            Assert.That(Progression.Level(Progression.XpForLevel(Progression.MaxLevel)), Is.EqualTo(Progression.MaxLevel));
+            Assert.That(Progression.XpForLevel(Progression.MaxLevel), Is.GreaterThan(0), "The last level costs a real, unwrapped number.");
+            Assert.That(Progression.XpForLevel(int.MaxValue), Is.EqualTo(Progression.XpForLevel(Progression.MaxLevel)),
+                "And the curve is flat past it rather than wrapping negative.");
+        }
+
         [Test]
         public void RunsEarnExperienceForMonstersFloorsTheBossAndTheWin()
         {

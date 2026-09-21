@@ -60,11 +60,12 @@ namespace ClickDungeon.Application
         {
             var message = Find(profile, id);
             if (message == null || !Waiting(message)) return false;
-            profile.Coins += message.Coins;
-            profile.Gems += message.Gems;
-            profile.PotionRations += message.PotionRations;
-            profile.HeartTokens += message.HeartTokens;
-            profile.SpecialKeys += message.SpecialKeys;
+            // A gift only ever adds (SEC-04): a hand-edited letter carrying a negative amount must not empty the purse.
+            profile.Coins += Math.Max(0, message.Coins);
+            profile.Gems += Math.Max(0, message.Gems);
+            profile.PotionRations += Math.Max(0, message.PotionRations);
+            profile.HeartTokens += Math.Max(0, message.HeartTokens);
+            profile.SpecialKeys += Math.Max(0, message.SpecialKeys);
             message.Collected = true;
             message.Read = true;
             return true;

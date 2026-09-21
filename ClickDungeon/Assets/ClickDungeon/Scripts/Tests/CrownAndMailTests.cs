@@ -67,6 +67,23 @@ namespace ClickDungeon.Tests
             Assert.That(Mailbox.Unread(profile), Is.Zero);
         }
 
+        /// <summary>
+        /// SEC-04: a gift only ever adds. A hand-edited letter carrying a negative amount used to be collected as written,
+        /// taking coins out of the purse — and the purse is only clamped back to zero on the next load.
+        /// </summary>
+        [Test]
+        public void AGiftCanOnlyEverAddToThePurse()
+        {
+            var profile = new ProfileState { Coins = 100, Gems = 5 };
+            // A letter worth collecting overall, with one amount edited to run the other way.
+            var letter = Mailbox.Post(profile, "Nobody", "Hand-edited", "Written into the file by hand.",
+                new RewardBundle { Gems = 2000, Coins = -1000, Label = "a trap" });
+
+            Assert.That(Mailbox.Collect(profile, letter.Id), Is.True);
+            Assert.That(profile.Coins, Is.EqualTo(100), "Nothing was taken out of the purse.");
+            Assert.That(profile.Gems, Is.EqualTo(2005), "And what the letter really gave still arrived.");
+        }
+
         [Test]
         public void EveryAchievementCanBeReachedAndGivesSomething()
         {

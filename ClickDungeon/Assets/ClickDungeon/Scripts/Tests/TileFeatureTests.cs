@@ -240,6 +240,113 @@ namespace ClickDungeon.Tests
             Assert.That(run.Hero.HasKey, Is.True);
         }
 
+        /// <summary>A run standing in a vault that holds a great chest: the chest that pays a gem and a piece of gear (D-018, D-028).</summary>
+        static RunState InAVaultWithAGreatChest()
+        {
+            for (ulong seed = 1; seed <= 40; seed++)
+            {
+                var run = Run(2, seed, ".....", ".....", "HdK.X", ".....", ".....");
+                run.Hero.HasKey = true;
+                DoOk(run, PlayerCommand.Move(P(1, 2)));
+                Assert.That(run.Floor.IsVault, Is.True, "Test setup: the hero is in the vault.");
+                // The guards are not what is under test.
+                run.Floor.Enemies.Clear();
+                if (Board.AllCells.Any(p => run.Floor[p].GreatChest)) return run;
+            }
+            Assert.Fail("No vault with a great chest in 40 seeds.");
+            return null;
+        }
+
+        /// <summary>Opens every closed chest on the floor, a tap at a time, standing on each one.</summary>
+        static void LootEveryChest(RunState run)
+        {
+            foreach (var p in Board.AllCells.Where(p => run.Floor[p].IsClosedChest).ToList())
+            {
+                // Chests do not block, so the hero may stand on the one they open.
+                run.Hero.Pos = p;
+                OpenChest(run, p);
+            }
+        }
+
+        static void LeaveTheVault(RunState run)
+        {
+            var exit = run.Floor.Exit;
+            run.Floor.Enemies.Clear();
+            run.Hero.Pos = Directions.All.Select(d => exit.Step(d)).First(p => p.InBounds && Board.HeroCanEnter(run, p));
+            DoOk(run, PlayerCommand.Move(exit));
+            Assert.That(run.Floor.IsVault, Is.False, "Test setup: the hero walked back out.");
+        }
+
+        [Test]
+        public void AVaultCannotBeLootedTwice()
+        {
+            // REL-26: the door stays open behind the hero and GenerateVault is pure in (seed, floor, door), so a second step
+            // through it used to build an identical room with its chests shut again.
+            var run = InAVaultWithAGreatChest();
+            var vault = run.Floor;
+            LootEveryChest(run);
+            int gems = run.GemsFound, items = run.ItemsFound.Count, chests = run.ChestsOpened;
+            int coins = run.CoinsFound, rewards = run.Rewards.Count;
+            Assert.That(gems, Is.GreaterThan(0), "Test setup: the great chest paid its gem.");
+            Assert.That(chests, Is.GreaterThan(0), "Test setup: something was looted.");
+
+            LeaveTheVault(run);
+            DoOk(run, PlayerCommand.Move(P(1, 2)));
+
+            Assert.That(run.Floor.IsVault, Is.True);
+            Assert.That(run.Floor, Is.SameAs(vault), "A vault is a one-time room, not a fresh copy.");
+            Assert.That(Board.AllCells.Count(p => run.Floor[p].IsClosedChest), Is.Zero, "The chests stay as they were left.");
+
+            LootEveryChest(run);
+            Assert.That(run.GemsFound, Is.EqualTo(gems));
+            Assert.That(run.ItemsFound.Count, Is.EqualTo(items));
+            Assert.That(run.ChestsOpened, Is.EqualTo(chests));
+            Assert.That(run.CoinsFound, Is.EqualTo(coins));
+            Assert.That(run.Rewards.Count, Is.EqualTo(rewards));
+        }
+
+        [Test]
+        public void ALootedVaultComesBackWithTheSave()
+        {
+            // Carrying the room on the run rather than re-deriving it also means a vault survives a save and load, which it
+            // did not once the hero had stepped back out (REL-26).
+            var run = InAVaultWithAGreatChest();
+            LootEveryChest(run);
+            int gems = run.GemsFound, chests = run.ChestsOpened;
+            LeaveTheVault(run);
+
+            var loaded = SaveSerializer.FromJson(SaveSerializer.ToJson(run));
+            DoOk(loaded, PlayerCommand.Move(P(1, 2)));
+            Assert.That(loaded.Floor.IsVault, Is.True);
+            Assert.That(Board.AllCells.Count(p => loaded.Floor[p].IsClosedChest), Is.Zero, "The looted room travelled with the save.");
+
+            LootEveryChest(loaded);
+            Assert.That(loaded.GemsFound, Is.EqualTo(gems));
+            Assert.That(loaded.ChestsOpened, Is.EqualTo(chests));
+        }
+
+        [Test]
+        public void AChestPaysOutOnceHoweverOftenItsRoomIsRebuilt()
+        {
+            // The other half of REL-26: a chest's gem, its item and the chest counter sat above the reward dedupe and were
+            // minted on every open. An identical, unlooted copy of a room is always one GenerateVault call away, so the guard
+            // has to sit on the chest itself — not only on the door that stopped the hero reaching it.
+            var run = InAVaultWithAGreatChest();
+            LootEveryChest(run);
+            int gems = run.GemsFound, items = run.ItemsFound.Count, chests = run.ChestsOpened, coins = run.CoinsFound;
+            Assert.That(gems, Is.GreaterThan(0), "Test setup: the great chest paid its gem.");
+
+            run.Floor = FloorGenerator.GenerateVault(run.RunSeed, run.OuterFloor.FloorIndex, P(1, 2), Catalog);
+            run.Floor.Enemies.Clear();
+            Assert.That(Board.AllCells.Count(p => run.Floor[p].IsClosedChest), Is.GreaterThan(0), "Test setup: the copy is unlooted.");
+            LootEveryChest(run);
+
+            Assert.That(run.GemsFound, Is.EqualTo(gems), "Gems are minted once.");
+            Assert.That(run.ItemsFound.Count, Is.EqualTo(items), "The same item is not found twice.");
+            Assert.That(run.ChestsOpened, Is.EqualTo(chests), "The chest counter does not double.");
+            Assert.That(run.CoinsFound, Is.EqualTo(coins));
+        }
+
         [Test]
         public void AVaultsChestsGetTheirQualityLikeEveryOtherFloor()
         {

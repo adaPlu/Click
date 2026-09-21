@@ -39,6 +39,9 @@ namespace ClickDungeon.Unity
         {
             UnityEngine.Application.targetFrameRate = 60;
             AutomationMode = ArgValue("-cdShot") != null || ArgValue("-cdWatch") != null;
+            // The saves and the profile are already kept apart below; the device's preferences are the third thing an
+            // automation run must not write (D-051).
+            UserPrefs.ReadOnly = AutomationMode;
             _automationTelemetryDir = AutomationMode ? ArgValue("-cdTelemetryDir") : null;
             Store = new FileSaveStore(Path.Combine(UnityEngine.Application.persistentDataPath, AutomationMode ? "saves-automation" : "saves"));
             // Automation keeps its coins in memory, so screenshot runs never spend or bank a real player's profile.
@@ -461,6 +464,14 @@ namespace ClickDungeon.Unity
     /// </summary>
     public static class UserPrefs
     {
+        /// <summary>
+        /// Set for a screenshot or watch build (D-051). Automation keeps its saves and its profile to itself, but these
+        /// preferences are the device's, shared by every build of the game, and nothing else stops a stray tap in a demo
+        /// from turning a tester's playtest log off for good — silently, because automation does not read the setting it
+        /// just wrote. Reads still answer honestly; only writes are refused.
+        /// </summary>
+        public static bool ReadOnly;
+
         /// <summary>Movement mode for the next new run (D-021). A run in progress keeps the mode it was started with.</summary>
         public static Domain.MovementMode Movement
         {
@@ -469,6 +480,7 @@ namespace ClickDungeon.Unity
                 : Domain.MovementMode.Free;
             set
             {
+                if (ReadOnly) return;
                 PlayerPrefs.SetInt("cd.movementMode", (int)value);
                 PlayerPrefs.Save();
             }
@@ -480,6 +492,7 @@ namespace ClickDungeon.Unity
             get => PlayerPrefs.GetString("cd.hero", Content.ContentCatalog.DefaultHeroId);
             set
             {
+                if (ReadOnly) return;
                 PlayerPrefs.SetString("cd.hero", value);
                 PlayerPrefs.Save();
             }
@@ -516,6 +529,7 @@ namespace ClickDungeon.Unity
             get => (Domain.Difficulty)PlayerPrefs.GetInt("cd.lastDifficulty", (int)Domain.Difficulty.Easy);
             set
             {
+                if (ReadOnly) return;
                 PlayerPrefs.SetInt("cd.lastDifficulty", (int)value);
                 PlayerPrefs.Save();
             }
@@ -523,6 +537,7 @@ namespace ClickDungeon.Unity
 
         static void SetBool(string key, bool value)
         {
+            if (ReadOnly) return;
             PlayerPrefs.SetInt(key, value ? 1 : 0);
             PlayerPrefs.Save();
         }

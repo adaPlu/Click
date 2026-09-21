@@ -23,7 +23,10 @@ namespace ClickDungeon.Application
             _store = store;
             _profiles = profiles ?? new MemoryProfileStore();
             Profile = _profiles.Load();
-            ProfileNotice = _profiles.LoadNotice;
+            // Straight to the field, not the property: a notice from the load is the one that knows where the player's
+            // profile actually is, and the save a few lines below may well fail because of what it says (REL-24).
+            _profileNotice = _profiles.LoadNotice;
+            _noticeCameFromTheLoad = _profileNotice != null;
             Telemetry = telemetry;
             // A new profile gets its welcome letter; one from before the crown gets what it had already earned.
             int letters = Profile.NextMailId;
@@ -35,11 +38,29 @@ namespace ClickDungeon.Application
         /// <summary>What the player keeps between runs (D-025). Never read during a run: provisions become hero numbers at the start.</summary>
         public ProfileState Profile { get; private set; }
 
+        string _profileNotice;
+
+        /// <summary>
+        /// True while <see cref="ProfileNotice"/> is still the one the store set when it read the profile. A store that
+        /// refuses to write over a file it could not read, or one from a newer build, fails every save afterwards — and the
+        /// generic "could not be saved" says nothing about where that file is, so it must not replace the load's notice.
+        /// </summary>
+        bool _noticeCameFromTheLoad;
+
         /// <summary>
         /// What to tell the player about their profile: set when it had to be read from its backup or could not be read at
-        /// all (D-043), and when a write failed. The title screen shows it; clearing it is the reader's job.
+        /// all (D-043), and when a write failed. The title screen shows it; clearing it is the reader's job — and clearing
+        /// it lets the next write failure speak again.
         /// </summary>
-        public string ProfileNotice { get; set; }
+        public string ProfileNotice
+        {
+            get => _profileNotice;
+            set
+            {
+                _profileNotice = value;
+                _noticeCameFromTheLoad = false;
+            }
+        }
 
         /// <summary>Writes the profile. Presentation calls this after spending in the shop.</summary>
         public void SaveProfile()
@@ -47,8 +68,10 @@ namespace ClickDungeon.Application
             if (_profiles == null || Profile == null) return;
             // A profile write that fails is the one failure the player must hear about: what they just bought or earned
             // is only in memory (D-043). The reason goes to the log; the notice stays free of file paths.
-            if (!Guarded(() => _profiles.Save(Profile)))
-                ProfileNotice = "Your profile could not be saved, so coins, gear and talents may be back as they were when you next start the game.";
+            if (Guarded(() => _profiles.Save(Profile))) return;
+            // Unless the load already said something more useful, which is why this write failed (REL-24).
+            if (_noticeCameFromTheLoad) return;
+            ProfileNotice = "Your profile could not be saved, so coins, gear and talents may be back as they were when you next start the game.";
         }
 
         /// <summary>Content tuned for the current run's difficulty. Changes when a run of another tier starts or resumes.</summary>

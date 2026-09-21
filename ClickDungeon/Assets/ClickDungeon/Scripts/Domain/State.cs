@@ -144,6 +144,13 @@ namespace ClickDungeon.Domain
         public FloorState OuterFloor;
         /// <summary>The door cell the hero stepped through, where they come back out.</summary>
         public GridPos ReturnPos = GridPos.Invalid;
+        /// <summary>
+        /// The vault already opened off this floor, kept exactly as it was left: a vault is a one-time room, so stepping back
+        /// through its door finds the looted chests and the dead guards, not a fresh copy (REL-26). Cleared on every new floor.
+        /// </summary>
+        public FloorState VisitedVault;
+        /// <summary>The door <see cref="VisitedVault"/> hangs off.</summary>
+        public GridPos VisitedVaultDoor = GridPos.Invalid;
         public List<RewardRecord> Rewards = new List<RewardRecord>();
         /// <summary>Treasure carried out of the dungeon (D-025). Banked into the profile when the run ends.</summary>
         public int CoinsFound;

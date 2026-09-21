@@ -92,6 +92,23 @@ namespace ClickDungeon.Tests
         /// <summary>Most turns spent on random moves. Separates the tiers clearly.</summary>
         public const double FlailingMistakeRate = 0.7;
 
+        /// <summary>
+        /// Every tier number in this repo is measured by the bot, so a guard that only reads win rates cannot tell a
+        /// dungeon that got harder from a bot that stopped playing. MAINT-15 was exactly that: a bot looping between
+        /// teleport pads measured Knight's Trial at 30% won and no guard moved, because the count it would have moved
+        /// was already being tallied and never read (D-053).
+        /// </summary>
+        static void AssertTheBotWasPlaying(Tally tally, string what)
+        {
+            // A ceiling, not zero: the 60-seed DifficultySweep shows one or two stalls a tier even with a healthy bot,
+            // so zero would go red the first time a legitimate change moved a seed. What this catches is the systemic
+            // case -- MAINT-15 looped the bot on whole classes of floor, not on one unlucky seed.
+            int allowed = 1 + tally.Runs / 30;
+            Assert.That(tally.Stalled, Is.LessThanOrEqualTo(allowed),
+                $"{tally.Stalled} of {tally.Runs} {what} runs ran out of commands without an ending (at most {allowed} "
+                + $"is normal): by floor {ByFloor(tally.StalledByFloor)}. That is the instrument failing, not the dungeon winning.");
+        }
+
         [Test]
         public void SquiresStrollLetsANovicePlayerBeatBlobert()
         {
@@ -100,6 +117,7 @@ namespace ClickDungeon.Tests
             var easy = Measure(Difficulty.Easy, 30, NoviceMistakeRate, blind: true);
             Assert.That(easy.ReachedBoss, Is.GreaterThanOrEqualTo(27), $"Only {easy.ReachedBoss}/30 novice easy runs reached floor 5.");
             Assert.That(easy.Won, Is.GreaterThanOrEqualTo(26), $"Only {easy.Won}/30 novice easy runs beat Lord Blobert.");
+            AssertTheBotWasPlaying(easy, "easy");
         }
 
         [Test]
@@ -109,6 +127,7 @@ namespace ClickDungeon.Tests
             // 52% of 60 seeds (DifficultySweep). This 30-seed guard sits below that, so it catches a real collapse.
             var medium = Measure(Difficulty.Medium, 30, NoviceMistakeRate, blind: true);
             Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(11), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
+            AssertTheBotWasPlaying(medium, "medium");
         }
 
         [Test]
@@ -235,14 +254,24 @@ namespace ClickDungeon.Tests
                 return won;
             }
 
-            // Measured after D-047 and re-measured after D-048: novice 20 / 17 on Knight's Trial, 9 / 10 on Blobert's
-            // Wrath. The guard allows drift but not a class that is twice the other, which is what the numbers were before.
+            // The band has to be a ratio, not a count. D-047 measured novice 20 / 17 and an absolute +/-8 was a
+            // reasonable fence around that; D-050 then halved the win counts, and at the smaller scale the same 8
+            // tolerates 8 against 16 -- the very 2x split this guard exists to refuse (D-053). A floor under the
+            // smaller count keeps the ratio meaningful when both classes are losing most runs.
             foreach (var (skill, rate) in new[] { ("casual", AutoPlayer.CasualMistakeRate), ("novice", NoviceMistakeRate) })
             {
                 int knight = Wins(ContentCatalog.DefaultHeroId, rate);
                 int paladin = Wins("dawnward", rate);
-                Assert.That(System.Math.Abs(knight - paladin), Is.LessThanOrEqualTo(8),
-                    $"{skill}: Knight won {knight}/{runs} and Paladin {paladin}/{runs} of the same dungeons.");
+                int fewer = System.Math.Min(knight, paladin), more = System.Math.Max(knight, paladin);
+                Assert.That(fewer, Is.GreaterThanOrEqualTo(5),
+                    $"{skill}: the weaker class won only {fewer}/{runs}. Both classes have collapsed -- this is a "
+                    + "difficulty regression, not a parity one, and the ratio below would be meaningless anyway.");
+                // Whichever fence is tighter at this scale. The ratio alone would be looser than the old +/-8 above
+                // 13 wins, so keeping both means this guard can only ever have become stricter.
+                int allowed = System.Math.Min(fewer + 8, fewer * 8 / 5);
+                Assert.That(more, Is.LessThanOrEqualTo(allowed),
+                    $"{skill}: Knight won {knight}/{runs} and Paladin {paladin}/{runs} of the same dungeons -- "
+                    + $"the weaker won {fewer}, so the stronger may win at most {allowed}.");
             }
         }
 

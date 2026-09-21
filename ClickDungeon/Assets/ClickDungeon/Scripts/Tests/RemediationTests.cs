@@ -149,7 +149,7 @@ namespace ClickDungeon.Tests
     /// <summary>REL-02 / REL-09 / MAINT-02 / MAINT-03: the tester log collector.</summary>
     public class PlaytestKitTests
     {
-        static string RepoRoot()
+        internal static string RepoRoot()
         {
             foreach (var start in new[] { Directory.GetCurrentDirectory(), TestContext.CurrentContext.TestDirectory })
             {
@@ -233,6 +233,222 @@ namespace ClickDungeon.Tests
             {
                 if (Directory.Exists(root)) Directory.Delete(root, true);
             }
+        }
+    }
+
+    /// <summary>
+    /// CI-09 / CI-10 / DATA-06: the kit is the only gate there is, and this repo is public.
+    /// These run real processes (git, powershell) on purpose -- the thing under test is the tooling.
+    /// </summary>
+    public class KitGateAndTesterDataTests
+    {
+        static string RepoRoot() => PlaytestKitTests.RepoRoot();
+
+        static string Kit(string file) => Path.Combine(RepoRoot(), "tools", "playtest-kit", file);
+
+        struct Ran
+        {
+            public int Code;
+            public string Output;
+        }
+
+        static Ran Run(string exe, string args)
+        {
+            var start = new ProcessStartInfo(exe, args)
+            {
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                WorkingDirectory = RepoRoot(),
+            };
+            var text = new System.Text.StringBuilder();
+            using (var process = new Process { StartInfo = start })
+            {
+                // Read both pipes asynchronously: a synchronous ReadToEnd on one can deadlock on the other.
+                process.OutputDataReceived += (s, e) => { if (e.Data != null) lock (text) text.AppendLine(e.Data); };
+                process.ErrorDataReceived += (s, e) => { if (e.Data != null) lock (text) text.AppendLine(e.Data); };
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                Assert.That(process.WaitForExit(120000), Is.True, exe + " timed out.");
+                process.WaitForExit();
+                lock (text) return new Ran { Code = process.ExitCode, Output = text.ToString() };
+            }
+        }
+
+        // ---- DATA-06 -------------------------------------------------------
+
+        [Test]
+        public void NoTelemetryArtifactCanBeCommitted()
+        {
+            // Tester zips are named after the player and carry Player.log (GPU/CPU/OS/resolution).
+            // github.com/adaPlu/Click is public; one push is permanent.
+            foreach (var path in new[]
+                     {
+                         "playtest-logs/x/a.jsonl",
+                         "playtest-summary.md",
+                         "ClickDungeon-playtest-logs.zip",
+                         "summary.md",
+                         "tools/playtest-kit/ClickDungeon-playtest-logs.zip",
+                         "docs/playtest-logs/someone/run.jsonl",
+                     })
+            {
+                var ran = Run("git", $"-C \"{RepoRoot()}\" check-ignore -q -- \"{path}\"");
+                Assert.That(ran.Code, Is.EqualTo(0), $"{path} is not gitignored. {ran.Output}");
+            }
+        }
+
+        [Test]
+        public void TheGuideNeverWritesTesterDataIntoTheRepo()
+        {
+            string repo = RepoRoot();
+            string guidePath = Path.Combine(repo, "docs", "playtest-guide.md");
+            var lines = File.ReadAllLines(guidePath);
+            string guide = string.Join("\n", lines);
+
+            void MustBeOutsideTheRepo(string token, string where)
+            {
+                // Placeholders like <player1> are not legal path characters; they do not change where the path lives.
+                string probe = token.Trim('`', '.', ',').Replace("<", "").Replace(">", "");
+                Assert.That(Path.IsPathRooted(probe), Is.True, $"{where}: '{token}' is a repo-relative path. Tester data must live outside the worktree.");
+                string full = Path.GetFullPath(probe).TrimEnd(Path.DirectorySeparatorChar);
+                Assert.That(full.StartsWith(repo.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase),
+                    Is.False, $"{where}: '{token}' resolves inside the repo ({full}).");
+            }
+
+            // The summarize command: every path it reads from and writes to.
+            var command = lines.SingleOrDefault(l => l.Contains("ClickDungeon.Telemetry.Report"));
+            Assert.That(command, Is.Not.Null, "The summarize command vanished from the guide.");
+            var words = command.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            int dashDash = Array.IndexOf(words, "--");
+            Assert.That(dashDash, Is.GreaterThan(-1), command);
+            var arguments = words.Skip(dashDash + 1).Where(w => !w.StartsWith("--")).ToList();
+            Assert.That(arguments.Count, Is.GreaterThanOrEqualTo(2), command);
+            foreach (var argument in arguments) MustBeOutsideTheRepo(argument, "summarize command");
+            int outFlag = Array.IndexOf(words, "--out");
+            Assert.That(outFlag, Is.GreaterThan(dashDash), "The summarize command no longer writes to an explicit --out.");
+            MustBeOutsideTheRepo(words[outFlag + 1], "--out");
+
+            // The "unzip every tester's logs into ..." example.
+            int bullet = Array.FindIndex(lines, l => l.Contains("Unzip every tester's logs"));
+            Assert.That(bullet, Is.GreaterThan(-1), "The unzip step vanished from the guide.");
+            var bulletText = new System.Text.StringBuilder(lines[bullet]);
+            for (int i = bullet + 1; i < lines.Length && lines[i].StartsWith("  "); i++) bulletText.Append(' ').Append(lines[i]);
+            var examples = Regex.Matches(bulletText.ToString(), "`([^`]+)`").Cast<Match>()
+                .Select(m => m.Groups[1].Value)
+                .Where(v => v.Contains("/") || v.Contains("\\"))
+                .ToList();
+            Assert.That(examples, Is.Not.Empty, "The unzip step gives no example folder at all.");
+            foreach (var example in examples) MustBeOutsideTheRepo(example, "unzip example");
+
+            // Belt: no relative playtest-logs directory anywhere in the page.
+            Assert.That(Regex.IsMatch(guide, @"(?<![\w:\\/])playtest-logs[/\\]"), Is.False,
+                "The guide still names a repo-relative playtest-logs/ folder.");
+        }
+
+        // ---- CI-09 ---------------------------------------------------------
+
+        static Ran Gate(string runnerOutput, int exitCode = 0)
+        {
+            string file = Path.Combine(Path.GetTempPath(), "cd-gate-" + Guid.NewGuid().ToString("N") + ".txt");
+            File.WriteAllText(file, runnerOutput);
+            try
+            {
+                return Run("powershell", $"-NoProfile -ExecutionPolicy Bypass -File \"{Kit("test-gate.ps1")}\" -OutputFile \"{file}\" -ExitCode {exitCode}");
+            }
+            finally
+            {
+                if (File.Exists(file)) File.Delete(file);
+            }
+        }
+
+        const string PassedLine = "Passed!  - Failed:     0, Passed:   289, Skipped:     0, Total:   289, Duration: 19 s - ClickDungeon.Sim.Tests.dll (net10.0)";
+
+        [Test]
+        public void TheKitGateAcceptsAFullRun()
+        {
+            var ran = Gate("Determining projects to restore...\n" + PassedLine + "\n");
+            Assert.That(ran.Code, Is.EqualTo(0), ran.Output);
+            Assert.That(ran.Output.Trim(), Does.Contain("289"), "The gate reports the count it verified, for VERSION.txt.");
+        }
+
+        [Test]
+        public void TheKitGateRejectsARunThatDiscoveredNothing()
+        {
+            // This is the whole point: `dotnet test` exits 0 here, so the old `if ($LASTEXITCODE -ne 0)` passed it.
+            var ran = Gate("No test matches the given testcase filter `FullyQualifiedName~Nope` in ClickDungeon.Sim.Tests.dll\n", 0);
+            Assert.That(ran.Code, Is.Not.EqualTo(0), "A run that discovered no tests was accepted as a gate pass.");
+
+            var quiet = Gate("Determining projects to restore...\nRestored ClickDungeon.Sim.Tests.csproj\n", 0);
+            Assert.That(quiet.Code, Is.Not.EqualTo(0), "A run with no summary line at all was accepted as a gate pass.");
+        }
+
+        [Test]
+        public void TheKitGateRejectsAShrunkenSuite()
+        {
+            var ran = Gate("Passed!  - Failed:     0, Passed:     4, Skipped:     0, Total:     4, Duration: 1 s - x.dll (net10.0)\n");
+            Assert.That(ran.Code, Is.Not.EqualTo(0), "Four tests passed for the whole suite and the gate let it through.");
+        }
+
+        [Test]
+        public void TheKitGateStillRejectsFailuresAndBadExitCodes()
+        {
+            var failed = Gate("Failed!  - Failed:     3, Passed:   286, Skipped:     0, Total:   289, Duration: 19 s - x.dll (net10.0)\n");
+            Assert.That(failed.Code, Is.Not.EqualTo(0), "Failing tests were accepted.");
+
+            var crashed = Gate(PassedLine + "\n", 1);
+            Assert.That(crashed.Code, Is.Not.EqualTo(0), "A non-zero dotnet test exit code was ignored.");
+        }
+
+        [Test]
+        public void TheKitGateFloorIsWorthHaving()
+        {
+            var script = File.ReadAllText(Kit("test-gate.ps1"));
+            var floor = Regex.Match(script, @"\$MinimumTests\s*=\s*(\d+)");
+            Assert.That(floor.Success, Is.True, "test-gate.ps1 no longer has a default minimum.");
+            Assert.That(int.Parse(floor.Groups[1].Value), Is.GreaterThanOrEqualTo(200), "The floor is too low to detect a suite that stopped running.");
+        }
+
+        [Test]
+        public void MakeKitUsesTheGateAndRecordsWhetherItRan()
+        {
+            var kit = File.ReadAllText(Kit("make-kit.ps1"));
+            Assert.That(kit, Does.Contain("test-gate.ps1"), "make-kit.ps1 no longer runs the gate.");
+            Assert.That(Regex.IsMatch(kit, @"if\s*\(\s*\$LASTEXITCODE\s*-ne\s*0\s*\)\s*\{\s*throw"), Is.False,
+                "make-kit.ps1 is back to gating on the exit code alone, which is 0 when no tests are discovered.");
+            // VERSION.txt has to distinguish a gated kit from a -SkipTests one.
+            Assert.That(kit, Does.Contain("SKIPPED"), "A -SkipTests kit leaves no trace of having skipped the gate.");
+            var versionLines = Regex.Match(kit, @"\$versionLines\s*=\s*@\((.*?)^\)", RegexOptions.Singleline | RegexOptions.Multiline);
+            Assert.That(versionLines.Success, Is.True, "make-kit.ps1 no longer builds VERSION.txt from $versionLines.");
+            Assert.That(versionLines.Groups[1].Value, Does.Contain("$gateLine"), "The gate result is not written into VERSION.txt.");
+            Assert.That(Regex.IsMatch(kit, @"\$versionLines\s*\|\s*Set-Content[^\r\n]*VERSION\.txt"), Is.True,
+                "$versionLines is not what gets written to VERSION.txt.");
+        }
+
+        // ---- CI-10 ---------------------------------------------------------
+
+        [Test]
+        public void TheKitIsNamedAfterTheBuildStampAndAMismatchIsFatal()
+        {
+            var kit = File.ReadAllText(Kit("make-kit.ps1"));
+
+            var name = Regex.Match(kit, @"(?m)^\$name\s*=\s*(.+)$");
+            Assert.That(name.Success, Is.True, "make-kit.ps1 no longer names the kit.");
+            Assert.That(name.Groups[1].Value, Does.Contain("$builtFrom"), "The kit name must come from the build stamp.");
+            Assert.That(name.Groups[1].Value, Does.Not.Contain("$version"),
+                "The kit is still labelled with the packaging-time commit, which the player may not have been built from.");
+
+            Assert.That(kit, Does.Contain("AllowVersionMismatch"), "There is no explicit opt-out switch for a stamp mismatch.");
+            var guard = Regex.Match(kit, @"if\s*\(\s*\$mismatch\s+-and\s+-not\s+\$AllowVersionMismatch\s*\)\s*\{\s*\r?\n?\s*throw");
+            Assert.That(guard.Success, Is.True, "A build/packaging version mismatch is not a hard failure.");
+            // ...and the throw has to come before anything is staged or zipped.
+            Assert.That(guard.Index, Is.LessThan(kit.IndexOf("New-Item -ItemType Directory", StringComparison.Ordinal)),
+                "The mismatch check runs after the kit has already been built.");
+
+            // VERSION.txt keeps both versions, as CI-02's fix required.
+            Assert.That(kit, Does.Contain("Player built from: $builtFrom"));
+            Assert.That(Regex.IsMatch(kit, @"""[^""]*\(git\):\s*\$version"""), Is.True, "VERSION.txt no longer records the packaging-time git version.");
         }
     }
 }

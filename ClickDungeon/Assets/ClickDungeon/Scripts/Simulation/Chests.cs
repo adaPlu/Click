@@ -146,13 +146,17 @@ namespace ClickDungeon.Simulation
         {
             var state = run.Floor[cell];
             if (!state.IsClosedChest) return null;
+            // A room can be re-entered and rebuilt with its chests shut again, so *everything* a chest pays out is once-only,
+            // not just the reward draws (REL-26). The first draw's transaction id is the chest's own, so a record under that
+            // id already means "this chest has paid out", in this run and in any save made from it.
+            bool firstOpening = !run.HasReward(TransactionId(run.Floor.FloorIndex, cell, run.Floor.IsVault, 0));
             state.ChestOpened = true;
-            run.ChestsOpened++;
+            if (firstOpening) run.ChestsOpened++;
             // The special key turns in the lock and stays there (D-026).
             if (state.Premium && run.Hero.SpecialKeys > 0) run.Hero.SpecialKeys--;
-            if (state.GreatChest) Treasure.Gems(run, catalog.Treasure.GemsPerGreatChest, cell, events);
+            if (firstOpening && state.GreatChest) Treasure.Gems(run, catalog.Treasure.GemsPerGreatChest, cell, events);
             // A vault's great chest and a premium chest each hold one piece of equipment (D-028).
-            if (state.GreatChest || state.Premium) Treasure.Item(run, catalog, cell, state.Premium ? 2UL : 1UL,
+            if (firstOpening && (state.GreatChest || state.Premium)) Treasure.Item(run, catalog, cell, state.Premium ? 2UL : 1UL,
                 state.Premium ? catalog.Treasure.ItemChancePremium : catalog.Treasure.ItemChanceGreatChest, events);
 
             int draws = RewardDraws(state, catalog);

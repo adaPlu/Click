@@ -9,8 +9,13 @@ namespace ClickDungeon.Tests
     /// <summary>
     /// Prints the slice the balance guards assert, sighted and blind, at the sample sizes those guards use. Run it after
     /// anything that moves the numbers, and set the guard thresholds from what it prints rather than by nudging them.
+    ///
+    /// <para><b>Nothing in here asserts anything.</b> Every method is a printer, so removing <c>[Explicit]</c> would not
+    /// restore a guard — it would add methods that pass unconditionally and are then counted as protection, which is
+    /// worse than a skip. It used to be called <c>GuardBaselineTests</c>, and that name was the whole misunderstanding
+    /// (D-053). The guards themselves live in <see cref="BalanceTests"/>; these measurements are what set them.</para>
     /// </summary>
-    public class GuardBaselineTests
+    public class GuardBaselineReports
     {
         /// <summary>Each hero against each tier, so a new class can be judged next to the one it is joining (D-024).</summary>
         [Test, Explicit("Tuning aid: dotnet test --filter Name=HeroSweep --logger \"console;verbosity=detailed\"")]

@@ -89,6 +89,26 @@ namespace ClickDungeon.Tests
             Assert.That(changes, Is.True);
         }
 
+        /// <summary>
+        /// Rarer gear costs more, counted in one currency. The shop sells gems as well as gear, so a gem price is only
+        /// dearer than a coin price if it is dearer at the exchange the same screen offers.
+        /// </summary>
+        [Test]
+        public void GearPricesRiseWithRarityInASingleCurrency()
+        {
+            var rarities = (ItemRarity[])Enum.GetValues(typeof(ItemRarity));
+            int previous = 0;
+            foreach (var rarity in rarities)
+            {
+                var item = Catalog.Items.FirstOrDefault(i => i.Rarity == rarity);
+                Assert.That(item, Is.Not.Null, $"Test setup: the catalog has {rarity} gear.");
+                int coins = Shop.GearPriceInCoins(item);
+                Assert.That(coins, Is.GreaterThan(previous),
+                    $"{rarity} gear costs {coins} coins, no more than the rarity below it.");
+                previous = coins;
+            }
+        }
+
         [Test]
         public void BuyingGearPaysItsRarityPriceAndWearsItInAnEmptySlot()
         {

@@ -97,7 +97,7 @@ namespace ClickDungeon.Simulation
                     var c = floor[p];
                     return c.Terrain == Terrain.Floor && c.Hazard == HazardKind.None && !c.IsClosedChest;
                 };
-                var fromStart = Pathfinding.DistanceField(new[] { floor.Start }, safe);
+                var fromStart = Reachable(floor, floor.Start, safe);
                 // `safe` excludes doors, so the key and the exit are always reachable without opening a vault.
                 if (floor.IsVault)
                 {
@@ -119,13 +119,54 @@ namespace ClickDungeon.Simulation
                 }
                 else
                 {
-                    var fromKey = Pathfinding.DistanceField(new[] { keyPos }, safe);
+                    var fromKey = Reachable(floor, keyPos, safe);
                     if (fromKey[floor.Exit.Index] == Pathfinding.Unreachable)
                         errors.Add("Exit is unreachable from the key without crossing hazards.");
                 }
             }
 
             return errors.Count == initialCount;
+        }
+
+        /// <summary>
+        /// Distance over the tiles the hero can actually stand on. A teleport pad is never crossed: stepping onto one ends
+        /// the step on its partner, and arriving there does not fire it again (<see cref="Hazards.HeroEnter"/>), so a pad is
+        /// an edge to its partner rather than a tile with neighbours of its own (REL-27). Straight steps only, like the
+        /// distance field this replaced.
+        /// </summary>
+        static int[] Reachable(FloorState floor, GridPos source, Func<GridPos, bool> safe)
+        {
+            var dist = new int[BoardRules.CellCount];
+            for (int i = 0; i < dist.Length; i++) dist[i] = Pathfinding.Unreachable;
+            if (!source.InBounds) return dist;
+
+            var queue = new Queue<GridPos>();
+            dist[source.Index] = 0;
+            queue.Enqueue(source);
+            while (queue.Count > 0)
+            {
+                var p = queue.Dequeue();
+                foreach (var d in Directions.All)
+                {
+                    var n = p.Step(d);
+                    if (!n.InBounds || !safe(n)) continue;
+                    var landed = floor[n].Content == ContentKind.Teleport ? Partner(floor, n) : n;
+                    // A pad with no partner is inert: the hero stays where they stepped.
+                    if (!landed.InBounds || !safe(landed)) landed = n;
+                    if (dist[landed.Index] != Pathfinding.Unreachable) continue;
+                    dist[landed.Index] = dist[p.Index] + 1;
+                    queue.Enqueue(landed);
+                }
+            }
+            return dist;
+        }
+
+        /// <summary>The pad a hop from <paramref name="pad"/> ends on, picked exactly as <see cref="Hazards.HeroEnter"/> picks it.</summary>
+        static GridPos Partner(FloorState floor, GridPos pad)
+        {
+            foreach (var q in Board.AllCells)
+                if (q != pad && floor[q].Content == ContentKind.Teleport) return q;
+            return GridPos.Invalid;
         }
     }
 }

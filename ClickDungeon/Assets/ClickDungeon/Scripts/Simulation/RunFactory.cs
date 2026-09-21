@@ -43,6 +43,9 @@ namespace ClickDungeon.Simulation
         public static void BeginFloor(RunState run, int floorIndex, ContentCatalog catalog, List<GameEvent> events)
         {
             run.Floor = FloorGenerator.Generate(run.RunSeed, floorIndex, catalog);
+            // A new floor has its own door and its own vault behind it.
+            run.VisitedVault = null;
+            run.VisitedVaultDoor = GridPos.Invalid;
             SetupFloor(run, catalog, events);
         }
 
@@ -58,11 +61,25 @@ namespace ClickDungeon.Simulation
             run.OuterFloor = outer;
             // The hero comes back out onto the tile they stepped in from: nobody ever stands in a doorway.
             run.ReturnPos = StepOutTile(outer, door, from);
-            run.Floor = FloorGenerator.GenerateVault(run.RunSeed, outer.FloorIndex, door, catalog);
-            AssignChestQuality(run);
-            // A vault hangs off its floor and keeps that floor's index, so renown reaches its guards' blows; their hearts
-            // have to come from the same place, or they hit for the raised number and die on the base one (D-046).
-            ApplyThreat(run, catalog);
+            // The door stays open after a visit, so a second step through it must find the room as it was left: looted chests,
+            // dead guards and all. Only a room nobody has been in is generated and stocked (REL-26).
+            bool revisit = run.VisitedVault != null && run.VisitedVaultDoor == door;
+            if (revisit)
+            {
+                // While the hero is inside, the room is the live floor; LeaveVault puts it back.
+                run.Floor = run.VisitedVault;
+                run.VisitedVault = null;
+            }
+            else
+            {
+                run.VisitedVault = null;
+                run.Floor = FloorGenerator.GenerateVault(run.RunSeed, outer.FloorIndex, door, catalog);
+                AssignChestQuality(run);
+                // A vault hangs off its floor and keeps that floor's index, so renown reaches its guards' blows; their hearts
+                // have to come from the same place, or they hit for the raised number and die on the base one (D-046).
+                ApplyThreat(run, catalog);
+            }
+            run.VisitedVaultDoor = door;
             events.Add(GameEvent.Of(GameEventKind.VaultEntered, from: door, to: run.Floor.Start, amount: outer.FloorIndex));
             ArriveOnFloor(run, catalog, events);
             run.Turn++;
@@ -75,6 +92,8 @@ namespace ClickDungeon.Simulation
             if (run.OuterFloor == null) return false;
             var outer = run.OuterFloor;
             run.OuterFloor = null;
+            // Kept as it stands, so the door leads back into this same room and not a fresh one (REL-26).
+            run.VisitedVault = run.Floor;
             run.Floor = outer;
             run.Hero.Pos = run.ReturnPos.InBounds ? run.ReturnPos : outer.Start;
             run.ReturnPos = GridPos.Invalid;

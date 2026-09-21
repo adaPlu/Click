@@ -138,6 +138,46 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
+        public void ValidatorRejectsKeyOnlyReachableAcrossATeleportPad()
+        {
+            // REL-27: a pad is not a tile the hero walks across. Stepping onto one ends the step on its partner
+            // (Hazards.HeroEnter), so this corridor leads into a sealed pocket and the key can never be picked up.
+            var floor = Floor(
+                "#####",
+                "#####",
+                "Ht.KX",
+                "#####",
+                "t####");
+            var errors = new List<string>();
+            Assert.That(FloorValidator.Validate(floor, Catalog, errors), Is.False, "The only route to the key runs onto a pad.");
+            Assert.That(string.Join("; ", errors), Does.Contain("Key is unreachable"));
+
+            // The same board with plain floor where the pads stood is a straight walk.
+            floor[P(1, 2)].Content = ContentKind.None;
+            floor[P(0, 0)].Content = ContentKind.None;
+            errors.Clear();
+            Assert.That(FloorValidator.Validate(floor, Catalog, errors), Is.True, string.Join("; ", errors));
+        }
+
+        [Test]
+        public void ValidatorAcceptsAKeyOnlyTheTeleportPadReaches()
+        {
+            // The other half of REL-27: a pad is an edge to its partner, so a hop the hero really can make counts as a route.
+            var floor = Floor(
+                "#####",
+                "#####",
+                "Ht###",
+                "#####",
+                "tK.X#");
+            var errors = new List<string>();
+            Assert.That(FloorValidator.Validate(floor, Catalog, errors), Is.True, string.Join("; ", errors));
+
+            floor[P(1, 2)].Content = ContentKind.None;
+            floor[P(0, 0)].Content = ContentKind.None;
+            Assert.That(FloorValidator.Validate(floor, Catalog), Is.False, "Without the hop nothing reaches the pocket.");
+        }
+
+        [Test]
         public void ValidatorRejectsEnemyNearStart()
         {
             var floor = Floor(

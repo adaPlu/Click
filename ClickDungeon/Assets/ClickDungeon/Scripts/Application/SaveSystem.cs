@@ -99,6 +99,15 @@ namespace ClickDungeon.Application
                 Require(run.ReturnPos.InBounds, "return position off the board");
                 foreach (var cell in run.OuterFloor.Cells) Require(cell != null, "missing tile on the outer floor");
             }
+
+            // A vault already visited travels with the save too, so the door leads back into the room it was left in (REL-26).
+            if (run.VisitedVault != null)
+            {
+                Require(run.VisitedVault.Cells != null && run.VisitedVault.Cells.Length == BoardRules.CellCount, "visited vault is incomplete");
+                Require(run.VisitedVault.Enemies != null, "visited vault has no enemy list");
+                Require(run.VisitedVaultDoor.InBounds, "visited vault door off the board");
+                foreach (var cell in run.VisitedVault.Cells) Require(cell != null, "missing tile in the visited vault");
+            }
         }
 
         static void Require(bool ok, string problem)

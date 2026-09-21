@@ -33,6 +33,19 @@ Sim/**/bin/
 Sim/**/obj/
 TestResults/
 
+# Tester telemetry (DATA-06). This repo is public. Returned logs are named after the player and,
+# since the collector started including Player.log, carry GPU/CPU/OS/resolution and any path the
+# %USERPROFILE% redaction missed. Keep them outside the repo -- these rules are only the backstop.
+playtest-logs/
+**/playtest-logs/
+/playtest-logs/**/*.jsonl
+/playtest-summary.md
+/summary.md
+ClickDungeon-playtest-logs.zip
+
 # OS
 Thumbs.db
 .DS_Store
+
+# Claude Code agent worktrees: complete stale copies of this repo, never to be committed.
+.claude/worktrees/

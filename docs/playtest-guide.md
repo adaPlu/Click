@@ -10,10 +10,15 @@ Telemetry details: `docs/telemetry.md`.
    ```bash
    powershell -ExecutionPolicy Bypass -File tools/playtest-kit/make-kit.ps1
    ```
-3. Hand out `ClickDungeon/Builds/Playtest/ClickDungeon-Playtest-<date>-<version>.zip`.
+3. Hand out `ClickDungeon/Builds/Playtest/ClickDungeon-Playtest-<date>-<build commit>.zip`.
    It contains the game, `PLAYTEST-README.txt`, `collect-logs.bat` and `VERSION.txt`.
 
-Commit before packaging, so `VERSION.txt` names a real commit instead of `-dirty`.
+The kit is named after the commit the **player** was built from. If you have committed since the build,
+packaging fails: rebuild, or pass `-AllowVersionMismatch` if you really mean to ship the older player.
+Commit before building, so `VERSION.txt` names a real commit instead of `-dirty`.
+
+`VERSION.txt` also records whether the test gate ran. A kit packaged with `-SkipTests` says
+`Test gate: SKIPPED` — don't hand that to a tester.
 
 ## 2. Who and how many
 
@@ -60,13 +65,16 @@ Replay rating (1–5): ___ Uses Shield/Dash unprompted: yes / no
 
 - **On your own machine:** logs are already in `%USERPROFILE%\AppData\LocalLow\Clickd\ClickDungeon\telemetry`.
 - **Testers:** they run `collect-logs.bat` and send back `ClickDungeon-playtest-logs.zip`.
-- Unzip every tester's logs into one folder, e.g. `playtest-logs/<player>/`.
-  Keep the logs outside the git repo.
+- Unzip every tester's logs into one folder **outside the git repo** — this repo is public, the folders are
+  named after the player, and the zips carry `Player.log` (GPU, CPU, OS build, resolution). Use an absolute
+  path, e.g. `C:\ClickDungeon-playtest\<player>\`. Once pushed, it is permanent.
 
 ## 6. Summarize
 
+Absolute paths again, in and out — nothing tester-shaped goes under the repo:
+
 ```bash
-dotnet run --project Sim/ClickDungeon.Telemetry.Report -- playtest-logs/<player1> playtest-logs/<player2> --out playtest-summary.md
+dotnet run --project Sim/ClickDungeon.Telemetry.Report -- C:\ClickDungeon-playtest\<player1> C:\ClickDungeon-playtest\<player2> --out C:\ClickDungeon-playtest\playtest-summary.md
 ```
 
 Or copy all `.jsonl` files into your own telemetry folder and use **ClickDungeon → Telemetry → Summarize Logs**.

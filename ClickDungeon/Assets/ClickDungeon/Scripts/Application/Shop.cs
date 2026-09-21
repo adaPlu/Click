@@ -179,7 +179,11 @@ namespace ClickDungeon.Application
 
         // ------------------------------------------------------------------ gear on sale
 
-        /// <summary>Gear is priced by rarity: coins up to rare, gems for epic and legendary.</summary>
+        /// <summary>
+        /// Gear is priced by rarity: coins up to rare, gems for epic and legendary. The two currencies have to be read
+        /// against the same exchange the shop itself sells, <see cref="GemPouchCoins"/> per gem, or the ladder stops
+        /// climbing where it changes currency: at 15 gems an epic piece cost 450 coins, less than a 600-coin rare one.
+        /// </summary>
         public static int GearPrice(ItemDefinition item)
         {
             switch (item.Rarity)
@@ -187,10 +191,14 @@ namespace ClickDungeon.Application
                 case ItemRarity.Common: return 150;
                 case ItemRarity.Uncommon: return 300;
                 case ItemRarity.Rare: return 600;
-                case ItemRarity.Epic: return 15;
+                case ItemRarity.Epic: return 21;
                 default: return 30;
             }
         }
+
+        /// <summary>What a piece of gear costs with both currencies read in coins, so the rarities can be compared.</summary>
+        public static int GearPriceInCoins(ItemDefinition item) =>
+            GearPricedInGems(item) ? GearPrice(item) * GemPouchCoins / GemPouchGems : GearPrice(item);
 
         public static bool GearPricedInGems(ItemDefinition item) => item.Rarity >= ItemRarity.Epic;
 

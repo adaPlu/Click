@@ -7,8 +7,12 @@ namespace ClickDungeon.Simulation
 {
     public static class Combat
     {
-        /// <summary>Applies damage to the hero. Returns true when Guard blocked it.</summary>
-        public static bool DamageHero(RunState run, int amount, string source, List<GameEvent> events, bool blockable = true)
+        /// <summary>
+        /// Applies damage to the hero. Returns true when Guard blocked it. <paramref name="attacker"/> is whoever threw
+        /// the blow, where there is one — a hazard has none — so that a block can be answered wherever it happens.
+        /// </summary>
+        public static bool DamageHero(RunState run, int amount, string source, List<GameEvent> events,
+            bool blockable = true, EnemyState attacker = null, ContentCatalog catalog = null)
         {
             var hero = run.Hero;
             if (amount <= 0 || hero.Hp <= 0) return false;
@@ -18,6 +22,12 @@ namespace ClickDungeon.Simulation
                 // Holy Bulwark (D-037): a block gives mana back.
                 int mana = run.Perk(TalentEffect.HolyBulwark);
                 if (mana > 0) hero.Mana = Math.Min(hero.MaxMana, hero.Mana + mana);
+                // Riposte (D-037, D-052): a blocked blow is answered. It lives here beside Holy Bulwark so the two
+                // talents keep the promise they are both written with — every block, not only the ones thrown by a
+                // neighbour. A hazard passes no attacker, so a blocked bomb answers nobody.
+                int riposte = run.Perk(TalentEffect.Riposte);
+                if (riposte > 0 && attacker != null && catalog != null)
+                    DamageEnemy(run, attacker, riposte, "riposte", catalog, events);
                 return true;
             }
             // Unyielding (D-037): at half hearts or fewer, every hit is softened, never below 1.

@@ -72,6 +72,27 @@ namespace ClickDungeon.Application
 
         public static void Unequip(ProfileState profile, ItemSlot slot) => profile?.Equipped?.Remove(slot.ToString());
 
+        /// <summary>
+        /// Makes a hand-edited <see cref="ProfileState.Equipped"/> safe to apply (SEC-04). Only the six real slots survive,
+        /// each holding an owned item that belongs in that slot; anything else is taken off. Because every entry has to be
+        /// filed under its own item's slot, and a slot appears once, the same item can no longer be worn twice and have its
+        /// numbers counted twice.
+        /// </summary>
+        public static void RepairEquipped(ProfileState profile, ContentCatalog catalog)
+        {
+            if (profile?.Equipped == null) return;
+            var worn = new Dictionary<string, string>();
+            foreach (var slot in SlotOrder)
+            {
+                string key = slot.ToString();
+                if (!profile.Equipped.TryGetValue(key, out var id)) continue;
+                var item = catalog?.Item(id);
+                if (item == null || item.Slot != slot || !Owns(profile, id)) continue;
+                worn[key] = id;
+            }
+            profile.Equipped = worn;
+        }
+
         /// <summary>Adds every worn item's numbers to the new run. A dash cost cut adds to the talent's and never goes under one.</summary>
         public static void Apply(ProfileState profile, RunState run, ContentCatalog catalog)
         {

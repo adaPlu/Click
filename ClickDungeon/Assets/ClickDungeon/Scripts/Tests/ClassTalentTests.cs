@@ -154,6 +154,22 @@ namespace ClickDungeon.Tests
             Assert.That(attacker.Hp, Is.EqualTo(attacker.MaxHp - 2), "Blocked, and answered.");
         }
 
+        /// <summary>
+        /// D-052: Riposte and Holy Bulwark are written with the same promise — "a blocked attack" — so they answer the
+        /// same blows. A fire imp's lane shot and Lord Blobert's slam are blocked attacks like any other.
+        /// </summary>
+        [Test]
+        public void RiposteAnswersEveryBlockItIsPromisedFor()
+        {
+            var fire = With(Run(".....", ".....", "I.H..", ".....", "....."), (TalentEffect.Riposte, 1));
+            var imp = Enemy(fire, "fire_imp");
+            for (int i = 0; i < 6 && imp.Intent.Kind != IntentKind.Fire; i++) DoOk(fire, PlayerCommand.Wait());
+            Assert.That(imp.Intent.Kind, Is.EqualTo(IntentKind.Fire), "Test setup: the imp is about to shoot down the lane.");
+            fire.Hero.Hp = fire.Hero.MaxHp;
+            DoOk(fire, PlayerCommand.Shield());
+            Assert.That(imp.Hp, Is.EqualTo(imp.MaxHp - 1), "A blocked fireball is answered like a blocked sword.");
+        }
+
         [Test]
         public void ShieldWallBastionAndTreasureSense()
         {
@@ -186,12 +202,34 @@ namespace ClickDungeon.Tests
         // ------------------------------------------------------------------ Paladin
 
         [Test]
-        public void JudgementAndDawnstrikePunishTheStaggeredAndTheBoss()
+        public void JudgementHitsAnEnemyTheShieldJustStaggered()
         {
-            var run = With(Run(".....", ".....", ".HG..", ".....", "....."), (TalentEffect.Judgement, 2), (TalentEffect.Dawnstrike, 1));
-            var goblin = Enemy(run, "goblin");
-            goblin.Staggered = true;
-            Assert.That(Talents.SlashDamage(run, goblin, Catalog), Is.EqualTo(run.Hero.SlashDamage + 2));
+            // REL-23: Staggered is set in the enemy phase and cleared in the same turn's declare step, so the flag a slash
+            // reads on the player's next turn is always false. What lasts is the Recover intent the board calls a free hit.
+            int SlashAStaggeredGoblin(params (TalentEffect effect, int value)[] perks)
+            {
+                var run = With(Run(".....", ".....", ".HG..", ".....", "....."), perks);
+                var goblin = Enemy(run, "goblin");
+                // Plenty of hearts, so the blow can be read off them instead of killing it.
+                goblin.MaxHp = goblin.Hp = 20;
+                Assert.That(goblin.Intent.Kind, Is.EqualTo(IntentKind.Attack), "Test setup: the goblin is about to swing.");
+
+                DoOk(run, PlayerCommand.Shield());
+                Assert.That(goblin.Staggered, Is.False, "The stagger flag never outlives the turn that set it.");
+                Assert.That(goblin.Intent.Kind, Is.EqualTo(IntentKind.Recover), "A blocked blow staggers: it does nothing next turn.");
+
+                int before = goblin.Hp;
+                DoOk(run, PlayerCommand.Slash(goblin.Pos));
+                return before - goblin.Hp;
+            }
+
+            Assert.That(SlashAStaggeredGoblin((TalentEffect.Judgement, 2)),
+                Is.EqualTo(SlashAStaggeredGoblin() + 2), "Judgement has to land on the enemy the shield just staggered.");
+        }
+
+        [Test]
+        public void DawnstrikePunishesTheBoss()
+        {
             var boss = With(Run(Catalog.RunFloorCount, 1234UL, ".....", ".....", ".HB..", ".....", "....X"), (TalentEffect.Dawnstrike, 1));
             Assert.That(Talents.SlashDamage(boss, Enemy(boss, "lord_blobert"), Catalog), Is.EqualTo(boss.Hero.SlashDamage + 1));
         }

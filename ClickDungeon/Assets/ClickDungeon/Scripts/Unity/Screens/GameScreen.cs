@@ -243,6 +243,10 @@ namespace ClickDungeon.Unity.Screens
                 _speechGroup.alpha = Mathf.Clamp01((_speechUntil - Time.unscaledTime) / 0.5f);
             var kb = Keyboard.current;
             if (kb == null) return;
+            // The keys belong to the bot's driver in automation, not to this screen. Watch mode polls Escape once a move
+            // to stop the batch; this method sees every frame, so without this it wins the race and opens the pause menu
+            // instead, which blocks the bot for the rest of the run (REL-28).
+            if (_app.AutomationMode) return;
 
             if (_chest.IsOpen)
             {
@@ -364,7 +368,9 @@ namespace ClickDungeon.Unity.Screens
 
         void OnCellClicked(GridPos p)
         {
-            if (Blocked) return;
+            // A tap on the board during a watched run would be a command the bot did not choose, in the middle of the
+            // run it is being measured on. The bot reaches the board through AutomationSubmit, not through here.
+            if (Blocked || _app.AutomationMode) return;
             switch (_mode)
             {
                 case TargetMode.Slash:
@@ -389,7 +395,7 @@ namespace ClickDungeon.Unity.Screens
 
         void OnAbility(CommandKind kind)
         {
-            if (Blocked) return;
+            if (Blocked || _app.AutomationMode) return;
             switch (kind)
             {
                 case CommandKind.Move:
@@ -554,7 +560,7 @@ namespace ClickDungeon.Unity.Screens
                     $"Lord Blobert is defeated. Again.\n\nDifficulty: {DifficultyName(run)}\nTurns taken: {run.Turn}\nChests opened: {Chests.ChestsOpened(run.Rewards)} ({run.Rewards.Count} rewards)\n{Purse(run)}\n\nSir Clickington: \"Victory! Snacks for everyone!\"",
                     () => { },
                     Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
-                    Menus.B("TITLE", Palette.NavyLight, _app.ShowTitle));
+                    Menus.B("TITLE", Palette.NavyLight, GoToTitle));
             }
             else
             {
@@ -563,7 +569,7 @@ namespace ClickDungeon.Unity.Screens
                     () => { },
                     Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
                     Menus.B("WHAT HAPPENED", Palette.NavyLight, () => OpenLog(CheckRunEnd)),
-                    Menus.B("TITLE", Palette.NavyLight, _app.ShowTitle));
+                    Menus.B("TITLE", Palette.NavyLight, GoToTitle));
             }
         }
 
@@ -575,6 +581,16 @@ namespace ClickDungeon.Unity.Screens
         }
 
         // ------------------------------------------------------------------ menus
+
+        /// <summary>
+        /// Leaving for the title tears this screen down. A watched run is still submitting into it, so in automation the
+        /// way out belongs to the batch, not to whoever is looking at it (REL-29).
+        /// </summary>
+        void GoToTitle()
+        {
+            if (_app.AutomationMode) return;
+            _app.ShowTitle();
+        }
 
         void OpenPause()
         {
@@ -588,7 +604,7 @@ namespace ClickDungeon.Unity.Screens
                 Menus.B("HOW TO PLAY", Palette.NavyLight, OpenHelp),
                 Menus.B("SETTINGS", Palette.NavyLight, () => Menus.OpenSettings(_modal, OpenPause, _app.ApplyTelemetrySetting)),
                 Menus.B("ABANDON RUN", Palette.QuitRed, ConfirmAbandon),
-                Menus.B("QUIT TO TITLE", Palette.NavyLight, _app.ShowTitle));
+                Menus.B("QUIT TO TITLE", Palette.NavyLight, GoToTitle));
         }
 
         /// <summary>The run's story so far, newest first: every hit, discovery and wake-up, in the words the log used to show beside the board.</summary>
@@ -653,8 +669,11 @@ namespace ClickDungeon.Unity.Screens
             _modal.Show("ABANDON RUN?", "This run will be lost for good.", OpenPause,
                 Menus.B("ABANDON", Palette.QuitRed, () =>
                 {
+                    // Abandoning clears the run out from under the batch that is still stepping it (REL-29). The button
+                    // stays on screen so an automated shot of this panel is the panel a player sees; it just does nothing.
+                    if (_app.AutomationMode) return;
                     _app.Session.Abandon();
-                    _app.ShowTitle();
+                    GoToTitle();
                 }),
                 Menus.B("KEEP PLAYING", Palette.PlayGreen, _modal.Hide));
         }
