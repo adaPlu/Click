@@ -42,14 +42,32 @@ namespace ClickDungeon.Simulation
         /// </summary>
         public static bool ClickUncovers(RunState run, GridPos p)
         {
+            // Reaching for a sleeping Mimic Chest meets teeth, not the lid (D-061): a turn spent, the hero where they were.
+            if (SleepingMimicAt(run.Floor, p)) return true;
             if (!p.InBounds || run.Floor[p].Knowledge == Knowledge.Revealed) return false;
             var enemy = run.Floor.EnemyAt(p);
             if (enemy != null) return !enemy.Awake;
             return !HeroCanEnter(run, p);
         }
 
+        /// <summary>
+        /// A Mimic Chest asleep on an uncovered tile, where it passes for a chest (D-061). Every command aimed at it must be
+        /// answered just as a real chest's would be - accepted where a chest's is, refused where a chest's is, in the same
+        /// words - because a refused command costs no turn, and any difference would let a player test chests for free.
+        /// </summary>
+        public static bool SleepingMimicAt(FloorState floor, GridPos p)
+        {
+            if (!p.InBounds || floor[p].Knowledge != Knowledge.Revealed) return false;
+            var enemy = floor.EnemyAt(p);
+            return enemy != null && enemy.Disguised && !enemy.Awake;
+        }
+
+        /// <summary>
+        /// No falling past a boss (D-062): with a boss every few floors rather than only on the last, a pit on a boss floor
+        /// would let the hero drop straight past the fight the floor exists for.
+        /// </summary>
         public static bool CanFallThrough(RunState run) =>
-            !run.Floor.IsVault && run.Floor.FloorIndex < run.FloorCount;
+            !run.Floor.IsVault && !run.Floor.IsBossFloor && run.Floor.FloorIndex < run.FloorCount;
 
         /// <summary>Cells enemy AI will path through, ignoring actors. Enemies avoid live hazards.</summary>
         public static bool EnemyPathable(FloorState floor, GridPos p) =>
@@ -111,7 +129,8 @@ namespace ClickDungeon.Simulation
             var cell = floor[p];
             var clue = Clue.None;
             var enemy = floor.EnemyAt(p);
-            if (enemy != null && !enemy.Awake) clue |= Clue.Enemy;
+            // A sleeping Mimic Chest reads as the treasure it pretends to be (D-061): the one clue that is not the whole truth.
+            if (enemy != null && !enemy.Awake) clue |= enemy.Disguised ? Clue.Treasure : Clue.Enemy;
             if (cell.Hazard != HazardKind.None) clue |= Clue.Danger;
             // Step by Step only (Free Roam senses nothing). Each thing worth finding has its own mark, so "K" means the key.
             if (cell.Content == ContentKind.Key) clue |= Clue.Objective;

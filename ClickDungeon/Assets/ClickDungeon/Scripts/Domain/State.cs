@@ -53,6 +53,10 @@ namespace ClickDungeon.Domain
         public int ModeTurns;
         /// <summary>A Skeleton Warrior that has already fallen once and stood up: the next fall is final (D-058).</summary>
         public bool Rallied;
+        /// <summary>A Mimic Chest (D-061): passed over by sight, drawn as a chest, and woken only by coming right up to it.</summary>
+        public bool Disguised;
+        /// <summary>A Goblin Key Warden holding this floor's key (D-061); it drops the key where it falls.</summary>
+        public bool CarriesKey;
     }
 
     [Serializable]
@@ -74,6 +78,8 @@ namespace ClickDungeon.Domain
         public int MaxMana;
         /// <summary>Divine Shield (D-037) has saved the hero on this floor; it comes back on the next.</summary>
         public bool WardSpent;
+        /// <summary>Caught in a Cave Spider's web (D-061): while above zero the hero cannot Move or Dash. One turn.</summary>
+        public int WebbedTurns;
     }
 
     [Serializable]

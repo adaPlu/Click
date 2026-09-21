@@ -11,11 +11,14 @@ namespace ClickDungeon.Domain
     public static class Versions
     {
         public const int SaveSchema = 1;
-        // Bumped for renown's threat, rarer gear and Blobert's second slam (D-040); 9 for the first expansion monsters (D-058).
-        public const int Ruleset = 9;
+        // Bumped for renown's threat, rarer gear and Blobert's second slam (D-040); 9 for the first expansion monsters (D-058);
+        // 10 for the second wave, the act bosses and the act-clear heal (D-061, D-062).
+        public const int Ruleset = 10;
         // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
         // 3: the first expansion monsters join the floors' enemy pools (D-058), so floors from seed N differ again.
-        public const int Generation = 3;
+        // 4: twenty floors in acts, the second wave in the pools and the key warden holding keys (D-062). A seven-floor save
+        // is refused rather than resumed into a dungeon that no longer matches it.
+        public const int Generation = 4;
         /// <summary>The between-runs profile: coins, gems and the provisions bought with them (D-025).</summary>
         public const int ProfileSchema = 1;
     }
@@ -48,10 +51,11 @@ namespace ClickDungeon.Domain
     }
 
     /// <summary>Charge, Throw and Reassemble belong to the first expansion monsters (D-058): boar, bomber and skeleton.</summary>
-    public enum IntentKind { None = 0, Attack, Move, Fire, Rest, Recover, Summon, Slam, PuffUp, Charge, Throw, Reassemble }
+    public enum IntentKind { None = 0, Attack, Move, Fire, Rest, Recover, Summon, Slam, PuffUp, Charge, Throw, Reassemble, Web, Vanish }
 
     /// <summary>Bones: a Skeleton Warrior that fell once and lies waiting to stand up again (D-058).</summary>
-    public enum EnemyMode { Normal = 0, Puffed, Deflated, Bones }
+    /// <summary>Enraged: the Goblin Brute King below half his hearts, every blow one harder (D-062).</summary>
+    public enum EnemyMode { Normal = 0, Puffed, Deflated, Bones, Enraged }
 
     public enum RunStatus { InProgress = 0, Won, Lost }
 

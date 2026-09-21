@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ClickDungeon.Content;
 using ClickDungeon.Domain;
 using ClickDungeon.Simulation;
 using NUnit.Framework;
@@ -49,7 +50,7 @@ namespace ClickDungeon.Tests
                 errors.Clear();
                 Assert.That(FloorValidator.Validate(floor, Catalog, errors), Is.True,
                     $"seed {seed} floor {floorIndex}: {string.Join("; ", errors)}");
-                Assert.That(floor.IsBossFloor, Is.EqualTo(floorIndex == Catalog.RunFloorCount), "Blobert's Court is always the last floor.");
+                Assert.That(floor.IsBossFloor, Is.EqualTo(floorIndex % ContentCatalog.BossEvery == 0), "A boss every fifth floor (D-062).");
             }
         }
 
@@ -228,8 +229,16 @@ namespace ClickDungeon.Tests
                 if (profile.IsBoss) Assert.That(Catalog.Enemy(profile.BossId).IsBoss, Is.True);
                 Assert.That(profile.Name, Is.Not.Empty);
             }
+            // Every monster that summons names a minion that exists (D-062): Blobert, the Bat Swarm Leader, the Curtain Demon
+            // and the Spellbook do; the Goblin Brute King does not summon at all, so "every boss summons" no longer holds.
+            var summoners = new[] { EnemyBehavior.Boss, EnemyBehavior.SwarmLeader, EnemyBehavior.Showman, EnemyBehavior.Caster };
             foreach (var enemy in Catalog.Enemies.Values)
-                if (enemy.IsBoss) Assert.That(Catalog.HasEnemy(enemy.SummonId), Is.True);
+            {
+                if (System.Array.IndexOf(summoners, enemy.Behavior) >= 0)
+                    Assert.That(enemy.SummonId, Is.Not.Null.And.Not.Empty, $"{enemy.Id} summons, but names no minion.");
+                if (!string.IsNullOrEmpty(enemy.SummonId))
+                    Assert.That(Catalog.HasEnemy(enemy.SummonId), Is.True, $"{enemy.Id} summons '{enemy.SummonId}', which does not exist.");
+            }
             Assert.That(Catalog.ChestRewards, Is.Not.Empty);
         }
 

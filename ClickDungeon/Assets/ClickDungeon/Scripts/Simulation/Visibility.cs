@@ -38,6 +38,9 @@ namespace ClickDungeon.Simulation
             foreach (var enemy in floor.Enemies)
             {
                 if (enemy.Awake || floor[enemy.Pos].Knowledge != Knowledge.Revealed) continue;
+                // A Mimic Chest is passed over by sight (D-061): it sits there looking like a chest until the hero comes right
+                // up to it, or strikes it. Its first act on waking is declared, not taken - the bite is still a turn away.
+                if (enemy.Disguised && !enemy.Pos.IsAdjacent(hero.Pos) && enemy.Hp >= enemy.MaxHp) continue;
                 enemy.Awake = true;
                 enemy.JustWoken = true;
                 events.Add(GameEvent.Of(GameEventKind.EnemyWoke, enemy.Id, to: enemy.Pos, source: enemy.DefId));

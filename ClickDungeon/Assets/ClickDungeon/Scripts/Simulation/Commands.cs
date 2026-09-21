@@ -25,6 +25,7 @@ namespace ClickDungeon.Simulation
                     return true;
 
                 case CommandKind.Move:
+                    if (hero.WebbedTurns > 0) return Fail(out reason, "You're stuck in a web! Slash, shield, drink or wait it out.");
                     if (!target.InBounds || target == hero.Pos) return Fail(out reason, "Pick another tile.");
                     // Free Roam reaches the whole board; Step by Step is one tile at a time, diagonals included (D-021).
                     if (run.Movement == MovementMode.Step && !hero.Pos.IsAdjacent(target))
@@ -52,6 +53,7 @@ namespace ClickDungeon.Simulation
                 }
 
                 case CommandKind.Dash:
+                    if (hero.WebbedTurns > 0) return Fail(out reason, "You're stuck in a web! Slash, shield, drink or wait it out.");
                     return ValidateDash(run, target, catalog.HeroClass(hero.ClassId), out reason);
 
                 case CommandKind.Potion:
@@ -63,6 +65,8 @@ namespace ClickDungeon.Simulation
                     // Chests do not block, so the hero may be standing on the one they open.
                     if (!target.InBounds || (target != hero.Pos && !hero.Pos.IsAdjacent(target)))
                         return Fail(out reason, "Stand next to it first.");
+                    // Opening a sleeping mimic is accepted like opening a chest; it wakes instead (D-061).
+                    if (Board.SleepingMimicAt(floor, target)) return true;
                     // A covered chest is just a cover: tapping it uncovers it like any other tile (D-023 amendment).
                     if (!floor[target].IsClosedChest || floor[target].Knowledge != Knowledge.Revealed)
                         return Fail(out reason, "Nothing to open there.");
@@ -116,6 +120,9 @@ namespace ClickDungeon.Simulation
         /// </summary>
         public static bool DashBumpsAt(RunState run, GridPos p, bool landing)
         {
+            // A dash may land on a chest, so it may "land" on a mimic too - and meet it (D-061). Passing through one is
+            // refused below as "Something blocks the dash", word for word what a chest in the way gets.
+            if (landing && Board.SleepingMimicAt(run.Floor, p)) return true;
             if (!p.InBounds || run.Floor[p].Knowledge == Knowledge.Revealed) return false;
             if (landing) return Board.ClickUncovers(run, p);
             var enemy = run.Floor.EnemyAt(p);

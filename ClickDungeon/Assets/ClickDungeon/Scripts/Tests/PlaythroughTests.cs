@@ -40,7 +40,7 @@ namespace ClickDungeon.Tests
                 ulong seed = seedBase + (ulong)i * 101UL;
                 session.StartNewRun(seed, Difficulty.Medium, MovementMode.Free, heroId);
                 var bot = new AutoPlayer(AutoPlayer.CasualMistakeRate, blind: true);
-                for (int c = 0; c < 1500 && session.Run.Status == RunStatus.InProgress; c++)
+                for (int c = 0; c < 160 * session.Catalog.RunFloorCount && session.Run.Status == RunStatus.InProgress; c++)
                     session.Submit(bot.Choose(session.Run, session.Catalog, seed * 7919UL + (ulong)c));
                 var run = session.Run;
                 if (run.Status == RunStatus.InProgress) session.Abandon();
@@ -81,7 +81,7 @@ namespace ClickDungeon.Tests
                 var lines = new List<string>();
                 int lastFloor = -1;
                 var visits = new Dictionary<string, int>();
-                for (int i = 0; i < 1500 && session.Run.Status == RunStatus.InProgress; i++)
+                for (int i = 0; i < 160 * session.Catalog.RunFloorCount && session.Run.Status == RunStatus.InProgress; i++)
                 {
                     var command = bot.Choose(session.Run, session.Catalog, seed * 7919UL + (ulong)i);
                     var live = session.Run;

@@ -839,3 +839,72 @@ Rules referenced here live in `docs/rules.md`.
   Class parity on Knight's Trial: casual Knight 30 / Paladin 32, novice 13 / 12 - the closest the two have been.
   A longer run gives a careful player more chests and levels to grow into, and a careless one more floors to die on.
   **No tier was retuned.**
+
+## D-060 Sir Clickington can still be picked
+- **DECISION**: the mascot is playable again, listed last on hero select after the heroes. D-057 had retired him to the
+  title screen; the user asked that he stay selectable "for now", ahead of his own comedic campaign.
+- **HOW**: he is a hero identity again (Knight class, "Brave. Loyal. Clickable."), `RetiredHeroes` is empty, and
+  Ironheart stays the default and first on the roster. A run started as Clickington continues as Clickington.
+- **TESTS**: `IronheartLeadsTheRosterAndTheMascotCanStillBePicked`, `ARunStartedAsTheMascotContinuesAsTheMascot`.
+
+## D-061 The second wave of monsters
+- **DECISION**: every monster with a reference sheet is in. Each brings one new rule, telegraphed a turn ahead:
+  - **Mimic Chest** (4 HP, 3 dmg): asleep, it looks and behaves exactly like a closed chest - drawn as one with its tap
+    meter, sensed as treasure, and every command a chest would accept is accepted. Tapping, opening, dashing onto it or
+    stepping beside it wakes it. 15 coins when it falls.
+  - **Cave Spider** (3 HP, 2 dmg): webs the hero's tile from up to 3 away. Webbed, the hero cannot Move or Dash on
+    their next command; Slash, Shield, Potion and Wait all still work.
+  - **Spooky Spellbook** (3 HP, 2 dmg): fires down lanes as an imp, and every third action calls a Spectral Page
+    (1 HP) beside it, never more than two.
+  - **Goblin Key Warden** (3 HP, 1 dmg): on floors 4, 8, 14 and 18 it holds the key instead of the key lying on a
+    tile. It backs away, resting after each step so it can be caught; the key drops where it falls.
+- **WHY THE MIMIC NEEDS PARITY**: a mimic that answered even one command differently from a chest (a refused tap, a
+  missing meter, a different clue) would be a free, riskless test for every chest. A parametrised test sends every
+  command to a mimic and a real chest side by side and requires the same answer.
+- **THE BOT**: the sighted bot stalled on warden floors - it never walked toward a monster it needed. Its goal
+  distance now treats a boss or warden as reached from any tile beside it.
+- **ART**: all four from their sheets (the warden from the Common Encounter pack); five poses and a portrait each,
+  plus the page. A sleeping mimic draws the game's own chest art, never the mimic's closed pose, which differs.
+- **TESTS**: 19 in `SecondWaveMonsterTests`. Removing each rule in turn - the tap, dash and open parity, the web,
+  the key drop, the page summon, the mimic sleeping when seen - turns its tests red.
+
+## D-062 Twenty floors in four acts, a boss at the end of each
+- **DECISION**: the user's call ("bosses every 5 or every 10"): a boss every five floors, twenty floors in all.
+
+  | Act | Floors | Newcomers (floor) | Boss |
+  |---|---|---|---|
+  | I | 1-4 | Mimic (2), Skeleton (3), Key Warden (4) | 5: Goblin Brute King |
+  | II | 6-9 | Bomber (6), Spider (7), Key Warden (8) | 10: Bat Swarm Leader |
+  | III | 11-14 | Spellbook (11), Boar (12), Key Warden (14) | 15: Theater Curtain Demon |
+  | IV | 16-19 | nothing new; everything, and more of it; Key Warden (18) | 20: Lord Blobert |
+
+  Each act brings its newcomers in one floor at a time, so no floor asks the player to learn two new rules at once.
+- **THE BOSSES** (rules §3.6): the **Goblin Brute King** (10 HP) charges and slams, and enrages at half his hearts
+  (+1 to every blow, shown in its warning); the **Bat Swarm Leader** (13 HP) calls bats, at most four, and dives
+  down lines; the **Theater Curtain Demon** (16 HP) calls masks, brings the curtain down across the hero's whole row
+  and column, and vanishes to a tile it marks the turn before.
+- **ACT CLEARED**: beating an act boss restores full hearts and mana. Without it the first twenty-floor measurements showed
+  a wall at floors 5-6, the King and the first floor after him. The King was also
+  softened (12 HP / 3 dmg to 10 / 2) - the first boss should teach, not gate.
+- **NO FALLING PAST A BOSS**: a pit on a boss floor is a pit, never a way down.
+- **KNOCK-ONS**: premium chests may appear on floors 2-19. Hard-coded command caps (400, 1500) in tests and the watch
+  loop now scale with the floor count. "Lord Blobert" in the goal line, the sealed exit and HOW TO PLAY now names the
+  floor's own boss. **VERSIONS**: Ruleset 9 -> 10, Generation 3 -> 4, content catalog 2 -> 3. The seven-floor
+  game went out in the D-058 builds, so a save from it is refused cleanly rather than resumed into floors that no
+  longer match it.
+- **MEASURED** (240 blind seeds, `DifficultySweep`, won; was D-059 on 60):
+
+  | Player | Squire's Stroll | Knight's Trial | Blobert's Wrath |
+  |---|---|---|---|
+  | casual | 100% (was 100%) | 69% (was 77%) | 51% (was 52%) |
+  | novice | 100% (was 97%) | 15% (was 28%) | 11% (was 12%) |
+
+  No stalls in any tier. **60 seeds is too few over twenty floors**: the same code measured 80% and then 55% for a
+  casual player on Knight's Trial on two sets of 60 (the generation bump deals every seed a new dungeon). The guard
+  on novices reaching the last floor was re-based on the 240-seed rate.
+  The **Goblin King is the novice wall**: of their deaths, 41 of 205 on Knight's Trial and 61 of 214 on Blobert's
+  Wrath come on floor 5. For novices the two harder tiers are now close (15% and 11%). **No tier was retuned**;
+  the King is the first thing to look at when one is.
+
+- **TESTS**: 9 in `ActBossTests`. Removing each rule in turn - the act-clear heal, the no-pit rule, the enrage, the
+  enraged warning, the bat cap, the vanish - turns its test red.

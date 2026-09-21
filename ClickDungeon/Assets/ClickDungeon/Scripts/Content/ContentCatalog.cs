@@ -14,25 +14,32 @@ namespace ClickDungeon.Content
         public const string DefaultHeroId = "ironheart";
 
         /// <summary>
-        /// Sir Clickington: the game's mascot, painted into the title and HUD backgrounds and the voice of its letters.
-        /// He is not a playable hero (D-057) — he belongs to a comedy campaign still to come. Screens that lay the playing
-        /// hero's face over the painted background compare against this, never against <see cref="DefaultHeroId"/>.
+        /// Sir Clickington: the game's mascot, painted into the title and HUD backgrounds and the voice of its letters,
+        /// and - for now - still a playable Knight at the end of the roster (D-060), until his comedy campaign gives him a
+        /// home of his own. Screens that lay the playing hero's face over the painted background compare against this,
+        /// never against <see cref="DefaultHeroId"/>: when he is the one playing, the painted face is already his.
         /// </summary>
         public const string MascotId = "sir_clickington";
 
         /// <summary>
-        /// Hero ids that once existed and what a saved run of theirs becomes. Sir Clickington's runs become Ironheart's:
-        /// the same Knight class, so the run plays on unchanged under a new face.
+        /// Hero ids that once existed and what a saved run of theirs becomes, applied as a save loads. Empty today: D-057
+        /// sent Sir Clickington's runs to Ironheart, and D-060 made him playable again, so a run saved as him stays his.
         /// </summary>
         public static readonly System.Collections.Generic.IReadOnlyDictionary<string, string> RetiredHeroes =
-            new System.Collections.Generic.Dictionary<string, string> { [MascotId] = DefaultHeroId };
+            new System.Collections.Generic.Dictionary<string, string>();
         /// <summary>Guard used for a vault on a floor whose profile has no enemy pool of its own.</summary>
         public const string DefaultVaultEnemyId = "goblin";
 
-        /// <summary>2: the first expansion monsters (D-058). A save that names them is refused by an older build.</summary>
-        public int Version = 2;
-        /// <summary>Seven since the first expansion monsters (D-059); Blobert's Court is always the last.</summary>
-        public int RunFloorCount = 7;
+        /// <summary>2: the first expansion monsters (D-058); 3: the second wave and the act bosses (D-061, D-062). A save that
+        /// names them is refused by an older build.</summary>
+        public int Version = 3;
+        /// <summary>
+        /// Twenty: four acts of <see cref="BossEvery"/> floors, each ending in a boss, Blobert's Court the last (D-062).
+        /// </summary>
+        public int RunFloorCount = 20;
+
+        /// <summary>A boss floor every this many floors (D-062). The floor profiles are laid out to match it.</summary>
+        public const int BossEvery = 5;
         public HazardTuning Hazards = new HazardTuning();
         /// <summary>What a vault room behind a door holds (D-018).</summary>
         public VaultTuning Vault = new VaultTuning();
@@ -244,6 +251,11 @@ namespace ClickDungeon.Content
             {
                 Id = "dawnward", DisplayName = "Dawnward", ClassId = "paladin", Tagline = "Steadfast. Shielded. Unshaken.",
             };
+            // The mascot, playable for now (D-060): last on the roster, a Knight like Ironheart, with the words he had.
+            c.HeroIdentities[MascotId] = new HeroIdentityDefinition
+            {
+                Id = MascotId, DisplayName = "Sir Clickington", ClassId = "knight", Tagline = "Brave. Loyal. Clickable.",
+            };
 
             // ------------------------------------------------------------------ class talent trees (D-037)
             var knight = c.HeroClasses["knight"];
@@ -323,6 +335,8 @@ namespace ClickDungeon.Content
             c.HeroIdentities[DefaultHeroId].Quote = "Absorbs pressure, protects space, and wins through durability.";
             c.HeroIdentities["dawnward"].Title = "Shield of the Dawn";
             c.HeroIdentities["dawnward"].Quote = "Anchors the front line and turns faith into victory.";
+            c.HeroIdentities[MascotId].Title = "The Brave...ish";
+            c.HeroIdentities[MascotId].Quote = "Adventure looks better together.";
 
             // Heroes on the way (D-037): shown locked on Hero Select, with no class behind them yet.
             c.ComingSoon.Add(new HeroPreview { Id = "shadowcut", DisplayName = "Shadowcut", ClassName = "Rogue", Role = "Damage", Blurb = "Exploits openings and turns precision into burst damage." });
@@ -404,6 +418,38 @@ namespace ClickDungeon.Content
             AddEnemy(c, new EnemyDefinition { Id = "armored_boar", DisplayName = "Armored Boar", Behavior = EnemyBehavior.Charger, MaxHp = 5, Damage = 3, Range = 4 });
             // Goblin Bomber: fragile, keeps its distance and lobs a lit bomb where the hero stands.
             AddEnemy(c, new EnemyDefinition { Id = "goblin_bomber", DisplayName = "Goblin Bomber", Behavior = EnemyBehavior.Bomber, MaxHp = 2, Damage = 1, ThrowRange = 3 });
+
+            // Second expansion monsters (D-061), each one more rule, each telegraphed a turn ahead.
+            // Cave Spider: spits a web that holds the hero in place for a turn.
+            AddEnemy(c, new EnemyDefinition { Id = "cave_spider", DisplayName = "Cave Spider", Behavior = EnemyBehavior.Spinner, MaxHp = 3, Damage = 2, Range = 3 });
+            // Spooky Spellbook: an imp's fire lanes, plus a spectral page summoned beside it every third turn.
+            AddEnemy(c, new EnemyDefinition { Id = "spooky_spellbook", DisplayName = "Spooky Spellbook", Behavior = EnemyBehavior.Caster, MaxHp = 3, Damage = 2, Range = 3,
+                SummonId = "spectral_page", SummonCount = 1, MaxMinions = 2 });
+            AddEnemy(c, new EnemyDefinition { Id = "spectral_page", DisplayName = "Spectral Page", Behavior = EnemyBehavior.Chaser, MaxHp = 1, Damage = 1 });
+            // Mimic Chest: looks like a chest until the hero comes right up to it; pays out in coins when it falls.
+            AddEnemy(c, new EnemyDefinition { Id = "mimic_chest", DisplayName = "Mimic Chest", Behavior = EnemyBehavior.Chaser, MaxHp = 4, Damage = 3, Disguised = true, LootCoins = 15 });
+            // Goblin Key Warden: holds the floor's key and backs away with it (placed by FloorProfile.KeyWarden, not by pools).
+            AddEnemy(c, new EnemyDefinition { Id = "goblin_key_warden", DisplayName = "Goblin Key Warden", Behavior = EnemyBehavior.Keeper, MaxHp = 3, Damage = 1 });
+            // Act bosses (D-062): one closes each act of five floors, Lord Blobert the last.
+            AddEnemy(c, new EnemyDefinition
+            {
+                Id = "goblin_brute_king", DisplayName = "Goblin Brute King", Behavior = EnemyBehavior.BruteKing, IsBoss = true,
+                // The gentlest boss, as the first should be: enraged, his blows still reach 3.
+                MaxHp = 10, Damage = 2, SlamDamage = 2, Range = 3, EnragesAtHalf = true,
+            });
+            AddEnemy(c, new EnemyDefinition
+            {
+                Id = "bat_swarm_leader", DisplayName = "Bat Swarm Leader", Behavior = EnemyBehavior.SwarmLeader, IsBoss = true,
+                MaxHp = 13, Damage = 2, Range = 4, SummonId = "bat", SummonCount = 2, MaxMinions = 4,
+            });
+            AddEnemy(c, new EnemyDefinition
+            {
+                Id = "theater_curtain_demon", DisplayName = "Theater Curtain Demon", Behavior = EnemyBehavior.Showman, IsBoss = true,
+                MaxHp = 16, Damage = 3, SlamDamage = 3, Range = 4, SummonId = "stage_mask", SummonCount = 2, MaxMinions = 3,
+                SlamShakesLines = true,
+            });
+            AddEnemy(c, new EnemyDefinition { Id = "bat", DisplayName = "Bat", Behavior = EnemyBehavior.Chaser, MaxHp = 1, Damage = 1 });
+            AddEnemy(c, new EnemyDefinition { Id = "stage_mask", DisplayName = "Stage Mask", Behavior = EnemyBehavior.Chaser, MaxHp = 1, Damage = 2 });
             AddEnemy(c, new EnemyDefinition
             {
                 Id = "lord_blobert", DisplayName = "Lord Blobert", Behavior = EnemyBehavior.Boss, IsBoss = true,
@@ -523,49 +569,125 @@ namespace ClickDungeon.Content
                 ".....",
                 "o...o");
 
+            // Twenty floors in four acts of five (D-062): four floors to learn an act's monsters, then its boss. Each act
+            // introduces its newcomers one floor at a time, so no floor asks the player to learn two new rules at once.
+            // ---- Act I: the goblins' halls. New: Mimic Chest (2), Skeleton Warrior (3), Goblin Key Warden (4).
             c.FloorProfiles.Add(new FloorProfile
             {
                 FloorIndex = 1, Name = "The Upper Halls", EnemyPool = new[] { "goblin" }, MinEnemies = 1, MaxEnemies = 2,
-                MinSpikes = 1, MaxSpikes = 2, MinBombs = 0, MaxBombs = 1, Chests = 1,
+                MinSpikes = 1, MaxSpikes = 2, MinBombs = 0, MaxBombs = 1, Chests = 1, MinPotions = 0, MaxPotions = 0,
             });
-            // Seven floors since the first expansion monsters (D-059): each new monster gets a floor that introduces it
-            // before it starts turning up alongside the others, rather than all three crowding the two floors before Blobert.
             c.FloorProfiles.Add(new FloorProfile
             {
-                FloorIndex = 2, Name = "The Damp Cellars", EnemyPool = new[] { "goblin", "goblin", "crowned_slime" }, MinEnemies = 2, MaxEnemies = 2,
+                FloorIndex = 2, Name = "The Damp Cellars", EnemyPool = new[] { "goblin", "goblin", "crowned_slime", "mimic_chest" }, MinEnemies = 2, MaxEnemies = 2,
                 MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 0, MaxPotions = 1,
                 Vault = true, Fountains = 1,
             });
-            // Introduces the Skeleton Warrior: a floor where the new rule - its bones stand up again - is the main event.
             c.FloorProfiles.Add(new FloorProfile
             {
                 FloorIndex = 3, Name = "The Bone Crypt", EnemyPool = new[] { "skeleton", "skeleton", "goblin", "crowned_slime" }, MinEnemies = 2, MaxEnemies = 3,
                 MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 0, MaxPotions = 1,
                 Vault = true,
             });
-            // Introduces the Goblin Bomber, among the imps' fire lanes.
             c.FloorProfiles.Add(new FloorProfile
             {
-                FloorIndex = 4, Name = "The Ember Vaults", EnemyPool = new[] { "goblin", "fire_imp", "goblin_bomber", "skeleton" }, MinEnemies = 2, MaxEnemies = 3,
+                FloorIndex = 4, Name = "The Goblin Warren", EnemyPool = new[] { "goblin", "goblin", "skeleton", "mimic_chest" }, MinEnemies = 2, MaxEnemies = 3,
+                MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 0, MaxPotions = 1,
+                KeyWarden = true, Fountains = 1,
+            });
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 5, Name = "The Goblin King's Hall", IsBoss = true, BossId = "goblin_brute_king", MinPotions = 1, MaxPotions = 1, MinExitDistance = 3,
+                MinSpikes = 1, MaxSpikes = 1, MinBombs = 0, MaxBombs = 1,
+            });
+            // ---- Act II: the burning deep. New: Goblin Bomber (6), Cave Spider (7).
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 6, Name = "The Ember Vaults", EnemyPool = new[] { "goblin", "fire_imp", "goblin_bomber", "skeleton" }, MinEnemies = 2, MaxEnemies = 3,
                 MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 0, MaxPotions = 1,
                 Vault = true, MinLava = 1, MaxLava = 2, Teleports = true,
             });
             c.FloorProfiles.Add(new FloorProfile
             {
-                FloorIndex = 5, Name = "The Locked Depths", EnemyPool = new[] { "goblin", "fire_imp", "crowned_slime", "skeleton", "goblin_bomber" }, MinEnemies = 3, MaxEnemies = 3,
-                MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 2, Chests = 1, MinPotions = 1, MaxPotions = 1,
-                Vault = true, MinLava = 1, MaxLava = 2, Teleports = true, Fountains = 1,
+                FloorIndex = 7, Name = "The Spider Caverns", EnemyPool = new[] { "cave_spider", "cave_spider", "goblin", "fire_imp" }, MinEnemies = 2, MaxEnemies = 3,
+                MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 0, MaxPotions = 1,
+                Vault = true, Teleports = true,
             });
-            // Introduces the Armored Boar. No lava: a boar needs open lines to charge down, and the floor is about reading them.
             c.FloorProfiles.Add(new FloorProfile
             {
-                FloorIndex = 6, Name = "The Boar Warrens", EnemyPool = new[] { "armored_boar", "armored_boar", "goblin_bomber", "skeleton", "fire_imp" }, MinEnemies = 3, MaxEnemies = 3,
+                FloorIndex = 8, Name = "The Locked Depths", EnemyPool = new[] { "fire_imp", "goblin_bomber", "cave_spider", "crowned_slime", "skeleton" }, MinEnemies = 3, MaxEnemies = 3,
+                MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 2, Chests = 1, MinPotions = 1, MaxPotions = 1,
+                Vault = true, MinLava = 1, MaxLava = 2, Teleports = true, KeyWarden = true, Fountains = 1,
+            });
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 9, Name = "The Echoing Dark", EnemyPool = new[] { "cave_spider", "goblin_bomber", "fire_imp", "skeleton", "mimic_chest" }, MinEnemies = 3, MaxEnemies = 3,
+                MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 1, MaxPotions = 1,
+                Teleports = true,
+            });
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 10, Name = "The Bat Roost", IsBoss = true, BossId = "bat_swarm_leader", MinPotions = 1, MaxPotions = 1, MinExitDistance = 3,
+                MinSpikes = 1, MaxSpikes = 1, MinBombs = 0, MaxBombs = 1,
+            });
+            // ---- Act III: the haunted stage. New: Spooky Spellbook (11), Armored Boar (12).
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 11, Name = "The Haunted Library", EnemyPool = new[] { "spooky_spellbook", "spooky_spellbook", "skeleton", "fire_imp" }, MinEnemies = 2, MaxEnemies = 3,
+                MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 1, MaxPotions = 1,
+                Vault = true, Fountains = 1,
+            });
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 12, Name = "The Boar Warrens", EnemyPool = new[] { "armored_boar", "armored_boar", "goblin_bomber", "skeleton" }, MinEnemies = 3, MaxEnemies = 3,
                 MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 1, MaxPotions = 1,
                 Vault = true, Teleports = true, Fountains = 1,
             });
             c.FloorProfiles.Add(new FloorProfile
             {
-                FloorIndex = 7, Name = "Blobert's Court", IsBoss = true, BossId = "lord_blobert", MinPotions = 1, MaxPotions = 1, MinExitDistance = 3,
+                FloorIndex = 13, Name = "The Forgotten Archive", EnemyPool = new[] { "spooky_spellbook", "cave_spider", "armored_boar", "mimic_chest", "fire_imp" }, MinEnemies = 3, MaxEnemies = 3,
+                MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 2, Chests = 1, MinPotions = 1, MaxPotions = 1,
+                Vault = true, MinLava = 1, MaxLava = 1, Teleports = true,
+            });
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 14, Name = "The Backstage", EnemyPool = new[] { "spooky_spellbook", "armored_boar", "cave_spider", "goblin_bomber" }, MinEnemies = 3, MaxEnemies = 3,
+                MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 2, Chests = 1, MinPotions = 1, MaxPotions = 1,
+                KeyWarden = true, Teleports = true, Fountains = 1,
+            });
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 15, Name = "The Grand Stage", IsBoss = true, BossId = "theater_curtain_demon", MinPotions = 1, MaxPotions = 1, MinExitDistance = 3,
+                MinSpikes = 1, MaxSpikes = 2, MinBombs = 0, MaxBombs = 1,
+            });
+            // ---- Act IV: the royal descent. Nothing new: every monster, and more of them, on the way to Lord Blobert.
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 16, Name = "The Deep Halls", EnemyPool = new[] { "goblin", "skeleton", "cave_spider", "goblin_bomber", "fire_imp", "crowned_slime" }, MinEnemies = 3, MaxEnemies = 4,
+                MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 2, Chests = 1, MinPotions = 1, MaxPotions = 1,
+                Vault = true, Teleports = true, Fountains = 1,
+            });
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 17, Name = "The Molten Depths", EnemyPool = new[] { "fire_imp", "fire_imp", "goblin_bomber", "armored_boar", "skeleton", "mimic_chest" }, MinEnemies = 3, MaxEnemies = 4,
+                MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 2, Chests = 1, MinPotions = 1, MaxPotions = 1,
+                Vault = true, MinLava = 1, MaxLava = 2, Teleports = true,
+            });
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 18, Name = "The Sealed Vaults", EnemyPool = new[] { "spooky_spellbook", "cave_spider", "armored_boar", "skeleton", "crowned_slime" }, MinEnemies = 3, MaxEnemies = 4,
+                MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 2, Chests = 1, MinPotions = 1, MaxPotions = 1,
+                Vault = true, MinLava = 1, MaxLava = 2, Teleports = true, KeyWarden = true, Fountains = 1,
+            });
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 19, Name = "The Royal Approach", EnemyPool = new[] { "armored_boar", "spooky_spellbook", "cave_spider", "goblin_bomber", "skeleton", "fire_imp", "mimic_chest" }, MinEnemies = 4, MaxEnemies = 4,
+                MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 2, Chests = 1, MinPotions = 1, MaxPotions = 1,
+                Vault = true, MinLava = 1, MaxLava = 2, Teleports = true, Fountains = 1,
+            });
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 20, Name = "Blobert's Court", IsBoss = true, BossId = "lord_blobert", MinPotions = 1, MaxPotions = 1, MinExitDistance = 3,
                 MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1,
             });
 

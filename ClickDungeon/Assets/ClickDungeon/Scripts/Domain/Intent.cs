@@ -28,6 +28,10 @@ namespace ClickDungeon.Domain
         public static Intent Throw(GridPos cell) => new Intent { Kind = IntentKind.Throw, Target = cell };
         /// <summary>A fallen skeleton lies as bones, pulling itself back together (D-058).</summary>
         public static Intent Reassemble() => new Intent { Kind = IntentKind.Reassemble, Target = GridPos.Invalid };
+        /// <summary>The spider spits a web onto this tile next turn; the hero caught in it cannot move for a turn (D-061).</summary>
+        public static Intent Web(GridPos cell) => new Intent { Kind = IntentKind.Web, Target = cell };
+        /// <summary>The Curtain Demon vanishes and reappears on this tile next turn (D-062).</summary>
+        public static Intent Vanish(GridPos cell) => new Intent { Kind = IntentKind.Vanish, Target = cell };
 
         public override string ToString()
         {
@@ -37,6 +41,8 @@ namespace ClickDungeon.Domain
                 case IntentKind.Summon:
                 case IntentKind.Slam:
                 case IntentKind.Throw:
+                case IntentKind.Web:
+                case IntentKind.Vanish:
                     return $"{Kind}{Target}";
                 case IntentKind.Fire:
                     return $"Fire({Dir})";

@@ -5,7 +5,7 @@ using ClickDungeon.Domain;
 namespace ClickDungeon.Simulation
 {
     /// <summary>Charge and Throw belong to the first expansion monsters (D-058).</summary>
-    public enum ThreatKind { Attack, Fire, Slam, Summon, BombBlast, BombArmed, Charge, Throw }
+    public enum ThreatKind { Attack, Fire, Slam, Summon, BombBlast, BombArmed, Charge, Throw, Web, Arrive }
 
     public struct Threat
     {
@@ -34,7 +34,7 @@ namespace ClickDungeon.Simulation
                 switch (intent.Kind)
                 {
                     case IntentKind.Attack:
-                        Add(threats, ThreatKind.Attack, intent.Target, Renown.Hit(run, catalog, def.Damage), enemy.Id);
+                        Add(threats, ThreatKind.Attack, intent.Target, Renown.Hit(run, catalog, def.Damage) + EnemyAi.Fury(enemy), enemy.Id);
                         break;
                     case IntentKind.Fire:
                         foreach (var cell in Board.LaneCells(run, enemy.Pos, intent.Dir, def.Range))
@@ -42,7 +42,7 @@ namespace ClickDungeon.Simulation
                         break;
                     case IntentKind.Slam:
                         foreach (var cell in Board.SlamCells(intent.Target, def.SlamShakesLines))
-                            Add(threats, ThreatKind.Slam, cell, Renown.Hit(run, catalog, def.SlamDamage), enemy.Id);
+                            Add(threats, ThreatKind.Slam, cell, Renown.Hit(run, catalog, def.SlamDamage) + EnemyAi.Fury(enemy), enemy.Id);
                         break;
                     case IntentKind.Summon:
                         Add(threats, ThreatKind.Summon, intent.Target, 0, enemy.Id);
@@ -52,11 +52,19 @@ namespace ClickDungeon.Simulation
                     // The whole path of a charge is dangerous: the boar hits the hero anywhere on it (D-058).
                     case IntentKind.Charge:
                         foreach (var cell in Board.ChargeCells(run, enemy.Pos, intent.Dir, def.Range))
-                            Add(threats, ThreatKind.Charge, cell, Renown.Hit(run, catalog, def.Damage), enemy.Id);
+                            Add(threats, ThreatKind.Charge, cell, Renown.Hit(run, catalog, def.Damage) + EnemyAi.Fury(enemy), enemy.Id);
                         break;
                     // Where a bomb will land. It does no harm on landing; the lit bomb then telegraphs its own blast.
                     case IntentKind.Throw:
                         Add(threats, ThreatKind.Throw, intent.Target, 0, enemy.Id);
+                        break;
+                    // Where a web lands (D-061). No damage: it holds the hero in place for a turn.
+                    case IntentKind.Web:
+                        Add(threats, ThreatKind.Web, intent.Target, 0, enemy.Id);
+                        break;
+                    // Where the Curtain Demon reappears (D-062): no blow, but the tile will be taken.
+                    case IntentKind.Vanish:
+                        Add(threats, ThreatKind.Arrive, intent.Target, 0, enemy.Id);
                         break;
                 }
             }

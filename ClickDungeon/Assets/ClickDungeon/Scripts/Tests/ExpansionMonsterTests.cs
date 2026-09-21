@@ -214,11 +214,11 @@ namespace ClickDungeon.Tests
         // ------------------------------------------------------------------ all three
 
         /// <summary>
-        /// D-059: each new monster has a floor that introduces it before it turns up alongside the others - the skeleton
-        /// on the Bone Crypt, the bomber in the Ember Vaults, the boar in the Boar Warrens - and Blobert keeps the last floor.
+        /// D-062: twenty floors in four acts of five, each act ending in a boss. Within an act each newcomer has a floor that
+        /// introduces it before it mixes with the rest, so no floor asks a player to learn two new rules at once.
         /// </summary>
         [Test]
-        public void EachNewMonsterHasAFloorThatIntroducesIt()
+        public void TheDungeonRunsInActsWithEachNewcomerIntroducedOnItsOwnFloor()
         {
             int FirstFloorWith(string id)
             {
@@ -226,13 +226,26 @@ namespace ClickDungeon.Tests
                     if (System.Array.IndexOf(Catalog.ProfileFor(f).EnemyPool ?? new string[0], id) >= 0) return f;
                 return -1;
             }
-            Assert.That(Catalog.RunFloorCount, Is.EqualTo(7));
-            Assert.That(Catalog.ProfileFor(Catalog.RunFloorCount).IsBoss, Is.True, "Blobert's Court is the last floor.");
+            Assert.That(Catalog.RunFloorCount, Is.EqualTo(20));
+            Assert.That(ContentCatalog.BossEvery, Is.EqualTo(5));
+            string[] bosses = { "goblin_brute_king", "bat_swarm_leader", "theater_curtain_demon", "lord_blobert" };
+            for (int f = 1; f <= Catalog.RunFloorCount; f++)
+            {
+                var profile = Catalog.ProfileFor(f);
+                Assert.That(profile.IsBoss, Is.EqualTo(f % ContentCatalog.BossEvery == 0), $"floor {f}");
+                if (profile.IsBoss) Assert.That(profile.BossId, Is.EqualTo(bosses[f / ContentCatalog.BossEvery - 1]), $"floor {f}");
+            }
+            Assert.That(Catalog.ProfileFor(Catalog.RunFloorCount).BossId, Is.EqualTo("lord_blobert"), "Blobert keeps the finale.");
+
+            Assert.That(FirstFloorWith("mimic_chest"), Is.EqualTo(2));
             Assert.That(FirstFloorWith("skeleton"), Is.EqualTo(3));
-            Assert.That(FirstFloorWith("goblin_bomber"), Is.EqualTo(4));
-            Assert.That(FirstFloorWith("armored_boar"), Is.EqualTo(6));
-            Assert.That(Catalog.ProfileFor(3).Name, Is.EqualTo("The Bone Crypt"));
-            Assert.That(Catalog.ProfileFor(6).Name, Is.EqualTo("The Boar Warrens"));
+            Assert.That(FirstFloorWith("goblin_bomber"), Is.EqualTo(6));
+            Assert.That(FirstFloorWith("cave_spider"), Is.EqualTo(7));
+            Assert.That(FirstFloorWith("spooky_spellbook"), Is.EqualTo(11));
+            Assert.That(FirstFloorWith("armored_boar"), Is.EqualTo(12));
+            // The key warden is placed by the floor, not drawn from a pool.
+            for (int f = 1; f <= Catalog.RunFloorCount; f++)
+                Assert.That(Catalog.ProfileFor(f).KeyWarden, Is.EqualTo(f == 4 || f == 8 || f == 14 || f == 18), $"floor {f}");
         }
     }
 }

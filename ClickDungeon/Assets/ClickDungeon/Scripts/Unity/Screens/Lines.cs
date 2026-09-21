@@ -1,3 +1,4 @@
+using System.Linq;
 using ClickDungeon.Content;
 using ClickDungeon.Domain;
 using ClickDungeon.Simulation;
@@ -28,9 +29,22 @@ namespace ClickDungeon.Unity.Screens
             }
         }
 
+        /// <summary>Each boss greets the hero in its own voice (D-062): the Bat Roost used to open with Blobert's line.</summary>
         public static string FloorStart(FloorState floor) => floor.IsBossFloor
-            ? "LORD BLOBERT: \"You dare challenge the most magnificent blob in all the dungeons?\""
+            ? floor.Enemies.Select(e => BossGreeting(e.DefId)).FirstOrDefault(g => g != null) ?? BossGreeting("lord_blobert")
             : Pick("Onward! Probably.", "Deeper we go. Bravely-ish.", "Smells like adventure. And goblin.", "Every tile tells a story. Hopefully not a sad one.");
+
+        static string BossGreeting(string bossId)
+        {
+            switch (bossId)
+            {
+                case "goblin_brute_king": return "GOBLIN BRUTE KING: \"Bigger crown. More lunch. You're the lunch.\"";
+                case "bat_swarm_leader": return "BAT SWARM LEADER: \"You're never just fighting one of us.\"";
+                case "theater_curtain_demon": return "CURTAIN DEMON: \"Places, everyone! The show must go on...\"";
+                case "lord_blobert": return "LORD BLOBERT: \"You dare challenge the most magnificent blob in all the dungeons?\"";
+                default: return null;
+            }
+        }
 
         /// <summary>
         /// The playing hero's name, for the lines spoken in their voice. These used to name Sir Clickington outright, so a
@@ -48,6 +62,14 @@ namespace ClickDungeon.Unity.Screens
             if (id == "bomb") return "a bomb";
             if (id == "slash") return "your slash";
             return catalog.HasEnemy(id) ? catalog.Enemy(id).DisplayName : id;
+        }
+
+        /// <summary>The boss this floor is sealed by: each act ends in its own (D-062).</summary>
+        public static string BossName(RunState run, ContentCatalog catalog)
+        {
+            var boss = run.Floor.Enemies.Find(e => catalog.HasEnemy(e.DefId) && catalog.Enemy(e.DefId).IsBoss);
+            string id = boss?.DefId ?? catalog.ProfileFor(run.Floor.FloorIndex)?.BossId;
+            return id != null && catalog.HasEnemy(id) ? catalog.Enemy(id).DisplayName : "the boss";
         }
 
         public static string EnemyName(RunState run, int actorId, string fallbackId, ContentCatalog catalog)
@@ -96,6 +118,13 @@ namespace ClickDungeon.Unity.Screens
                         : e.Source == "skeleton" ? "A skeleton. Of course there's a skeleton."
                         : e.Source == "armored_boar" ? "Why is that boar wearing armour?!"
                         : e.Source == "goblin_bomber" ? "Is that goblin holding a... yep."
+                        : e.Source == "cave_spider" ? "Eight legs. Why is it always eight legs?"
+                        : e.Source == "spooky_spellbook" ? "That book is looking at me."
+                        : e.Source == "mimic_chest" ? "THE CHEST HAS TEETH!"
+                        : e.Source == "goblin_key_warden" ? "He's got the key! Get him!"
+                        : e.Source == "goblin_brute_king" ? "That's a big crown. On a big goblin."
+                        : e.Source == "bat_swarm_leader" ? "Bats. So many bats."
+                        : e.Source == "theater_curtain_demon" ? "Oh no. It's a musical."
                         : "Oh. Hello there.";
                     face = Expression.Shocked;
                     return 45;
@@ -114,6 +143,22 @@ namespace ClickDungeon.Unity.Screens
                 case GameEventKind.BombThrown:
                     line = "Incoming!";
                     face = Expression.Worried;
+                    return 46;
+                case GameEventKind.HeroWebbed:
+                    line = "Sticky! So sticky!";
+                    face = Expression.Worried;
+                    return 47;
+                case GameEventKind.KeyDropped:
+                    line = "Finders keepers!";
+                    face = Expression.Confident;
+                    return 46;
+                case GameEventKind.BossEnraged:
+                    line = "Uh oh. Now he's angry.";
+                    face = Expression.Shocked;
+                    return 48;
+                case GameEventKind.BossVanished:
+                    line = "Where did it go?!";
+                    face = Expression.Shocked;
                     return 46;
                 case GameEventKind.BossDeflated:
                     line = "He's deflating! Now's my chance!";
@@ -199,13 +244,13 @@ namespace ClickDungeon.Unity.Screens
                 case GameEventKind.EnemyStaggered:
                     return $"{EnemyName(run, e.ActorId, e.Subject, catalog)} is staggered.";
                 case GameEventKind.EnemySummoned:
-                    return $"Lord Blobert summons a {SourceName(e.Source, catalog)}.";
+                    return $"{EnemyName(run, run.Floor.EnemyAt(e.From)?.Id ?? -1, null, catalog)} summons a {SourceName(e.Source, catalog)}.";
                 case GameEventKind.BossPuffed:
                     return "Lord Blobert puffs up: <color=#B8BCC4>immune for 2 turns.</color>";
                 case GameEventKind.BossDeflated:
                     return "Lord Blobert deflates: <color=#F2C94C>double damage next turn!</color>";
                 case GameEventKind.BossSlammed:
-                    return "Lord Blobert belly-slams!";
+                    return e.Source == "lord_blobert" ? "Lord Blobert belly-slams!" : $"{SourceName(e.Source, catalog)} slams!";
                 case GameEventKind.EnemyCollapsed:
                     return $"{SourceName(e.Source, catalog)} collapses into a pile of bones... <color=#F2C94C>break it before it stands up!</color>";
                 case GameEventKind.EnemyReassembled:
@@ -214,6 +259,14 @@ namespace ClickDungeon.Unity.Screens
                     return $"{SourceName(e.Source, catalog)} charges!";
                 case GameEventKind.BombThrown:
                     return $"<color=#FF9A2E>{SourceName(e.Source, catalog)} lobs a lit bomb!</color>";
+                case GameEventKind.HeroWebbed:
+                    return $"<color=#FF6B5E>You're caught in the {SourceName(e.Source, catalog)}'s web!</color> No moving or dashing next turn.";
+                case GameEventKind.KeyDropped:
+                    return "<color=#F2C94C>The key clatters to the floor!</color>";
+                case GameEventKind.BossEnraged:
+                    return $"<color=#FF6B5E>{SourceName(e.Source, catalog)} is enraged!</color> Its blows hit 1 harder.";
+                case GameEventKind.BossVanished:
+                    return $"{SourceName(e.Source, catalog)} vanishes... and reappears across the stage!";
                 case GameEventKind.BombArmed:
                     return "<color=#FF9A2E>A bomb is armed.</color> It explodes after your next action.";
                 case GameEventKind.BombExploded:
@@ -294,6 +347,8 @@ namespace ClickDungeon.Unity.Screens
                 case IntentKind.Throw: return "BOMB";
                 // Counts down to the turn it stands up again: the player's window to break it (D-058).
                 case IntentKind.Reassemble: return $"BONES {enemy.ModeTurns + 1}";
+                case IntentKind.Web: return "WEB";
+                case IntentKind.Vanish: return "VANISH";
                 default: return "";
             }
         }
@@ -301,13 +356,15 @@ namespace ClickDungeon.Unity.Screens
         public static string IntentExplain(EnemyState enemy, EnemyDefinition def, int extraDamage = 0)
         {
             string mode = enemy.Mode == EnemyMode.Puffed ? " Puffed up: immune to damage."
-                : enemy.Mode == EnemyMode.Deflated ? " Deflated: takes double damage!" : "";
+                : enemy.Mode == EnemyMode.Deflated ? " Deflated: takes double damage!"
+                : enemy.Mode == EnemyMode.Enraged ? " Enraged: its blows hit 1 harder." : "";
+            string key = enemy.CarriesKey ? " It carries the floor's key - beat it and the key drops." : "";
             switch (enemy.Intent.Kind)
             {
                 case IntentKind.Attack: return $"Next turn: hits the marked tile for {def.Damage + extraDamage}. Step off it or Shield.{mode}";
-                case IntentKind.Move: return $"Next turn: moves toward you.{mode}";
+                case IntentKind.Move: return enemy.CarriesKey ? $"Next turn: runs from you.{mode}{key}" : $"Next turn: moves toward you.{mode}";
                 case IntentKind.Fire: return $"Next turn: shoots fire {enemy.Intent.Dir.ToString().ToLowerInvariant()} for {def.Damage + extraDamage}. Leave the lane.{mode}";
-                case IntentKind.Rest: return $"Next turn: does nothing.{mode}";
+                case IntentKind.Rest: return $"Next turn: does nothing.{mode}{key}";
                 case IntentKind.Recover: return "Staggered: does nothing next turn. Free hit!";
                 case IntentKind.Summon: return "Next turn: summons on the marked tiles.";
                 case IntentKind.Slam: return $"Next turn: slams the marked tiles for {def.SlamDamage + extraDamage}. Dash out or Shield!";
@@ -318,7 +375,11 @@ namespace ClickDungeon.Unity.Screens
                     return "Next turn: lobs a lit bomb onto the marked tile. It blows up the turn after - get clear.";
                 case IntentKind.Reassemble:
                     return $"A pile of bones. Break it now - any hit will do - or it stands up again in {enemy.ModeTurns + 1} turn{(enemy.ModeTurns == 0 ? "" : "s")}.";
-                default: return mode.Trim();
+                case IntentKind.Web:
+                    return "Next turn: spins a web onto the marked tile. Caught, you can't move or dash for a turn - Slash, Shield, drink or wait.";
+                case IntentKind.Vanish:
+                    return "Next turn: vanishes and reappears on the marked tile.";
+                default: return (mode + key).Trim();
             }
         }
 

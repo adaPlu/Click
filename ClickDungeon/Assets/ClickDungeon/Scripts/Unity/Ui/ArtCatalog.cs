@@ -296,6 +296,10 @@ namespace ClickDungeon.Unity.Ui
             ["fire_imp"] = new[] { "fire" },
             ["slimelet"] = new[] { "spawn" },
             ["lord_blobert"] = new[] { "boast", "slam", "summon", "puffup", "immune", "deflate" },
+            // The act bosses (D-062) boast while a slam is telegraphed, as Blobert does.
+            ["goblin_brute_king"] = new[] { "boast" },
+            ["bat_swarm_leader"] = new[] { "boast" },
+            ["theater_curtain_demon"] = new[] { "boast" },
         };
 
         public static readonly CommandKind[] AbilityKinds =
@@ -420,6 +424,9 @@ namespace ClickDungeon.Unity.Ui
                 case IntentKind.Charge: return IntentIcon(IntentKind.Attack);
                 case IntentKind.Reassemble: return IntentIcon(IntentKind.Recover);
                 case IntentKind.Throw: return null;
+                // D-061/D-062 likewise: a web has no icon (its WEB badge and marked tile say it), a vanish is a kind of move.
+                case IntentKind.Web: return null;
+                case IntentKind.Vanish: return IntentIcon(IntentKind.Move);
                 default: return $"icon_intent_{kind.ToString().ToLowerInvariant()}";
             }
         }
@@ -460,7 +467,8 @@ namespace ClickDungeon.Unity.Ui
             foreach (ItemRarity rarity in System.Enum.GetValues(typeof(ItemRarity))) keys.Add(RarityFrame(rarity));
             foreach (var enemy in catalog.Enemies.Values)
             {
-                if (!enemy.IsBoss) continue;
+                // Only a boss that puffs up has puffed and deflated poses (D-062).
+                if (!enemy.IsBoss || enemy.PuffTurns <= 0) continue;
                 keys.Add(Actor(enemy.Id, "puffed"));
                 keys.Add(Actor(enemy.Id, "deflated"));
             }

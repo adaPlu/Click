@@ -404,15 +404,22 @@ namespace ClickDungeon.Application
         {
             var floor = run.Floor;
             var goals = new List<GridPos>();
+            // The objective is a monster, not a tile: it cannot be stood on, only reached (D-062).
+            bool monster = false;
             if (floor.IsBossFloor && !floor.ExitUnlocked)
             {
                 foreach (var enemy in floor.Enemies)
                     if (catalog.Enemy(enemy.DefId).IsBoss) goals.Add(enemy.Pos);
+                monster = goals.Count > 0;
             }
             else if (!run.Hero.HasKey && !floor.ExitUnlocked)
             {
                 foreach (var p in Board.AllCells)
                     if (floor[p].Content == ContentKind.Key) goals.Add(p);
+                // A Key Warden carries it (D-061): the warden is where the key is.
+                // Asleep or awake: a blind player's view has already removed any it has not found (Redact).
+                foreach (var e in floor.Enemies) if (e.CarriesKey) goals.Add(e.Pos);
+                monster = goals.Count > 0 && goals.TrueForAll(g => floor.EnemyAt(g) != null);
                 // No key in sight: the only lead a blind player has is the nearest tile they have not uncovered.
                 if (goals.Count == 0)
                     foreach (var p in Board.AllCells)
@@ -430,6 +437,11 @@ namespace ClickDungeon.Application
                     if (floor[p].Knowledge != Knowledge.Revealed) goals.Add(p);
             if (goals.Count == 0) return 0;
 
+            // A monster to reach - a warden holding the key, or the boss - is reached by standing next to it, from where
+            // the next turn's swing lands. In Free Roam any tile is one click away, so without this every candidate move
+            // scored the same and a one-move look-ahead never saw why to approach: a warden that kept its distance was
+            // simply never chased, and the run stalled with the bot at full health (D-062).
+            if (monster) return goals.Exists(g => g.IsAdjacent(run.Hero.Pos)) ? 0 : 1;
             // In Free Roam every tile is one click away; standing on the exit still needs a step off and back on.
             if (run.Movement == MovementMode.Free) return goals.Contains(run.Hero.Pos) ? 2 : 1;
             // Step by Step moves diagonally, so distances count diagonal steps.
@@ -458,6 +470,10 @@ namespace ClickDungeon.Application
                 Floor = Copy(run.Floor),
                 OuterFloor = run.OuterFloor == null ? null : Copy(run.OuterFloor),
                 ReturnPos = run.ReturnPos,
+                // A looted vault kept for the hero's return (REL-26). Without these the bot's look-ahead rebuilt a fresh
+                // vault on re-entry while the real game restored the looted one, so its predictions diverged from play.
+                VisitedVault = run.VisitedVault == null ? null : Copy(run.VisitedVault),
+                VisitedVaultDoor = run.VisitedVaultDoor,
                 // Reward records are never changed after they are granted.
                 Rewards = new List<RewardRecord>(run.Rewards),
                 CoinsFound = run.CoinsFound,
@@ -478,7 +494,7 @@ namespace ClickDungeon.Application
         static HeroState Copy(HeroState h) => new HeroState
         {
             IdentityId = h.IdentityId, ClassId = h.ClassId, Pos = h.Pos, Hp = h.Hp, MaxHp = h.MaxHp, SlashDamage = h.SlashDamage,
-            Potions = h.Potions, HasKey = h.HasKey, SpecialKeys = h.SpecialKeys, Guard = h.Guard, Mana = h.Mana, WardSpent = h.WardSpent,
+            Potions = h.Potions, HasKey = h.HasKey, SpecialKeys = h.SpecialKeys, Guard = h.Guard, Mana = h.Mana, WardSpent = h.WardSpent, WebbedTurns = h.WebbedTurns,
             MaxMana = h.MaxMana,
         };
 
@@ -505,7 +521,7 @@ namespace ClickDungeon.Application
                 copy.Enemies.Add(new EnemyState
                 {
                     Id = e.Id, DefId = e.DefId, Pos = e.Pos, Hp = e.Hp, MaxHp = e.MaxHp, Awake = e.Awake, JustWoken = e.JustWoken,
-                    Staggered = e.Staggered, Intent = e.Intent, ActionCounter = e.ActionCounter, Mode = e.Mode, ModeTurns = e.ModeTurns, Rallied = e.Rallied,
+                    Staggered = e.Staggered, Intent = e.Intent, ActionCounter = e.ActionCounter, Mode = e.Mode, ModeTurns = e.ModeTurns, Rallied = e.Rallied, Disguised = e.Disguised, CarriesKey = e.CarriesKey,
                 });
             }
             return copy;

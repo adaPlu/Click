@@ -130,10 +130,11 @@ namespace ClickDungeon.Tests
         [Test]
         public void KnightsTrialLetsANovicePlayerReachBlobert()
         {
-            // Re-measured after D-056: a blind novice *reaches* Blobert in 52% of 60 seeds (DifficultySweep) and wins
-            // 32%. This 30-seed guard sits below the reach rate, so it catches a real collapse.
+            // Re-measured after D-062 (twenty floors, a boss every five) on 240 blind seeds - 60 proved too few over twenty
+            // floors: a blind novice reaches the last floor in 16%. About 70% of that over these 30 seeds is 3, the margin
+            // this guard always kept (it was 11/30 against 52%), so it catches a real collapse, not a small drift.
             var medium = Measure(Difficulty.Medium, 30, NoviceMistakeRate, blind: true);
-            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(11), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
+            Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(3), $"Only {medium.ReachedBoss}/30 novice medium runs reached the last floor."); 
             AssertTheBotWasPlaying(medium, "medium");
         }
 

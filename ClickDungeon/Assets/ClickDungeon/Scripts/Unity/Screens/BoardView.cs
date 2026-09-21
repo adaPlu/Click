@@ -341,6 +341,12 @@ namespace ClickDungeon.Unity.Screens
                 }
             }
             else if (cell.Content == ContentKind.Potion) Icons.Potion(view.Icons);
+            // A sleeping mimic is drawn exactly as a closed chest, meter and all - no token, badge or bar (D-061).
+            else if (Board.SleepingMimicAt(floor, p))
+            {
+                Icons.Chest(view.Icons, false, premium: false);
+                Icons.ChestProgress(view.Labels, 0, ClickDungeon.Simulation.Chests.TapsToOpen(run, cell));
+            }
         }
 
         /// <summary>Uses tile art for the cell base when the catalog has it (tinted for knowledge state).</summary>
@@ -377,6 +383,9 @@ namespace ClickDungeon.Unity.Screens
             // had no branch at all and drew nothing - the one warning the Bomber depends on.
             bool charge = kinds.Contains(ThreatKind.Charge);
             bool thrown = kinds.Contains(ThreatKind.Throw);
+            // D-061/D-062: a web and a boss's arrival do no damage, but each must still be marked a turn ahead.
+            bool web = kinds.Contains(ThreatKind.Web);
+            bool arrive = kinds.Contains(ThreatKind.Arrive);
 
             if (damage > 0)
             {
@@ -425,6 +434,17 @@ namespace ClickDungeon.Unity.Screens
                 }
             }
 
+            if (damage <= 0 && (web || arrive))
+            {
+                var tint = web ? Palette.Steel : Palette.Summon;
+                Icons.Shape(view.Overlay, Shapes.Rounded, tint.WithAlpha(0.18f), Vector2.zero, new Vector2(CellWidth - 6f, CellSize - 6f));
+                float bandY = enemyHere ? CellSize * 0.5f - 38f : CellSize * 0.5f - 24f;
+                string hex = ColorUtility.ToHtmlStringRGB(tint.Dim(1.4f));
+                var mark = Icons.Label(view.Labels, $"<color=#{hex}>{(web ? "WEB" : "ARRIVES")}</color>", 22, Color.white,
+                    new Vector2(12f, bandY), new Vector2(110f, 30f));
+                mark.alignment = TextAnchor.MiddleRight;
+            }
+
             if (summon && Icons.TryArtImage(view.Overlay, ArtKeys.DangerOverlay(ThreatKind.Summon), CellSize) == null)
             {
                 Icons.Shape(view.Overlay, Shapes.Ring, Palette.Summon, Vector2.zero, new Vector2(CellSize - 20f, CellSize - 20f));
@@ -455,8 +475,14 @@ namespace ClickDungeon.Unity.Screens
                 alive.Add(enemy.Id);
                 var def = catalog.Enemy(enemy.DefId);
                 var e = enemy;
-                UpsertToken(enemy.Id, def.Id + ":" + enemy.Mode + ":" + ActorAnimations.Pose(enemy, def), enemy.Pos, animate,
-                    body => Icons.Enemy(body, def, e.Mode, e.Intent.Kind), Lines.IntentBadge(enemy, def, Renown.Hit(run, catalog, 0)), ArtKeys.IntentIcon(enemy.Intent.Kind),
+                UpsertToken(enemy.Id, def.Id + ":" + enemy.Mode + ":" + ActorAnimations.Pose(enemy, def) + ":" + enemy.CarriesKey, enemy.Pos, animate,
+                    body =>
+                    {
+                        Icons.Enemy(body, def, e.Mode, e.Intent.Kind);
+                        // The key warden shows what it carries, so the player knows whom to chase (D-061).
+                        if (e.CarriesKey) Icons.Key(Icons.Group(body, new Vector2(34f, 30f)));
+                    },
+                    Lines.IntentBadge(enemy, def, Renown.Hit(run, catalog, 0) + EnemyAi.Fury(enemy)), ArtKeys.IntentIcon(enemy.Intent.Kind),
                     BadgeColor(enemy.Intent.Kind), enemy.Hp, enemy.MaxHp);
             }
 

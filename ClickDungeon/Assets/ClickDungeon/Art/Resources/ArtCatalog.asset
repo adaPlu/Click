@@ -38,6 +38,66 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 880654416f89b0e4bae2d187dc5a9059, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: actor_bat_idle
+    Frames:
+    - {fileID: 21300000, guid: b7c85e12ee82acc4ab646aa335b9546b, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_bat_swarm_leader_attack
+    Frames:
+    - {fileID: 21300000, guid: 127a6c2087ab0174899d581d3c63a5e6, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_bat_swarm_leader_boast
+    Frames:
+    - {fileID: 21300000, guid: 1fef186283a81e34bbec054278077f67, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_bat_swarm_leader_defeat
+    Frames:
+    - {fileID: 21300000, guid: 9f54d7ebcd40c8747ab0d42650919363, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_bat_swarm_leader_hit
+    Frames:
+    - {fileID: 21300000, guid: ba28baee3cea5c044bbe993aae588361, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_bat_swarm_leader_idle
+    Frames:
+    - {fileID: 21300000, guid: c3b7f20c6a3aef14a82a0008c9905836, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_bat_swarm_leader_wake
+    Frames:
+    - {fileID: 21300000, guid: ca6d60485f3dc7446aac35e326d5cade, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_cave_spider_attack
+    Frames:
+    - {fileID: 21300000, guid: 022cb865b9ad4304fa28334b9965150d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_cave_spider_defeat
+    Frames:
+    - {fileID: 21300000, guid: 11e7133df89adc741b60d4c7b46dcce2, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_cave_spider_hit
+    Frames:
+    - {fileID: 21300000, guid: 4e6e6d67bac16044891c251f27f3a10c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_cave_spider_idle
+    Frames:
+    - {fileID: 21300000, guid: 3dad0d5dee9d87346807537474626670, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_cave_spider_wake
+    Frames:
+    - {fileID: 21300000, guid: b1a35f150cab8f04f90d901b7845f3de, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_crowned_slime_attack
     Frames:
     - {fileID: 21300000, guid: 5927c0ba5750e054980487553ae66451, type: 3}
@@ -158,6 +218,36 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 67ad5b0d42aab554d88f72587e0869e1, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: actor_goblin_brute_king_attack
+    Frames:
+    - {fileID: 21300000, guid: fd8fc99c16338224f81869e35ec9d075, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_brute_king_boast
+    Frames:
+    - {fileID: 21300000, guid: 4a2d27ebcbd4a9d479614132a58b6b30, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_brute_king_defeat
+    Frames:
+    - {fileID: 21300000, guid: 6f766d4d5cf7f3d4d9da419620374d68, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_brute_king_hit
+    Frames:
+    - {fileID: 21300000, guid: 06558141df672904687ae484ec5ec1cc, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_brute_king_idle
+    Frames:
+    - {fileID: 21300000, guid: 3c180c6f383b68049b4f5de936578d58, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_goblin_brute_king_wake
+    Frames:
+    - {fileID: 21300000, guid: 0e26c66dba80c814099202242cc6fbab, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_goblin_defeat
     Frames:
     - {fileID: 21300000, guid: f513515462a0994428b1c2a7b02009f7, type: 3}
@@ -172,6 +262,31 @@ MonoBehaviour:
     Frames:
     - {fileID: 21300000, guid: 5fa3f0e04f200e743b1f0d927ba48d85, type: 3}
     Fps: 8
+    Placeholder: 1
+  - Key: actor_goblin_key_warden_attack
+    Frames:
+    - {fileID: 21300000, guid: 93f5825d1d639c846a16d60c1e11d531, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_key_warden_defeat
+    Frames:
+    - {fileID: 21300000, guid: 0b0536cc9a813b140af2925b4c0c8280, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_key_warden_hit
+    Frames:
+    - {fileID: 21300000, guid: 5656e736d96b1d347a764f23a24f827d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_key_warden_idle
+    Frames:
+    - {fileID: 21300000, guid: 47dba614afe02e445a3052b25ffe62ba, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_goblin_key_warden_wake
+    Frames:
+    - {fileID: 21300000, guid: 50fdaa8f7c034674ca9f1446db8b9ce6, type: 3}
+    Fps: 12
     Placeholder: 1
   - Key: actor_goblin_wake
     Frames:
@@ -241,6 +356,31 @@ MonoBehaviour:
   - Key: actor_lord_blobert_summon
     Frames:
     - {fileID: 21300000, guid: bc0ea2a2d912cfa41a80f3bf095ec17e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_mimic_chest_attack
+    Frames:
+    - {fileID: 21300000, guid: f6025816651bab247af13b33e95cc759, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_mimic_chest_defeat
+    Frames:
+    - {fileID: 21300000, guid: ef9196f846fbee54bb2b37dfadc97f06, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_mimic_chest_hit
+    Frames:
+    - {fileID: 21300000, guid: 0414141dd4e7484448e55acac4784bfb, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_mimic_chest_idle
+    Frames:
+    - {fileID: 21300000, guid: 78d265ae83c6616419b496f91a0b06ed, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_mimic_chest_wake
+    Frames:
+    - {fileID: 21300000, guid: 76c93980af2c83445b68a899bdaf229d, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: actor_sir_clickington_defeat
@@ -326,6 +466,71 @@ MonoBehaviour:
   - Key: actor_slimelet_wake
     Frames:
     - {fileID: 21300000, guid: 24639e8f4b5b735409784325a7f7b7cd, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_spectral_page_idle
+    Frames:
+    - {fileID: 21300000, guid: 63e13204282e90e43b9128a9a8f26d38, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_spooky_spellbook_attack
+    Frames:
+    - {fileID: 21300000, guid: a564ba58211c29e40a29dbe6c9eadb79, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_spooky_spellbook_defeat
+    Frames:
+    - {fileID: 21300000, guid: 951f5f23be46536439c36ea4dfd8ee17, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_spooky_spellbook_hit
+    Frames:
+    - {fileID: 21300000, guid: 3344a6f8077bcbe409beafb0e9088349, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_spooky_spellbook_idle
+    Frames:
+    - {fileID: 21300000, guid: 52fe66014c81ead4e8ee2c3c9f3b99bd, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_spooky_spellbook_wake
+    Frames:
+    - {fileID: 21300000, guid: 332f0c6a457a33f4988e85bda85d6fa4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_stage_mask_idle
+    Frames:
+    - {fileID: 21300000, guid: 229273e53dbf65644ab1e4f527821972, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_theater_curtain_demon_attack
+    Frames:
+    - {fileID: 21300000, guid: 4ef9f7103f629c64db4af981916b83d2, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_theater_curtain_demon_boast
+    Frames:
+    - {fileID: 21300000, guid: 47ef7c500b9abb345b5ebcacb2ef6f0d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_theater_curtain_demon_defeat
+    Frames:
+    - {fileID: 21300000, guid: f50ad20504876c147ab5a1ae1159719c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_theater_curtain_demon_hit
+    Frames:
+    - {fileID: 21300000, guid: ebb2b6e157c2719459295874ad6e6517, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_theater_curtain_demon_idle
+    Frames:
+    - {fileID: 21300000, guid: a3ab31f35e2c1b24993d6b795add1be5, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_theater_curtain_demon_wake
+    Frames:
+    - {fileID: 21300000, guid: d29991d0dc4773a4f8c585784caf7449, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: bg_gameplay
@@ -888,6 +1093,21 @@ MonoBehaviour:
     - {fileID: 21300000, guid: e6de3f5f4321e754dad18a65a1b329ea, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_bat
+    Frames:
+    - {fileID: 21300000, guid: 34dea94263e50eb4683a9a4576c0bc28, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_bat_swarm_leader
+    Frames:
+    - {fileID: 21300000, guid: 93ac9245b7ed59948badb48c0ef6c8b0, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_cave_spider
+    Frames:
+    - {fileID: 21300000, guid: c6ada98598eca954d811ff80825e144e, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_dawnward_full
     Frames:
     - {fileID: 21300000, guid: c809e883ac7d7ce46852e81b933802b2, type: 3}
@@ -933,6 +1153,16 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 35125638de145cb40b4763d1cf1eee9b, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_goblin_brute_king
+    Frames:
+    - {fileID: 21300000, guid: 51c773ca84684b24ca0b831cf968ef91, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_goblin_key_warden
+    Frames:
+    - {fileID: 21300000, guid: a4c11a3e6a6b6434992353799607d9fd, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_ironheart_full
     Frames:
     - {fileID: 21300000, guid: 1b0cb80e7aae53a4e821b5e5fce72469, type: 3}
@@ -956,6 +1186,11 @@ MonoBehaviour:
   - Key: portrait_lightbringer_neutral
     Frames:
     - {fileID: 21300000, guid: 05cb14234e11a084688b90bc6e48bc85, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_mimic_chest
+    Frames:
+    - {fileID: 21300000, guid: 4cc10b8a2595b654495124bed4010626, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_rageclaw_full
@@ -1031,6 +1266,26 @@ MonoBehaviour:
   - Key: portrait_slimelet
     Frames:
     - {fileID: 21300000, guid: 05d00f36c220f9a42ace05c4a30af9ae, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_spectral_page
+    Frames:
+    - {fileID: 21300000, guid: 24c533b7ee659f1448b887209d38a35a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_spooky_spellbook
+    Frames:
+    - {fileID: 21300000, guid: 2e3f2db29ed08e144a39087f1d2fcc01, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_stage_mask
+    Frames:
+    - {fileID: 21300000, guid: ea1cda02ad583b641a924a4680e912e7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_theater_curtain_demon
+    Frames:
+    - {fileID: 21300000, guid: 6ee0fdca7754afe45bd0f22b387aaa1f, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_windsong_full

@@ -182,7 +182,9 @@ namespace ClickDungeon.Unity
                                + (learned.Count > 0 ? $"  ·  learned {string.Join(", ", learned)}" : "");
                 yield return new WaitForSecondsRealtime(Hold(learned.Count > 0 ? 3.5f : 2f));
 
-                for (int i = 0; i < 1500 && Session.Run.Status == Domain.RunStatus.InProgress; i++)
+                // Room for a whole run however long the dungeon is: 1500 was plenty for five floors and cuts a twenty-floor
+                // run short (D-062). Twice the balance bot's per-floor allowance, since a watched bot also plays out chests.
+                for (int i = 0; i < 160 * Catalog.RunFloorCount && Session.Run.Status == Domain.RunStatus.InProgress; i++)
                 {
                     if (Keyboard.current != null && Keyboard.current.escapeKey.isPressed) { UnityEngine.Application.Quit(); yield break; }
                     var hero = Session.Run.Hero;

@@ -159,6 +159,8 @@ the player responds.
 | `Charge(direction)` | the whole line marked, **GORE** | runs the line; the hero anywhere on it takes the blow and stops the charge (D-058) |
 | `Throw(cell)`     | landing tile marked **BOMB**      | a lit bomb lands on `cell`; it blows up the turn after, as any bomb (D-058) |
 | `Reassemble`      | **BONES n** countdown             | nothing; after its turns run out the bones stand up again (D-058) |
+| `Web(cell)`       | **WEB** on the marked tile        | if the hero is still on `cell`, they are webbed: no Move or Dash on their next command (D-061) |
+| `Vanish(cell)`    | **ARRIVES** on the marked tile    | the boss reappears on `cell`, unless something has taken it (D-062) |
 
 Attacks target **cells**, not the hero. Moving out of a telegraphed cell
 avoids the hit. This is the core of Shield/Dash decisions.
@@ -177,13 +179,34 @@ avoids the hit. This is the core of Shield/Dash decisions.
 | Enemy            | HP | Dmg | From floor | Behaviour |
 |------------------|----|-----|------------|-----------|
 | Skeleton Warrior | 3  | 2   | 3 | Crowned Slime's pace (acts every other turn). Its **first** fall is not a death: it collapses into bones at 1 heart, shown as `BONES n`. Any hit in the next 2 of its turns breaks it for good; left alone, it stands up at half its hearts (rounded up), and its next fall is final. The kill, and its experience, count only when the bones break. |
-| Goblin Bomber    | 2  | 1   | 4 | Within 3 tiles (king's moves) of the hero, and the hero on open floor → `Throw(hero's cell)`: a lit bomb lands there next turn and explodes the turn after, so the hero has a turn to step clear. After a throw → `Rest`. Adjacent → steps away, or `Attack` if cornered. Never throws at a tile that cannot take a bomb (a chest, key, potion, pad, plate, the exit, or a hazard). |
-| Armored Boar     | 5  | 3   | 6 | Adjacent → `Attack`. Otherwise, the hero on a clear straight line within 4 → `Charge(dir)`: the whole path is marked, and the hero anywhere on it next turn is gored and stops the charge. Walls, hazards, doors and other monsters stop the line. After a charge it is winded → `Rest`. Otherwise it lumbers a step every other turn. |
+| Goblin Bomber    | 2  | 1   | 6 | Within 3 tiles (king's moves) of the hero, and the hero on open floor → `Throw(hero's cell)`: a lit bomb lands there next turn and explodes the turn after, so the hero has a turn to step clear. After a throw → `Rest`. Adjacent → steps away, or `Attack` if cornered. Never throws at a tile that cannot take a bomb (a chest, key, potion, pad, plate, the exit, or a hazard). |
+| Armored Boar     | 5  | 3   | 12 | Adjacent → `Attack`. Otherwise, the hero on a clear straight line within 4 → `Charge(dir)`: the whole path is marked, and the hero anywhere on it next turn is gored and stops the charge. Walls, hazards, doors and other monsters stop the line. After a charge it is winded → `Rest`. Otherwise it lumbers a step every other turn. |
+
+**Second expansion monsters (D-061).**
+
+| Enemy             | HP | Dmg | From floor | Behaviour |
+|-------------------|----|-----|------------|-----------|
+| Mimic Chest       | 4  | 3   | 2 | Sits asleep looking exactly like a closed chest: the board draws a chest and its tap meter, the clue is Treasure, and every command a chest accepts (tap, open, dash onto it) is accepted - there is no free probe. Tapping or bumping it, or the hero stepping beside it, wakes it; then it is a Goblin. Drops 15 coins when it falls. |
+| Cave Spider       | 3  | 2   | 7 | Hero within 3 and not already webbed → `Web(hero's cell)`. Webbed, the hero cannot Move or Dash on their next command (Slash, Shield, Potion and Wait still work); the web is gone after that command. After a web → `Rest`. Otherwise a Goblin. |
+| Spooky Spellbook  | 3  | 2   | 11 | Fires down lanes as a Fire Imp. Every third action, with fewer than 2 pages out → `Summon` a Spectral Page (1 HP, 1 dmg, a Goblin) beside it. |
+| Goblin Key Warden | 3  | 1   | 4, 8, 14, 18 | Placed by the floor, not drawn from a pool: on these floors it holds the key instead of the key lying on a tile. It backs away from the hero, resting after each step so the hero can catch it; cornered and adjacent it attacks. When it falls the key drops on its tile (or the nearest clear one). |
 
 AI tie-breaks are deterministic (fixed direction order Up, Right, Down, Left;
 then lowest actor id). No RNG in AI.
 
-### 3.6 Lord Blobert (last-floor boss) *(tune numbers)*
+### 3.6 Act bosses *(D-062, tune numbers)*
+
+A boss closes each act of five floors. Its floor has no key; the exit is sealed until it falls, and no pit on it leads
+down past it. **Beating an act boss restores the hero's full hearts and mana.**
+
+| Floor | Boss | HP | Dmg | Script |
+|---|---|---|---|---|
+| 5 | Goblin Brute King | 10 | 2 (slam 2) | A three-step cycle: (1) adjacent → `Attack`, else the hero on a clear line within 3 → `Charge` as the Boar, else `Move`; (2) `Slam` on the hero's cell and every tile touching it; (3) `Charge` if the hero is on a line, else as (1). Winded → `Rest` after any charge. At half his hearts or below he is **Enraged** for the rest of the fight: every blow +1, shown in its warning. |
+| 10 | Bat Swarm Leader | 13 | 2 | Cycles `Summon` (two Bats, 1 HP / 1 dmg, never more than 4 out) → `Charge` (a dive down a clear line within 4) → `Attack` adjacent, else `Charge` or `Move`. Rests after any dive. |
+| 15 | Theater Curtain Demon | 16 | 3 (slam 3) | Four-step script: `Summon` two Stage Masks (1 HP / 2 dmg, at most 3 out) → `Slam` the hero's whole row and column → `Fire` down a lane, or `Attack` adjacent → `Vanish` to the free tile farthest from the hero (only if one is farther than where it stands), marked **ARRIVES** the turn before. |
+| 20 | Lord Blobert | 18 | 2 (slam 4) | Below. |
+
+### 3.7 Lord Blobert (last-floor boss) *(tune numbers)*
 
 HP 18 (D-039). Uses the same intent system. His court hides 2 spike traps and a bomb
 under its covers. Repeating script:
@@ -308,7 +331,7 @@ Ordering is covered by automated tests.
   the key collects it. Walking onto the locked exit while holding the key
   unlocks it, consumes the key and completes the floor.
   The exit tile is drawn open as soon as the key is held, since stepping on it
-  will open it. Blobert's sealed exit ignores keys. The exit only triggers when
+  will open it. A boss floor's sealed exit ignores keys. The exit only triggers when
   entered: a hero already standing on it when Blobert falls steps off and back on.
 - **Chest**: `Interact` with a closed chest on the hero's own tile or one beside it.
   - A chest has a **quality** that sets how many taps it takes to open (D-022):
@@ -330,8 +353,8 @@ Ordering is covered by automated tests.
     lists every reward the chest granted.
 - **Floor complete** → next floor generates, hero HP/potions/boons carry over,
   mana refills, key is cleared.
-- **Run**: 7 floors (D-059; it was 5). The last floor is Lord Blobert's arena; its exit is unlocked
-  when he dies and stepping on it wins the run.
+- **Run**: 20 floors in four acts of five (D-062; it was 7). Floors 5, 10 and 15 are act bosses (§3.6); floor 20 is
+  Lord Blobert's arena, whose exit is unlocked when he dies and stepping on it wins the run.
 - **Death**: hero HP ≤ 0 ends the run. The save is cleared (roguelike run).
 
 ---
@@ -391,16 +414,17 @@ Damage and HP never drop below 1.
 
 ### 10.1 Measured difficulty
 
-**Current** (D-059: seven floors and the first expansion monsters). `DifficultySweep`, 60 blind seeds, Free Roam —
-reach the last floor / won:
+**Current** (D-062: twenty floors in four acts, the second wave of monsters). `DifficultySweep`, **240** blind
+seeds (60 is too few over twenty floors), Free Roam — reach the last floor / won:
 
 | Player             | Squire's Stroll | Knight's Trial | Blobert's Wrath |
 |--------------------|-----------------|----------------|-----------------|
-| casual (20%)       | 100% / 100%     | 82% / 77%      | 55% / 52%       |
-| novice (50%)       | 98% / 97%       | 45% / 28%      | 23% / 12%       |
+| casual (20%)       | 100% / 100%     | 69% / 69%      | 52% / 51%       |
+| novice (50%)       | 100% / 100%     | 16% / 15%      | 12% / 11%       |
 
-Class parity on Knight's Trial (`ClassSweep`, 40 blind seeds, won): casual Knight 30 · Paladin 32; novice
-Knight 13 · Paladin 12.
+No run stalled. Floor 5, the Goblin King, is where novices die most: 41 of 205 deaths on Knight's Trial, 61 of 214 on
+Blobert's Wrath. Class parity is held by the parity guard in `BalanceTests`; `ClassSweep` now prints only candidate
+variants, so its rows are not the shipped game.
 
 These numbers are for a hero with **no talents, gear or renown**: `AutoPlayer.PlayRun` starts every run from an
 empty profile. They measure the dungeon and cannot see the class trees at all — a talent could be broken, as

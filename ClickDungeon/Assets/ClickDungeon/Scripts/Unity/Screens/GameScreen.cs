@@ -597,7 +597,7 @@ namespace ClickDungeon.Unity.Screens
             if (_chest.IsOpen || Run == null) return;
             var run = Run;
             _modal.Show("MENU",
-                $"{Goal(run)}\nFloor {run.Floor.FloorIndex}: {Catalog.ProfileFor(run.Floor.FloorIndex).Name}\nDifficulty: {DifficultyName(run)}\nMovement: {Menus.MovementName(run.Movement)}\nTurn {run.Turn + 1}    Seed {run.RunSeed}\nYour run is saved after every turn.{(_app.TelemetryActive ? "\nPlaytest log is on (saved on this device only)." : "")}",
+                $"{Goal(run, Catalog)}\nFloor {run.Floor.FloorIndex}: {Catalog.ProfileFor(run.Floor.FloorIndex).Name}\nDifficulty: {DifficultyName(run)}\nMovement: {Menus.MovementName(run.Movement)}\nTurn {run.Turn + 1}    Seed {run.RunSeed}\nYour run is saved after every turn.{(_app.TelemetryActive ? "\nPlaytest log is on (saved on this device only)." : "")}",
                 _modal.Hide,
                 Menus.B("RESUME", Palette.PlayGreen, _modal.Hide),
                 Menus.B("WHAT HAPPENED", Palette.NavyLight, () => OpenLog(OpenPause)),
@@ -758,7 +758,7 @@ namespace ClickDungeon.Unity.Screens
             // mascot is not playable (D-057), so in practice the overlay always shows — the comparison is kept so a future
             // campaign that plays as him shows the painted face rather than a copy laid over it.
             if (_portraitRoot != null) _portraitRoot.SetActive(!_matched || hero.IdentityId != ArtKeys.MascotId);
-            if (_goal != null) _goal.text = Goal(run);
+            if (_goal != null) _goal.text = Goal(run, Catalog);
             if (_status != null) _status.text = $"TURN {run.Turn + 1}   ·   SLASH {hero.SlashDamage}   ·   KEY {(hero.HasKey ? "YES" : "NO")}"
                            + (hero.SpecialKeys > 0 ? $"   ·   SPECIAL KEYS {hero.SpecialKeys}" : "");
             RefreshPurse();
@@ -781,10 +781,10 @@ namespace ClickDungeon.Unity.Screens
         }
 
         /// <summary>What this floor asks of the player, the line the INSPECT panel used to open with.</summary>
-        static string Goal(RunState run)
+        static string Goal(RunState run, ContentCatalog catalog)
         {
             var floor = run.Floor;
-            if (floor.IsBossFloor && !floor.ExitUnlocked) return "GOAL: defeat Lord Blobert to open the exit.";
+            if (floor.IsBossFloor && !floor.ExitUnlocked) return $"GOAL: defeat {Lines.BossName(run, catalog)} to open the exit.";
             if (floor.ExitUnlocked || run.Hero.HasKey) return "GOAL: reach the EXIT.";
             return "GOAL: find the KEY, then reach the EXIT.";
         }
@@ -870,7 +870,7 @@ namespace ClickDungeon.Unity.Screens
             if (!_hover.HasValue)
             {
                 _inspectTitle.text = "INSPECT";
-                if (floor.IsBossFloor && !floor.ExitUnlocked) sb.AppendLine("Goal: defeat Lord Blobert to open the exit.");
+                if (floor.IsBossFloor && !floor.ExitUnlocked) sb.AppendLine($"Goal: defeat {Lines.BossName(run, Catalog)} to open the exit.");
                 else if (floor.ExitUnlocked || run.Hero.HasKey) sb.AppendLine("Goal: reach the EXIT.");
                 else sb.AppendLine("Goal: find the KEY, then reach the EXIT.");
                 sb.AppendLine();
@@ -940,7 +940,7 @@ namespace ClickDungeon.Unity.Screens
                 sb.AppendLine($"Mana {hero.Mana}/{hero.MaxMana}: shield costs {Mana.ShieldCost(run, heroClass)}, dash {Mana.DashCost(run, heroClass)}.");
                 sb.AppendLine($"+{Mana.PerTurn} mana every turn, full on every new floor.");
                 sb.AppendLine($"Turn {run.Turn + 1}. Key: {(hero.HasKey ? "yes" : "no")}{(hero.SpecialKeys > 0 ? $". Special keys: {hero.SpecialKeys}" : "")}.");
-                sb.AppendLine(Goal(run));
+                sb.AppendLine(Goal(run, catalog));
                 sb.AppendLine("Tap him to wait a turn.");
                 var underfoot = UnderfootText(cell, floor, Board.ExitReadsOpen(run));
                 if (underfoot != null) sb.AppendLine(underfoot);
@@ -994,7 +994,7 @@ namespace ClickDungeon.Unity.Screens
                 {
                     title = "EXIT";
                     sb.AppendLine(floor.ExitUnlocked ? "Open. Step on it to descend."
-                        : floor.IsBossFloor ? "Sealed until Lord Blobert falls."
+                        : floor.IsBossFloor ? $"Sealed until {Lines.BossName(run, catalog)} falls."
                         : run.Hero.HasKey ? "Your key fits. Step on it to descend." : "Locked. Find the key first.");
                 }
                 if (cell.Hazard == HazardKind.Spikes)
@@ -1490,10 +1490,10 @@ namespace ClickDungeon.Unity.Screens
             "- Tiles are uncovered only by clicking them. FREE ROAM: tap any tile to go there; if a monster or a shut door is hiding under it, you stay put and it is revealed.\n" +
             "- STEP BY STEP: step to a lit tile next to you. Tiles two steps away are SENSED: red diamond ! = enemy, orange triangle ! = trap, K = key, E = exit, purple + = door, plate or teleport, $ = treasure, dot = safe.\n" +
             "- Tap an enemy beside you to SLASH, a chest to open it (2-4 taps, each a turn), or your hero to wait.\n" +
-            "- Uncovering an enemy wakes it. It shows its intent and only acts on the NEXT turn. Most must stand next to you to hit; Fire Imps shoot along a line and Lord Blobert slams from anywhere.\n" +
+            "- Uncovering an enemy wakes it. It shows its intent and only acts on the NEXT turn. Most must stand next to you to hit; Fire Imps shoot along a line and bosses slam from anywhere.\n" +
             "- Tiles marked -N will be hit next turn. Step off, SHIELD to block (staggers attackers), or DASH one or two tiles over traps.\n" +
             "- SHIELD and DASH cost MANA (the blue bar; the price is on each button). You get 1 back every turn and a full bar on every new floor. Moving, slashing and potions are free.\n" +
-            "- Find the KEY, reach the EXIT. Floor 5: defeat Lord Blobert.\n\n" +
+            "- Find the KEY, reach the EXIT. Every fifth floor ends in a boss - beat it to heal fully - and Lord Blobert waits at the bottom.\n\n" +
             "Keys: WASD / arrows, Space = wait, 1-5 = abilities, Esc = menu, H = help.";
 
         public static (string label, Color color, Action action) B(string label, Color color, Action action) => (label, color, action);

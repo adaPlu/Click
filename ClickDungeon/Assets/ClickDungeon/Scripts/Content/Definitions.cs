@@ -88,7 +88,9 @@ namespace ClickDungeon.Content
     }
 
     /// <summary>Charger and Bomber belong to the first expansion monsters (D-058).</summary>
-    public enum EnemyBehavior { Chaser, SlowChaser, Lane, Boss, Charger, Bomber }
+    /// <summary>Spinner, Caster and Keeper belong to the second expansion monsters (D-061).</summary>
+    /// <summary>BruteKing, SwarmLeader and Showman are the act bosses (D-062); Boss is Lord Blobert's own script.</summary>
+    public enum EnemyBehavior { Chaser, SlowChaser, Lane, Boss, Charger, Bomber, Spinner, Caster, Keeper, BruteKing, SwarmLeader, Showman }
 
     public sealed class EnemyDefinition
     {
@@ -120,6 +122,15 @@ namespace ClickDungeon.Content
         public int ReassembleTurns = 2;
         /// <summary>How far a bomber lobs, counted in king's moves (D-058).</summary>
         public int ThrowRange = 3;
+
+        /// <summary>Sight does not wake it and its clue reads as treasure; it wakes when the hero comes right up to it (D-061).</summary>
+        public bool Disguised;
+        /// <summary>Coins it leaves where it falls (D-061).</summary>
+        public int LootCoins;
+        /// <summary>A summoner that is not a boss keeps no more than this many of its minions alive at once (D-061).</summary>
+        public int MaxMinions;
+        /// <summary>At half its hearts or fewer it enrages: every blow one harder, and the warnings say so (D-062).</summary>
+        public bool EnragesAtHalf;
     }
 
     public sealed class HazardTuning
@@ -181,6 +192,8 @@ namespace ClickDungeon.Content
         public int MaxLava;
         /// <summary>Teleport pads are placed as a pair, or not at all.</summary>
         public bool Teleports;
+        /// <summary>The key is held by a Goblin Key Warden, not left on the floor (D-061): it drops where the warden falls.</summary>
+        public bool KeyWarden;
         public int Fountains;
         /// <summary>A vault door plus the pressure plate that opens it (D-018).</summary>
         public bool Vault;
@@ -312,7 +325,7 @@ namespace ClickDungeon.Content
         /// <summary>The earliest and latest floor a premium chest is placed on (never the boss floor).</summary>
         public int PremiumFirstFloor = 2;
         /// <summary>The last floor a premium chest may appear on: every floor but Blobert's (D-059 widened it from 4).</summary>
-        public int PremiumLastFloor = 6;
+        public int PremiumLastFloor = 19;
         /// <summary>What one bought potion ration is worth on the next run.</summary>
         public int PotionRationPotions = 1;
         /// <summary>What one bought heart token is worth on the next run.</summary>

@@ -32,6 +32,8 @@ namespace ClickDungeon.Simulation
     {
         public const int MaxAttempts = 100;
 
+        public const string KeyWardenId = "goblin_key_warden";
+
         public static FloorState Generate(ulong runSeed, int floorIndex, ContentCatalog catalog)
         {
             var profile = catalog.ProfileFor(floorIndex);
@@ -39,9 +41,27 @@ namespace ClickDungeon.Simulation
             {
                 var seed = Hash.Of(runSeed, Hash.GenerationSalt, (ulong)Versions.Generation, (ulong)floorIndex, (ulong)attempt);
                 var floor = TryBuild(new DeterministicRng(seed), floorIndex, attempt, profile, catalog);
-                if (floor != null && FloorValidator.Validate(floor, catalog)) return floor;
+                if (floor != null && FloorValidator.Validate(floor, catalog)) return HandKeyToWarden(floor, profile, catalog);
             }
             throw new InvalidOperationException($"Could not generate a valid floor {floorIndex} for seed {runSeed}.");
+        }
+
+        /// <summary>
+        /// On a floor whose key is guarded (D-061), a Goblin Key Warden takes it up from where it lay: it starts on that very
+        /// tile, which the floor has already been proved to reach, and drops the key where it falls.
+        /// </summary>
+        static FloorState HandKeyToWarden(FloorState floor, FloorProfile profile, ContentCatalog catalog)
+        {
+            if (!profile.KeyWarden || !catalog.HasEnemy(KeyWardenId)) return floor;
+            foreach (var p in Board.AllCells)
+            {
+                if (floor[p].Content != ContentKind.Key) continue;
+                floor[p].Content = ContentKind.None;
+                var warden = EnemyAi.Spawn(floor, catalog.Enemy(KeyWardenId), p, awake: false);
+                warden.CarriesKey = true;
+                break;
+            }
+            return floor;
         }
 
         static FloorState TryBuild(DeterministicRng rng, int floorIndex, int attempt, FloorProfile profile, ContentCatalog catalog)

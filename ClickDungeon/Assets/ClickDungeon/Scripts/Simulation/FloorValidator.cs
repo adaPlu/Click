@@ -66,11 +66,18 @@ namespace ClickDungeon.Simulation
                     errors.Add($"Enemy {enemy.Id} is out of bounds.");
                     continue;
                 }
+                // A Key Warden's key is this floor's key, held where the warden stands (D-061).
+                if (enemy.CarriesKey)
+                {
+                    keys++;
+                    keyPos = enemy.Pos;
+                }
                 if (!occupied.Add(enemy.Pos)) errors.Add($"Two actors share {enemy.Pos}.");
                 var cell = floor[enemy.Pos];
                 if (Board.BlocksMovement(cell) || cell.Hazard != HazardKind.None || cell.Content != ContentKind.None || cell.IsExit)
                     errors.Add($"Enemy {enemy.Id} spawned inside a blocker or object at {enemy.Pos}.");
-                if (!enemy.Awake && floor.Start.InBounds && enemy.Pos.Manhattan(floor.Start) <= 2)
+                // A warden backs away rather than ambushes, and starts where the key was placed - which may be two tiles off.
+                if (!enemy.Awake && !enemy.CarriesKey && floor.Start.InBounds && enemy.Pos.Manhattan(floor.Start) <= 2)
                     errors.Add($"Dormant enemy {enemy.Id} is within 2 tiles of the start.");
             }
 

@@ -148,7 +148,7 @@ namespace ClickDungeon.Tests
             {
                 var run = KeyedRun(seed, 3);
                 var player = new AutoPlayer();
-                for (int i = 0; i < 400 && run.Status == RunStatus.InProgress; i++)
+                for (int i = 0; i < BalanceTests.MaxCommands && run.Status == RunStatus.InProgress; i++)
                     TurnResolver.Apply(run, player.Choose(run, Catalog, seed * 7919UL + (ulong)i), Catalog);
                 if (run.Status == RunStatus.Won) won++;
             }

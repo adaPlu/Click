@@ -139,6 +139,7 @@ namespace ClickDungeon.Simulation
             var hero = run.Hero;
             if (run.Floor.Start.InBounds && run.OuterFloor != null) hero.Pos = run.Floor.Start;
             hero.Guard = false;
+            hero.WebbedTurns = 0;
             Visibility.Update(run, catalog, events);
             TurnResolver.DeclareAll(run, catalog, events);
         }
@@ -206,6 +207,7 @@ namespace ClickDungeon.Simulation
             hero.Pos = floor.Start;
             hero.HasKey = false;
             hero.Guard = false;
+            hero.WebbedTurns = 0;
             hero.WardSpent = false;
             Mana.Refill(hero);
 

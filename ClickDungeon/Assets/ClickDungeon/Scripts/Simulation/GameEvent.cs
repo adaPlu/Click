@@ -56,6 +56,12 @@ namespace ClickDungeon.Simulation
         EnemyReassembled,
         EnemyCharged,
         BombThrown,
+        // Second expansion monsters (D-061), appended.
+        HeroWebbed,
+        KeyDropped,
+        // The act bosses (D-062), appended.
+        BossEnraged,
+        BossVanished,
     }
 
     /// <summary>A record of something the simulation already decided. Presentation only reacts to these.</summary>

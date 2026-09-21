@@ -20,6 +20,8 @@ namespace ClickDungeon.Simulation
             var events = result.Events;
             var hero = run.Hero;
             var heroClass = catalog.HeroClass(hero.ClassId);
+            // A web holds for the one turn after it lands (D-061); this accepted command was that turn.
+            if (hero.WebbedTurns > 0) hero.WebbedTurns--;
             bool enteredCell = false;
             // Where the hero stepped from, so a vault can put them back there (D-018).
             var enteredFrom = GridPos.Invalid;
@@ -94,6 +96,11 @@ namespace ClickDungeon.Simulation
                     break;
                 }
                 case CommandKind.Interact:
+                    if (Board.SleepingMimicAt(run.Floor, command.Target))
+                    {
+                        Bump(run, command.Target, events);
+                        break;
+                    }
                     // One tap. A chest takes several, and each is a full turn the enemies answer (D-022).
                     Chests.Tap(run, command.Target, catalog, events);
                     break;
@@ -144,9 +151,18 @@ namespace ClickDungeon.Simulation
         /// </summary>
         static void Bump(RunState run, GridPos p, List<GameEvent> events)
         {
-            string what = run.Floor.EnemyAt(p) != null ? "lurker" : "obstacle";
+            var lurker = run.Floor.EnemyAt(p);
+            string what = lurker != null ? "lurker" : "obstacle";
             events.Add(GameEvent.Of(GameEventKind.HeroBumped, from: run.Hero.Pos, to: p, source: what));
             Visibility.Reveal(run.Floor, p, events);
+            // A mimic reached for springs awake, from wherever the hero reached for it (D-061). Its bite is still declared
+            // first, so it lands a turn from now, like every other blow.
+            if (lurker != null && lurker.Disguised && !lurker.Awake)
+            {
+                lurker.Awake = true;
+                lurker.JustWoken = true;
+                events.Add(GameEvent.Of(GameEventKind.EnemyWoke, lurker.Id, to: lurker.Pos, source: lurker.DefId));
+            }
         }
 
         /// <summary>The first covered tile along a dash that stops it as a bump, or <see cref="GridPos.Invalid"/>.</summary>

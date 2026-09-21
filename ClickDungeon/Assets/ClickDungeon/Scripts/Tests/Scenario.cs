@@ -68,6 +68,15 @@ namespace ClickDungeon.Tests
                         case 'Z': Spawn(floor, "skeleton", p, true); break;
                         case 'R': Spawn(floor, "armored_boar", p, true); break;
                         case 'M': Spawn(floor, "goblin_bomber", p, true); break;
+                        // Second expansion monsters (D-061). The mimic starts asleep, as it would on a floor.
+                        case 'A': Spawn(floor, "cave_spider", p, true); break;
+                        case 'Y': Spawn(floor, "spooky_spellbook", p, true); break;
+                        case 'Q': Spawn(floor, "mimic_chest", p, false); break;
+                        case 'J': Spawn(floor, "goblin_key_warden", p, true).CarriesKey = true; break;
+                        // Act bosses (D-062), each making its floor a boss floor as Blobert's 'B' does.
+                        case 'N': Spawn(floor, "goblin_brute_king", p, true); floor.IsBossFloor = true; break;
+                        case 'V': Spawn(floor, "bat_swarm_leader", p, true); floor.IsBossFloor = true; break;
+                        case 'T': Spawn(floor, "theater_curtain_demon", p, true); floor.IsBossFloor = true; break;
                         case 'B':
                             Spawn(floor, "lord_blobert", p, true);
                             floor.IsBossFloor = true;
@@ -146,6 +155,6 @@ namespace ClickDungeon.Tests
 
         public static bool Has(CommandResult result, GameEventKind kind) => result.Events.Exists(e => e.Kind == kind);
 
-        static void Spawn(FloorState floor, string id, GridPos p, bool awake) => EnemyAi.Spawn(floor, Catalog.Enemy(id), p, awake);
+        static EnemyState Spawn(FloorState floor, string id, GridPos p, bool awake) => EnemyAi.Spawn(floor, Catalog.Enemy(id), p, awake);
     }
 }

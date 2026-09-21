@@ -371,6 +371,8 @@ namespace ClickDungeon.Unity.Ui
             {
                 // Immunity must stay readable without relying on the art: keep the steel ring.
                 if (mode == EnemyMode.Puffed) Shape(t, Shapes.Ring, Palette.Steel, Vector2.zero, new Vector2(134f, 134f));
+                // Enraged likewise (D-062): the ring, not the art, says its blows now hit harder.
+                if (mode == EnemyMode.Enraged) Shape(t, Shapes.Ring, Palette.Danger, Vector2.zero, new Vector2(134f, 134f));
                 string state = mode == EnemyMode.Puffed ? "puffed"
                     : mode == EnemyMode.Deflated ? "deflated"
                     : intent == IntentKind.Slam ? "boast" : "idle";

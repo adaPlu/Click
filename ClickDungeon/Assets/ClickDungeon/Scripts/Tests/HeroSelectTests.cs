@@ -19,42 +19,36 @@ namespace ClickDungeon.Tests
         const string Dawnward = "dawnward";
 
         /// <summary>
-        /// D-057: Ironheart is the first and default Knight, and Sir Clickington is the mascot, not a playable hero. The
-        /// roster's order is what hero select shows and what the watch bot alternates through.
+        /// D-057, D-060: Ironheart is the first and default Knight. Sir Clickington, the mascot, can still be picked for
+        /// now - last on the roster, a Knight as well. The roster's order is what hero select shows.
         /// </summary>
         [Test]
-        public void IronheartLeadsTheRosterAndTheMascotIsNotPlayable()
+        public void IronheartLeadsTheRosterAndTheMascotCanStillBePicked()
         {
             Assert.That(ContentCatalog.DefaultHeroId, Is.EqualTo("ironheart"));
             Assert.That(Catalog.HeroIdentities.Keys.First(), Is.EqualTo(ContentCatalog.DefaultHeroId), "Ironheart is hero number one.");
             Assert.That(Catalog.HeroIdentity(ContentCatalog.DefaultHeroId).ClassId, Is.EqualTo("knight"));
-            Assert.That(Catalog.HeroIdentities.ContainsKey(ContentCatalog.MascotId), Is.False,
-                "The mascot must not be offered as a hero: he belongs to a campaign that does not exist yet.");
+            Assert.That(Catalog.HeroIdentities.Keys.Last(), Is.EqualTo(ContentCatalog.MascotId), "The mascot comes last.");
+            Assert.That(Catalog.HeroIdentity(ContentCatalog.MascotId).ClassId, Is.EqualTo("knight"));
+            Assert.That(Catalog.HeroIdentity(ContentCatalog.MascotId).DisplayName, Is.EqualTo("Sir Clickington"));
             Assert.That(ContentCatalog.MascotId, Is.Not.EqualTo(ContentCatalog.DefaultHeroId),
                 "Screens that lay a face over the painted mascot compare against the mascot, not the default hero.");
         }
 
         /// <summary>
-        /// D-057: a run saved as Sir Clickington, before he was retired from play, continues as Ironheart instead of being
-        /// refused as an unknown hero. The successor shares the class, so nothing about the run itself may change.
+        /// D-060: a run started as Sir Clickington comes back as Sir Clickington. D-057 had mapped his saves to Ironheart,
+        /// which would now turn a run the player chose him for into someone else's on the next Continue.
         /// </summary>
         [Test]
-        public void ARunSavedAsTheRetiredMascotContinuesAsIronheart()
+        public void ARunStartedAsTheMascotContinuesAsTheMascot()
         {
-            var run = RunFactory.NewRun(21UL, Catalog, new List<GameEvent>(), ContentCatalog.DefaultHeroId, MovementMode.Free);
-            run.Hero.IdentityId = ContentCatalog.MascotId;   // as a save written before D-057 has it
-            int hp = run.Hero.Hp, slash = run.Hero.SlashDamage;
-
-            var loaded = SaveSerializer.FromJson(SaveSerializer.ToJson(run));
-
-            Assert.That(loaded.Hero.IdentityId, Is.EqualTo(ContentCatalog.DefaultHeroId));
-            Assert.That(loaded.Hero.ClassId, Is.EqualTo("knight"));
-            Assert.That(loaded.Hero.Hp, Is.EqualTo(hp));
-            Assert.That(loaded.Hero.SlashDamage, Is.EqualTo(slash));
+            var run = RunFactory.NewRun(21UL, Catalog, new List<GameEvent>(), ContentCatalog.MascotId, MovementMode.Free);
+            Assert.That(run.Hero.IdentityId, Is.EqualTo(ContentCatalog.MascotId));
 
             var session = new GameSession(Catalog, new JsonStore(SaveSerializer.ToJson(run)));
             Assert.That(session.TryContinue(out var problem), Is.True, $"Continue refused it: {problem}");
-            Assert.That(session.Run.Hero.IdentityId, Is.EqualTo(ContentCatalog.DefaultHeroId));
+            Assert.That(session.Run.Hero.IdentityId, Is.EqualTo(ContentCatalog.MascotId), "Still Sir Clickington after a reload.");
+            Assert.That(session.Run.Hero.ClassId, Is.EqualTo("knight"));
         }
 
         /// <summary>A save held as text and read back through the real serializer, so loading runs the real migration.</summary>
@@ -156,7 +150,7 @@ namespace ClickDungeon.Tests
                 var catalog = Catalog.ForDifficulty(tier);
                 int won = 0;
                 for (ulong seed = 1; seed <= 6; seed++)
-                    if (AutoPlayer.PlayRun(catalog, seed, 400, heroId: identity.Id).Status == RunStatus.Won) won++;
+                    if (AutoPlayer.PlayRun(catalog, seed, BalanceTests.MaxCommands, heroId: identity.Id).Status == RunStatus.Won) won++;
                 Assert.That(won, Is.GreaterThan(0), $"{identity.Id} on {tier} won none of 6 runs.");
             }
         }

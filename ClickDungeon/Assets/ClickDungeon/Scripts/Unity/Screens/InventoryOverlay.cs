@@ -74,7 +74,7 @@ namespace ClickDungeon.Unity.Screens
             _catalog = catalog;
             _profile = profile;
             _changed = changed;
-            _detail.text = "Items come from Lord Blobert, vault great chests, premium chests and the SHOP.\nWhat you wear shapes every run you start.";
+            _detail.text = "Items come from bosses, vault great chests, premium chests and the SHOP.\nWhat you wear shapes every run you start.";
             _root.gameObject.SetActive(true);
             _root.SetAsLastSibling();
             Redraw();
