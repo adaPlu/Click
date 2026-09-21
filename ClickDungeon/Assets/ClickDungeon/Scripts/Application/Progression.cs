@@ -116,7 +116,10 @@ namespace ClickDungeon.Application
         public static void BankXp(ProfileState profile, RunState run)
         {
             if (profile == null || run == null) return;
-            profile.Xp += Math.Max(0, run.XpEarned);
+            // The same ceiling the store clamps to on load (D-054). Without it a profile already carrying an absurd
+            // total — only a hand-edited one gets there — wraps negative on the next win, and stays that way until it
+            // is next read back from disk.
+            profile.Xp = Math.Min(XpForLevel(MaxLevel), profile.Xp + Math.Max(0, run.XpEarned));
         }
 
         /// <summary>

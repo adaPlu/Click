@@ -18,6 +18,25 @@ namespace ClickDungeon.Tests
             return run;
         }
 
+        /// <summary>
+        /// D-054: banking onto a profile that is already at the ceiling leaves it there. The store clamps on load, so
+        /// without a clamp here too an absurd total wraps negative and stays that way for the rest of the session —
+        /// long enough to show the player level 1 and take their talent points away.
+        /// </summary>
+        [Test]
+        public void BankingOntoACappedProfileLeavesItCappedRatherThanNegative()
+        {
+            int ceiling = Progression.XpForLevel(Progression.MaxLevel);
+            var profile = new ProfileState { Xp = ceiling };
+            var run = Scenario.Run(".....", ".....", "..H..", ".....", ".....");
+            run.XpEarned = 500;
+
+            Progression.BankXp(profile, run);
+
+            Assert.That(profile.Xp, Is.EqualTo(ceiling), "A capped profile stays capped.");
+            Assert.That(Progression.Level(profile), Is.EqualTo(Progression.MaxLevel), "And still reads as the top level.");
+        }
+
         [Test]
         public void TheLevelCurveClimbsByTriangleNumbers()
         {
