@@ -448,6 +448,37 @@ def circle(image: Image.Image, spec: dict) -> Image.Image:
     return square
 
 
+def grabcut_background(image: Image.Image, core=None, iterations: int = 10, margin: int = 6) -> Image.Image:
+    """
+    Separates a figure from its backdrop with GrabCut, which models colour and edges together, then trims.
+
+    For a dark figure on a dark backdrop, where remove_background's single colour threshold cannot tell armour from
+    wall: any tolerance loose enough to clear the floor also eats the armour (Ironheart's dark steel sits within ~20
+    colour units of the dungeon). "grabcut_core" is [x, y, w, h] as fractions of the crop, marked as certainly the
+    figure — needed where a limb matches the floor it stands on and would otherwise be handed to the background.
+    """
+    import cv2
+    import numpy as np
+
+    rgb = np.array(image.convert("RGB"))
+    bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+    h, w = bgr.shape[:2]
+    m = max(1, min(margin, w // 4, h // 4))
+    mask = np.full((h, w), cv2.GC_BGD, np.uint8)
+    mask[m:h - m, m:w - m] = cv2.GC_PR_FGD
+    if core:
+        fx, fy, fw, fh = core
+        x0, y0 = int(fx * w), int(fy * h)
+        mask[y0:y0 + max(1, int(fh * h)), x0:x0 + max(1, int(fw * w))] = cv2.GC_FGD
+    bg_model = np.zeros((1, 65), np.float64)
+    fg_model = np.zeros((1, 65), np.float64)
+    cv2.grabCut(bgr, mask, None, bg_model, fg_model, iterations, cv2.GC_INIT_WITH_MASK)
+    alpha = np.where((mask == cv2.GC_FGD) | (mask == cv2.GC_PR_FGD), 255, 0).astype(np.uint8)
+    rgba = Image.fromarray(np.dstack([rgb, alpha]), "RGBA")
+    bbox = rgba.getchannel("A").getbbox()
+    return rgba.crop(bbox) if bbox else rgba
+
+
 def render(crop: Image.Image, spec: dict) -> Image.Image:
     mode = spec.get("mode", "tile")
     size = int(spec.get("size", 256))
@@ -465,7 +496,10 @@ def render(crop: Image.Image, spec: dict) -> Image.Image:
         scale = size / cleaned.width
         return cleaned.resize((size, max(1, round(cleaned.height * scale))), Image.LANCZOS)
     if mode == "sprite":
-        cleaned = remove_background(crop, int(spec.get("tolerance", 40)), int(spec.get("local_tolerance", 10)))
+        if spec.get("grabcut"):
+            cleaned = grabcut_background(crop, spec.get("grabcut_core"))
+        else:
+            cleaned = remove_background(crop, int(spec.get("tolerance", 40)), int(spec.get("local_tolerance", 10)))
         if "min_island" in spec:
             cleaned = keep_largest_component(cleaned, min_fraction=float(spec["min_island"]))
         return contain(cleaned, size, spec.get("anchor", "bottom"))

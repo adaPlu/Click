@@ -6,7 +6,7 @@ namespace ClickDungeon.Unity.Screens
 {
     public enum Expression { Neutral, Happy, Confident, Worried, Shocked, Angry, Victorious, Defeated }
 
-    /// <summary>Player-facing words: Sir Clickington's quips, the turn log, and tile/intent explanations.</summary>
+    /// <summary>Player-facing words: the hero's quips, the turn log, and tile/intent explanations.</summary>
     public static class Lines
     {
         static readonly System.Random Rng = new System.Random();
@@ -31,6 +31,16 @@ namespace ClickDungeon.Unity.Screens
         public static string FloorStart(FloorState floor) => floor.IsBossFloor
             ? "LORD BLOBERT: \"You dare challenge the most magnificent blob in all the dungeons?\""
             : Pick("Onward! Probably.", "Deeper we go. Bravely-ish.", "Smells like adventure. And goblin.", "Every tile tells a story. Hopefully not a sad one.");
+
+        /// <summary>
+        /// The playing hero's name, for the lines spoken in their voice. These used to name Sir Clickington outright, so a
+        /// Dawnward run ended "Sir Clickington has fallen" — and with the mascot retired from play (D-057), so would every
+        /// run. Falls back to a plain word rather than throwing if the run or its hero is somehow missing.
+        /// </summary>
+        public static string HeroName(RunState run, ContentCatalog catalog) =>
+            run?.Hero != null && catalog != null && catalog.HeroIdentities.TryGetValue(run.Hero.IdentityId ?? "", out var identity)
+                ? identity.DisplayName
+                : "The hero";
 
         public static string SourceName(string id, ContentCatalog catalog)
         {
@@ -127,7 +137,7 @@ namespace ClickDungeon.Unity.Screens
                     face = Expression.Shocked;
                     return 48;
                 case GameEventKind.EnemyDied:
-                    line = "Sir Clickington: 1. Dungeon: 0.";
+                    line = $"{HeroName(run, catalog)}: 1. Dungeon: 0.";
                     face = Expression.Confident;
                     return 30;
                 case GameEventKind.HeroHealed:
@@ -225,7 +235,7 @@ namespace ClickDungeon.Unity.Screens
                 case GameEventKind.RunWon:
                     return "<color=#F2C94C>Run complete!</color>";
                 case GameEventKind.RunLost:
-                    return "<color=#FF6B5E>Sir Clickington has fallen.</color>";
+                    return $"<color=#FF6B5E>{HeroName(run, catalog)} has fallen.</color>";
             }
             return null;
         }

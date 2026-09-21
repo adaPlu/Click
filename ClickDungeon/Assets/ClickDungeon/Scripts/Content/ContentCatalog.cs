@@ -10,7 +10,22 @@ namespace ClickDungeon.Content
     /// </summary>
     public sealed class ContentCatalog
     {
-        public const string DefaultHeroId = "sir_clickington";
+        /// <summary>The hero a new player starts as, and the one a run falls back to (D-057).</summary>
+        public const string DefaultHeroId = "ironheart";
+
+        /// <summary>
+        /// Sir Clickington: the game's mascot, painted into the title and HUD backgrounds and the voice of its letters.
+        /// He is not a playable hero (D-057) — he belongs to a comedy campaign still to come. Screens that lay the playing
+        /// hero's face over the painted background compare against this, never against <see cref="DefaultHeroId"/>.
+        /// </summary>
+        public const string MascotId = "sir_clickington";
+
+        /// <summary>
+        /// Hero ids that once existed and what a saved run of theirs becomes. Sir Clickington's runs become Ironheart's:
+        /// the same Knight class, so the run plays on unchanged under a new face.
+        /// </summary>
+        public static readonly System.Collections.Generic.IReadOnlyDictionary<string, string> RetiredHeroes =
+            new System.Collections.Generic.Dictionary<string, string> { [MascotId] = DefaultHeroId };
         /// <summary>Guard used for a vault on a floor whose profile has no enemy pool of its own.</summary>
         public const string DefaultVaultEnemyId = "goblin";
 
@@ -209,7 +224,7 @@ namespace ClickDungeon.Content
             };
             c.HeroIdentities[DefaultHeroId] = new HeroIdentityDefinition
             {
-                Id = DefaultHeroId, DisplayName = "Sir Clickington", ClassId = "knight", Tagline = "Brave. Loyal. Clickable.",
+                Id = DefaultHeroId, DisplayName = "Ironheart", ClassId = "knight", Tagline = "Sturdy. Stubborn. Unbroken.",
             };
 
             // The Paladin trades reach for staying power: more hearts, more mana for shields and a stronger potion,
@@ -302,13 +317,12 @@ namespace ClickDungeon.Content
             Talent(c, "p_sanctified", "paladin", "devotion", 4, 1, "Sanctified", "Blessed waters, blessed wine.",
                 "Potions also refill your mana, and fountains heal you fully", TalentEffect.Sanctified, requires: "p_guiding_light");
 
-            c.HeroIdentities[DefaultHeroId].Title = "The Brave...ish";
-            c.HeroIdentities[DefaultHeroId].Quote = "Adventure looks better together.";
+            c.HeroIdentities[DefaultHeroId].Title = "The Iron Vanguard";
+            c.HeroIdentities[DefaultHeroId].Quote = "Absorbs pressure, protects space, and wins through durability.";
             c.HeroIdentities["dawnward"].Title = "Shield of the Dawn";
             c.HeroIdentities["dawnward"].Quote = "Anchors the front line and turns faith into victory.";
 
             // Heroes on the way (D-037): shown locked on Hero Select, with no class behind them yet.
-            c.ComingSoon.Add(new HeroPreview { Id = "ironheart", DisplayName = "Ironheart", ClassName = "Knight", Role = "Tank", Blurb = "Absorbs pressure and wins through durability." });
             c.ComingSoon.Add(new HeroPreview { Id = "shadowcut", DisplayName = "Shadowcut", ClassName = "Rogue", Role = "Damage", Blurb = "Exploits openings and turns precision into burst damage." });
             c.ComingSoon.Add(new HeroPreview { Id = "emberwisp", DisplayName = "Emberwisp", ClassName = "Wizard", Role = "Magic", Blurb = "Controls the battlefield with powerful magical effects." });
             c.ComingSoon.Add(new HeroPreview { Id = "windsong", DisplayName = "Windsong", ClassName = "Ranger", Role = "Ranged", Blurb = "Controls distance and turns precision into ranged attacks." });

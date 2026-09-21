@@ -765,3 +765,25 @@ Rules referenced here live in `docs/rules.md`.
 - **AND A WATCH BATCH AGREES**: ten watched runs at `3535907` came out byte-for-byte identical to the same seeds before
   the repairs, except the first run in which the Paladin held Judgement. The simulation stayed deterministic through a
   batch that changed the validator, chest rewards, a talent and combat.
+
+## D-057 Ironheart is the Knight; Sir Clickington is the mascot
+- **DECISION**: Ironheart is the first hero on the roster and the default Knight. Sir Clickington is no longer a playable
+  hero: he is the game's mascot — painted into the title and HUD backgrounds, standing under the title arch, and the voice
+  of its letters — and belongs to a comedy campaign still to be built. Ironheart comes off the "coming soon" roster.
+- **WHY**: the user's call ("Ironheart is number 1 — Sir Clickington is meant as a game mascot and additional comedic game
+  campaign"). It also fixes a live bug: hero-voice lines named Sir Clickington outright, so a Dawnward run ended "Sir
+  Clickington has fallen". Those lines — the death log, the "1. Dungeon: 0." quip, the victory and defeat quips — now use
+  the playing hero's name, and the Step-by-Step refusal and HOW TO PLAY no longer name anyone.
+- **TWO CONSTANTS, NOT ONE**: `ArtKeys.HeroId` had meant both "the default hero" and "the hero painted into the
+  backgrounds". Repointing it alone would have hidden Ironheart's face on the HUD and shown the painted mascot instead.
+  `ContentCatalog.MascotId` now carries the second meaning, and the screens that lay a face over the painted art compare
+  against it.
+- **SAVES**: `ContentCatalog.RetiredHeroes` maps `sir_clickington` to `ironheart`, applied as a save loads, so a run in
+  progress is not refused as an unknown hero. Both are Knights, so only the face changes. A stored hero preference needs no
+  migration: an unknown choice already falls back to the default.
+- **ART**: cut from `Iornheart.png` (`IronHeart1.png`'s extra animations are off-model and unused). The sheet's dark armour
+  on a dark floor defeated the slicer's colour threshold — any tolerance loose enough to clear the floor also ate the
+  armour — so sprite mode gained a `grabcut` option that models colour and edges together.
+- **NOT DONE**: the chest reward sequence still shows Sir Clickington's drawn reaction poses whoever plays, because
+  Ironheart's sheet has no chest-reaction art. His title and tagline ("The Iron Vanguard", "Sturdy. Stubborn. Unbroken.")
+  are placeholders written for this change, not from the sheet.

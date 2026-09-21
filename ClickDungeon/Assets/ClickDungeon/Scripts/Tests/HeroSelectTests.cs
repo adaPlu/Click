@@ -18,6 +18,63 @@ namespace ClickDungeon.Tests
     {
         const string Dawnward = "dawnward";
 
+        /// <summary>
+        /// D-057: Ironheart is the first and default Knight, and Sir Clickington is the mascot, not a playable hero. The
+        /// roster's order is what hero select shows and what the watch bot alternates through.
+        /// </summary>
+        [Test]
+        public void IronheartLeadsTheRosterAndTheMascotIsNotPlayable()
+        {
+            Assert.That(ContentCatalog.DefaultHeroId, Is.EqualTo("ironheart"));
+            Assert.That(Catalog.HeroIdentities.Keys.First(), Is.EqualTo(ContentCatalog.DefaultHeroId), "Ironheart is hero number one.");
+            Assert.That(Catalog.HeroIdentity(ContentCatalog.DefaultHeroId).ClassId, Is.EqualTo("knight"));
+            Assert.That(Catalog.HeroIdentities.ContainsKey(ContentCatalog.MascotId), Is.False,
+                "The mascot must not be offered as a hero: he belongs to a campaign that does not exist yet.");
+            Assert.That(ContentCatalog.MascotId, Is.Not.EqualTo(ContentCatalog.DefaultHeroId),
+                "Screens that lay a face over the painted mascot compare against the mascot, not the default hero.");
+        }
+
+        /// <summary>
+        /// D-057: a run saved as Sir Clickington, before he was retired from play, continues as Ironheart instead of being
+        /// refused as an unknown hero. The successor shares the class, so nothing about the run itself may change.
+        /// </summary>
+        [Test]
+        public void ARunSavedAsTheRetiredMascotContinuesAsIronheart()
+        {
+            var run = RunFactory.NewRun(21UL, Catalog, new List<GameEvent>(), ContentCatalog.DefaultHeroId, MovementMode.Free);
+            run.Hero.IdentityId = ContentCatalog.MascotId;   // as a save written before D-057 has it
+            int hp = run.Hero.Hp, slash = run.Hero.SlashDamage;
+
+            var loaded = SaveSerializer.FromJson(SaveSerializer.ToJson(run));
+
+            Assert.That(loaded.Hero.IdentityId, Is.EqualTo(ContentCatalog.DefaultHeroId));
+            Assert.That(loaded.Hero.ClassId, Is.EqualTo("knight"));
+            Assert.That(loaded.Hero.Hp, Is.EqualTo(hp));
+            Assert.That(loaded.Hero.SlashDamage, Is.EqualTo(slash));
+
+            var session = new GameSession(Catalog, new JsonStore(SaveSerializer.ToJson(run)));
+            Assert.That(session.TryContinue(out var problem), Is.True, $"Continue refused it: {problem}");
+            Assert.That(session.Run.Hero.IdentityId, Is.EqualTo(ContentCatalog.DefaultHeroId));
+        }
+
+        /// <summary>A save held as text and read back through the real serializer, so loading runs the real migration.</summary>
+        sealed class JsonStore : ISaveStore
+        {
+            string _json;
+            public JsonStore(string json) => _json = json;
+            public bool Exists => _json != null;
+            public void Save(RunState run) => _json = SaveSerializer.ToJson(run);
+            public void Delete() => _json = null;
+            public bool TryLoad(out RunState run, out string message)
+            {
+                run = null;
+                message = null;
+                if (_json == null) return false;
+                try { run = SaveSerializer.FromJson(_json); return true; }
+                catch (FormatException ex) { message = ex.Message; return false; }
+            }
+        }
+
         [Test]
         public void EveryHeroIdentityHasAClassAndNumbersThatMakeSense()
         {

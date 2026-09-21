@@ -51,6 +51,11 @@ namespace ClickDungeon.Application
             if (run.GenerationVersion != Versions.Generation)
                 throw new FormatException($"Save uses floor generation {run.GenerationVersion} (expected {Versions.Generation}).");
             Validate(run);
+            // A hero retired from the roster is carried to the one that replaced it (D-057), so a run in progress survives
+            // the roster changing under it: Sir Clickington's runs become Ironheart's. The successor shares the class, so
+            // only the face changes — the stats, talents and board of the run are exactly as they were.
+            if (ClickDungeon.Content.ContentCatalog.RetiredHeroes.TryGetValue(run.Hero.IdentityId, out var successor))
+                run.Hero.IdentityId = successor;
             // Older rulesets only lack additions (ruleset 2 added the arrival heal), so the run continues under current rules.
             run.RulesetVersion = Versions.Ruleset;
             return run;

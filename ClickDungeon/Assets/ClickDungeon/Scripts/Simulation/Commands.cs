@@ -28,7 +28,7 @@ namespace ClickDungeon.Simulation
                     if (!target.InBounds || target == hero.Pos) return Fail(out reason, "Pick another tile.");
                     // Free Roam reaches the whole board; Step by Step is one tile at a time, diagonals included (D-021).
                     if (run.Movement == MovementMode.Step && !hero.Pos.IsAdjacent(target))
-                        return Fail(out reason, "Sir Clickington can only step to a neighbouring tile.");
+                        return Fail(out reason, "You can only step to a neighbouring tile.");
                     if (Board.ClickUncovers(run, target)) { reason = null; return true; }
                     if (!Board.HeroCanEnter(run, target)) return Fail(out reason, "That way is blocked.");
                     return true;

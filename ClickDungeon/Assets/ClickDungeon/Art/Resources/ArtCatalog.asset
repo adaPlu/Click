@@ -128,6 +128,36 @@ MonoBehaviour:
     - {fileID: 21300000, guid: a511cb3329ba7d24abf551e59c431b0a, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: actor_ironheart_defeat
+    Frames:
+    - {fileID: 21300000, guid: 66dc8abe9bacef749b40ad4bb8216c05, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_ironheart_guard
+    Frames:
+    - {fileID: 21300000, guid: f34aef880c55afc4aa2ff3b04d80a1b5, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_ironheart_hit
+    Frames:
+    - {fileID: 21300000, guid: ed42e57be4e3c7a4eb2e59070af8a6b1, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_ironheart_idle
+    Frames:
+    - {fileID: 21300000, guid: c1624b48c17fb4446913704035c240c2, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_ironheart_slash
+    Frames:
+    - {fileID: 21300000, guid: af403c8cc21246f40b22ae0e0c6d9a2b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_ironheart_victory
+    Frames:
+    - {fileID: 21300000, guid: b349e4db694f2fd448ab3d49340be975, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_lord_blobert_boast
     Frames:
     - {fileID: 21300000, guid: 2bba1c1887e21b3428b8ca3db54a1f07, type: 3}
@@ -821,6 +851,11 @@ MonoBehaviour:
   - Key: portrait_ironheart_full
     Frames:
     - {fileID: 21300000, guid: 1b0cb80e7aae53a4e821b5e5fce72469, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_ironheart_happy
+    Frames:
+    - {fileID: 21300000, guid: 0aeea1c5a62fa104f99ee10d83a77c5f, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_ironheart_neutral

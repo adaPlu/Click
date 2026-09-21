@@ -109,7 +109,10 @@ namespace ClickDungeon.Unity.Ui
     /// <summary>Art key naming (docs/art-brief.md, appendix). Keys are file names without extension.</summary>
     public static class ArtKeys
     {
+        /// <summary>The default playable hero: whose art stands in when a hero has none of its own yet.</summary>
         public const string HeroId = ContentCatalog.DefaultHeroId;
+        /// <summary>The mascot painted into the title and HUD backgrounds (D-057). Not a playable hero.</summary>
+        public const string MascotId = ContentCatalog.MascotId;
 
         public const string FloorStone = "tile_floor_stone";
         public const string Wall = "tile_wall";
@@ -484,6 +487,8 @@ namespace ClickDungeon.Unity.Ui
                 keys.Add(Actor(identity.Id, "guard"));
                 foreach (var animation in HeroAnimations) keys.Add(Actor(identity.Id, animation));
             }
+            // The mascot is no hero (D-057), but the title still stands him under the arch.
+            if (!keys.Contains(Actor(MascotId))) keys.Add(Actor(MascotId));
             foreach (var enemy in catalog.Enemies.Values)
             {
                 foreach (var animation in EnemyAnimations) keys.Add(Actor(enemy.Id, animation));

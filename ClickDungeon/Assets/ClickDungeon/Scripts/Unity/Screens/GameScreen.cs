@@ -153,7 +153,7 @@ namespace ClickDungeon.Unity.Screens
 
         /// <summary>
         /// The phone-upright layout on the 1080 × 1920 stage: portrait, bars and purse across the top; the floor plaque, logo,
-        /// settings and menu under them; the board in the room's frame; the abilities under it; Sir Clickington's line and the
+        /// settings and menu under them; the board in the room's frame; the abilities under it; the hero's line and the
         /// goal below; INSPECT when there is something to inspect; the INVENTORY / TALENTS / SHOP bar along the bottom.
         /// </summary>
         void LayoutPortrait()
@@ -557,7 +557,7 @@ namespace ClickDungeon.Unity.Screens
             if (run.Status == RunStatus.Won)
             {
                 _modal.Show(ModalStyle.Victory, "VICTORY!",
-                    $"Lord Blobert is defeated. Again.\n\nDifficulty: {DifficultyName(run)}\nTurns taken: {run.Turn}\nChests opened: {Chests.ChestsOpened(run.Rewards)} ({run.Rewards.Count} rewards)\n{Purse(run)}\n\nSir Clickington: \"Victory! Snacks for everyone!\"",
+                    $"Lord Blobert is defeated. Again.\n\nDifficulty: {DifficultyName(run)}\nTurns taken: {run.Turn}\nChests opened: {Chests.ChestsOpened(run.Rewards)} ({run.Rewards.Count} rewards)\n{Purse(run)}\n\n{Lines.HeroName(run, Catalog)}: \"Victory! Snacks for everyone!\"",
                     () => { },
                     Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
                     Menus.B("TITLE", Palette.NavyLight, GoToTitle));
@@ -565,7 +565,7 @@ namespace ClickDungeon.Unity.Screens
             else
             {
                 _modal.Show(ModalStyle.Defeat, "DEFEATED",
-                    $"Fell on floor {run.Floor.FloorIndex}: {floorName}\nFinal blow: {Lines.SourceName(_lastDamageSource ?? "?", Catalog)}\nDifficulty: {DifficultyName(run)}\nTurns survived: {run.Turn}\n{Purse(run)}\n\nWHAT HAPPENED shows every hit.\n\nSir Clickington: \"Tell my horse... wait. I don't have a horse.\"",
+                    $"Fell on floor {run.Floor.FloorIndex}: {floorName}\nFinal blow: {Lines.SourceName(_lastDamageSource ?? "?", Catalog)}\nDifficulty: {DifficultyName(run)}\nTurns survived: {run.Turn}\n{Purse(run)}\n\nWHAT HAPPENED shows every hit.\n\n{Lines.HeroName(run, Catalog)}: \"Tell my horse... wait. I don't have a horse.\"",
                     () => { },
                     Menus.B("NEW RUN", Palette.PlayGreen, _app.StartNewRun),
                     Menus.B("WHAT HAPPENED", Palette.NavyLight, () => OpenLog(CheckRunEnd)),
@@ -692,7 +692,7 @@ namespace ClickDungeon.Unity.Screens
                     || Art.TryGetSprite(ArtKeys.Portrait(heroId, "neutral"), out portrait)
                     || Art.TryGetSprite(ArtKeys.Portrait(ArtKeys.HeroId, face.ToString()), out portrait)))
                 _portraitArt.sprite = portrait;
-            // The HUD portrait is the background's own when Sir Clickington plays, so his expression shows in the bubble.
+            // The speech bubble shows the playing hero's own face for this expression.
             if (_speechPortrait != null && Art.TryGetSprite(ArtKeys.Portrait(heroId, face.ToString()), out var bubbleFace)
                     || _speechPortrait != null && Art.TryGetSprite(ArtKeys.Portrait(heroId, "neutral"), out bubbleFace))
             {
@@ -754,8 +754,10 @@ namespace ClickDungeon.Unity.Screens
             var heroClass = Catalog.HeroClass(hero.ClassId);
             int shieldCost = Mana.ShieldCost(run, heroClass), dashCost = Mana.DashCost(run, heroClass);
             _levelBadge.text = Progression.Level(_app.Session.Profile).ToString();
-            // The reference shows Sir Clickington in its own portrait frame; another hero is drawn over it.
-            if (_portraitRoot != null) _portraitRoot.SetActive(!_matched || hero.IdentityId != ContentCatalog.DefaultHeroId);
+            // The reference paints the mascot into its own portrait frame; the playing hero's face is drawn over him. The
+            // mascot is not playable (D-057), so in practice the overlay always shows — the comparison is kept so a future
+            // campaign that plays as him shows the painted face rather than a copy laid over it.
+            if (_portraitRoot != null) _portraitRoot.SetActive(!_matched || hero.IdentityId != ArtKeys.MascotId);
             if (_goal != null) _goal.text = Goal(run);
             if (_status != null) _status.text = $"TURN {run.Turn + 1}   ·   SLASH {hero.SlashDamage}   ·   KEY {(hero.HasKey ? "YES" : "NO")}"
                            + (hero.SpecialKeys > 0 ? $"   ·   SPECIAL KEYS {hero.SpecialKeys}" : "");
@@ -1155,13 +1157,13 @@ namespace ClickDungeon.Unity.Screens
         static readonly Color PlaqueInk = new Color(0.16f, 0.1f, 0.05f);
 
         /// <summary>
-        /// The reference's HUD, which the background already shows: the logo and Sir Clickington's portrait are its own; the
+        /// The reference's HUD, which the background already shows: the logo and the mascot's painted portrait are its own; the
         /// level shield, floor plaque and purse fields are cleaned patches with live text; the bars are drawn over its
         /// sample bars; the "+" buttons are taps on its own.
         /// </summary>
         void BuildMatchedTopLeft()
         {
-            // Another hero's face goes over the reference's Sir Clickington.
+            // The playing hero's face goes over the mascot painted into the reference.
             var portrait = AtRef(Root, "Portrait", 500f, 14f, 110f, 104f);
             _portraitRoot = portrait.gameObject;
             UiFactory.Image(portrait, "Back", new Color(0.06f, 0.07f, 0.1f), Shapes.Rounded, true).rectTransform.Stretch();
@@ -1378,7 +1380,7 @@ namespace ClickDungeon.Unity.Screens
         }
 
         /// <summary>
-        /// Sir Clickington's running commentary and the floor's goal, on the left under the floor plaque. The reference has no
+        /// The hero's running commentary and the floor's goal, on the left under the floor plaque. The reference has no
         /// strip along the bottom (its nav bar is there), so what he says sits beside the board instead.
         /// </summary>
         void BuildSpeechStrip()
@@ -1405,7 +1407,7 @@ namespace ClickDungeon.Unity.Screens
 
             if (_matched)
             {
-                // The reference keeps the banners beside the board clear: Sir Clickington's line shows for a moment, with his
+                // The reference keeps the banners beside the board clear: the hero's line shows for a moment, with his
                 // face, and fades. The goal is on his INSPECT (hover him) and in the menu.
                 _speechGroup = strip.gameObject.AddComponent<CanvasGroup>();
                 _speechGroup.blocksRaycasts = false;
@@ -1487,7 +1489,7 @@ namespace ClickDungeon.Unity.Screens
         public const string HelpText =
             "- Tiles are uncovered only by clicking them. FREE ROAM: tap any tile to go there; if a monster or a shut door is hiding under it, you stay put and it is revealed.\n" +
             "- STEP BY STEP: step to a lit tile next to you. Tiles two steps away are SENSED: red diamond ! = enemy, orange triangle ! = trap, K = key, E = exit, purple + = door, plate or teleport, $ = treasure, dot = safe.\n" +
-            "- Tap an enemy beside you to SLASH, a chest to open it (2-4 taps, each a turn), or Sir Clickington to wait.\n" +
+            "- Tap an enemy beside you to SLASH, a chest to open it (2-4 taps, each a turn), or your hero to wait.\n" +
             "- Uncovering an enemy wakes it. It shows its intent and only acts on the NEXT turn. Most must stand next to you to hit; Fire Imps shoot along a line and Lord Blobert slams from anywhere.\n" +
             "- Tiles marked -N will be hit next turn. Step off, SHIELD to block (staggers attackers), or DASH one or two tiles over traps.\n" +
             "- SHIELD and DASH cost MANA (the blue bar; the price is on each button). You get 1 back every turn and a full bar on every new floor. Moving, slashing and potions are free.\n" +

@@ -62,7 +62,7 @@ namespace ClickDungeon.UnityTests
             var catalog = ClickDungeon.Content.ContentCatalog.CreateDefault();
             var overlay = new HeroSelectOverlay((RectTransform)_root.transform);
             string chosen = null, talentsFor = null;
-            overlay.Open(catalog, new ClickDungeon.Domain.ProfileState(), "sir_clickington", id => chosen = id, c => talentsFor = c);
+            overlay.Open(catalog, new ClickDungeon.Domain.ProfileState(), ClickDungeon.Content.ContentCatalog.DefaultHeroId, id => chosen = id, c => talentsFor = c);
 
             var names = Buttons().Select(b => b.name).ToList();
             foreach (var identity in catalog.HeroIdentities.Values) Assert.That(names, Does.Contain("Roster " + identity.Id));

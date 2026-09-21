@@ -451,11 +451,11 @@ namespace ClickDungeon.Unity.Screens
             RefreshPurse();
         }
 
-        /// <summary>The background already shows Sir Clickington in the frame; another hero's face is laid over him.</summary>
+        /// <summary>The background already shows the mascot in the frame; the chosen hero's face is laid over him.</summary>
         void MatchedFace(string heroId)
         {
             for (int i = _heroPortrait.childCount - 1; i >= 0; i--) UiFactory.SafeDestroy(_heroPortrait.GetChild(i).gameObject);
-            if (heroId == Content.ContentCatalog.DefaultHeroId) return;
+            if (heroId == ArtKeys.MascotId) return;
             var back = UiFactory.Image(_heroPortrait, "Back", new Color(0.06f, 0.07f, 0.1f), Shapes.Rounded, true);
             back.rectTransform.Stretch();
             if (!ArtAt(_heroPortrait, Vector2.zero, 84f, ArtKeys.Portrait(heroId, "happy"), ArtKeys.Portrait(heroId, "neutral"), ArtKeys.Actor(heroId)))
@@ -558,9 +558,9 @@ namespace ClickDungeon.Unity.Screens
             Icons.Shape(goblin, Shapes.Circle, Color.black, new Vector2(34f, 36f), new Vector2(16f, 18f));
             Icons.Chest(goblin, false, 2.2f, useArt: false);
 
-            // Sir Clickington under the arch.
+            // The mascot, Sir Clickington, under the arch: the title belongs to him whoever is playing (D-057).
             var knight = Icons.Group(Root, new Vector2(0f, -200f));
-            if (ArtAt(Root, new Vector2(0f, -190f), 600f, ArtKeys.TitleHero, ArtKeys.Actor(ArtKeys.HeroId))) knight.gameObject.SetActive(false);
+            if (ArtAt(Root, new Vector2(0f, -190f), 600f, ArtKeys.TitleHero, ArtKeys.Actor(ArtKeys.MascotId))) knight.gameObject.SetActive(false);
             Icons.Shape(knight, Shapes.Rounded, Palette.Hp.Dim(0.8f), new Vector2(-30f, -60f), new Vector2(300f, 320f), 8f);
             Icons.Shape(knight, Shapes.Rounded, Palette.Steel, new Vector2(0f, -80f), new Vector2(210f, 230f));
             Icons.Shape(knight, Shapes.Rounded, Palette.Hp, new Vector2(0f, 10f), new Vector2(190f, 40f));

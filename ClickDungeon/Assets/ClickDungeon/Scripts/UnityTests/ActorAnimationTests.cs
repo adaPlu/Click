@@ -245,7 +245,8 @@ namespace ClickDungeon.UnityTests
             Assert.That(bossRoot.GetComponentsInChildren<Image>().Any(i => i.sprite == boast), Is.True);
 
             var wired = ArtKeys.Wired(Catalog);
-            foreach (var key in new[] { "actor_sir_clickington_guard", "actor_sir_clickington_potion", "actor_goblin_attack", "actor_fire_imp_fire", "actor_lord_blobert_puffup" })
+            // The default hero's poses: Ironheart since D-057, which retired the mascot from play.
+            foreach (var key in new[] { ArtKeys.Actor(ArtKeys.HeroId, "guard"), ArtKeys.Actor(ArtKeys.HeroId, "potion"), "actor_goblin_attack", "actor_fire_imp_fire", "actor_lord_blobert_puffup" })
                 Assert.That(wired, Does.Contain(key));
             Assert.That(wired, Is.Unique);
         }

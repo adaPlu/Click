@@ -122,7 +122,8 @@ namespace ClickDungeon.UnityTests
             foreach (var key in keys)
                 Assert.That(key, Does.Match("^(tile|actor|portrait|icon|ui|fx|bg|logo)_[a-z0-9_]+$"), key);
             Assert.That(keys, Does.Contain("actor_lord_blobert_idle"));
-            Assert.That(keys, Does.Contain("portrait_sir_clickington_happy"));
+            // The default hero's expressions (Ironheart since D-057; the retired mascot's are no longer looked up).
+            Assert.That(keys, Does.Contain(ArtKeys.Portrait(ArtKeys.HeroId, "happy")));
         }
     }
 }
