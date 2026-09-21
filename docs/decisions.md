@@ -685,3 +685,83 @@ Rules referenced here live in `docs/rules.md`.
 - **TESTS**: `KnightsTrialLetsANovicePlayerReachBlobert` re-baselined to the 52% reach measured now;
   `TiersKeepTheirOrder` and `TheClassesWinAboutAsOftenAsEachOther` re-checked.
 
+
+## D-051 A watched or screenshotted run never writes the device's preferences
+- **DECISION**: `UserPrefs.ReadOnly` is set once in `Awake` whenever the app runs in automation (`-cdShot` or
+  `-cdWatch`), and every preference setter refuses while it is set. In the game screen, automation also ignores the
+  keyboard, refuses board and ability taps, and refuses the two actions that tear the run down (QUIT TO TITLE,
+  ABANDON). The menu and settings UI are still built and still open, so an automated shot shows what a player sees.
+- **WHY**: audit 3 (REL-28, REL-29, DATA-16). Automation already kept its saves and profile to itself, but the
+  settings panel stayed live and `UserPrefs` had no automation branch, so toggling PLAYTEST LOG during a demo turned a
+  tester's telemetry off for good — silently, because automation does not read the setting it had just written. A
+  single Escape tap opened the pause menu instead of stopping the batch, which blocked the bot for the rest of the run;
+  QUIT TO TITLE nulled the screen the batch was still submitting into and quit the process with no summary.
+- **REJECTED**: hiding the menu and settings UI in automation. The first cut did, and review caught that it silently
+  broke `-cdOverlay pause` and `-cdOverlay menu` and stripped the gear from every portrait screenshot. Guarding the
+  destructive *actions* keeps the screenshots honest and still leaves a stray click nothing to break.
+- **VERIFIED** by real key presses into a running batch (scan-code `SendInput`; Unity's Input System ignores
+  virtual-key injection): a 60 ms Escape tap is missed by the once-a-move poll and the run plays out untouched; a held
+  Escape quits cleanly. At the shipped 0.5 s pace, hold the key briefly rather than tapping it.
+
+## D-052 Riposte answers every blocked blow
+- **DECISION**: Riposte moved inside `Combat.DamageHero` beside Holy Bulwark, so a blocked fire-imp shot and a
+  blocked Blobert slam are answered as well as a blocked sword. A hazard passes no attacker, so a blocked bomb still
+  answers nobody. A riposte that kills leaves no "dazed" corpse behind.
+- **WHY**: audit 3 (REL-31). Riposte and Holy Bulwark were written with the same promise — "a blocked attack" — but
+  Holy Bulwark paid on every block and Riposte only on melee, so the Knight's BULWARK path did nothing against the
+  whole slam cycle of the fight it is built for. Asked and answered: the talent keeps its promise rather than having its
+  text narrowed to "a blocked melee attack".
+- **NOT MEASURED BY THE SWEEPS**: the balance bot plays with no talents, so no sweep number can move (see D-056).
+
+## D-053 The balance guards assert what they measure
+- **DECISION**: `GuardBaselineTests` is renamed `GuardBaselineReports`, with a note that nothing in it asserts
+  anything. The class-parity guard takes whichever of its two fences is tighter at the measured scale — within 8 wins,
+  and within 5 : 8 — and the tier guards now also cap how many runs ran out of commands.
+- **WHY**: audit 3 (TEST-06, TEST-07). All fourteen `[Explicit]` "tests" were printers, so un-skipping them would have
+  added unconditional passes, not guards. The parity band was an absolute ±8 against counts D-050 had halved, so a
+  2× split (8 against 16) passed the check written to refuse it; a ratio alone would have been looser than ±8 above
+  13 wins, which is why both fences are kept.
+- **HONEST LIMIT**: the stall ceiling is a cheap tripwire, not the regression test for the D-048 teleport loop.
+  Reverting D-048's fix leaves the guards green, because they run 30 seeds and that loop was found on a seed they
+  never touch. It is a ceiling (`1 + runs/30`), not zero, because a healthy bot still stalls once or twice in 60 seeds.
+
+## D-054 Levels stop at 500, and banked experience stops with them
+- **DECISION**: `Progression.MaxLevel = 500`. The level search is bounded by it, the store clamps a loaded profile's
+  experience to the cost of that level, and `BankXp` clamps to the same ceiling so the value held in memory can never
+  be one the curve cannot express.
+- **WHY**: audit 3 (DATA-17, DATA-20). The curve's intermediate product overflowed at level 6555, after which it
+  could never exceed 2^30 — so for any experience total above that, the level search never ended, on the main thread,
+  inside the session's constructor, before any screen existed. The store's clamp left `BankXp` still able to wrap a
+  capped profile negative for the rest of a session. Both need a hand-edited profile; neither is reachable by play.
+
+## D-055 Epic gear costs 21 gems
+- **DECISION**: Epic gear rose from 15 to 21 gems. The price ladder now reads, in coins at the shop's own exchange:
+  Common 150 · Uncommon 300 · Rare 600 · Epic 630 · Legendary 900.
+- **WHY**: audit 3 (MAINT-16). The shop sells gems at 30 coins each, so at 15 gems an Epic piece cost 450 coins —
+  cheaper than a 600-coin Rare one from the same screen on the same day. The ladder inverted exactly where it changed
+  currency. Asked and answered: the smallest change that keeps coins-then-gems, rather than moving all gear to coins.
+- **TEST**: `GearPricesRiseWithRarityInASingleCurrency` reads every rarity through the exchange and fails if any rung
+  is not dearer than the one below it.
+
+## D-056 Difficulty re-measured after audit 3
+- **MEASURED** at `3535907` (60 blind seeds, `DifficultySweep`, Free Roam, reach F5 / won):
+
+  | Player  | Squire's Stroll | Knight's Trial | Blobert's Wrath |
+  |---------|-----------------|----------------|-----------------|
+  | casual  | 97% / 97%       | 80% / **75%**  | 63% / **43%**   |
+  | novice  | 100% / 100%     | 52% / **32%**  | 35% / **18%**   |
+
+  Class parity (`ClassSweep`, 40 blind seeds, Knight's Trial, won): casual Knight 30 · Paladin 30; novice Knight 11 ·
+  Paladin 16.
+- **WHAT MOVED IT**: the floor validator now knows a teleport pad carries the hero to its partner (REL-27), which
+  changes which generated floors are accepted for some seeds. It rescues more floors than it rejects. Net effect is
+  about three points a tier against D-050 (Knight's Trial was 78% / 35%, Blobert's Wrath 45% / 15%). **No tier was
+  retuned**: the tiers still sit where D-050 put them.
+- **WHAT CANNOT MOVE IT**: `AutoPlayer.PlayRun` starts every run with an empty `Perks` dictionary, so no talent fix
+  can move a sweep number — `ClassSweep` is digit-for-digit identical with and without the Judgement fix (REL-23).
+  That is also why Judgement could be dead through four difficulty decisions without any guard noticing. Where talents
+  do show, on the growing profile (`TenPlaythroughs`, 30 seeds, a talented Paladin), Judgement alone moved wins from
+  18 to 23.
+- **AND A WATCH BATCH AGREES**: ten watched runs at `3535907` came out byte-for-byte identical to the same seeds before
+  the repairs, except the first run in which the Paladin held Judgement. The simulation stayed deterministic through a
+  batch that changed the validator, chest rewards, a talent and combat.

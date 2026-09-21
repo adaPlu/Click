@@ -123,8 +123,8 @@ namespace ClickDungeon.Tests
         [Test]
         public void KnightsTrialLetsANovicePlayerReachBlobert()
         {
-            // Re-measured after D-050 (harder traps on Knight's Trial, honest bot): a blind novice reaches Blobert in
-            // 52% of 60 seeds (DifficultySweep). This 30-seed guard sits below that, so it catches a real collapse.
+            // Re-measured after D-056: a blind novice *reaches* Blobert in 52% of 60 seeds (DifficultySweep) and wins
+            // 32%. This 30-seed guard sits below the reach rate, so it catches a real collapse.
             var medium = Measure(Difficulty.Medium, 30, NoviceMistakeRate, blind: true);
             Assert.That(medium.ReachedBoss, Is.GreaterThanOrEqualTo(11), $"Only {medium.ReachedBoss}/30 novice medium runs reached floor 5.");
             AssertTheBotWasPlaying(medium, "medium");
@@ -133,7 +133,7 @@ namespace ClickDungeon.Tests
         [Test]
         public void TiersKeepTheirOrder()
         {
-            // Blind novice, 60-seed sweep after D-050: 100% / 35% / 15% won (rules §10.2).
+            // Blind novice, 60-seed sweep after D-056: 100% / 32% / 18% won (rules §10.1).
             var easy = Measure(Difficulty.Easy, 40, NoviceMistakeRate, blind: true);
             var medium = Measure(Difficulty.Medium, 40, NoviceMistakeRate, blind: true);
             var hardcore = Measure(Difficulty.Hardcore, 40, NoviceMistakeRate, blind: true);

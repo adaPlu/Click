@@ -360,8 +360,8 @@ A floor is valid only if:
 ## 10. Difficulty tiers *(tune numbers)*
 
 Chosen when starting a run and stored in the run (decision D-017). Every tier uses the rules
-above; only numbers change. §3–§8 describe the base content; Knight's Trial blunts traps by one
-(retuned for click-to-reveal, where every click is a blind step — §10.2).
+above; only numbers change. §3–§8 describe the base content; Knight's Trial's traps hit one harder than that (D-050) and
+it adds one monster a floor (D-038).
 
 | Setting                                | Squire's Stroll (easy) | Knight's Trial (medium) | Blobert's Wrath (hardcore) |
 |----------------------------------------|------------------------|-------------------------|----------------------------|
@@ -374,9 +374,32 @@ above; only numbers change. §3–§8 describe the base content; Knight's Trial 
 | Enemies on normal floors               | profile                | profile +1              | profile                    |
 | HP restored on arriving at a new floor | 3                      | 0                       | 0                          |
 
+Hero max HP is the Knight's. The Paladin has one more heart on every tier (D-047).
+
 Damage and HP never drop below 1.
 
 ### 10.1 Measured difficulty
+
+**Current** (D-056, measured at `3535907`). `DifficultySweep`, 60 blind seeds, Free Roam — reach F5 / won:
+
+| Player             | Squire's Stroll | Knight's Trial | Blobert's Wrath |
+|--------------------|-----------------|----------------|-----------------|
+| casual (20%)       | 97% / 97%       | 80% / 75%      | 63% / 43%       |
+| novice (50%)       | 100% / 100%     | 52% / 32%      | 35% / 18%       |
+
+Class parity on Knight's Trial (`ClassSweep`, 40 blind seeds, won): casual Knight 30 · Paladin 30; novice
+Knight 11 · Paladin 16.
+
+These numbers are for a hero with **no talents, gear or renown**: `AutoPlayer.PlayRun` starts every run from an
+empty profile. They measure the dungeon and cannot see the class trees at all — a talent could be broken, as
+Judgement was until audit 3, without moving any of them. The curve a levelled player meets is measured only by the
+explicit `TenPlaythroughs`.
+
+#### The first sweep (sighted — superseded)
+
+Kept for the record: everything below was measured with a **sighted** bot, before the bot could stall
+(D-048) was found and fixed. A sighted bot walks straight to a key it should not be able to see, so these
+rows are far easier than the game. Use the table above.
 
 `BalanceReport` (explicit test) plays 200 seeds per tier with `AutoPlayer`, a one-turn look-ahead
 bot. "Mistakes" is the share of turns it spends on a random move that does not lose on the spot.
@@ -426,6 +449,21 @@ next to the hero, §12) — reach F5 / win:
 |--------------------|-----------------|----------------|-----------------|
 | novice, sighted    | 40 / 40         | 40 / 40        | 40 / 40         |
 | novice, **blind**  | 40 / 39         | 33 / 21        | 21 / 10         |
+| flailing, sighted  | 40 / 40         | 40 / 37        | 40 / 31         |
+| flailing, **blind**| 40 / 32         | 29 / 11        | 16 / 1          |
+
+Measured after click-to-reveal (D-023), its retune, and covering the exit (novice rows; covering the exit
+added ~24 turns to a Knight's Trial run and moved novice wins from 36 / 25 / 8 to 39 / 21 / 10). **Sighted bots now win every run at every tier**:
+seeing the board makes the dungeon trivial, and hidden information is what makes the tiers bite. Before the
+retune, blind clicking made Knight's Trial and Blobert's Wrath near-unwinnable (8 and 0 novice wins of 30),
+with traps and bumped monsters doing the killing. In the 60-seed `DifficultySweep` the careful (casual) blind
+bot wins 93% / 77% / 53%.
+
+**Re-measured since, newest first** (60 blind seeds, `DifficultySweep`, won, casual then novice):
+
+*D-056 re-measure* (after audit 3: the floor validator learned that a teleport pad carries the hero to its pair).
+Casual 97% / 75% / 43%, novice 100% / 32% / 18% — about three points a tier against D-050, and no tier retuned. See
+§10.1 for the full table.
 
 *D-050 retune* (Knight's Trial traps hit one harder). `DifficultySweep`, 60 blind seeds, won: casual 97% / 78% / 45%,
 novice 100% / 35% / 15%. `HeroSweep`, 40 blind novice seeds: Knight 40 / 12 / 8 won, Paladin 40 / 14 / 14.
@@ -437,15 +475,6 @@ the dungeon rather than the bot). `DifficultySweep`, 60 blind seeds, Free Roam, 
 *D-038 retune* (full-strength traps and one more monster a floor on Knight's Trial; traps +1 on Blobert's
 Wrath). `DifficultySweep`, 60 blind seeds, Free Roam, won: casual 95% / 70% / 53%, novice 100% / 67% / 33%.
 Before it, casual won 88% of Knight's Trial and the ten-run playthrough won all ten.
-| flailing, sighted  | 40 / 40         | 40 / 37        | 40 / 31         |
-| flailing, **blind**| 40 / 32         | 29 / 11        | 16 / 1          |
-
-Measured after click-to-reveal (D-023), its retune, and covering the exit (novice rows; covering the exit
-added ~24 turns to a Knight's Trial run and moved novice wins from 36 / 25 / 8 to 39 / 21 / 10). **Sighted bots now win every run at every tier**:
-seeing the board makes the dungeon trivial, and hidden information is what makes the tiers bite. Before the
-retune, blind clicking made Knight's Trial and Blobert's Wrath near-unwinnable (8 and 0 novice wins of 30),
-with traps and bumped monsters doing the killing. In the 60-seed `DifficultySweep` the careful (casual) blind
-bot wins 93% / 77% / 53%.
 
 - **Adjacent-only melee first made every tier much easier** (blind novice won 39 / 35 / 26 of 40, Knight's
   Trial four wins behind Squire's Stroll). The tiers were retuned with `DifficultySweep` (D-017 amendment):
