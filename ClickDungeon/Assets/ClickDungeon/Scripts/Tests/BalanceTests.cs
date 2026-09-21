@@ -46,15 +46,22 @@ namespace ClickDungeon.Tests
     /// </summary>
     public class BalanceTests
     {
-        public const int MaxCommands = 400;
+        /// <summary>
+        /// The command cap for one bot run: 80 a floor, the ratio the original 400 set for five floors. It must grow with
+        /// the dungeon (D-059) - held at 400 over seven floors, a slow but winning run was cut off and counted as a stall,
+        /// the bot running out of time dressed up as the dungeon winning.
+        /// </summary>
+        public static readonly int MaxCommands = 80 * ContentCatalog.CreateDefault().RunFloorCount;
         static readonly Difficulty[] Tiers = { Difficulty.Easy, Difficulty.Medium, Difficulty.Hardcore };
+        static readonly int FloorSlots = ContentCatalog.CreateDefault().RunFloorCount + 1;
 
         sealed class Tally
         {
             public int Runs, Won, ReachedBoss, Stalled;
             public long Turns;
-            public int[] DeathsByFloor = new int[6];
-            public int[] StalledByFloor = new int[6];
+            // One slot per floor, 1-based. Sized from the catalog: it was a literal 6 until the dungeon grew (D-059).
+            public int[] DeathsByFloor = new int[FloorSlots];
+            public int[] StalledByFloor = new int[FloorSlots];
         }
 
         static readonly (string name, double mistakeRate)[] Skills =
@@ -318,7 +325,7 @@ namespace ClickDungeon.Tests
             }
         }
 
-        static string ByFloor(int[] counts) => $"{counts[1]} / {counts[2]} / {counts[3]} / {counts[4]} / {counts[5]}";
+        static string ByFloor(int[] counts) => string.Join(" / ", System.Linq.Enumerable.Skip(counts, 1));
 
         [Test, Explicit("Tuning aid: prints the end of stalled or lost AutoPlayer runs")]
         public void AutoPlayerTrace()

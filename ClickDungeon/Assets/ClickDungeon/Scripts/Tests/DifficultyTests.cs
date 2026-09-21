@@ -205,7 +205,7 @@ namespace ClickDungeon.Tests
         [Test]
         public void BlobertsSealIgnoresKeys()
         {
-            var run = Run(5, 1UL,
+            var run = Run(Catalog.RunFloorCount, 1UL,
                 "B....",
                 ".....",
                 "H.X..",

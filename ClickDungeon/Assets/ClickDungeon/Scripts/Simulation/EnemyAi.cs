@@ -29,6 +29,19 @@ namespace ClickDungeon.Simulation
         public static void Declare(RunState run, EnemyState enemy, ContentCatalog catalog, List<GameEvent> events)
         {
             var def = catalog.Enemy(enemy.DefId);
+            // A fallen skeleton lies as bones for a while, then pulls itself back together at half its hearts (D-058).
+            if (enemy.Mode == EnemyMode.Bones)
+            {
+                if (enemy.ModeTurns > 0)
+                {
+                    enemy.ModeTurns--;
+                    enemy.Intent = Intent.Reassemble();
+                    return;
+                }
+                enemy.Mode = EnemyMode.Normal;
+                enemy.Hp = System.Math.Max(1, (enemy.MaxHp + 1) / 2);
+                events.Add(GameEvent.Of(GameEventKind.EnemyReassembled, enemy.Id, to: enemy.Pos, amount: enemy.Hp, source: def.Id));
+            }
             if (enemy.Staggered)
             {
                 enemy.Staggered = false;
@@ -51,7 +64,40 @@ namespace ClickDungeon.Simulation
                 case EnemyBehavior.Boss:
                     enemy.Intent = BossIntent(run, enemy, def, events);
                     break;
+                case EnemyBehavior.Charger:
+                    enemy.Intent = ChargerIntent(run, enemy, def);
+                    break;
+                case EnemyBehavior.Bomber:
+                    enemy.Intent = BomberIntent(run, enemy, def);
+                    break;
             }
+        }
+
+        /// <summary>
+        /// The Armored Boar (D-058): gores what stands next to it, charges down any clear line to the hero, and is winded
+        /// for a turn after a charge - the opening to hit back. Otherwise it is heavy, and lumbers a step every other turn.
+        /// </summary>
+        static Intent ChargerIntent(RunState run, EnemyState enemy, EnemyDefinition def)
+        {
+            if (enemy.Intent.Kind == IntentKind.Charge) return Intent.Rest();
+            if (enemy.Pos.IsAdjacent(run.Hero.Pos)) return Intent.Attack(run.Hero.Pos);
+            if (Board.HeroInChargeLane(run, enemy.Pos, def.Range, out var dir)) return Intent.Charge(dir);
+            enemy.ActionCounter++;
+            return enemy.ActionCounter % 2 == 1 ? Intent.Move() : Intent.Rest();
+        }
+
+        /// <summary>
+        /// The Goblin Bomber (D-058): keeps its distance, lobs a lit bomb at the hero's tile from up to
+        /// <see cref="EnemyDefinition.ThrowRange"/> away, and takes a turn to light the next. Cornered, it lashes out.
+        /// </summary>
+        static Intent BomberIntent(RunState run, EnemyState enemy, EnemyDefinition def)
+        {
+            if (enemy.Intent.Kind == IntentKind.Throw) return Intent.Rest();
+            if (enemy.Pos.IsAdjacent(run.Hero.Pos))
+                return TryStepAway(run, enemy, out _) ? Intent.Move() : Intent.Attack(run.Hero.Pos);
+            if (enemy.Pos.Chebyshev(run.Hero.Pos) <= def.ThrowRange && Board.CanHoldBomb(run.Floor, run.Hero.Pos))
+                return Intent.Throw(run.Hero.Pos);
+            return Intent.Move();
         }
 
         /// <summary>
@@ -152,8 +198,8 @@ namespace ClickDungeon.Simulation
                 case IntentKind.Move:
                 {
                     GridPos step;
-                    bool moved = def.Behavior == EnemyBehavior.Lane
-                        ? TryLaneStep(run, enemy, def, out step)
+                    bool moved = def.Behavior == EnemyBehavior.Lane ? TryLaneStep(run, enemy, def, out step)
+                        : def.Behavior == EnemyBehavior.Bomber && enemy.Pos.IsAdjacent(run.Hero.Pos) ? TryStepAway(run, enemy, out step)
                         : TryChaseStep(run, enemy, out step);
                     if (moved)
                     {
@@ -206,6 +252,41 @@ namespace ClickDungeon.Simulation
                     enemy.Mode = EnemyMode.Puffed;
                     enemy.ModeTurns = def.PuffTurns;
                     events.Add(GameEvent.Of(GameEventKind.BossPuffed, enemy.Id, to: enemy.Pos));
+                    break;
+
+                case IntentKind.Charge:
+                {
+                    // It runs the line it declared, straight through anything it can cross, and stops at the first thing
+                    // it cannot - the hero among them, who takes the blow for staying on the line (D-058).
+                    var from = enemy.Pos;
+                    var stop = enemy.Pos;
+                    bool hitHero = false;
+                    foreach (var cell in Board.ChargeCells(run, enemy.Pos, intent.Dir, def.Range))
+                    {
+                        if (cell == run.Hero.Pos) { hitHero = true; break; }
+                        stop = cell;
+                    }
+                    enemy.Pos = stop;
+                    events.Add(GameEvent.Of(GameEventKind.EnemyCharged, enemy.Id, from, stop, source: def.Id));
+                    if (hitHero)
+                    {
+                        int gore = Renown.Hit(run, catalog, def.Damage);
+                        events.Add(GameEvent.Of(GameEventKind.EnemyAttacked, enemy.Id, stop, run.Hero.Pos, gore, def.Id));
+                        Combat.DamageHero(run, gore, def.Id, events, attacker: enemy, catalog: catalog);
+                    }
+                    break;
+                }
+
+                case IntentKind.Throw:
+                    // The landing tile was marked a turn ago; from here the bomb is an ordinary lit bomb, with its own
+                    // armed-then-blast telegraph. A tile that has since been covered by something takes no bomb.
+                    if (Board.CanHoldBomb(run.Floor, intent.Target))
+                    {
+                        var landed = run.Floor[intent.Target];
+                        landed.Hazard = HazardKind.Bomb;
+                        landed.BombFuse = catalog.Hazards.BombFuse;
+                        events.Add(GameEvent.Of(GameEventKind.BombThrown, enemy.Id, enemy.Pos, intent.Target, source: def.Id));
+                    }
                     break;
             }
         }

@@ -93,9 +93,28 @@ namespace ClickDungeon.Unity.Screens
                 case GameEventKind.EnemyWoke:
                     line = e.Source == "fire_imp" ? "Is it warm in here, or is that an imp?"
                         : e.Source == "crowned_slime" ? "That slime is wearing a crown. Rude."
+                        : e.Source == "skeleton" ? "A skeleton. Of course there's a skeleton."
+                        : e.Source == "armored_boar" ? "Why is that boar wearing armour?!"
+                        : e.Source == "goblin_bomber" ? "Is that goblin holding a... yep."
                         : "Oh. Hello there.";
                     face = Expression.Shocked;
                     return 45;
+                case GameEventKind.EnemyCollapsed:
+                    line = "It's... still twitching.";
+                    face = Expression.Worried;
+                    return 46;
+                case GameEventKind.EnemyReassembled:
+                    line = "Bones don't quit, apparently.";
+                    face = Expression.Shocked;
+                    return 47;
+                case GameEventKind.EnemyCharged:
+                    line = "Big pig! BIG PIG!";
+                    face = Expression.Shocked;
+                    return 47;
+                case GameEventKind.BombThrown:
+                    line = "Incoming!";
+                    face = Expression.Worried;
+                    return 46;
                 case GameEventKind.BossDeflated:
                     line = "He's deflating! Now's my chance!";
                     face = Expression.Angry;
@@ -187,6 +206,14 @@ namespace ClickDungeon.Unity.Screens
                     return "Lord Blobert deflates: <color=#F2C94C>double damage next turn!</color>";
                 case GameEventKind.BossSlammed:
                     return "Lord Blobert belly-slams!";
+                case GameEventKind.EnemyCollapsed:
+                    return $"{SourceName(e.Source, catalog)} collapses into a pile of bones... <color=#F2C94C>break it before it stands up!</color>";
+                case GameEventKind.EnemyReassembled:
+                    return $"<color=#FF6B5E>{SourceName(e.Source, catalog)} pulls itself back together!</color>";
+                case GameEventKind.EnemyCharged:
+                    return $"{SourceName(e.Source, catalog)} charges!";
+                case GameEventKind.BombThrown:
+                    return $"<color=#FF9A2E>{SourceName(e.Source, catalog)} lobs a lit bomb!</color>";
                 case GameEventKind.BombArmed:
                     return "<color=#FF9A2E>A bomb is armed.</color> It explodes after your next action.";
                 case GameEventKind.BombExploded:
@@ -263,6 +290,10 @@ namespace ClickDungeon.Unity.Screens
                 case IntentKind.Summon: return "SUMMON";
                 case IntentKind.Slam: return $"SLAM {def.SlamDamage + extraDamage}";
                 case IntentKind.PuffUp: return "PUFF UP";
+                case IntentKind.Charge: return $"CHARGE {def.Damage + extraDamage}";
+                case IntentKind.Throw: return "BOMB";
+                // Counts down to the turn it stands up again: the player's window to break it (D-058).
+                case IntentKind.Reassemble: return $"BONES {enemy.ModeTurns + 1}";
                 default: return "";
             }
         }
@@ -281,6 +312,12 @@ namespace ClickDungeon.Unity.Screens
                 case IntentKind.Summon: return "Next turn: summons on the marked tiles.";
                 case IntentKind.Slam: return $"Next turn: slams the marked tiles for {def.SlamDamage + extraDamage}. Dash out or Shield!";
                 case IntentKind.PuffUp: return "Next turn: puffs up and becomes immune for 2 turns.";
+                case IntentKind.Charge:
+                    return $"Next turn: charges {enemy.Intent.Dir.ToString().ToLowerInvariant()} down the marked line for {def.Damage + extraDamage}. Get off the line or Shield!";
+                case IntentKind.Throw:
+                    return "Next turn: lobs a lit bomb onto the marked tile. It blows up the turn after - get clear.";
+                case IntentKind.Reassemble:
+                    return $"A pile of bones. Break it now - any hit will do - or it stands up again in {enemy.ModeTurns + 1} turn{(enemy.ModeTurns == 0 ? "" : "s")}.";
                 default: return mode.Trim();
             }
         }

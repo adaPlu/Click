@@ -409,7 +409,20 @@ namespace ClickDungeon.Unity.Ui
         public static string Portrait(string heroId, string expression) => $"portrait_{heroId}_{expression.ToLowerInvariant()}";
 
         /// <summary>Icon shown at the left of an enemy intent badge, e.g. icon_intent_attack, icon_intent_puffup.</summary>
-        public static string IntentIcon(IntentKind kind) => kind == IntentKind.None ? null : $"icon_intent_{kind.ToString().ToLowerInvariant()}";
+        public static string IntentIcon(IntentKind kind)
+        {
+            switch (kind)
+            {
+                case IntentKind.None: return null;
+                // The first expansion monsters' intents (D-058) borrow the nearest icon rather than looking up art that
+                // does not exist: a charge is a blow, and lying as bones is a kind of recovering. A throw has none - its
+                // BOMB badge and the marked landing tile say it plainly.
+                case IntentKind.Charge: return IntentIcon(IntentKind.Attack);
+                case IntentKind.Reassemble: return IntentIcon(IntentKind.Recover);
+                case IntentKind.Throw: return null;
+                default: return $"icon_intent_{kind.ToString().ToLowerInvariant()}";
+            }
+        }
 
         /// <summary>Tile-sized telegraph overlay, e.g. ui_danger_attack, ui_danger_blast.</summary>
         public static string DangerOverlay(ThreatKind kind)

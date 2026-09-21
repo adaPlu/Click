@@ -13,6 +13,31 @@ MonoBehaviour:
   m_Name: ArtCatalog
   m_EditorClassIdentifier: ClickDungeon.Unity::ClickDungeon.Unity.Ui.ArtCatalog
   _entries:
+  - Key: actor_armored_boar_attack
+    Frames:
+    - {fileID: 21300000, guid: 992c030171d1b9b42971d22ef8cc9668, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_armored_boar_defeat
+    Frames:
+    - {fileID: 21300000, guid: 1fb2f472a1893e54c88241624cc71f96, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_armored_boar_hit
+    Frames:
+    - {fileID: 21300000, guid: e607116f0c675454098cd9fc1c874f61, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_armored_boar_idle
+    Frames:
+    - {fileID: 21300000, guid: 5053b7c819b9b284a921e267ee47bcdf, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_armored_boar_wake
+    Frames:
+    - {fileID: 21300000, guid: 880654416f89b0e4bae2d187dc5a9059, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_crowned_slime_attack
     Frames:
     - {fileID: 21300000, guid: 5927c0ba5750e054980487553ae66451, type: 3}
@@ -106,6 +131,31 @@ MonoBehaviour:
   - Key: actor_goblin_attack
     Frames:
     - {fileID: 21300000, guid: f60e8564fc2b8304eb49eac1c75457ac, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_bomber_attack
+    Frames:
+    - {fileID: 21300000, guid: 663d24eaa4b20b1469d0c6575999354c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_bomber_defeat
+    Frames:
+    - {fileID: 21300000, guid: e0a2884acd0b7ec4b984963b2511a622, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_bomber_hit
+    Frames:
+    - {fileID: 21300000, guid: 4b3b6d6483042724c8f6c57d54596231, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_goblin_bomber_idle
+    Frames:
+    - {fileID: 21300000, guid: 0c55f3486bd558149825bdb9c5690adf, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_goblin_bomber_wake
+    Frames:
+    - {fileID: 21300000, guid: 67ad5b0d42aab554d88f72587e0869e1, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: actor_goblin_defeat
@@ -221,6 +271,31 @@ MonoBehaviour:
   - Key: actor_sir_clickington_victory
     Frames:
     - {fileID: 21300000, guid: 864cdaf97ecf5034cb1bec3bdeb0f088, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_skeleton_attack
+    Frames:
+    - {fileID: 21300000, guid: 1e8df7595340d2b40a3caed40d4912a0, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_skeleton_defeat
+    Frames:
+    - {fileID: 21300000, guid: 9e65c3d9776093a4f9cd57fb3dba332a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_skeleton_hit
+    Frames:
+    - {fileID: 21300000, guid: afd50a5b88b7fd64e81d7a009c9dcc72, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_skeleton_idle
+    Frames:
+    - {fileID: 21300000, guid: 0edd000413717fc46946372643e6453b, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_skeleton_wake
+    Frames:
+    - {fileID: 21300000, guid: 3a2a50a8d952d3d41896894c5b662970, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: actor_slimelet_attack
@@ -808,6 +883,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: fe2abc399562d9d4bab4fa48b0cfa9a3, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_armored_boar
+    Frames:
+    - {fileID: 21300000, guid: e6de3f5f4321e754dad18a65a1b329ea, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_dawnward_full
     Frames:
     - {fileID: 21300000, guid: c809e883ac7d7ce46852e81b933802b2, type: 3}
@@ -846,6 +926,11 @@ MonoBehaviour:
   - Key: portrait_goblin
     Frames:
     - {fileID: 21300000, guid: b131a50442f4ba244bc55328603873f4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_goblin_bomber
+    Frames:
+    - {fileID: 21300000, guid: 35125638de145cb40b4763d1cf1eee9b, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_ironheart_full
@@ -936,6 +1021,11 @@ MonoBehaviour:
   - Key: portrait_sir_clickington_worried
     Frames:
     - {fileID: 21300000, guid: ef9b72a55d2d7014cab138c7e61822d4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_skeleton
+    Frames:
+    - {fileID: 21300000, guid: 7fd9852952f7f4f4c96f129a7220915c, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_slimelet

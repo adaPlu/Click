@@ -47,7 +47,7 @@ namespace ClickDungeon.Tests
         [Test]
         public void FinalExitWinsTheRun()
         {
-            var run = Run(5, 7UL,
+            var run = Run(Catalog.RunFloorCount, 7UL,
                 ".....",
                 ".....",
                 "Hx...",

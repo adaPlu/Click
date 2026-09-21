@@ -4,7 +4,8 @@ using ClickDungeon.Domain;
 
 namespace ClickDungeon.Simulation
 {
-    public enum ThreatKind { Attack, Fire, Slam, Summon, BombBlast, BombArmed }
+    /// <summary>Charge and Throw belong to the first expansion monsters (D-058).</summary>
+    public enum ThreatKind { Attack, Fire, Slam, Summon, BombBlast, BombArmed, Charge, Throw }
 
     public struct Threat
     {
@@ -47,6 +48,15 @@ namespace ClickDungeon.Simulation
                         Add(threats, ThreatKind.Summon, intent.Target, 0, enemy.Id);
                         foreach (var cell in EnemyAi.SummonCells(run, enemy, def, intent.Target))
                             if (cell != intent.Target) Add(threats, ThreatKind.Summon, cell, 0, enemy.Id);
+                        break;
+                    // The whole path of a charge is dangerous: the boar hits the hero anywhere on it (D-058).
+                    case IntentKind.Charge:
+                        foreach (var cell in Board.ChargeCells(run, enemy.Pos, intent.Dir, def.Range))
+                            Add(threats, ThreatKind.Charge, cell, Renown.Hit(run, catalog, def.Damage), enemy.Id);
+                        break;
+                    // Where a bomb will land. It does no harm on landing; the lit bomb then telegraphs its own blast.
+                    case IntentKind.Throw:
+                        Add(threats, ThreatKind.Throw, intent.Target, 0, enemy.Id);
                         break;
                 }
             }

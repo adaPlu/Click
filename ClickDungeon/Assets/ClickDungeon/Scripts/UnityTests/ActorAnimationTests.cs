@@ -109,7 +109,7 @@ namespace ClickDungeon.UnityTests
         public void SummonCuesTheBossAndTheMinion()
         {
             var floor = FloorState.CreateEmpty();
-            floor.FloorIndex = 5;
+            floor.FloorIndex = Catalog.RunFloorCount;
             floor.IsBossFloor = true;
             floor.Start = new GridPos(0, 2);
             var boss = EnemyAi.Spawn(floor, Catalog.Enemy("lord_blobert"), new GridPos(4, 2), awake: true);

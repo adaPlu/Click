@@ -262,7 +262,7 @@ namespace ClickDungeon.Tests
             DoOk(lane, PlayerCommand.Wait());
             Assert.That(lane.Hero.Hp, Is.EqualTo(8), "The imp shoots from three tiles away.");
 
-            var boss = Run(5, 1UL,
+            var boss = Run(Catalog.RunFloorCount, 1UL,
                 "B....",
                 ".....",
                 "..H..",

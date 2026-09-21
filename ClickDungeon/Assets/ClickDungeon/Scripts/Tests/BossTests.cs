@@ -8,7 +8,7 @@ namespace ClickDungeon.Tests
 {
     public class LordBlobertTests
     {
-        static RunState Court() => Run(5, 42UL,
+        static RunState Court() => Run(Catalog.RunFloorCount, 42UL,
             "....X",
             ".....",
             "H...B",
@@ -82,7 +82,7 @@ namespace ClickDungeon.Tests
         [Test]
         public void PuffedIsImmuneThenDeflatedTakesDouble()
         {
-            var run = Run(5, 42UL,
+            var run = Run(Catalog.RunFloorCount, 42UL,
                 "....X",
                 ".....",
                 "HB...",
@@ -129,7 +129,7 @@ namespace ClickDungeon.Tests
         [Test]
         public void BossDeathClearsMinionsAndUnlocksExit()
         {
-            var run = Run(5, 42UL,
+            var run = Run(Catalog.RunFloorCount, 42UL,
                 "....X",
                 ".....",
                 "HB...",

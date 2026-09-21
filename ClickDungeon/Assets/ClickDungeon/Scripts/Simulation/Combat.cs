@@ -73,6 +73,21 @@ namespace ClickDungeon.Simulation
                     i++;
                     continue;
                 }
+                // A Skeleton Warrior's first fall is not its last (D-058). It collapses into bones where it stood, and the
+                // kill - with its experience - only counts once the bones are broken.
+                var fallen = catalog.Enemy(enemy.DefId);
+                if (fallen.Reassembles && !enemy.Rallied)
+                {
+                    enemy.Rallied = true;
+                    enemy.Hp = 1;
+                    enemy.Mode = EnemyMode.Bones;
+                    enemy.ModeTurns = fallen.ReassembleTurns;
+                    enemy.Intent = Intent.Reassemble();
+                    enemy.Staggered = false;
+                    events.Add(GameEvent.Of(GameEventKind.EnemyCollapsed, enemy.Id, to: enemy.Pos, source: enemy.DefId));
+                    i++;
+                    continue;
+                }
                 floor.Enemies.RemoveAt(i);
                 events.Add(GameEvent.Of(GameEventKind.EnemyDied, enemy.Id, to: enemy.Pos, source: enemy.DefId));
                 bool boss = catalog.Enemy(enemy.DefId).IsBoss;

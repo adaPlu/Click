@@ -59,6 +59,46 @@ namespace ClickDungeon.Simulation
             EnemyPathable(run.Floor, p) && run.Floor.EnemyAt(p) == null && run.Hero.Pos != p;
 
         /// <summary>
+        /// The tiles a charge down this line passes through (D-058): straight on until a wall, hazard, door, another
+        /// monster or the board's edge stops it. The hero does not end the line — they may step off it before the charge
+        /// comes — so the whole path is what the telegraph marks, exactly as a fire lane is.
+        /// </summary>
+        public static List<GridPos> ChargeCells(RunState run, GridPos from, Direction dir, int range)
+        {
+            var cells = new List<GridPos>();
+            for (int i = 1; i <= range; i++)
+            {
+                var p = from.Step(dir, i);
+                if (!EnemyPathable(run.Floor, p) || run.Floor.EnemyAt(p) != null) break;
+                cells.Add(p);
+            }
+            return cells;
+        }
+
+        /// <summary>Whether the hero stands on a line a charge from here could reach, and which way it runs.</summary>
+        public static bool HeroInChargeLane(RunState run, GridPos from, int range, out Direction dir)
+        {
+            foreach (var d in Directions.All)
+            {
+                if (ChargeCells(run, from, d, range).Contains(run.Hero.Pos))
+                {
+                    dir = d;
+                    return true;
+                }
+            }
+            dir = Direction.Up;
+            return false;
+        }
+
+        /// <summary>
+        /// Whether a thrown bomb can land here (D-058): open floor with nothing on it — no hazard already, no chest, key,
+        /// potion, pad or plate, and not the exit. A throw at a tile that cannot take one is never declared.
+        /// </summary>
+        public static bool CanHoldBomb(FloorState floor, GridPos p) =>
+            p.InBounds && floor[p].Terrain == Terrain.Floor && floor[p].Hazard == HazardKind.None
+            && floor[p].Content == ContentKind.None && !floor[p].IsExit;
+
+        /// <summary>
         /// Whether the exit should look open: it is unlocked, or the hero holds a normal floor's key, so stepping
         /// on it will open it. Blobert's sealed exit ignores keys.
         /// </summary>

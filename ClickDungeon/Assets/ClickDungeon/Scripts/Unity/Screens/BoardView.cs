@@ -372,11 +372,17 @@ namespace ClickDungeon.Unity.Screens
             bool blast = kinds.Contains(ThreatKind.BombBlast);
             bool armed = kinds.Contains(ThreatKind.BombArmed);
             bool summon = kinds.Contains(ThreatKind.Summon);
+            // D-058. A charge is a blow, so it wears the melee warning; without this it fell through to the bomb-blast
+            // style and a boar's line read as "explosion here". A throw marks where a bomb lands: no damage yet, so it
+            // had no branch at all and drew nothing - the one warning the Bomber depends on.
+            bool charge = kinds.Contains(ThreatKind.Charge);
+            bool thrown = kinds.Contains(ThreatKind.Throw);
 
             if (damage > 0)
             {
-                var primary = slam ? ThreatKind.Slam : attack ? ThreatKind.Attack : fire ? ThreatKind.Fire : ThreatKind.BombBlast;
-                var fill = slam ? Palette.Slam : attack ? Palette.Danger : fire ? Palette.FireLane : Palette.Fuse;
+                bool melee = attack || charge;
+                var primary = slam ? ThreatKind.Slam : melee ? ThreatKind.Attack : fire ? ThreatKind.Fire : ThreatKind.BombBlast;
+                var fill = slam ? Palette.Slam : melee ? Palette.Danger : fire ? Palette.FireLane : Palette.Fuse;
                 if (TileOverlay(view, ArtKeys.DangerOverlay(primary)) == null)
                 {
                     Icons.Shape(view.Overlay, Shapes.Rounded, fill.WithAlpha(0.32f), Vector2.zero, new Vector2(CellWidth - 6f, CellSize - 6f));
@@ -398,16 +404,25 @@ namespace ClickDungeon.Unity.Screens
                 }
 
                 // Damage and threat type stay live text with or without art.
-                string tag = slam ? "SLAM" : blast ? "BOOM" : fire ? "FIRE" : "HIT";
+                string tag = slam ? "SLAM" : blast ? "BOOM" : fire ? "FIRE" : charge && !attack ? "GORE" : "HIT";
                 string tagColor = ColorUtility.ToHtmlStringRGB(fill.Dim(1.4f));
                 var threatLabel = Icons.Label(view.Labels, $"<color=#{tagColor}>{tag}</color> -{damage}", 22, Color.white,
                     new Vector2(12f, labelY), new Vector2(96f, 30f));
                 threatLabel.alignment = TextAnchor.MiddleRight;
             }
-            else if (armed)
+            else if (armed || thrown)
             {
                 if (TileOverlay(view, ArtKeys.DangerOverlay(ThreatKind.BombArmed)) == null)
                     Icons.Shape(view.Overlay, Shapes.Rounded, Palette.Fuse.WithAlpha(0.14f), Vector2.zero, new Vector2(CellWidth - 6f, CellSize - 6f));
+                // A lit bomb lands here next turn. Worded apart from an armed bomb, which is already on the tile.
+                if (thrown && !armed)
+                {
+                    float bandY = enemyHere ? CellSize * 0.5f - 38f : CellSize * 0.5f - 24f;
+                    string fuse = ColorUtility.ToHtmlStringRGB(Palette.Fuse.Dim(1.4f));
+                    var landing = Icons.Label(view.Labels, $"<color=#{fuse}>BOMB</color>", 22, Color.white,
+                        new Vector2(12f, bandY), new Vector2(96f, 30f));
+                    landing.alignment = TextAnchor.MiddleRight;
+                }
             }
 
             if (summon && Icons.TryArtImage(view.Overlay, ArtKeys.DangerOverlay(ThreatKind.Summon), CellSize) == null)

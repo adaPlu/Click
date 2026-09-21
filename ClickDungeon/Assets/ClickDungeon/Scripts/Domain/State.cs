@@ -51,6 +51,8 @@ namespace ClickDungeon.Domain
         public int ActionCounter;
         public EnemyMode Mode;
         public int ModeTurns;
+        /// <summary>A Skeleton Warrior that has already fallen once and stood up: the next fall is final (D-058).</summary>
+        public bool Rallied;
     }
 
     [Serializable]

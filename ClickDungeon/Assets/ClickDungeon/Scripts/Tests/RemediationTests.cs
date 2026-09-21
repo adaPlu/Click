@@ -123,7 +123,7 @@ namespace ClickDungeon.Tests
         [Test]
         public void HeroOnTheExitWhenBlobertFallsStepsOffAndBackOnToWin()
         {
-            var run = Run(5, 3UL,
+            var run = Run(Catalog.RunFloorCount, 3UL,
                 "HB...",
                 ".....",
                 ".....",

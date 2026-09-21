@@ -29,8 +29,10 @@ namespace ClickDungeon.Content
         /// <summary>Guard used for a vault on a floor whose profile has no enemy pool of its own.</summary>
         public const string DefaultVaultEnemyId = "goblin";
 
-        public int Version = 1;
-        public int RunFloorCount = 5;
+        /// <summary>2: the first expansion monsters (D-058). A save that names them is refused by an older build.</summary>
+        public int Version = 2;
+        /// <summary>Seven since the first expansion monsters (D-059); Blobert's Court is always the last.</summary>
+        public int RunFloorCount = 7;
         public HazardTuning Hazards = new HazardTuning();
         /// <summary>What a vault room behind a door holds (D-018).</summary>
         public VaultTuning Vault = new VaultTuning();
@@ -394,6 +396,14 @@ namespace ClickDungeon.Content
             AddEnemy(c, new EnemyDefinition { Id = "crowned_slime", DisplayName = "Crowned Slime", Behavior = EnemyBehavior.SlowChaser, MaxHp = 5, Damage = 3 });
             AddEnemy(c, new EnemyDefinition { Id = "fire_imp", DisplayName = "Fire Imp", Behavior = EnemyBehavior.Lane, MaxHp = 2, Damage = 2, Range = 3 });
             AddEnemy(c, new EnemyDefinition { Id = "slimelet", DisplayName = "Slimelet", Behavior = EnemyBehavior.Chaser, MaxHp = 1, Damage = 1 });
+
+            // First expansion monsters (D-058). Each adds one new rule, and every rule is telegraphed a turn ahead.
+            // Skeleton Warrior: slow, and its first fall leaves bones that stand up again unless broken.
+            AddEnemy(c, new EnemyDefinition { Id = "skeleton", DisplayName = "Skeleton Warrior", Behavior = EnemyBehavior.SlowChaser, MaxHp = 3, Damage = 2, Reassembles = true });
+            // Armored Boar: heavy, and charges down any clear line - the whole path is marked the turn before.
+            AddEnemy(c, new EnemyDefinition { Id = "armored_boar", DisplayName = "Armored Boar", Behavior = EnemyBehavior.Charger, MaxHp = 5, Damage = 3, Range = 4 });
+            // Goblin Bomber: fragile, keeps its distance and lobs a lit bomb where the hero stands.
+            AddEnemy(c, new EnemyDefinition { Id = "goblin_bomber", DisplayName = "Goblin Bomber", Behavior = EnemyBehavior.Bomber, MaxHp = 2, Damage = 1, ThrowRange = 3 });
             AddEnemy(c, new EnemyDefinition
             {
                 Id = "lord_blobert", DisplayName = "Lord Blobert", Behavior = EnemyBehavior.Boss, IsBoss = true,
@@ -518,27 +528,44 @@ namespace ClickDungeon.Content
                 FloorIndex = 1, Name = "The Upper Halls", EnemyPool = new[] { "goblin" }, MinEnemies = 1, MaxEnemies = 2,
                 MinSpikes = 1, MaxSpikes = 2, MinBombs = 0, MaxBombs = 1, Chests = 1,
             });
+            // Seven floors since the first expansion monsters (D-059): each new monster gets a floor that introduces it
+            // before it starts turning up alongside the others, rather than all three crowding the two floors before Blobert.
             c.FloorProfiles.Add(new FloorProfile
             {
                 FloorIndex = 2, Name = "The Damp Cellars", EnemyPool = new[] { "goblin", "goblin", "crowned_slime" }, MinEnemies = 2, MaxEnemies = 2,
                 MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 0, MaxPotions = 1,
                 Vault = true, Fountains = 1,
             });
+            // Introduces the Skeleton Warrior: a floor where the new rule - its bones stand up again - is the main event.
             c.FloorProfiles.Add(new FloorProfile
             {
-                FloorIndex = 3, Name = "The Ember Vaults", EnemyPool = new[] { "goblin", "fire_imp", "crowned_slime" }, MinEnemies = 2, MaxEnemies = 3,
+                FloorIndex = 3, Name = "The Bone Crypt", EnemyPool = new[] { "skeleton", "skeleton", "goblin", "crowned_slime" }, MinEnemies = 2, MaxEnemies = 3,
+                MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 0, MaxPotions = 1,
+                Vault = true,
+            });
+            // Introduces the Goblin Bomber, among the imps' fire lanes.
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 4, Name = "The Ember Vaults", EnemyPool = new[] { "goblin", "fire_imp", "goblin_bomber", "skeleton" }, MinEnemies = 2, MaxEnemies = 3,
                 MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 0, MaxPotions = 1,
                 Vault = true, MinLava = 1, MaxLava = 2, Teleports = true,
             });
             c.FloorProfiles.Add(new FloorProfile
             {
-                FloorIndex = 4, Name = "The Locked Depths", EnemyPool = new[] { "goblin", "fire_imp", "fire_imp", "crowned_slime" }, MinEnemies = 3, MaxEnemies = 3,
+                FloorIndex = 5, Name = "The Locked Depths", EnemyPool = new[] { "goblin", "fire_imp", "crowned_slime", "skeleton", "goblin_bomber" }, MinEnemies = 3, MaxEnemies = 3,
                 MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 2, Chests = 1, MinPotions = 1, MaxPotions = 1,
                 Vault = true, MinLava = 1, MaxLava = 2, Teleports = true, Fountains = 1,
             });
+            // Introduces the Armored Boar. No lava: a boar needs open lines to charge down, and the floor is about reading them.
             c.FloorProfiles.Add(new FloorProfile
             {
-                FloorIndex = 5, Name = "Blobert's Court", IsBoss = true, BossId = "lord_blobert", MinPotions = 1, MaxPotions = 1, MinExitDistance = 3,
+                FloorIndex = 6, Name = "The Boar Warrens", EnemyPool = new[] { "armored_boar", "armored_boar", "goblin_bomber", "skeleton", "fire_imp" }, MinEnemies = 3, MaxEnemies = 3,
+                MinSpikes = 1, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1, Chests = 1, MinPotions = 1, MaxPotions = 1,
+                Vault = true, Teleports = true, Fountains = 1,
+            });
+            c.FloorProfiles.Add(new FloorProfile
+            {
+                FloorIndex = 7, Name = "Blobert's Court", IsBoss = true, BossId = "lord_blobert", MinPotions = 1, MaxPotions = 1, MinExitDistance = 3,
                 MinSpikes = 2, MaxSpikes = 2, MinBombs = 1, MaxBombs = 1,
             });
 

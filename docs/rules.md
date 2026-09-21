@@ -156,6 +156,9 @@ the player responds.
 | `Summon`          | magic circle on target cell       | creates minion on that cell if empty               |
 | `Slam(cells)`     | cracked-ground overlay on cells   | damage on all listed cells                         |
 | `PuffUp`          | inflating arrows                  | enters Puffed state                                |
+| `Charge(direction)` | the whole line marked, **GORE** | runs the line; the hero anywhere on it takes the blow and stops the charge (D-058) |
+| `Throw(cell)`     | landing tile marked **BOMB**      | a lit bomb lands on `cell`; it blows up the turn after, as any bomb (D-058) |
+| `Reassemble`      | **BONES n** countdown             | nothing; after its turns run out the bones stand up again (D-058) |
 
 Attacks target **cells**, not the hero. Moving out of a telegraphed cell
 avoids the hit. This is the core of Shield/Dash decisions.
@@ -169,10 +172,18 @@ avoids the hit. This is the core of Shield/Dash decisions.
 | Fire Imp       | 2  | 2   | Hero in a straight clear lane within 3 → `Fire(dir)` (the telegraph *is* the aim). After firing → `Rest` (reload). Otherwise `Move` toward a lane cell at distance 2–3. Adjacent → steps away if possible. |
 | Slimelet (summon) | 1 | 1 | Goblin behaviour.                                                       |
 
+**First expansion monsters (D-058).** Each adds one rule, telegraphed a turn ahead like every other.
+
+| Enemy            | HP | Dmg | From floor | Behaviour |
+|------------------|----|-----|------------|-----------|
+| Skeleton Warrior | 3  | 2   | 3 | Crowned Slime's pace (acts every other turn). Its **first** fall is not a death: it collapses into bones at 1 heart, shown as `BONES n`. Any hit in the next 2 of its turns breaks it for good; left alone, it stands up at half its hearts (rounded up), and its next fall is final. The kill, and its experience, count only when the bones break. |
+| Goblin Bomber    | 2  | 1   | 4 | Within 3 tiles (king's moves) of the hero, and the hero on open floor → `Throw(hero's cell)`: a lit bomb lands there next turn and explodes the turn after, so the hero has a turn to step clear. After a throw → `Rest`. Adjacent → steps away, or `Attack` if cornered. Never throws at a tile that cannot take a bomb (a chest, key, potion, pad, plate, the exit, or a hazard). |
+| Armored Boar     | 5  | 3   | 6 | Adjacent → `Attack`. Otherwise, the hero on a clear straight line within 4 → `Charge(dir)`: the whole path is marked, and the hero anywhere on it next turn is gored and stops the charge. Walls, hazards, doors and other monsters stop the line. After a charge it is winded → `Rest`. Otherwise it lumbers a step every other turn. |
+
 AI tie-breaks are deterministic (fixed direction order Up, Right, Down, Left;
 then lowest actor id). No RNG in AI.
 
-### 3.6 Lord Blobert (floor 5 boss) *(tune numbers)*
+### 3.6 Lord Blobert (last-floor boss) *(tune numbers)*
 
 HP 18 (D-039). Uses the same intent system. His court hides 2 spike traps and a bomb
 under its covers. Repeating script:
@@ -319,7 +330,7 @@ Ordering is covered by automated tests.
     lists every reward the chest granted.
 - **Floor complete** → next floor generates, hero HP/potions/boons carry over,
   mana refills, key is cleared.
-- **Run**: 5 floors. Floor 5 is Lord Blobert's arena; its exit is unlocked
+- **Run**: 7 floors (D-059; it was 5). The last floor is Lord Blobert's arena; its exit is unlocked
   when he dies and stepping on it wins the run.
 - **Death**: hero HP ≤ 0 ends the run. The save is cleared (roguelike run).
 
@@ -380,15 +391,16 @@ Damage and HP never drop below 1.
 
 ### 10.1 Measured difficulty
 
-**Current** (D-056, measured at `3535907`). `DifficultySweep`, 60 blind seeds, Free Roam — reach F5 / won:
+**Current** (D-059: seven floors and the first expansion monsters). `DifficultySweep`, 60 blind seeds, Free Roam —
+reach the last floor / won:
 
 | Player             | Squire's Stroll | Knight's Trial | Blobert's Wrath |
 |--------------------|-----------------|----------------|-----------------|
-| casual (20%)       | 97% / 97%       | 80% / 75%      | 63% / 43%       |
-| novice (50%)       | 100% / 100%     | 52% / 32%      | 35% / 18%       |
+| casual (20%)       | 100% / 100%     | 82% / 77%      | 55% / 52%       |
+| novice (50%)       | 98% / 97%       | 45% / 28%      | 23% / 12%       |
 
-Class parity on Knight's Trial (`ClassSweep`, 40 blind seeds, won): casual Knight 30 · Paladin 30; novice
-Knight 11 · Paladin 16.
+Class parity on Knight's Trial (`ClassSweep`, 40 blind seeds, won): casual Knight 30 · Paladin 32; novice
+Knight 13 · Paladin 12.
 
 These numbers are for a hero with **no talents, gear or renown**: `AutoPlayer.PlayRun` starts every run from an
 empty profile. They measure the dungeon and cannot see the class trees at all — a talent could be broken, as

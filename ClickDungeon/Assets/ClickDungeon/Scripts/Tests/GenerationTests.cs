@@ -49,7 +49,7 @@ namespace ClickDungeon.Tests
                 errors.Clear();
                 Assert.That(FloorValidator.Validate(floor, Catalog, errors), Is.True,
                     $"seed {seed} floor {floorIndex}: {string.Join("; ", errors)}");
-                Assert.That(floor.IsBossFloor, Is.EqualTo(floorIndex == 5));
+                Assert.That(floor.IsBossFloor, Is.EqualTo(floorIndex == Catalog.RunFloorCount), "Blobert's Court is always the last floor.");
             }
         }
 
@@ -57,7 +57,7 @@ namespace ClickDungeon.Tests
         public void GenerationIsDeterministic()
         {
             for (ulong seed = 1; seed <= 30; seed++)
-            for (int floorIndex = 1; floorIndex <= 5; floorIndex++)
+            for (int floorIndex = 1; floorIndex <= Catalog.RunFloorCount; floorIndex++)
                 Assert.That(Signature(FloorGenerator.Generate(seed, floorIndex, Catalog)),
                     Is.EqualTo(Signature(FloorGenerator.Generate(seed, floorIndex, Catalog))));
         }
@@ -103,7 +103,7 @@ namespace ClickDungeon.Tests
             for (ulong seed = 1; seed <= 400; seed++)
             {
                 used.Add(FloorGenerator.Generate(seed, 2, Catalog).TemplateId);
-                used.Add(FloorGenerator.Generate(seed, 5, Catalog).TemplateId);
+                used.Add(FloorGenerator.Generate(seed, Catalog.RunFloorCount, Catalog).TemplateId);
             }
             foreach (var template in Catalog.Templates)
                 Assert.That(used, Does.Contain(template.Id), $"Template '{template.Id}' never produced a valid floor.");

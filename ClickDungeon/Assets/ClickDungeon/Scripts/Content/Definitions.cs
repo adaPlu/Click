@@ -87,7 +87,8 @@ namespace ClickDungeon.Content
         public string Quote;
     }
 
-    public enum EnemyBehavior { Chaser, SlowChaser, Lane, Boss }
+    /// <summary>Charger and Bomber belong to the first expansion monsters (D-058).</summary>
+    public enum EnemyBehavior { Chaser, SlowChaser, Lane, Boss, Charger, Bomber }
 
     public sealed class EnemyDefinition
     {
@@ -110,6 +111,15 @@ namespace ClickDungeon.Content
         /// <summary>The script slams again after summoning: slam, summon, slam, puff up (D-040).</summary>
         public bool DoubleSlam;
         public int DeflatedDamageMultiplier = 2;
+
+        /// <summary>
+        /// The first fall is not the last (D-058): the enemy collapses into a pile of bones for
+        /// <see cref="ReassembleTurns"/> of its turns, then stands up again at half its hearts. Any hit on the bones ends it.
+        /// </summary>
+        public bool Reassembles;
+        public int ReassembleTurns = 2;
+        /// <summary>How far a bomber lobs, counted in king's moves (D-058).</summary>
+        public int ThrowRange = 3;
     }
 
     public sealed class HazardTuning
@@ -301,7 +311,8 @@ namespace ClickDungeon.Content
         public int PremiumChestRewards = 5;
         /// <summary>The earliest and latest floor a premium chest is placed on (never the boss floor).</summary>
         public int PremiumFirstFloor = 2;
-        public int PremiumLastFloor = 4;
+        /// <summary>The last floor a premium chest may appear on: every floor but Blobert's (D-059 widened it from 4).</summary>
+        public int PremiumLastFloor = 6;
         /// <summary>What one bought potion ration is worth on the next run.</summary>
         public int PotionRationPotions = 1;
         /// <summary>What one bought heart token is worth on the next run.</summary>

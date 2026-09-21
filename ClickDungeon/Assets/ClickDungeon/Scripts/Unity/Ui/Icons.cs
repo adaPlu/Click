@@ -376,7 +376,11 @@ namespace ClickDungeon.Unity.Ui
                     : intent == IntentKind.Slam ? "boast" : "idle";
                 if (TryArtFirst(t, TileSize * 1.4f, ArtKeys.Actor(def.Id, state), ArtKeys.Actor(def.Id))) return;
             }
-            else if (TryArtFirst(t, TileSize, intent == IntentKind.Rest ? ArtKeys.Actor(def.Id, "rest") : ArtKeys.Actor(def.Id), ArtKeys.Actor(def.Id)))
+            // A fallen skeleton lies as its defeat pose - on its sheet that frame is literally a pile of bones (D-058).
+            else if (TryArtFirst(t, TileSize,
+                         mode == EnemyMode.Bones ? ArtKeys.Actor(def.Id, "defeat")
+                         : intent == IntentKind.Rest ? ArtKeys.Actor(def.Id, "rest") : ArtKeys.Actor(def.Id),
+                         ArtKeys.Actor(def.Id)))
             {
                 return;
             }

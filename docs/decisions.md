@@ -787,3 +787,55 @@ Rules referenced here live in `docs/rules.md`.
 - **NOT DONE**: the chest reward sequence still shows Sir Clickington's drawn reaction poses whoever plays, because
   Ironheart's sheet has no chest-reaction art. His title and tagline ("The Iron Vanguard", "Sturdy. Stubborn. Unbroken.")
   are placeholders written for this change, not from the sheet.
+
+## D-058 The first expansion monsters: Skeleton Warrior, Goblin Bomber, Armored Boar
+- **DECISION**: three new monsters, each adding exactly one rule, each telegraphed the turn before it lands:
+  - **Skeleton Warrior** (3 HP, 2 dmg, slow): its first fall leaves bones at 1 heart for 2 of its turns. Break them
+    and it is gone; leave them and it stands up at half its hearts, and the next fall is final. Experience counts only
+    for the final kill.
+  - **Goblin Bomber** (2 HP, 1 dmg): keeps its distance and lobs a lit bomb onto the hero's tile from up to 3 away.
+    The bomb lands lit and blows the turn after, so there is always a turn to get clear. Reuses the bomb hazard.
+  - **Armored Boar** (5 HP, 3 dmg, range 4): charges down any clear straight line to the hero. The whole path is
+    marked; the hero anywhere on it takes the blow. Winded for a turn after.
+- **WHY THESE THREE FIRST**: a vertical slice, chosen so each stretches the engine differently - a passive rule on an
+  existing mover, a new attack shape through the telegraph system, and an enemy creating an existing hazard - so the
+  whole pipeline is proved once before the other monsters are built. The user skipped the scoping questions; this was
+  the recommended default, stated when it was taken.
+- **WHAT HAD TO CHANGE ALONG THE WAY**: the board drew a charge in the bomb-blast style (it fell through to the last
+  case), and drew nothing at all where a bomb was about to land (no damage, so no branch). Both are fixed. New intents
+  borrow the nearest existing icon instead of looking up art that does not exist.
+- **ART**: Skeleton and Boar from their encyclopedia sheets, the Bomber from the Common Encounter Monster Pack; five
+  poses and a portrait each. A fallen skeleton shows its defeat pose, which on its sheet is literally a pile of bones.
+- **VERSIONS**: Ruleset 8 -> 9, Generation 2 -> 3, content catalog 1 -> 2, so a save from before this is refused
+  cleanly rather than resumed into a dungeon that no longer matches it.
+- **TESTS**: 13 in `ExpansionMonsterTests`. Disabling each mechanic in turn turns its tests red: the collapse (4), the
+  charge (2), the bomb landing (3), and the charge telegraph (1).
+
+## D-059 The dungeon grows to seven floors
+- **DECISION**: seven floors instead of five, so each new monster has a floor that introduces it before it turns up
+  alongside the others. Blobert's Court is always the last floor.
+
+  | Floor | Name | New here |
+  |---|---|---|
+  | 1 | The Upper Halls | - |
+  | 2 | The Damp Cellars | - |
+  | 3 | **The Bone Crypt** | Skeleton Warrior |
+  | 4 | The Ember Vaults | Goblin Bomber |
+  | 5 | The Locked Depths | - (everything so far, mixed) |
+  | 6 | **The Boar Warrens** | Armored Boar (no lava: a boar needs open lines) |
+  | 7 | Blobert's Court | - |
+- **WHY**: the user's call ("with new monsters expand the dungeon accordingly"). Crowding three new monsters into the
+  two floors before the boss made the difficulty curve a cliff at floors 4-5.
+- **KNOCK-ONS**: premium chests may now appear on floors 2-6 (was 2-4). The balance bot's command cap is now 80 a
+  floor rather than a flat 400: held at 400 over seven floors, slow winning runs were cut off and counted as stalls.
+  Twelve tests that meant "Blobert's floor" by writing `5` now say "the last floor".
+- **MEASURED** (60 blind seeds, `DifficultySweep`, won; was D-056):
+
+  | Player | Squire's Stroll | Knight's Trial | Blobert's Wrath |
+  |---|---|---|---|
+  | casual | 100% (was 97%) | 77% (was 75%) | 52% (was 43%) |
+  | novice | 97% (was 100%) | 28% (was 32%) | 12% (was 18%) |
+
+  Class parity on Knight's Trial: casual Knight 30 / Paladin 32, novice 13 / 12 - the closest the two have been.
+  A longer run gives a careful player more chests and levels to grow into, and a careless one more floors to die on.
+  **No tier was retuned.**

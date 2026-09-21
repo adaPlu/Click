@@ -51,6 +51,11 @@ namespace ClickDungeon.Simulation
         FloorCompleted,
         RunWon,
         RunLost,
+        // First expansion monsters (D-058), appended so no existing kind changes its value.
+        EnemyCollapsed,
+        EnemyReassembled,
+        EnemyCharged,
+        BombThrown,
     }
 
     /// <summary>A record of something the simulation already decided. Presentation only reacts to these.</summary>

@@ -42,7 +42,7 @@ namespace ClickDungeon.Tests
             Assert.That(Enemy(deep, "goblin").Hp, Is.EqualTo(Enemy(deep, "goblin").MaxHp));
             Assert.That(Renown.Hit(deep, Catalog, 2), Is.EqualTo(2 + 2 / Catalog.Renown.ThreatPerExtraDamage));
 
-            var court = Run(5, 7UL, ".....", ".....", ".HB..", ".....", "....X");
+            var court = Run(Catalog.RunFloorCount, 7UL, ".....", ".....", ".HB..", ".....", "....X");
             var blobert = Enemy(court, "lord_blobert");
             int bossHp = blobert.MaxHp;
             court.Threat = 2;

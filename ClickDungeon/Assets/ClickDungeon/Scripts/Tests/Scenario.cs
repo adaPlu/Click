@@ -64,6 +64,10 @@ namespace ClickDungeon.Tests
                         case 'G': Spawn(floor, "goblin", p, true); break;
                         case 'S': Spawn(floor, "crowned_slime", p, true); break;
                         case 'I': Spawn(floor, "fire_imp", p, true); break;
+                        // First expansion monsters (D-058), awake.
+                        case 'Z': Spawn(floor, "skeleton", p, true); break;
+                        case 'R': Spawn(floor, "armored_boar", p, true); break;
+                        case 'M': Spawn(floor, "goblin_bomber", p, true); break;
                         case 'B':
                             Spawn(floor, "lord_blobert", p, true);
                             floor.IsBossFloor = true;

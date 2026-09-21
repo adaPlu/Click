@@ -505,7 +505,7 @@ namespace ClickDungeon.Application
                 copy.Enemies.Add(new EnemyState
                 {
                     Id = e.Id, DefId = e.DefId, Pos = e.Pos, Hp = e.Hp, MaxHp = e.MaxHp, Awake = e.Awake, JustWoken = e.JustWoken,
-                    Staggered = e.Staggered, Intent = e.Intent, ActionCounter = e.ActionCounter, Mode = e.Mode, ModeTurns = e.ModeTurns,
+                    Staggered = e.Staggered, Intent = e.Intent, ActionCounter = e.ActionCounter, Mode = e.Mode, ModeTurns = e.ModeTurns, Rallied = e.Rallied,
                 });
             }
             return copy;

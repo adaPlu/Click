@@ -11,10 +11,11 @@ namespace ClickDungeon.Domain
     public static class Versions
     {
         public const int SaveSchema = 1;
-        // Bumped for renown's threat, rarer gear and Blobert's second slam (D-040).
-        public const int Ruleset = 8;
+        // Bumped for renown's threat, rarer gear and Blobert's second slam (D-040); 9 for the first expansion monsters (D-058).
+        public const int Ruleset = 9;
         // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
-        public const int Generation = 2;
+        // 3: the first expansion monsters join the floors' enemy pools (D-058), so floors from seed N differ again.
+        public const int Generation = 3;
         /// <summary>The between-runs profile: coins, gems and the provisions bought with them (D-025).</summary>
         public const int ProfileSchema = 1;
     }
@@ -46,9 +47,11 @@ namespace ClickDungeon.Domain
         Feature = 64,
     }
 
-    public enum IntentKind { None = 0, Attack, Move, Fire, Rest, Recover, Summon, Slam, PuffUp }
+    /// <summary>Charge, Throw and Reassemble belong to the first expansion monsters (D-058): boar, bomber and skeleton.</summary>
+    public enum IntentKind { None = 0, Attack, Move, Fire, Rest, Recover, Summon, Slam, PuffUp, Charge, Throw, Reassemble }
 
-    public enum EnemyMode { Normal = 0, Puffed, Deflated }
+    /// <summary>Bones: a Skeleton Warrior that fell once and lies waiting to stand up again (D-058).</summary>
+    public enum EnemyMode { Normal = 0, Puffed, Deflated, Bones }
 
     public enum RunStatus { InProgress = 0, Won, Lost }
 
