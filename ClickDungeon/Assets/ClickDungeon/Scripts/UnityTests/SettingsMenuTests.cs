@@ -70,8 +70,14 @@ namespace ClickDungeon.UnityTests
             Button Choose() => Buttons().First(b => b.name == "Choose");
             Assert.That(Choose().interactable, Is.False, "Already chosen.");
 
+            // Every hero on the roster is playable since D-063; a preview, if the list ever holds one again, is not.
             overlay.Show("rageclaw");
-            Assert.That(Choose().interactable, Is.False, "Coming soon: locked.");
+            Assert.That(Choose().interactable, Is.True, "Rageclaw is playable.");
+            foreach (var preview in catalog.ComingSoon)
+            {
+                overlay.Show(preview.Id);
+                Assert.That(Choose().interactable, Is.False, "Coming soon: locked.");
+            }
             overlay.Show("dawnward");
             Assert.That(Choose().interactable, Is.True);
             Choose().onClick.Invoke();

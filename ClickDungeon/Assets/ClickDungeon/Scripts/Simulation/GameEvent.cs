@@ -62,6 +62,10 @@ namespace ClickDungeon.Simulation
         // The act bosses (D-062), appended.
         BossEnraged,
         BossVanished,
+        // The new classes (D-063), appended.
+        HeroDodged,
+        EnemyKnockedBack,
+        DroneZapped,
     }
 
     /// <summary>A record of something the simulation already decided. Presentation only reacts to these.</summary>

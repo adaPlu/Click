@@ -78,6 +78,8 @@ namespace ClickDungeon.Domain
         public int MaxMana;
         /// <summary>Divine Shield (D-037) has saved the hero on this floor; it comes back on the next.</summary>
         public bool WardSpent;
+        /// <summary>Dodge (D-063) has turned a blow aside on this floor; it comes back on the next.</summary>
+        public bool DodgeSpent;
         /// <summary>Caught in a Cave Spider's web (D-061): while above zero the hero cannot Move or Dash. One turn.</summary>
         public int WebbedTurns;
     }

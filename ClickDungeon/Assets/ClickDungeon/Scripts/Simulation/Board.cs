@@ -159,6 +159,32 @@ namespace ClickDungeon.Simulation
             return false;
         }
 
+        /// <summary>
+        /// A ranged class's slash (D-063): the target in a straight line from the hero, diagonals included, within
+        /// <paramref name="range"/>, with every tile between uncovered, clear of walls and doors, and clear of awake monsters.
+        /// Only uncovered tiles carry a shot, so a refused one says nothing about what any cover hides; a sleeping mimic is
+        /// passed over exactly as the chest it looks like.
+        /// </summary>
+        public static bool HeroHasShot(RunState run, GridPos target, int range)
+        {
+            var from = run.Hero.Pos;
+            int distance = from.Chebyshev(target);
+            if (!target.InBounds || distance < 1 || distance > range) return false;
+            if (!Directions.TryStepFromDelta(target.X - from.X, target.Y - from.Y, out var step)) return false;
+            for (int i = 1; i < distance; i++)
+            {
+                var p = from.Offset(new GridPos(step.X * i, step.Y * i));
+                var cell = run.Floor[p];
+                if (cell.Knowledge != Knowledge.Revealed || BlocksFire(cell)) return false;
+                var between = run.Floor.EnemyAt(p);
+                if (between != null && between.Awake) return false;
+            }
+            return true;
+        }
+
+        /// <summary>How far the hero's slash reaches (D-063): 1, unless the class shoots.</summary>
+        public static int SlashReach(RunState run) => Math.Max(1, run.Perk(TalentEffect.Reach));
+
         public static bool HeroInLane(RunState run, GridPos from, int range, out Direction dir)
         {
             foreach (var d in Directions.All)

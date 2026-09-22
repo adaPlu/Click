@@ -128,6 +128,27 @@ namespace ClickDungeon.Tests
             return run;
         }
 
+        /// <summary>
+        /// Plays the scenario as another hero (D-063): that hero's class numbers and class rules, standing where the
+        /// scenario's hero stood. Learned talents are not included; tests add the perks they need.
+        /// </summary>
+        public static RunState As(RunState run, string heroId)
+        {
+            var pos = run.Hero.Pos;
+            run.Hero = RunFactory.CreateHero(Catalog, heroId);
+            run.Hero.Pos = pos;
+            run.Perks = new Dictionary<string, int>();
+            RunFactory.ApplyClassTraits(run, Catalog);
+            return run;
+        }
+
+        /// <summary>Every tile uncovered, for tests of what a clear, seen line allows.</summary>
+        public static RunState Revealed(RunState run)
+        {
+            foreach (var p in Board.AllCells) run.Floor[p].Knowledge = Knowledge.Revealed;
+            return run;
+        }
+
         public static CommandResult Do(RunState run, PlayerCommand command) => TurnResolver.Apply(run, command, Catalog);
 
         public static CommandResult DoOk(RunState run, PlayerCommand command)

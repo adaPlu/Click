@@ -23,6 +23,7 @@ namespace ClickDungeon.Simulation
             // A web holds for the one turn after it lands (D-061); this accepted command was that turn.
             if (hero.WebbedTurns > 0) hero.WebbedTurns--;
             bool enteredCell = false;
+            EnemyState slashed = null;
             // Where the hero stepped from, so a vault can put them back there (D-018).
             var enteredFrom = GridPos.Invalid;
 
@@ -53,11 +54,15 @@ namespace ClickDungeon.Simulation
                 {
                     var enemy = run.Floor.EnemyAt(command.Target);
                     int damage = enemy != null ? Talents.SlashDamage(run, enemy, catalog) : hero.SlashDamage;
-                    events.Add(GameEvent.Of(GameEventKind.HeroSlashed, from: hero.Pos, to: command.Target, amount: damage));
+                    // Read before the blow lands, while the monster's telegraph still stands (D-063).
+                    bool ambush = enemy != null && Talents.IsAmbush(run, enemy, catalog);
+                    events.Add(GameEvent.Of(GameEventKind.HeroSlashed, from: hero.Pos, to: command.Target, amount: damage,
+                        source: ambush ? "ambush" : null));
                     if (enemy != null)
                     {
                         Combat.DamageEnemy(run, enemy, damage, "slash", catalog, events);
-                        Talents.AfterSlash(run, enemy, catalog, events);
+                        Talents.AfterSlash(run, enemy, catalog, events, ambush);
+                        slashed = enemy;
                     }
                     else Hazards.Arm(run.Floor, command.Target, catalog.Hazards, events);
                     break;
@@ -105,6 +110,9 @@ namespace ClickDungeon.Simulation
                     Chests.Tap(run, command.Target, catalog, events);
                     break;
             }
+
+            // The Engineer's drone answers every action the hero takes (D-063).
+            Talents.Drone(run, slashed, catalog, events);
 
             // 3. Deaths
             Combat.ResolveDeaths(run, catalog, events);

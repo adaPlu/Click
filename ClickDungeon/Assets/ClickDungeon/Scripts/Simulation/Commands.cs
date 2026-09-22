@@ -36,9 +36,13 @@ namespace ClickDungeon.Simulation
 
                 case CommandKind.Slash:
                 {
-                    if (!target.InBounds || !hero.Pos.IsAdjacent(target))
-                        return Fail(out reason, "Slash only reaches neighbouring tiles.");
                     var enemy = floor.EnemyAt(target);
+                    // A shooting class reaches an awake monster down a clear line (D-063); a bomb is still armed by hand.
+                    int reach = Board.SlashReach(run);
+                    if (reach > 1 && enemy != null && enemy.Awake && !hero.Pos.IsAdjacent(target))
+                        return Board.HeroHasShot(run, target, reach) ? true : Fail(out reason, "No clear shot at that one.");
+                    if (!target.InBounds || !hero.Pos.IsAdjacent(target))
+                        return Fail(out reason, reach > 1 ? "No clear shot there." : "Slash only reaches neighbouring tiles.");
                     if (enemy != null && enemy.Awake) return true;
                     var cell = floor[target];
                     if (cell.Hazard == HazardKind.Bomb && !cell.BombArmed && cell.Knowledge == Knowledge.Revealed) return true;
@@ -158,6 +162,12 @@ namespace ClickDungeon.Simulation
                 if (enemy != null && enemy.Awake) command = PlayerCommand.Slash(cell);
                 else if (run.Floor[cell].IsClosedChest && run.Floor[cell].Knowledge == Knowledge.Revealed) command = PlayerCommand.Interact(cell);
                 else command = PlayerCommand.Move(cell);
+                return true;
+            }
+            // A shooting class taps a monster down a clear line to shoot it (D-063), in either movement mode.
+            if (enemy != null && enemy.Awake && Board.SlashReach(run) > 1 && Board.HeroHasShot(run, cell, Board.SlashReach(run)))
+            {
+                command = PlayerCommand.Slash(cell);
                 return true;
             }
             // Free Roam: a tap anywhere on the board is a move, as long as the tile can be entered.

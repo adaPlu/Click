@@ -908,3 +908,48 @@ Rules referenced here live in `docs/rules.md`.
 
 - **TESTS**: 9 in `ActBossTests`. Removing each rule in turn - the act-clear heal, the no-pit rule, the enrage, the
   enraged warning, the bat cap, the vanish - turns its test red.
+
+## D-063 The six new heroes, and a rule for each class
+- **DECISION**: every hero on the roster sheet is playable. The sheet is what named them, so the class names follow it:
+  Shadowcut is a **Rogue**, not the "Thief" his own sheet says. `ComingSoon` is empty for the first time.
+
+  | Hero | Class | Class rule | Hearts / slash |
+  |---|---|---|---|
+  | Shadowcut | Rogue | **Ambush**: +2 against a monster whose declared action is not aimed at your tile | 10 / 2 |
+  | Emberwisp | Wizard | **Firebolt**: slash reaches 3 tiles down a line, and knocks the target back one | 9 / 3 |
+  | Windsong | Ranger | **Longshot**: slash reaches 4 tiles, +1 from 3 or more away | 8 / 3 |
+  | Lightbringer | Cleric | **Sanctuary**: every blow her shield blocks heals 1 | 8 / 2 |
+  | Rageclaw | Berserker | **Rage**: +1 for every 4 hearts missing | 9 / 2 |
+  | Gearspark | Engineer | **Spark Drone**: on every turn he does not slash, it zaps a neighbour for 1 | 7 / 1 |
+
+- **HOW A CLASS RULE WORKS**: as a perk the class starts every run with, so the simulation reads a class rule and a
+  learned talent through the same call, and a talent that sharpens a rule (Cruel Edge, Overclock, Blessed Ward) simply
+  raises the same perk. Saves and the bot's own copy already carried perks, so neither needed a new field.
+- **RANGED SLASHES AND THE COVER RULE**: a shot only crosses tiles the player has already uncovered. Letting one fly
+  over a cover would have made a refused shot a free probe - "there is a wall under that one" - which §2.1 forbids.
+  The same reason keeps a knock-back from pushing a monster onto a cover.
+- **WHY THE DRONE SKIPS THE TURNS YOU SLASH**: as a zap after every action it was simply free damage, and the Engineer
+  won 60 of 80 against the Knight's 47. Covering only the turns he spends moving, shielding or drinking makes it a
+  choice, and it reads as the drone doing the fighting while he does something else.
+- **TALENTS**: 72 new ones, twelve a class in three paths, tiers and capstones as D-037 set out. Most reuse effects the
+  simulation already had; thirteen are new (Eviscerate, Dodge, Pickpocket, Fireball, Piercing Arrow, Pinning Shot,
+  Hawkeye, Bloodlust, Long-Range Coil, Tesla Coil, Max Mana, and the two that raise a class rule).
+- **BALANCE**: tuned over four sweeps of 40 to 80 blind seeds against the Knight and Paladin. The Cleric and the
+  Engineer were far too strong on the first numbers (36 and 36 of 40, against the Knight's 26), the Rogue and the
+  Wizard too weak. What moved them: the Cleric's mana and shield cost, the Engineer's drone rule and slash, and a
+  heavier slash for both shooting classes, who rarely get a clear uncovered line in Free Roam.
+- **MEASURED** (40 blind seeds each, Knight's Trial, no talents, `ClassSweep`) - casual / novice wins:
+
+  | knight | paladin | rogue | wizard | ranger | cleric | berserker | engineer |
+  |---|---|---|---|---|---|---|---|
+  | 26 / 5 | 23 / 8 | 26 / 2 | 26 / 5 | 25 / 5 | 30 / 8 | 23 / 9 | 22 / 7 |
+
+  The Rogue punishes careless play hardest (2 novice wins) and is marked the most demanding class; the Cleric and the
+  Berserker are the most forgiving. `TheClassesWinAboutAsOftenAsEachOther` now guards all eight, not just the first two.
+- **ART**: each hero's sheet gives a full portrait, two expressions and six poses. The bright sheets cut out on a colour
+  threshold as Dawnward's does; Shadowcut's black leather, Rageclaw's browns and Gearspark's dark gear are cut with
+  GrabCut instead, seeded on the figure, because any threshold loose enough to clear their backdrop ate the hero.
+- **VERSIONS**: Ruleset 10 -> 11, content catalog 3 -> 4. Floor generation is untouched, so seeds still deal the same
+  dungeons; a save naming one of the new heroes is refused by an older build.
+- **TESTS**: 24 in `HeroClassTests`. Breaking each rule in turn - all 28 of them, every class rule and every new talent -
+  turns one of them red.

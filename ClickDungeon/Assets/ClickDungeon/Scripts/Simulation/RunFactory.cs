@@ -6,6 +6,22 @@ namespace ClickDungeon.Simulation
 {
     public static class RunFactory
     {
+        /// <summary>
+        /// The class's own rules (D-063), as perks every run of that class starts with. Learned talents are added on top
+        /// afterwards (Progression.Apply), so a talent that sharpens a class rule simply raises the same perk.
+        /// </summary>
+        public static void ApplyClassTraits(RunState run, ContentCatalog catalog)
+        {
+            var heroClass = catalog.HeroClass(run.Hero.ClassId);
+            if (heroClass.Traits == null) return;
+            if (run.Perks == null) run.Perks = new Dictionary<string, int>();
+            foreach (var trait in heroClass.Traits)
+            {
+                var key = trait.Key.ToString();
+                run.Perks[key] = (run.Perks.TryGetValue(key, out int had) ? had : 0) + trait.Value;
+            }
+        }
+
         public static HeroState CreateHero(ContentCatalog catalog, string identityId)
         {
             var identity = catalog.HeroIdentity(identityId);
@@ -36,6 +52,7 @@ namespace ClickDungeon.Simulation
                 ContentCatalogVersion = catalog.Version,
                 Hero = CreateHero(catalog, identityId),
             };
+            ApplyClassTraits(run, catalog);
             BeginFloor(run, 1, catalog, events);
             return run;
         }
@@ -183,9 +200,14 @@ namespace ClickDungeon.Simulation
         public static void RevealByTalents(RunState run, List<GameEvent> events)
         {
             var floor = run.Floor;
-            if (run.Perk(TalentEffect.GuidingLight) <= 0 || floor.IsVault) return;
+            if (floor.IsVault) return;
+            bool key = run.Perk(TalentEffect.GuidingLight) > 0, exit = run.Perk(TalentEffect.Hawkeye) > 0;
             foreach (var p in Board.AllCells)
-                if (floor[p].Content == ContentKind.Key && floor[p].Knowledge != Knowledge.Revealed) Visibility.Reveal(floor, p, events);
+            {
+                if (floor[p].Knowledge == Knowledge.Revealed) continue;
+                // Hawkeye (D-063): the way down is spotted from the stairs, as Guiding Light shows the key.
+                if ((key && floor[p].Content == ContentKind.Key) || (exit && p == floor.Exit)) Visibility.Reveal(floor, p, events);
+            }
         }
 
         /// <summary>Renown's threat (D-040): extra hearts for every monster on the deep floors, more for Lord Blobert.</summary>
@@ -209,6 +231,7 @@ namespace ClickDungeon.Simulation
             hero.Guard = false;
             hero.WebbedTurns = 0;
             hero.WardSpent = false;
+            hero.DodgeSpent = false;
             Mana.Refill(hero);
 
             AssignChestQuality(run);

@@ -12,8 +12,9 @@ namespace ClickDungeon.Domain
     {
         public const int SaveSchema = 1;
         // Bumped for renown's threat, rarer gear and Blobert's second slam (D-040); 9 for the first expansion monsters (D-058);
-        // 10 for the second wave, the act bosses and the act-clear heal (D-061, D-062).
-        public const int Ruleset = 10;
+        // 10 for the second wave, the act bosses and the act-clear heal (D-061, D-062); 11 for the six new classes and
+        // their rules (D-063).
+        public const int Ruleset = 11;
         // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
         // 3: the first expansion monsters join the floors' enemy pools (D-058), so floors from seed N differ again.
         // 4: twenty floors in acts, the second wave in the pools and the key warden holding keys (D-062). A seven-floor save
@@ -94,6 +95,11 @@ namespace ClickDungeon.Domain
         // Rules the simulation reads
         OpeningStrike, Cleave, Executioner, Relentless, Riposte, Bastion, ChestTapCut, SecondWind,
         Judgement, Consecrate, Dawnstrike, WrathOfDawn, HolyBulwark, Unyielding, DivineShield, Prayer, GuidingLight, Sanctified,
+        // Class rules (D-063): each class starts every run with its own, and its talents may add to it. Appended, so no
+        // saved perk changes meaning.
+        Ambush, Reach, Knockback, Longshot, Sanctuary, Rage, Drone,
+        // The new classes' talents (D-063).
+        MaxMana, Eviscerate, Dodge, Pickpocket, Fireball, PiercingArrow, PinningShot, Hawkeye, Bloodlust, DroneRange, ArcChain,
     }
 
     /// <summary>How rare an item is (D-036): its drop weight, its shop price and the colour of its frame.</summary>

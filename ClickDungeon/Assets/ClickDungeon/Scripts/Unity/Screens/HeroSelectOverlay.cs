@@ -213,7 +213,12 @@ namespace ClickDungeon.Unity.Screens
             _classLine.text = entry.Playable
                 ? $"{heroClass.DisplayName.ToUpperInvariant()}  ·  {heroClass.Role}"
                 : $"{entry.Preview.ClassName.ToUpperInvariant()}  ·  {entry.Preview.Role}";
-            _playstyle.text = entry.Playable ? $"{entry.Identity.Tagline}  {heroClass.Playstyle}" : entry.Preview.Blurb + " Not yet playable.";
+            // A class with a rule of its own shows it here (D-063): it is what makes the class play unlike the others, and
+            // it earns the space the longer playstyle line would take. The box holds four lines at this size.
+            bool hasRule = entry.Playable && !string.IsNullOrEmpty(heroClass.TraitName);
+            _playstyle.text = !entry.Playable ? entry.Preview.Blurb + " Not yet playable."
+                : hasRule ? $"{entry.Identity.Tagline}\n<color=#F2C94C>{heroClass.TraitName.ToUpperInvariant()}:</color> {heroClass.TraitText}"
+                : $"{entry.Identity.Tagline}  {heroClass.Playstyle}";
             _quote.text = entry.Playable && !string.IsNullOrEmpty(entry.Identity.Quote) ? $"“{entry.Identity.Quote}”" : "";
             DrawStars(heroClass);
             DrawStats(heroClass);

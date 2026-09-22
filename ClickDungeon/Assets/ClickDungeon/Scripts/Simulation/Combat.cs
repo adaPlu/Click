@@ -28,7 +28,22 @@ namespace ClickDungeon.Simulation
                 int riposte = run.Perk(TalentEffect.Riposte);
                 if (riposte > 0 && attacker != null && catalog != null)
                     DamageEnemy(run, attacker, riposte, "riposte", catalog, events);
+                // Sanctuary (D-063): the Cleric's blocks heal.
+                int mend = run.Perk(TalentEffect.Sanctuary);
+                if (mend > 0 && hero.Hp < hero.MaxHp)
+                {
+                    int before = hero.Hp;
+                    hero.Hp = Math.Min(hero.MaxHp, hero.Hp + mend);
+                    events.Add(GameEvent.Of(GameEventKind.HeroHealed, to: hero.Pos, amount: hero.Hp - before, source: "sanctuary"));
+                }
                 return true;
+            }
+            // Dodge (D-063): once per floor, the first blow that would land is turned aside.
+            if (run.Perk(TalentEffect.Dodge) > 0 && !hero.DodgeSpent)
+            {
+                hero.DodgeSpent = true;
+                events.Add(GameEvent.Of(GameEventKind.HeroDodged, to: hero.Pos, amount: amount, source: source));
+                return false;
             }
             // Unyielding (D-037): at half hearts or fewer, every hit is softened, never below 1.
             int soften = run.Perk(TalentEffect.Unyielding);

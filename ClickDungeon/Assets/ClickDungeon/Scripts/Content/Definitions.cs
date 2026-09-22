@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using ClickDungeon.Domain;
 
 namespace ClickDungeon.Content
@@ -29,6 +30,15 @@ namespace ClickDungeon.Content
         public string Theme = "#F2C14E";
         /// <summary>The talent paths, left to right; the talents themselves are in the catalog.</summary>
         public TalentBranch[] Branches = new TalentBranch[0];
+
+        /// <summary>
+        /// The class's own rules (D-063): perks every run of this class starts with. Knight and Paladin have none - their
+        /// shape is all in their numbers and trees.
+        /// </summary>
+        public Dictionary<TalentEffect, int> Traits;
+        /// <summary>The class rule's name and one line on it, for Hero Select and the talent screen.</summary>
+        public string TraitName;
+        public string TraitText;
     }
 
     /// <summary>One path of a class's talent tree (D-037).</summary>

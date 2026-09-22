@@ -199,10 +199,11 @@ namespace ClickDungeon.Unity.Screens
             var heroClass = _catalog.HeroClass(_classId);
             var hero = HeroOf(_classId);
             Color theme = Parse(heroClass.Theme);
-            _title.text = $"{hero?.DisplayName.ToUpperInvariant()}  ·  {heroClass.DisplayName.ToUpperInvariant()} TALENTS";
+            // Just the hero: with eight class tabs beside it (D-063) the old "HERO · CLASS TALENTS" ran under them.
+            _title.text = $"{hero?.DisplayName.ToUpperInvariant()}";
             _title.color = theme;
             int level = Progression.Level(_profile);
-            _level.text = $"Level {level}  ·  {_profile.Xp} / {Progression.XpForLevel(level + 1)} XP to level {level + 1}  ·  {heroClass.Role}";
+            _level.text = $"{heroClass.DisplayName.ToUpperInvariant()}  ·  Level {level}  ·  {_profile.Xp} / {Progression.XpForLevel(level + 1)} XP";
             int free = Progression.PointsFree(_profile, _catalog, _classId);
             _points.text = free > 0 ? $"{free} talent point{(free == 1 ? "" : "s")} to spend" : "No points to spend: every level gives one";
             _points.color = free > 0 ? Palette.Safe : Palette.TextDim;
@@ -225,14 +226,19 @@ namespace ClickDungeon.Unity.Screens
             var classes = new List<HeroClassDefinition>();
             foreach (var c in _catalog.HeroClasses.Values)
                 if (_catalog.TalentsOf(c.Id).Count > 0) classes.Add(c);
+            // The strip runs leftwards from the panel's right edge, so it has to fit every class that has a tree without
+            // reaching the title: eight of them at the old fixed 300 ran off the screen (D-063).
+            float budget = RefLayout.Portrait ? 940f : 1050f;
+            float step = Mathf.Min(300f, budget / Mathf.Max(1, classes.Count));
+            int font = step >= 260f ? 26 : step >= 200f ? 22 : step >= 150f ? 18 : 15;
             for (int i = 0; i < classes.Count; i++)
             {
                 var c = classes[i];
                 bool on = c.Id == _classId;
                 int free = Progression.PointsFree(_profile, _catalog, c.Id);
                 var parts = UiFactory.Button(_tabs, "Class " + c.Id, c.DisplayName.ToUpperInvariant() + (free > 0 ? $"  ({free})" : ""),
-                    on ? Parse(c.Theme).Dim(0.55f) : Palette.NavyLight, 26, () => ShowClass(c.Id));
-                parts.Rect.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-(classes.Count - 1 - i) * 300f, 0f), new Vector2(288f, 68f));
+                    on ? Parse(c.Theme).Dim(0.55f) : Palette.NavyLight, font, () => ShowClass(c.Id));
+                parts.Rect.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-(classes.Count - 1 - i) * step, 0f), new Vector2(step - 12f, 68f));
                 parts.Border.color = on ? Parse(c.Theme) : Palette.GoldDark.WithAlpha(0.5f);
                 parts.Label.color = on ? Color.white : Palette.TextDim;
             }

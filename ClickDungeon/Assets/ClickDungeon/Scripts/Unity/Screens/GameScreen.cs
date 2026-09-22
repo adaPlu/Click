@@ -431,7 +431,7 @@ namespace ClickDungeon.Unity.Screens
             }
             else if (mode == TargetMode.Slash)
             {
-                Say("SLASH: pick a lit tile next to you.", Expression.Confident);
+                Say(Board.SlashReach(Run) > 1 ? "SLASH: pick a lit monster down a clear line." : "SLASH: pick a lit tile next to you.", Expression.Confident);
             }
             else if (mode == TargetMode.Dash)
             {
@@ -876,7 +876,13 @@ namespace ClickDungeon.Unity.Screens
                 sb.AppendLine();
                 switch (_mode)
                 {
-                    case TargetMode.Slash: sb.AppendLine("SLASH: tap a lit tile next to you. Bombs can be slashed to arm them."); break;
+                    case TargetMode.Slash:
+                        // A shooting class reaches further (D-063), and the hint has to say so or its lit tiles look wrong.
+                        int reach = Board.SlashReach(run);
+                        sb.AppendLine(reach > 1
+                            ? $"SLASH: tap a lit monster up to {reach} tiles away, down a straight line you have uncovered. A bomb is still armed from beside it."
+                            : "SLASH: tap a lit tile next to you. Bombs can be slashed to arm them.");
+                        break;
                     case TargetMode.Dash: sb.AppendLine("DASH: tap a lit tile one or two steps away in a straight line. You jump over the middle tile."); break;
                     default:
                         // Free Roam has no sensing (D-021), so there is nothing to learn by hovering a covered tile.
@@ -1489,7 +1495,7 @@ namespace ClickDungeon.Unity.Screens
         public const string HelpText =
             "- Tiles are uncovered only by clicking them. FREE ROAM: tap any tile to go there; if a monster or a shut door is hiding under it, you stay put and it is revealed.\n" +
             "- STEP BY STEP: step to a lit tile next to you. Tiles two steps away are SENSED: red diamond ! = enemy, orange triangle ! = trap, K = key, E = exit, purple + = door, plate or teleport, $ = treasure, dot = safe.\n" +
-            "- Tap an enemy beside you to SLASH, a chest to open it (2-4 taps, each a turn), or your hero to wait.\n" +
+            "- Tap an enemy beside you to SLASH - the Wizard and the Ranger shoot instead, down any straight line they have uncovered - a chest to open it (2-4 taps, each a turn), or your hero to wait.\n" +
             "- Uncovering an enemy wakes it. It shows its intent and only acts on the NEXT turn. Most must stand next to you to hit; Fire Imps shoot along a line and bosses slam from anywhere.\n" +
             "- Tiles marked -N will be hit next turn. Step off, SHIELD to block (staggers attackers), or DASH one or two tiles over traps.\n" +
             "- SHIELD and DASH cost MANA (the blue bar; the price is on each button). You get 1 back every turn and a full bar on every new floor. Moving, slashing and potions are free.\n" +

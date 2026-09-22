@@ -145,6 +145,10 @@ namespace ClickDungeon.Application
                     case TalentEffect.DashCostCut: run.DashCostCut += value; break;
                     case TalentEffect.CoinsPerChestReward: run.BonusCoinsPerChestReward += value; break;
                     case TalentEffect.PotionHeal: run.PotionHealBonus += value; break;
+                    case TalentEffect.MaxMana:
+                        hero.MaxMana += value;
+                        hero.Mana += value;
+                        break;
                     default:
                         var key = talent.Effect.ToString();
                         run.Perks[key] = (run.Perks.TryGetValue(key, out int had) ? had : 0) + value;

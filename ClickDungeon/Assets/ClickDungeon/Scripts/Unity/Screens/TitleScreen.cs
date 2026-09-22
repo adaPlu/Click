@@ -180,9 +180,11 @@ namespace ClickDungeon.Unity.Screens
             else if (name == "heroes") OpenHeroSelect();
             else if (name == "shop") OpenShop();
             else if (name == "talents") OpenTalents();
-            else if (name == "talentspaladin") OpenTalents("paladin");
+            // -cdOverlay talents<classId> opens that class's tree, for screenshots of any of them (D-063).
+            else if (name.StartsWith("talents")) OpenTalents(name.Substring("talents".Length));
             else if (name == "heroespaladin") { OpenHeroSelect(); _heroes.Show("dawnward"); }
-            else if (name == "heroeslocked") { OpenHeroSelect(); _heroes.Show("rageclaw"); }
+            else if (name == "heroesrageclaw") { OpenHeroSelect(); _heroes.Show("rageclaw"); }
+            else if (name == "heroesgearspark") { OpenHeroSelect(); _heroes.Show("gearspark"); }
             else if (name == "inventory") OpenInventory();
             else if (name == "coins") OpenPurse(true);
             else if (name == "shopgear") OpenShop(ShopTab.Gear);

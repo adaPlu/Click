@@ -494,7 +494,7 @@ namespace ClickDungeon.Application
         static HeroState Copy(HeroState h) => new HeroState
         {
             IdentityId = h.IdentityId, ClassId = h.ClassId, Pos = h.Pos, Hp = h.Hp, MaxHp = h.MaxHp, SlashDamage = h.SlashDamage,
-            Potions = h.Potions, HasKey = h.HasKey, SpecialKeys = h.SpecialKeys, Guard = h.Guard, Mana = h.Mana, WardSpent = h.WardSpent, WebbedTurns = h.WebbedTurns,
+            Potions = h.Potions, HasKey = h.HasKey, SpecialKeys = h.SpecialKeys, Guard = h.Guard, Mana = h.Mana, WardSpent = h.WardSpent, DodgeSpent = h.DodgeSpent, WebbedTurns = h.WebbedTurns,
             MaxMana = h.MaxMana,
         };
 

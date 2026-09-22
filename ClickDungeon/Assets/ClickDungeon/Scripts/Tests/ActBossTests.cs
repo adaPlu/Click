@@ -13,12 +13,6 @@ namespace ClickDungeon.Tests
     /// </summary>
     public class ActBossTests
     {
-        static RunState Revealed(RunState run)
-        {
-            foreach (var p in Board.AllCells) run.Floor[p].Knowledge = Knowledge.Revealed;
-            return run;
-        }
-
         // ------------------------------------------------------------------ what every act boss shares
 
         [Test]

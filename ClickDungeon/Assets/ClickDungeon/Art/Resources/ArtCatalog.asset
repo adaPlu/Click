@@ -158,6 +158,36 @@ MonoBehaviour:
     - {fileID: 21300000, guid: aa9c78a804f50ac4ea1468e950c499ff, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: actor_emberwisp_defeat
+    Frames:
+    - {fileID: 21300000, guid: 0df054f620f988a488ef79abf588fda8, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_emberwisp_guard
+    Frames:
+    - {fileID: 21300000, guid: aee89c34fff77b44a815780d32dd80a9, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_emberwisp_hit
+    Frames:
+    - {fileID: 21300000, guid: 146884ab97fd1264391f8fdb0e6fbc7a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_emberwisp_idle
+    Frames:
+    - {fileID: 21300000, guid: d916e7f763534c84bad474bdeb93bbf8, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_emberwisp_slash
+    Frames:
+    - {fileID: 21300000, guid: 38815a58eb08d614d89c08fd63c7573e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_emberwisp_victory
+    Frames:
+    - {fileID: 21300000, guid: aa2c853f92a8e264ab0e50f6f82ea68a, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_fire_imp_attack
     Frames:
     - {fileID: 21300000, guid: dbbc13a39e6db8b42a270b155c1cc255, type: 3}
@@ -186,6 +216,36 @@ MonoBehaviour:
   - Key: actor_fire_imp_wake
     Frames:
     - {fileID: 21300000, guid: a488511144741b7488922180732fa124, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_gearspark_defeat
+    Frames:
+    - {fileID: 21300000, guid: 2eb7e7b067f0399488b096a9006bc23b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_gearspark_guard
+    Frames:
+    - {fileID: 21300000, guid: 32beb4c054032b54e8aa660704204a40, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_gearspark_hit
+    Frames:
+    - {fileID: 21300000, guid: 0526dead3572a2748bea01a326c2a106, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_gearspark_idle
+    Frames:
+    - {fileID: 21300000, guid: d05f279defdcc9842b4bdf34730f3a11, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_gearspark_slash
+    Frames:
+    - {fileID: 21300000, guid: 37dddceb4d4534e4984b6875f11c554d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_gearspark_victory
+    Frames:
+    - {fileID: 21300000, guid: 9fb9e14589ef3bc49930f37ac9d5a403, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: actor_goblin_attack
@@ -323,6 +383,36 @@ MonoBehaviour:
     - {fileID: 21300000, guid: b349e4db694f2fd448ab3d49340be975, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: actor_lightbringer_defeat
+    Frames:
+    - {fileID: 21300000, guid: 1b4ebc6bc754a7245b79c1b4bf3fd864, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_lightbringer_guard
+    Frames:
+    - {fileID: 21300000, guid: 08c8cb90bdfb77f4995567c945da19ef, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_lightbringer_hit
+    Frames:
+    - {fileID: 21300000, guid: d3ad8837ff6715c41a38c3cd30f1ebb7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_lightbringer_idle
+    Frames:
+    - {fileID: 21300000, guid: b1971b33f1b493d479a84cde72941594, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_lightbringer_slash
+    Frames:
+    - {fileID: 21300000, guid: 155af92df6311ae4db0180449343705d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_lightbringer_victory
+    Frames:
+    - {fileID: 21300000, guid: f9efa99551b2c7a4bbc66512fa19360a, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: actor_lord_blobert_boast
     Frames:
     - {fileID: 21300000, guid: 2bba1c1887e21b3428b8ca3db54a1f07, type: 3}
@@ -381,6 +471,66 @@ MonoBehaviour:
   - Key: actor_mimic_chest_wake
     Frames:
     - {fileID: 21300000, guid: 76c93980af2c83445b68a899bdaf229d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_rageclaw_defeat
+    Frames:
+    - {fileID: 21300000, guid: e188032fbdd974a449d7dedaebbfc5af, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_rageclaw_guard
+    Frames:
+    - {fileID: 21300000, guid: a20c61829a4d34144b0fb0c26e2e44db, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_rageclaw_hit
+    Frames:
+    - {fileID: 21300000, guid: 5866183a8bc5d7948b769dad3524e64d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_rageclaw_idle
+    Frames:
+    - {fileID: 21300000, guid: d831b0d05c548c34898dc62bd8ad870b, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_rageclaw_slash
+    Frames:
+    - {fileID: 21300000, guid: e4a2240e76428c041b27a95bb8cd4fad, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_rageclaw_victory
+    Frames:
+    - {fileID: 21300000, guid: f220bfa052c424843b633405c9592f06, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_shadowcut_defeat
+    Frames:
+    - {fileID: 21300000, guid: 3ad2750ca1a45734db4b37d2f5f3dc01, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_shadowcut_guard
+    Frames:
+    - {fileID: 21300000, guid: 8fb6438ba5a31fb4d885a0ba65d6d8d3, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_shadowcut_hit
+    Frames:
+    - {fileID: 21300000, guid: 0c822d40bca6dbd4fb06a2a9a0578af7, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_shadowcut_idle
+    Frames:
+    - {fileID: 21300000, guid: 5ccaf484b87a0c54ea66e99f23374815, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_shadowcut_slash
+    Frames:
+    - {fileID: 21300000, guid: dcdede1bbb1e1db40aeb0c9af0b9843d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_shadowcut_victory
+    Frames:
+    - {fileID: 21300000, guid: 5f96d6bdd134b404abec5b81cf50e0cd, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: actor_sir_clickington_defeat
@@ -531,6 +681,36 @@ MonoBehaviour:
   - Key: actor_theater_curtain_demon_wake
     Frames:
     - {fileID: 21300000, guid: d29991d0dc4773a4f8c585784caf7449, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_windsong_defeat
+    Frames:
+    - {fileID: 21300000, guid: 44e7b7a03ad8d2b4e9f7ce64094fd7b2, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_windsong_guard
+    Frames:
+    - {fileID: 21300000, guid: b930a44f03d9ecf49aa0fbb5ac3fcec4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_windsong_hit
+    Frames:
+    - {fileID: 21300000, guid: a2f5aa8b187121847bb830cf746a8c5c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_windsong_idle
+    Frames:
+    - {fileID: 21300000, guid: ce9895c09fd1c6a4dafb6238e7c9dec4, type: 3}
+    Fps: 8
+    Placeholder: 1
+  - Key: actor_windsong_slash
+    Frames:
+    - {fileID: 21300000, guid: f97186198002e384691c3586778135e6, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: actor_windsong_victory
+    Frames:
+    - {fileID: 21300000, guid: d07d971ba2eccba40be80cecd15a3d10, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: bg_gameplay
@@ -1128,6 +1308,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 00537e5f0cdd5c345a773b5b428033a1, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_emberwisp_happy
+    Frames:
+    - {fileID: 21300000, guid: f3ceac9ab841f2b49bf5fb2932d8598a, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_emberwisp_neutral
     Frames:
     - {fileID: 21300000, guid: 902ee25f6c3a3f942b2b3eed7b98c4b7, type: 3}
@@ -1136,6 +1321,11 @@ MonoBehaviour:
   - Key: portrait_gearspark_full
     Frames:
     - {fileID: 21300000, guid: 96aa70533fb65e34ab6875c02f7e236b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_gearspark_happy
+    Frames:
+    - {fileID: 21300000, guid: 7466b3347cd794644b16ad8f05b4a4af, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_gearspark_neutral
@@ -1183,6 +1373,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 81cc17b3a5881e944b6859bcd9432521, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_lightbringer_happy
+    Frames:
+    - {fileID: 21300000, guid: 3b2eb77bca29888479ccda8762513a7a, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_lightbringer_neutral
     Frames:
     - {fileID: 21300000, guid: 05cb14234e11a084688b90bc6e48bc85, type: 3}
@@ -1198,6 +1393,11 @@ MonoBehaviour:
     - {fileID: 21300000, guid: ca6a52cbdc7a0c0429c9a55c5062f0e0, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_rageclaw_happy
+    Frames:
+    - {fileID: 21300000, guid: 52796f5637c38564f95b7abc0cd10cac, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_rageclaw_neutral
     Frames:
     - {fileID: 21300000, guid: 9ddcc85ac54954246964b8c4f7f94061, type: 3}
@@ -1206,6 +1406,11 @@ MonoBehaviour:
   - Key: portrait_shadowcut_full
     Frames:
     - {fileID: 21300000, guid: d5ec0c89b09193940abb19bbfa69f1ea, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_shadowcut_happy
+    Frames:
+    - {fileID: 21300000, guid: 73fdbcea44d063948905ec2c24f13735, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_shadowcut_neutral
@@ -1291,6 +1496,11 @@ MonoBehaviour:
   - Key: portrait_windsong_full
     Frames:
     - {fileID: 21300000, guid: b776a96a05fb9514ba9de088b2de4d7a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_windsong_happy
+    Frames:
+    - {fileID: 21300000, guid: 4c72dba5ec7e26e4e94ccdb72dbe23d1, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_windsong_neutral

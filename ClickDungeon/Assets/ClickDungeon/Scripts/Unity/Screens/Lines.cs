@@ -148,6 +148,14 @@ namespace ClickDungeon.Unity.Screens
                     line = "Sticky! So sticky!";
                     face = Expression.Worried;
                     return 47;
+                case GameEventKind.HeroDodged:
+                    line = "Missed me!";
+                    face = Expression.Confident;
+                    return 47;
+                case GameEventKind.EnemyKnockedBack:
+                    line = "And stay back!";
+                    face = Expression.Confident;
+                    return 44;
                 case GameEventKind.KeyDropped:
                     line = "Finders keepers!";
                     face = Expression.Confident;
@@ -261,6 +269,12 @@ namespace ClickDungeon.Unity.Screens
                     return $"<color=#FF9A2E>{SourceName(e.Source, catalog)} lobs a lit bomb!</color>";
                 case GameEventKind.HeroWebbed:
                     return $"<color=#FF6B5E>You're caught in the {SourceName(e.Source, catalog)}'s web!</color> No moving or dashing next turn.";
+                case GameEventKind.HeroDodged:
+                    return "<color=#6CC04A>You slip aside</color> - the blow misses. Once a floor.";
+                case GameEventKind.EnemyKnockedBack:
+                    return $"{SourceName(e.Source, catalog)} is knocked back a tile.";
+                case GameEventKind.DroneZapped:
+                    return $"<color=#3FA7E0>Your drone zaps {SourceName(e.Source, catalog)} for {e.Amount}.</color>";
                 case GameEventKind.KeyDropped:
                     return "<color=#F2C94C>The key clatters to the floor!</color>";
                 case GameEventKind.BossEnraged:

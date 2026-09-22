@@ -245,16 +245,17 @@ namespace ClickDungeon.Tests
         }
 
         /// <summary>
-        /// D-047: the two classes should win about as often as each other. Before it, a blind novice won 11 of 40 as the
-        /// Knight and 22 as the Paladin — the same dungeons, twice the wins. This guard catches that gap coming back.
+        /// D-047: the classes should win about as often as each other. Before it, a blind novice won 11 of 40 as the
+        /// Knight and 22 as the Paladin - the same dungeons, twice the wins. This guard catches that gap coming back, and
+        /// since D-063 it covers all eight classes, each played by the first hero of that class on the roster.
         /// </summary>
         [Test]
         public void TheClassesWinAboutAsOftenAsEachOther()
         {
             const int runs = 40;
+            var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
             int Wins(string heroId, double mistakeRate)
             {
-                var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
                 int won = 0;
                 for (ulong seed = 1; seed <= runs; seed++)
                     if (AutoPlayer.PlayRun(catalog, seed, MaxCommands, mistakeRate, MovementMode.Free, true, heroId: heroId).Status == RunStatus.Won)
@@ -266,61 +267,57 @@ namespace ClickDungeon.Tests
             // reasonable fence around that; D-050 then halved the win counts, and at the smaller scale the same 8
             // tolerates 8 against 16 -- the very 2x split this guard exists to refuse (D-053). A floor under the
             // smaller count keeps the ratio meaningful when both classes are losing most runs.
-            foreach (var (skill, rate) in new[] { ("casual", AutoPlayer.CasualMistakeRate), ("novice", NoviceMistakeRate) })
+            // Casual only since D-063: over eight classes the novice counts are small enough (2 to 9 of 40) that the
+            // ratio says nothing, and the run cost would be twice this. ClassSweep prints both.
+            var wins = new List<(string id, int won)>();
+            foreach (var heroClass in catalog.HeroClasses.Values)
             {
-                int knight = Wins(ContentCatalog.DefaultHeroId, rate);
-                int paladin = Wins("dawnward", rate);
-                int fewer = System.Math.Min(knight, paladin), more = System.Math.Max(knight, paladin);
-                Assert.That(fewer, Is.GreaterThanOrEqualTo(5),
-                    $"{skill}: the weaker class won only {fewer}/{runs}. Both classes have collapsed -- this is a "
-                    + "difficulty regression, not a parity one, and the ratio below would be meaningless anyway.");
-                // Whichever fence is tighter at this scale. The ratio alone would be looser than the old +/-8 above
-                // 13 wins, so keeping both means this guard can only ever have become stricter.
-                int allowed = System.Math.Min(fewer + 8, fewer * 8 / 5);
-                Assert.That(more, Is.LessThanOrEqualTo(allowed),
-                    $"{skill}: Knight won {knight}/{runs} and Paladin {paladin}/{runs} of the same dungeons -- "
-                    + $"the weaker won {fewer}, so the stronger may win at most {allowed}.");
+                string heroId = System.Linq.Enumerable.First(catalog.HeroIdentities.Values, h => h.ClassId == heroClass.Id).Id;
+                wins.Add((heroClass.Id, Wins(heroId, AutoPlayer.CasualMistakeRate)));
             }
+            string table = string.Join(", ", wins.ConvertAll(w => $"{w.id} {w.won}"));
+            int fewer = wins[0].won, more = wins[0].won;
+            string weakest = wins[0].id, strongest = wins[0].id;
+            foreach (var (id, won) in wins)
+            {
+                if (won < fewer) { fewer = won; weakest = id; }
+                if (won > more) { more = won; strongest = id; }
+            }
+            Assert.That(fewer, Is.GreaterThanOrEqualTo(5),
+                $"{weakest} won only {fewer}/{runs}. Every class has collapsed -- this is a difficulty regression, not a "
+                + $"parity one, and the ratio below would be meaningless anyway. ({table})");
+            // Whichever fence is tighter at this scale. The ratio alone would be looser than the old +/-8 above
+            // 13 wins, so keeping both means this guard can only ever have become stricter.
+            int allowed = System.Math.Min(fewer + 8, fewer * 8 / 5);
+            Assert.That(more, Is.LessThanOrEqualTo(allowed),
+                $"{strongest} won {more}/{runs} of the same dungeons and {weakest} only {fewer}, so the strongest may win "
+                + $"at most {allowed}. ({table})");
         }
 
-        [Test, Explicit("Tuning aid: candidate numbers to even the Knight and the Paladin")]
+        [Test, Explicit("Tuning aid: every class on the shipped numbers, on the same dungeons")]
         public void ClassSweep()
         {
+            // D-063: one row per class, played by the first hero of that class on the roster. Blind, Free Roam, Knight's
+            // Trial, no talents - so it compares the classes' own numbers and rules, not their trees.
             const int runs = 40;
-            var candidates = new List<(string name, Action<ContentCatalog> tweak)>
+            var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
+            TestContext.Out.WriteLine($"Class sweep (blind, Free Roam, Knight's Trial): {runs} seeds per class, won / avg hearts left / deepest floor");
+            foreach (var heroClass in catalog.HeroClasses.Values)
             {
-                ("C0 current", c => { }),
-                ("CW knight slash 3 + paladin hearts 11", c => { c.HeroClasses["knight"].SlashDamage += 1; c.HeroClasses["paladin"].MaxHp -= 1; }),
-                ("D1 CW + every enemy +1 heart", c => { c.HeroClasses["knight"].SlashDamage += 1; c.HeroClasses["paladin"].MaxHp -= 1;
-                    foreach (var e in c.Enemies.Values) if (!e.IsBoss) e.MaxHp += 1; }),
-                ("D2 CW + traps +1", c => { c.HeroClasses["knight"].SlashDamage += 1; c.HeroClasses["paladin"].MaxHp -= 1;
-                    c.Hazards.SpikeDamage += 1; c.Hazards.BombDamage += 1; c.Hazards.LavaDamage += 1; }),
-                ("D3 CW + boss +4 hearts", c => { c.HeroClasses["knight"].SlashDamage += 1; c.HeroClasses["paladin"].MaxHp -= 1;
-                    c.Enemies["lord_blobert"].MaxHp += 4; }),
-                ("D4 D1 + boss +4", c => { c.HeroClasses["knight"].SlashDamage += 1; c.HeroClasses["paladin"].MaxHp -= 1;
-                    foreach (var e in c.Enemies.Values) if (!e.IsBoss) e.MaxHp += 1; c.Enemies["lord_blobert"].MaxHp += 4; }),
-            };
-
-            TestContext.Out.WriteLine($"Class sweep (blind, Free Roam, Knight's Trial): {runs} seeds per hero, won / avg hearts left");
-            foreach (var (name, tweak) in candidates)
-            {
-                var line = new System.Text.StringBuilder($"{name,-32}");
+                string heroId = System.Linq.Enumerable.First(catalog.HeroIdentities.Values, h => h.ClassId == heroClass.Id).Id;
+                var line = new System.Text.StringBuilder($"{heroClass.Id,-10}");
                 foreach (var (skill, rate) in new[] { ("casual", AutoPlayer.CasualMistakeRate), ("novice", NoviceMistakeRate) })
                 {
-                    foreach (var heroId in new[] { ContentCatalog.DefaultHeroId, "dawnward" })
+                    int won = 0;
+                    long hp = 0, depth = 0;
+                    for (ulong seed = 1; seed <= (ulong)runs; seed++)
                     {
-                        var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
-                        tweak(catalog);
-                        int won = 0;
-                        long hp = 0;
-                        for (ulong seed = 1; seed <= (ulong)runs; seed++)
-                        {
-                            var r = AutoPlayer.PlayRun(catalog, seed, MaxCommands, rate, MovementMode.Free, true, heroId: heroId);
-                            if (r.Status == RunStatus.Won) won++;
-                            hp += r.Hp;
-                        }
-                        line.Append($"  {skill[0]}/{(heroId == "dawnward" ? "pal" : "kni")} {won,2} ({hp / (float)runs,4:0.0}hp)");
+                        var r = AutoPlayer.PlayRun(catalog, seed, MaxCommands, rate, MovementMode.Free, true, heroId: heroId);
+                        if (r.Status == RunStatus.Won) won++;
+                        hp += r.Hp;
+                        depth += r.Floor;
                     }
+                    line.Append($"  {skill} {won,2} ({hp / (float)runs,4:0.0}hp, F{depth / (float)runs,4:0.0})");
                 }
                 TestContext.Out.WriteLine(line.ToString());
             }

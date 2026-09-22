@@ -279,19 +279,42 @@ A run is taken by one **hero identity**, chosen on the title screen before the r
 starts. A run already in progress keeps the hero it began with, and the save
 carries it. Every class plays by the same rules; only its numbers differ.
 
-| Class | Hearts | Slash | Potions (heal) | Mana | Shield | Dash |
-|---|---|---|---|---|---|---|
-| Knight (Sir Clickington) | 10 | **3** | 2 (heal 4) | 6 | 2 | 2 tiles for 3 |
-| Paladin (Dawnward) | **11** | 2 | 2 (heal 6) | 8 | 2 | **1 tile** for 4 |
+| Class | Hero | Hearts | Slash | Potions (heal) | Mana | Shield | Dash | Class rule |
+|---|---|---|---|---|---|---|---|---|
+| Knight | Ironheart, Sir Clickington | 10 | **3** | 2 (heal 4) | 6 | 2 | 2 tiles for 3 | - |
+| Paladin | Dawnward | **11** | 2 | 2 (heal 6) | 8 | 2 | **1 tile** for 4 | - |
+| Rogue | Shadowcut | 10 | 2 | 2 (heal 4) | 6 | 2 | 2 tiles for 2 | **Ambush** |
+| Wizard | Emberwisp | 9 | **3** | 2 (heal 4) | **8** | 2 | 2 tiles for 3 | **Firebolt** |
+| Ranger | Windsong | 8 | **3** | 2 (heal 4) | 6 | 2 | 2 tiles for 2 | **Longshot** |
+| Cleric | Lightbringer | 8 | 2 | 2 (heal 4) | 6 | **3** | 1 tile for 4 | **Sanctuary** |
+| Berserker | Rageclaw | 9 | 2 | 2 (heal 4) | **4** | **3** | 1 tile for 3 | **Rage** |
+| Engineer | Gearspark | 7 | **1** | 2 (heal 4) | 6 | 2 | 2 tiles for 3 | **Spark Drone** |
 
-The Paladin is the steadier of the two: more hearts, a stronger potion and a
+The Paladin is the steadier of the first two: more hearts, a stronger potion and a
 deeper mana pool for shields, paid for with a dash that moves one tile and costs
 more — and dash is how a hero crosses a trap or breaks away from a monster.
 Difficulty tiers apply to whichever class is playing (§10).
 
-Measured with mana, 40 seeds per tier with the novice bot (`HeroSweep`): sighted,
-both heroes win every tier. Blind, the Knight wins 40 / 36 / 26 and the Paladin
-37 / 38 / 30 (with cooldowns it was 40 / 36 / 29 and 39 / 38 / 33).
+**Class rules (D-063).** Six of the classes carry one rule of their own. Each is a perk the class starts every run
+with, so a talent that sharpens it simply raises the same perk.
+
+| Rule | Class | What it does |
+|---|---|---|
+| **Ambush** | Rogue | Slashes deal **+2** against a monster whose declared action is not aimed at the hero's tile — the same telegraph the player is shown (§3.2), so the opening is always visible before it is taken. |
+| **Firebolt** | Wizard | Slash reaches **3** tiles in a straight line, diagonals included, and knocks the target back one tile. |
+| **Longshot** | Ranger | Slash reaches **4** tiles in a straight line, **+1** damage against a target 3 or more tiles away. |
+| **Sanctuary** | Cleric | Every attack the shield blocks heals **1** heart. |
+| **Rage** | Berserker | Slashes deal **+1** for every **4** hearts missing. |
+| **Spark Drone** | Engineer | On every turn the hero does **not** slash, the drone zaps one awake monster within 1 tile for **1**. |
+
+**A slash that reaches** (Wizard, Ranger) obeys the cover rule (§2.1): every tile between the hero and the target must
+be **uncovered** and clear of walls, doors and awake monsters. A covered tile refuses the shot, whatever is under it, so
+a refusal never tells the player anything about a cover. A bomb is still armed by hand, from a tile beside it, and a
+knock-back only ever pushes onto an uncovered tile for the same reason. Bosses are never knocked back.
+
+Measured on Knight's Trial, 40 blind seeds per class with the casual bot and no talents (`ClassSweep`, D-063):
+Knight 26, Paladin 23, Rogue 26, Wizard 26, Ranger 25, Cleric 30, Berserker 23, Engineer 22. With the novice bot:
+5 / 8 / 2 / 5 / 5 / 8 / 9 / 7. `TheClassesWinAboutAsOftenAsEachOther` guards the spread.
 
 ---
 
