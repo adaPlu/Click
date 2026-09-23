@@ -1648,6 +1648,21 @@ MonoBehaviour:
     - {fileID: 21300000, guid: c6ada98598eca954d811ff80825e144e, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_dawnward_angry
+    Frames:
+    - {fileID: 21300000, guid: 4f3b9b2be10a3ca4da896e3d5114a3cf, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_dawnward_confident
+    Frames:
+    - {fileID: 21300000, guid: 7b4fa9a54d270ae4a8daafe11e193cd4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_dawnward_defeated
+    Frames:
+    - {fileID: 21300000, guid: 7aae16cb71a0eea488de3e846b41c383, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_dawnward_full
     Frames:
     - {fileID: 21300000, guid: c809e883ac7d7ce46852e81b933802b2, type: 3}
@@ -1661,6 +1676,36 @@ MonoBehaviour:
   - Key: portrait_dawnward_neutral
     Frames:
     - {fileID: 21300000, guid: 9da02b7b2aeada04c98f32d75addbe9c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_dawnward_shocked
+    Frames:
+    - {fileID: 21300000, guid: f9c44658f20b96d4eb91b7e9abc338c3, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_dawnward_victorious
+    Frames:
+    - {fileID: 21300000, guid: 941b7fe97872c6e4dbfe80481ea3448b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_dawnward_worried
+    Frames:
+    - {fileID: 21300000, guid: 8792ff9bda0af634e8965c0191c88425, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_emberwisp_angry
+    Frames:
+    - {fileID: 21300000, guid: 23cfdd57f3d0ad4468480079f317c0fb, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_emberwisp_confident
+    Frames:
+    - {fileID: 21300000, guid: 20ee432ea71e5ba49ad86cb7c9992775, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_emberwisp_defeated
+    Frames:
+    - {fileID: 21300000, guid: 73ff63982dac02b40ae73883685b53ac, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_emberwisp_full
@@ -1678,6 +1723,36 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 902ee25f6c3a3f942b2b3eed7b98c4b7, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_emberwisp_shocked
+    Frames:
+    - {fileID: 21300000, guid: 2e8f45fbb4f04ff4d88179164c311c47, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_emberwisp_victorious
+    Frames:
+    - {fileID: 21300000, guid: 9242dc5a2ac80094ca9959795369bc43, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_emberwisp_worried
+    Frames:
+    - {fileID: 21300000, guid: 815378699571fb64aa015dde79b1caf4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_gearspark_angry
+    Frames:
+    - {fileID: 21300000, guid: bd4205fee60ae2a45a89d38a5c34c36d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_gearspark_confident
+    Frames:
+    - {fileID: 21300000, guid: d063a6a80e5884640833e4c218bb7e89, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_gearspark_defeated
+    Frames:
+    - {fileID: 21300000, guid: b9d03028fa92a734fb133533bf2e3b2b, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_gearspark_full
     Frames:
     - {fileID: 21300000, guid: 96aa70533fb65e34ab6875c02f7e236b, type: 3}
@@ -1691,6 +1766,21 @@ MonoBehaviour:
   - Key: portrait_gearspark_neutral
     Frames:
     - {fileID: 21300000, guid: a14ddd5dca811eb4a9532cc4b4e642a5, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_gearspark_shocked
+    Frames:
+    - {fileID: 21300000, guid: bb84b71f6de5f8f4885caee20db8d092, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_gearspark_victorious
+    Frames:
+    - {fileID: 21300000, guid: 49e2703b718cfda4b88a7efc7ba8dfb1, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_gearspark_worried
+    Frames:
+    - {fileID: 21300000, guid: b54b3b80ccb4a274bac8337318570211, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_goblin
@@ -1713,6 +1803,21 @@ MonoBehaviour:
     - {fileID: 21300000, guid: a4c11a3e6a6b6434992353799607d9fd, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_ironheart_angry
+    Frames:
+    - {fileID: 21300000, guid: 54b10219bb40d464a900959728972570, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_ironheart_confident
+    Frames:
+    - {fileID: 21300000, guid: 5259f45385397144085d621f716b1f8c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_ironheart_defeated
+    Frames:
+    - {fileID: 21300000, guid: 1f0bf3ea36a87ea4981940ad9ef60cda, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_ironheart_full
     Frames:
     - {fileID: 21300000, guid: 1b0cb80e7aae53a4e821b5e5fce72469, type: 3}
@@ -1726,6 +1831,36 @@ MonoBehaviour:
   - Key: portrait_ironheart_neutral
     Frames:
     - {fileID: 21300000, guid: 5383c82c267c1bf45a957f68c09fc9e8, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_ironheart_shocked
+    Frames:
+    - {fileID: 21300000, guid: 0bb0fa240ec38764aac5a4899420819f, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_ironheart_victorious
+    Frames:
+    - {fileID: 21300000, guid: 299e7c36431862f4cbd922ae423a3035, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_ironheart_worried
+    Frames:
+    - {fileID: 21300000, guid: 8d42d11b6bbce0645ab0a4d2b14b278a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_lightbringer_angry
+    Frames:
+    - {fileID: 21300000, guid: 1400e94038aaeb240a0554d41267cdde, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_lightbringer_confident
+    Frames:
+    - {fileID: 21300000, guid: a03c711c9252f564eb37017a1cc21938, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_lightbringer_defeated
+    Frames:
+    - {fileID: 21300000, guid: 98d79cd5d27c11d4e8ad7e525cdf1086, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_lightbringer_full
@@ -1743,9 +1878,39 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 05cb14234e11a084688b90bc6e48bc85, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_lightbringer_shocked
+    Frames:
+    - {fileID: 21300000, guid: 4461d247fbfb00e40940b81176d10c60, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_lightbringer_victorious
+    Frames:
+    - {fileID: 21300000, guid: 9e1f88102ba5a5e409b9f169e669204d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_lightbringer_worried
+    Frames:
+    - {fileID: 21300000, guid: ff4aa1b79c57ee24c93abdb7f72a21f2, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_mimic_chest
     Frames:
     - {fileID: 21300000, guid: 4cc10b8a2595b654495124bed4010626, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_rageclaw_angry
+    Frames:
+    - {fileID: 21300000, guid: 51bbb720fe722dd48a68cd735a99a0fd, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_rageclaw_confident
+    Frames:
+    - {fileID: 21300000, guid: bad8bdc0841652344ba3e911bcc16832, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_rageclaw_defeated
+    Frames:
+    - {fileID: 21300000, guid: 1a63166a9feef1e4a8cfb54f2998f2cf, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_rageclaw_full
@@ -1763,6 +1928,36 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 9ddcc85ac54954246964b8c4f7f94061, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_rageclaw_shocked
+    Frames:
+    - {fileID: 21300000, guid: 14ae5d07efedffa4383a8eaf658ca665, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_rageclaw_victorious
+    Frames:
+    - {fileID: 21300000, guid: f6246d8b624146347a4d3643d9d6fc76, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_rageclaw_worried
+    Frames:
+    - {fileID: 21300000, guid: f3239ee757d853346937d39a9049aee5, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_shadowcut_angry
+    Frames:
+    - {fileID: 21300000, guid: 9ae24de24a11f3e4d8a9509b355d980a, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_shadowcut_confident
+    Frames:
+    - {fileID: 21300000, guid: 2e49c429bddd43842a55bbe8031212bf, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_shadowcut_defeated
+    Frames:
+    - {fileID: 21300000, guid: 39df6bf3678ee124c8094efd12ee8555, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_shadowcut_full
     Frames:
     - {fileID: 21300000, guid: d5ec0c89b09193940abb19bbfa69f1ea, type: 3}
@@ -1776,6 +1971,21 @@ MonoBehaviour:
   - Key: portrait_shadowcut_neutral
     Frames:
     - {fileID: 21300000, guid: 1723d6fdc22a244469b33bcdc36e11f5, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_shadowcut_shocked
+    Frames:
+    - {fileID: 21300000, guid: 907cf957283664a408d9cd95a4ef77c6, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_shadowcut_victorious
+    Frames:
+    - {fileID: 21300000, guid: ecd03d86702f8e04a89bd73317493b12, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_shadowcut_worried
+    Frames:
+    - {fileID: 21300000, guid: 90b867bb648720646b3882346c24ad00, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: portrait_sir_clickington_angry
@@ -1853,6 +2063,21 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 6ee0fdca7754afe45bd0f22b387aaa1f, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: portrait_windsong_angry
+    Frames:
+    - {fileID: 21300000, guid: 096fa44956d568f4bbfe1e3f96bb7064, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_windsong_confident
+    Frames:
+    - {fileID: 21300000, guid: aef299080e8a2c34eb34263d913c2bb8, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_windsong_defeated
+    Frames:
+    - {fileID: 21300000, guid: 4009097300ecba6498399d31c369a87e, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: portrait_windsong_full
     Frames:
     - {fileID: 21300000, guid: b776a96a05fb9514ba9de088b2de4d7a, type: 3}
@@ -1866,6 +2091,21 @@ MonoBehaviour:
   - Key: portrait_windsong_neutral
     Frames:
     - {fileID: 21300000, guid: f969faa69b2e8e444b17530008d7f07b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_windsong_shocked
+    Frames:
+    - {fileID: 21300000, guid: dc1bff141210048428a5ee5def002125, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_windsong_victorious
+    Frames:
+    - {fileID: 21300000, guid: 79158ccc927cb104082b49bd1d7bfad4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: portrait_windsong_worried
+    Frames:
+    - {fileID: 21300000, guid: 08167804edf63de409ff86dbe52d8218, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: tile_bomb
