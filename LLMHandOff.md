@@ -839,7 +839,9 @@ listed with the test written for them.
 | MAINT-33 | FIXED | COMPILED | Telemetry for 13 new event kinds |
 | MAINT-34 | FIXED | VERIFIED (`TheKitGateAcceptsAFullRun`) | Gate floor 280 -> 340 |
 | MAINT-38 | FIXED | VERIFIED (`AnimationsFallBackToSimilarOnesAndPosesFollowIntent`) | An enraged boss poses with its intent again; a puffed one is still drawn by its mode |
-| DATA-24, MAINT-35, MAINT-36, MAINT-37 | NOT_FIXED | - | Left deliberately: the missing `FloorCount` invariant test, difficulty tiers that do not touch the new monsters' non-damage numbers, renown tuned for a five-floor run, and art files for 72 talent icons and 48 expressions. The first three are design calls; the last is art |
+| MAINT-37 | FIXED (after the report) | VERIFIED in a built player | All 72 talent icons cut: each class's own affinity art, emblem and stat badges from its sheet, with the shared Core UI icons for the effects that are not class-specific - the pattern the Knight and Paladin trees already used. Holy Light shares Consecrate's icon, being the same effect |
+| MAINT-39 (new) | FIXED | VERIFIED (icons drew as letters before, as art after) | The art catalog is rebuilt from an import callback deferred to `EditorApplication.delayCall`, which never runs in a `-quit` batch build: newly sliced art imported and then shipped missing from the catalog. Every build method rebuilds it first now |
+| DATA-24, MAINT-35, MAINT-36 | NOT_FIXED | - | Left deliberately: the missing `FloorCount` invariant test, difficulty tiers that do not touch the new monsters' non-damage numbers, and renown tuned for a five-floor run. All three are design calls |
 
 ### Corrections to the audit made while fixing it
 
@@ -866,5 +868,5 @@ berserker 21/8, engineer 20/5.
 1. **The three design calls above** (DATA-24, MAINT-35, MAINT-36) - renown in particular: it is flat from floor 3 to 20.
 2. **A PlayMode assembly** (TEST-15, open since audit 3). REL-38, REL-39, REL-42 and MAINT-32 are all COMPILED-level
    because nothing in the repo can exercise a drawn tile; they were verified by reading the draw path only.
-3. MAINT-37: 72 talent icons and 48 expression portraits are wired with no file.
+3. 48 expression portraits are still wired with no file (the heroes fall back to their neutral face).
 4. Audit 3's open items remain open.

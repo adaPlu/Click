@@ -105,6 +105,10 @@ namespace ClickDungeon.EditorTools
         public static void BuildWindows()
         {
             if (!File.Exists(ScenePath)) CreateMainScene();
+            // MAINT-39: the art catalog is normally rebuilt from an import callback deferred to EditorApplication
+            // .delayCall, which never runs in a -quit batch build - so freshly sliced art imported fine and then
+            // shipped missing from the catalog, drawing as fallback letters. Every build rebuilds it first.
+            ArtCatalogBuilder.Rebuild();
             // The playtest log folder (and collect-logs) depends on the company and product names set here.
             ApplyPlayerSettings();
 
@@ -136,6 +140,10 @@ namespace ClickDungeon.EditorTools
         public static void BuildAndroid()
         {
             if (!File.Exists(ScenePath)) CreateMainScene();
+            // MAINT-39: the art catalog is normally rebuilt from an import callback deferred to EditorApplication
+            // .delayCall, which never runs in a -quit batch build - so freshly sliced art imported fine and then
+            // shipped missing from the catalog, drawing as fallback letters. Every build rebuilds it first.
+            ArtCatalogBuilder.Rebuild();
             ApplyPlayerSettings();
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Android, "com.clickd.clickdungeon");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
@@ -172,6 +180,10 @@ namespace ClickDungeon.EditorTools
         public static void BuildIos()
         {
             if (!File.Exists(ScenePath)) CreateMainScene();
+            // MAINT-39: the art catalog is normally rebuilt from an import callback deferred to EditorApplication
+            // .delayCall, which never runs in a -quit batch build - so freshly sliced art imported fine and then
+            // shipped missing from the catalog, drawing as fallback letters. Every build rebuilds it first.
+            ArtCatalogBuilder.Rebuild();
             ApplyPlayerSettings();
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.iOS, "com.clickd.clickdungeon");
             PlayerSettings.iOS.targetOSVersionString = "15.0";
