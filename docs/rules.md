@@ -34,12 +34,13 @@ on dangerous terrain) needs no model change.
 
 ### 1.2 Passability
 
-Nothing on the board stops the hero except a locked vault door and a tile someone is standing on (D-021).
+Nothing on a dungeon floor stops the hero except a locked vault door and a tile someone is standing on (D-021).
+A vault room is the one board with an edge: its nine tiles are surrounded by stone the hero cannot step into (§7.1, D-064).
 
 | Thing        | Hero can enter | Enemy can enter | Blocks ranged line |
 |--------------|----------------|-----------------|--------------------|
 | Floor        | yes            | yes             | no                 |
-| Wall         | yes — never generated, the sprite is the cover over an unrevealed tile (§2.1) | no | **yes** |
+| Wall         | **no** — only the stone around a vault room (§7.1); on a dungeon floor the sprite is the cover over an unrevealed tile (§2.1) | no | **yes** |
 | Pit          | **yes: falls to the next floor** | no | no                 |
 | Door (locked / open) | **no** / yes (vault) | no | **yes** |
 | Closed chest | yes — furniture you can stand on and open from your own tile | no | no |
@@ -374,6 +375,23 @@ Ordering is covered by automated tests.
   - Opening is shown on the board: after the first tap the chest tile carries one pip per
     tap it needs, filled as taps land. The reward reveal that follows costs no turns and
     lists every reward the chest granted.
+### 7.1 The vault room *(D-018, D-064)*
+
+- An **open door** on a floor leads to a room off it. Stepping into the door enters the room; the
+  floor behind is kept exactly as it was and waits.
+- The room is **nine tiles, three by three**, in the middle of the board, and the rest of the board is
+  solid stone — the one place in the game where a wall is real rather than a cover (§1.2). The stone is
+  drawn as known from the moment the hero arrives, so it never reads as something to click.
+- **The door the hero came through is the middle tile.** It is the way back out, always open, and the
+  hero arrives on one of the four tiles beside it — nobody ever stands in a doorway. Stepping back onto
+  it returns them to the tile they entered from, on the floor they left.
+- **Guards** (2–3) start awake and stand two tiles clear of the tile the hero arrives on, as on any
+  other floor. **Chests** stand in the room: one great chest, or two or three ordinary ones.
+- A vault hangs off a floor, so it has no key, no exit down, no hazards and no pits, and it carries its
+  floor's index — renown reaches its guards (D-046).
+- **A vault is a one-time room.** Its door stays open and a second visit finds it exactly as it was
+  left: looted chests, dead guards and all.
+
 - **Floor complete** → next floor generates, hero HP/potions/boons carry over,
   mana refills, key is cleared.
 - **Run**: 20 floors in four acts of five (D-062; it was 7). Floors 5, 10 and 15 are act bosses (§3.6); floor 20 is
@@ -401,7 +419,9 @@ A floor is valid only if:
    floor's key, so it stands where the key was placed;
 6. at most one of Exit/Hazard/Content per cell;
 7. every content/enemy id exists in the catalog;
-8. boss floor: boss placed, and at least 8 enterable cells.
+8. boss floor: boss placed, and at least 8 enterable cells;
+9. vault: nine Floor tiles in a three-by-three block, the exit at its middle, the start beside it, stone
+   everywhere else, no key and no boss (§7.1).
 
 ---
 
@@ -579,7 +599,7 @@ the board never shows a feature the rules do not implement.
 | `tile_fountain_heal` | healing fountain | entering heals 3 once, then it is spent |
 | `tile_key` | key | walking over it collects it |
 | `tile_chest_closed`, `tile_chest_open` | chest | Interact from an adjacent tile; vault chests hold three rewards |
-| `tile_stair_down_locked`, `tile_stair_down` | floor exit | locked until the key is held; open exits descend (also the vault's way back) |
+| `tile_stair_down_locked`, `tile_stair_down` | floor exit | locked until the key is held; open exits descend. A vault's is the door at the middle of the room and leads back out (§7.1) |
 | `tile_stair_up` | floor entrance (decor) | marks the start tile |
 
 Sheet one uses shorter names (`floor_stone.png`); the registry uses the `tile_*` names above.
@@ -606,9 +626,10 @@ Ranged monsters and the boss act from a distance: the fire imp shoots down a cle
 tiles, and Blobert's slam and summon reach anywhere on the board. Every attack still targets a cell
 declared a turn ahead (§3.4).
 
-Nothing on the board blocks the hero except a **locked vault door** and a tile with an actor on it.
-Walls are no longer generated: the wall sprite is the cover drawn over a tile the player has not
-revealed (§2.1). A **pit** is entered deliberately and drops the hero a floor for fixed damage (§4);
+Nothing on a dungeon floor blocks the hero except a **locked vault door** and a tile with an actor on it.
+No dungeon floor is generated with walls: the wall sprite is the cover drawn over a tile the player has
+not revealed (§2.1). The stone around a vault room is the one real wall in the game, and it is drawn as
+known from the moment the hero walks in, so it is never a cover (§7.1). A **pit** is entered deliberately and drops the hero a floor for fixed damage (§4);
 pits are never generated on a floor with nothing below it.
 
 Both modes are the same simulation, so a save records its mode and resumes in it.

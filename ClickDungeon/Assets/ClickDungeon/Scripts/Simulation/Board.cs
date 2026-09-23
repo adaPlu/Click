@@ -26,13 +26,16 @@ namespace ClickDungeon.Simulation
         public static bool BlocksFire(CellState cell) => cell.Terrain == Terrain.Wall || cell.Terrain == Terrain.Door;
 
         /// <summary>
-        /// No tile blocks the hero (D-021): only another actor, or a vault door still shut, which is a closed door rather
-        /// than a space. Stepping into a pit is a fall to the next floor, and pits never generate where nothing is below.
+        /// On a dungeon floor no tile blocks the hero (D-021): only another actor, or a vault door still shut, which is a
+        /// closed door rather than a space. Stepping into a pit is a fall to the next floor, and pits never generate where
+        /// nothing is below. A vault is the one room with an edge: it is nine tiles and the rest of the board is the stone
+        /// around it, which the hero no more walks into than a monster does (D-064).
         /// </summary>
         public static bool HeroCanEnter(RunState run, GridPos p) =>
             p.InBounds
             && run.Floor.EnemyAt(p) == null
             && !run.Floor[p].IsLockedDoor
+            && run.Floor[p].Terrain != Terrain.Wall
             && (run.Floor[p].Terrain != Terrain.Pit || CanFallThrough(run));
 
         /// <summary>

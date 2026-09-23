@@ -324,6 +324,13 @@ namespace ClickDungeon.Application
             // Sleeping enemies count too: waking one costs nothing, wounding one is progress.
             foreach (var enemy in floor.Enemies)
                 score -= enemy.Hp * (catalog.Enemy(enemy.DefId).IsBoss ? 90 : 35);
+            // The floor a vault hangs off is still there, monsters and all. Counting only the board underfoot made them
+            // vanish while the hero was inside, so walking back out - which puts them back - always scored worse than
+            // staying, and in a room of nine tiles there is nowhere to wander to instead: the bot circled it to the
+            // command cap (D-064).
+            if (run.OuterFloor != null)
+                foreach (var enemy in run.OuterFloor.Enemies)
+                    score -= enemy.Hp * (catalog.Enemy(enemy.DefId).IsBoss ? 90 : 35);
 
             // Without hints, uncovering tiles is the only way to find the key, so a blind player values it directly.
             if (blind) score += RevealedCells(floor) * 40;
@@ -389,6 +396,9 @@ namespace ClickDungeon.Application
             }
             // A sleeping monster is part of its cover; an awake one is drawn wherever it stands, so the player sees it.
             floor.Enemies.RemoveAll(e => !e.Awake && floor[e.Pos].Knowledge != Knowledge.Revealed);
+            // The floor left outside a vault is weighed too, so what is still hidden on it has to stay hidden (D-064).
+            var outer = copy.OuterFloor;
+            if (outer != null) outer.Enemies.RemoveAll(e => !e.Awake && outer[e.Pos].Knowledge != Knowledge.Revealed);
             return copy;
         }
 

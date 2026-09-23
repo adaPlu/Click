@@ -868,5 +868,20 @@ berserker 21/8, engineer 20/5.
 1. **The three design calls above** (DATA-24, MAINT-35, MAINT-36) - renown in particular: it is flat from floor 3 to 20.
 2. **A PlayMode assembly** (TEST-15, open since audit 3). REL-38, REL-39, REL-42 and MAINT-32 are all COMPILED-level
    because nothing in the repo can exercise a drawn tile; they were verified by reading the draw path only.
-3. 48 expression portraits are still wired with no file (the heroes fall back to their neutral face).
-4. Audit 3's open items remain open.
+3. Audit 3's open items remain open.
+
+---
+
+## D-064 - the vault room and the hero expressions (2026-09-23)
+
+Not an audit: feature work, recorded here because two bugs it exposed belong with the findings above.
+
+| ID | Outcome | Evidence | What changed |
+|---|---|---|---|
+| D-064a | DONE | VERIFIED (`AVaultIsNineTilesWithTheDoorItCameFromAtTheCentre`, `TheStoneAroundAVaultIsKnownFromTheStartAndIsNotATileToStepOn`, `AVaultsGuardsStandClearOfTheTileTheHeroArrivesOn`, `TheHeroCannotWalkIntoTheStoneAroundAVault`) | A vault is nine tiles, three by three, with the door it was entered by at the centre; the sixteen tiles around it are real wall, `HeroCanEnter` refuses them and they are written Revealed so they are never covers. `FloorValidator` checks the shape |
+| REL-47 (new) | FIXED | VERIFIED (`TheBotWalksBackOutOfAVaultInsteadOfCirclingIt`) | `AutoPlayer.Score` counted only the board underfoot, so the floor's monsters vanished while the hero was in a vault and leaving always scored worse than staying. It counts `run.OuterFloor` now, and `Redact` hides that floor's sleepers so a blind bot is not counting what the player cannot see. The old 25-tile room hid this: the bot blundered onto the stair by accident |
+| REL-48 (new) | FIXED | VERIFIED (`AHeroComingBackIntoAVaultNeverLandsOnItsGuard`) | A vault is kept as it was left and its guards keep moving, so a second visit could place the hero on top of one. `VaultArrivalTile` takes the arrival tile only if it is free. Found by `BotRunsNeverBreakInvariants`, which the small room made fire |
+| TEST-22 (new) | FIXED | VERIFIED by construction | The parity guard was resolving 40 seeds a class and landed exactly on its ceiling (paladin 18, cleric 28, ratio 1.56 of 1.6). 150 seeds put the eight classes at 53-69%, ratio 1.29, so the spread was the sample. Raised to 100 seeds a class |
+| MAINT-37 | DONE | VERIFIED by contact sheet | The 48 expression portraits are cut. `ArtCatalog.Portrait` already asked for them and fell back to the neutral face |
+
+Suites after the work: **383 headless**, **474 Unity EditMode**. Seven mutations run, every one caught.

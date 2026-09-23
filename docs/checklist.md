@@ -78,7 +78,8 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 ## Production tile set (D-018, D-019, rules §11)
 - [x] Every tile in both sheets has a rule or an explicit decoration role.
 - [x] New mechanics: lava, teleport pads, healing fountains, pressure plates, vault doors, great chests.
-- [x] Vault rooms behind doors: awake guards, one great chest or several ordinary ones, the way back is the door you came in by.
+- [x] Vault rooms behind doors: nine tiles, three by three, with the door you came in by at the middle of them;
+      awake guards two tiles clear of where you arrive, one great chest or several ordinary ones (D-064).
 - [x] Decoration only: cracked and mossy floors, wall corners, torches, water (pits), stair up (entrance).
 - [x] Simulation, generation, saves and telemetry for all of it, with tests.
 - [ ] Production PNGs: drop the sheets into `ClickDungeon/Art/Source/References/` to slice placeholders, or the final tiles into `Art/Runtime/Tiles/`.
@@ -97,7 +98,8 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 - [x] Enemies behave the same in both modes: melee from a neighbouring tile, ranged and boss attacks from a distance
       (the earlier Free Roam "strike from anywhere" rule was removed — see Enemy reach below).
 - [x] 8-way adjacency for hero and enemies; dash covers one or two tiles; revealing follows melee reach.
-- [x] Nothing blocks the hero but a locked vault door and an occupied tile; walls are no longer generated.
+- [x] Nothing blocks the hero on a dungeon floor but a locked vault door and an occupied tile; no dungeon floor is
+      generated with walls. The stone around a vault room is the one real wall, and it is known from the start (D-064).
 - [x] Saves record the mode and resume in it.
 - [x] Mode picker in Settings (applies to the next new run), a `-cdMovement free|step` automation flag, and the mode on the pause screen.
 - [ ] Re-measure the difficulty tiers under Free Roam: they no longer separate (rules §10.1).

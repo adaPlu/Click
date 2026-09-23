@@ -1016,8 +1016,11 @@ namespace ClickDungeon.Unity.Screens
                 title = "STONE FLOOR";
                 if (cell.IsExit)
                 {
-                    title = "EXIT";
-                    sb.AppendLine(floor.ExitUnlocked ? "Open. Step on it to descend."
+                    // A vault's way out is the door the hero came in by, at the middle of the room - it leads back to the
+                    // floor, not down to the next one, and the panel has to say which (D-064).
+                    title = floor.IsVault ? "DOOR" : "EXIT";
+                    sb.AppendLine(floor.IsVault ? "The way you came in. Step on it to go back out to the floor."
+                        : floor.ExitUnlocked ? "Open. Step on it to descend."
                         : floor.IsBossFloor ? $"Sealed until {Lines.BossName(run, catalog)} falls."
                         : run.Hero.HasKey ? "Your key fits. Step on it to descend." : "Locked. Find the key first.");
                 }
@@ -1090,7 +1093,8 @@ namespace ClickDungeon.Unity.Screens
                     : "<color=#FF9A2E>Standing on an armed bomb: it explodes in two turns.</color>";
             if (cell.IsExit)
                 // The exit only triggers when entered, so a hero already on it (Blobert fell meanwhile) must step off and back on.
-                return exitOpen ? "Standing on the open exit. Step off and back on to leave."
+                return floor.IsVault ? "Standing in the vault's doorway. Step off and back on to leave."
+                    : exitOpen ? "Standing on the open exit. Step off and back on to leave."
                     : floor.IsBossFloor ? "Standing on the sealed exit." : "Standing on the locked exit.";
             return null;
         }

@@ -150,11 +150,29 @@ namespace ClickDungeon.Simulation
             }
         }
 
-        /// <summary>Shared arrival work: clear guard, update sight and re-declare intents. The exit stays covered (D-023).</summary>
+        /// <summary>
+        /// Where the hero stands on stepping into a vault: the tile beside the door the room was built around, unless a
+        /// guard is standing on it. A room the hero has been in before is kept as they left it and its guards have been
+        /// walking about since, so on a second visit that tile can be taken - and in a room of nine tiles it often is
+        /// (D-064). Then any free tile in the room will do, and failing that the doorway itself.
+        /// </summary>
+        static GridPos VaultArrivalTile(RunState run)
+        {
+            var floor = run.Floor;
+            if (floor.EnemyAt(floor.Start) == null) return floor.Start;
+            foreach (var p in Board.AllCells)
+                if (floor[p].Terrain == Terrain.Floor && !floor[p].IsExit && floor.EnemyAt(p) == null) return p;
+            return floor.Exit.InBounds && floor.EnemyAt(floor.Exit) == null ? floor.Exit : floor.Start;
+        }
+
+        /// <summary>
+        /// Shared arrival work: clear guard, update sight and re-declare intents. A floor's exit stays covered (D-023);
+        /// a vault's door does not, because the hero has just walked through it (D-064).
+        /// </summary>
         static void ArriveOnFloor(RunState run, ContentCatalog catalog, List<GameEvent> events)
         {
             var hero = run.Hero;
-            if (run.Floor.Start.InBounds && run.OuterFloor != null) hero.Pos = run.Floor.Start;
+            if (run.Floor.Start.InBounds && run.OuterFloor != null) hero.Pos = VaultArrivalTile(run);
             hero.Guard = false;
             hero.WebbedTurns = 0;
             Visibility.Update(run, catalog, events);

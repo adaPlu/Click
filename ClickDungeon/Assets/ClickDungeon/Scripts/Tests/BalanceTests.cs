@@ -283,7 +283,11 @@ namespace ClickDungeon.Tests
         [Test]
         public void TheClassesWinAboutAsOftenAsEachOther()
         {
-            const int runs = 40;
+            // 100, not 40. At 40 the eight classes land within a few wins of each other and the band has no headroom left
+            // to report: D-064 measured paladin 18 and cleric 28 of 40 - ratio 1.56 against a ceiling of 1.6 - where 150
+            // seeds of the same build put the same two at 61% and 69%. A guard that cannot resolve what it asserts either
+            // red-builds on noise or gets widened until it guards nothing (TEST-17).
+            const int runs = 100;
             var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
             int Wins(string heroId, double mistakeRate)
             {

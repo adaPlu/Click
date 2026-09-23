@@ -953,3 +953,49 @@ Rules referenced here live in `docs/rules.md`.
   dungeons; a save naming one of the new heroes is refused by an older build.
 - **TESTS**: 24 in `HeroClassTests`. Breaking each rule in turn - all 28 of them, every class rule and every new talent -
   turns one of them red.
+
+## D-064 The vault is a room, and the hero's face shows what the run is doing to them
+
+- **THE ROOM**: a vault behind a door is now **nine tiles, three by three**, in the middle of the board, and the door
+  the hero came through is the **middle tile of the nine**. It is always open and it is the way back out; the hero
+  arrives on one of the four tiles beside it, because nobody ever stands in a doorway. The old vault was the whole
+  5x5 board with its stair dropped somewhere two or more tiles from a random entrance, which read as another floor
+  rather than a room you had stepped into.
+- **THE ONE REAL WALL IN THE GAME**: every dungeon floor is the whole board and generates no walls at all - the wall
+  sprite is the cover over an unrevealed tile (D-021, rules 2.1). A room with an edge needs that edge to be real, so
+  the sixteen tiles around a vault are `Terrain.Wall`, `HeroCanEnter` refuses them (it refused nothing but actors and
+  a locked door before), and they are written **Revealed at generation**: stone the player can click is a cover, and a
+  cover has to hide something. Inside the nine, covers work exactly as they do anywhere else.
+- **GUARDS AND CHESTS**: unchanged in number - two or three awake guards, one great chest or two or three ordinary
+  ones. The guards keep the same two tiles of distance from the tile the hero arrives on that they keep on any floor,
+  which in a room this size puts them on the far side of it. Closed chests never blocked the hero, so a room this
+  small cannot box them in.
+- **THE BOT WOULD NOT LEAVE**: scoring only counted the board the hero stands on, so the monsters left outside
+  **vanished** while they were in the vault, and stepping back out - which puts them all back - scored worse than
+  staying. The flat -2000 for being in a vault was the only thing pushing it out, and a heavy floor outweighed it. In
+  the old 25-tile room the bot blundered onto the stair anyway; in nine tiles it circled until the command cap. The
+  fix is to count `run.OuterFloor`'s monsters too, so the two boards compare honestly; a blind bot's redaction now
+  hides that floor's sleepers as well, or it would be counting what the player cannot see.
+- **A GUARD ON THE WELCOME MAT**: a vault is kept exactly as it was left (REL-26) and its guards keep walking about,
+  so a second visit could put the hero on top of one. Three of four arrival tiles is a coin flip in a room this size;
+  the hero now takes the arrival tile only if it is free, and any free tile in the room otherwise.
+- **VALIDATION**: the shape is a rule, not a habit - `FloorValidator` checks the nine tiles, the stone around them,
+  the door at the middle and the hero beside it, so a malformed room can never reach a player.
+- **EXPRESSIONS**: 48 portraits, six for each of the eight heroes who are not the mascot - confident, angry, shocked,
+  worried, victorious, defeated. A sheet holds five animation frames and two portraits, so `shocked` and `worried`
+  both come off the hit frame, tight and wide; `confident` comes off the master pose. Two automated passes failed
+  before the faces were read by hand off zoomed, grid-labelled strips of each sheet: a head box taken as a fraction of
+  the frame catches hair and backdrop as soon as a pose leans, and an alpha bounding box catches the sheet's own
+  section labels ("ATTACK", "VICTORY") and the spell effects around the figure.
+- **PARITY GUARD**: raised from 40 seeds a class to 100. The room change moved the numbers a little and the guard landed
+  exactly on its ceiling - paladin 18, cleric 28 of 40, ratio 1.56 against 1.6 - which is the state audit 4 built the
+  tripwire for. 150 seeds of the same build put the eight classes between 53% and 69% (rogue 80, cleric 103), a ratio of
+  1.29, so the spread was the sample, not the classes. The guard now measures what it asserts.
+- **MEASURED** (150 blind seeds each, Knight's Trial, casual, no talents): knight 101, paladin 91, rogue 80, wizard 89,
+  ranger 84, cleric 103, berserker 85, engineer 86.
+- **VERSIONS**: Ruleset 11 -> 12. Floor generation is untouched, so seeds still deal the same dungeons; a run saved
+  inside an old vault still loads and finishes in the room it was saved in, because an older ruleset resumes under the
+  current rules and that room breaks none of them that the game enforces at runtime.
+- **TESTS**: six in `VaultRoomTests`. Widening the room, leaving the stone as a cover, letting the hero walk into it,
+  spawning guards in their face, arriving on the door, dropping the outer floor from the bot's scoring and putting the
+  returning hero back on the arrival tile regardless - each turns one of them red.

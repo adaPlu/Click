@@ -226,7 +226,11 @@ namespace ClickDungeon.Simulation
             return floor;
         }
 
-        /// <summary>The room behind a door: awake guards and either one great chest or a few ordinary ones (D-018).</summary>
+        /// <summary>
+        /// The room behind a door (D-018): nine tiles, three by three, walled in on every side, with the door the hero
+        /// came through at its centre. Awake guards hold the far tiles and either one great chest or a few ordinary ones
+        /// stand between them (D-064).
+        /// </summary>
         public static FloorState GenerateVault(ulong runSeed, int floorIndex, GridPos door, ContentCatalog catalog)
         {
             var profile = catalog.ProfileFor(floorIndex);
@@ -239,43 +243,58 @@ namespace ClickDungeon.Simulation
             throw new InvalidOperationException($"Could not generate a vault for floor {floorIndex} behind {door}.");
         }
 
+        /// <summary>The id a vault room carries instead of a template's: its shape is fixed, not drawn from the catalog.</summary>
+        public const string VaultRoomId = "vault_room";
+
         static FloorState TryBuildVault(DeterministicRng rng, int floorIndex, int attempt, FloorProfile profile, ContentCatalog catalog)
         {
-            var templates = catalog.Templates.Where(t => !t.BossArena).ToList();
-            if (templates.Count == 0) return null;
-            var template = rng.Pick(templates);
-            int transform = rng.Next(TemplateTransform.Count);
-
             var floor = FloorState.CreateEmpty();
             floor.FloorIndex = floorIndex;
             floor.IsVault = true;
-            floor.TemplateId = template.Id;
-            floor.Transform = transform;
+            floor.TemplateId = VaultRoomId;
+            floor.Transform = 0;
             floor.AttemptIndex = attempt;
-            // A vault hangs off a floor, so it has nowhere to fall to: every tile is plain floor (D-021).
-            foreach (var p in Board.AllCells) floor[p].Terrain = Terrain.Floor;
 
-            var usable = LargestFloorRegion(floor);
-            if (usable.Count < 10) return null;
+            // The room is the same nine tiles every time, so it needs no template: a three-by-three block in the middle of
+            // the board with the door it was entered by at its centre, and stone all round. A vault hangs off a floor and
+            // has nowhere to fall to, so none of it is a pit (D-021). That stone is known from the moment the hero steps
+            // in - it is the shape of the room, not something kept from them - so only the nine tiles carry covers.
+            foreach (var p in Board.AllCells)
+            {
+                floor[p].Terrain = Terrain.Wall;
+                floor[p].Knowledge = Knowledge.Revealed;
+            }
+            var back = new GridPos(BoardRules.Size / 2, BoardRules.Size / 2);
+            var room = new List<GridPos>();
+            for (int dy = -1; dy <= 1; dy++)
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    var p = new GridPos(back.X + dx, back.Y + dy);
+                    floor[p].Terrain = Terrain.Floor;
+                    floor[p].Knowledge = Knowledge.Unseen;
+                    if (p != back) room.Add(p);
+                }
 
-            var start = rng.Pick(usable);
-            var dist = Pathfinding.DistanceField(new[] { start }, p => floor[p].Terrain == Terrain.Floor);
-            var backSpots = usable.Where(p => dist[p.Index] >= 2).ToList();
-            if (backSpots.Count == 0) return null;
-            var back = rng.Pick(backSpots);
-            floor.Start = start;
             floor.Exit = back;
             floor[back].IsExit = true;
             floor.ExitUnlocked = true;
+            // A floor's stair stays under its cover because finding it is the game (D-023). A vault's door is not: the hero
+            // has just walked through it, so it is drawn from the first turn and the way back is never in doubt.
+            floor[back].Knowledge = Knowledge.Revealed;
+            // Nobody ever stands in a doorway: the hero steps through it and stands on one of the four tiles that share an
+            // edge with it, and steps back onto it to leave.
+            var start = rng.Pick(room.Where(p => p.Manhattan(back) == 1).ToList());
+            floor.Start = start;
 
-            var taken = new HashSet<GridPos> { start, back };
-            List<GridPos> Free(Func<GridPos, bool> ok) => usable.Where(p => !taken.Contains(p) && ok(p)).ToList();
+            var taken = new HashSet<GridPos> { start };
+            List<GridPos> Free(Func<GridPos, bool> ok) => room.Where(p => !taken.Contains(p) && ok(p)).ToList();
 
             var pool = profile.EnemyPool.Length > 0 ? profile.EnemyPool : new[] { ContentCatalog.DefaultVaultEnemyId };
             var vault = catalog.Vault;
             int guards = rng.Range(vault.MinEnemies, vault.MaxEnemies);
             for (int i = 0; i < guards; i++)
             {
+                // Two tiles clear of the hero, as on any other floor: a guard is in the room, not in your face.
                 var spots = Free(p => p.Manhattan(start) >= 2);
                 if (spots.Count == 0) break;
                 var pos = rng.Pick(spots);

@@ -90,6 +90,17 @@ namespace ClickDungeon.Simulation
             {
                 if (bosses != 0) errors.Add("Vaults cannot contain a boss.");
                 if (keys != 0) errors.Add("Vaults have no key.");
+                // D-064: a vault is nine tiles around the door the hero came in by, and the stone around those nine is
+                // the one wall in the game that is not a cover.
+                var centre = new GridPos(BoardRules.Size / 2, BoardRules.Size / 2);
+                foreach (var p in Board.AllCells)
+                {
+                    bool inside = p.Chebyshev(centre) <= 1;
+                    if (inside != (floor[p].Terrain == Terrain.Floor))
+                        errors.Add($"Vault cell {p} should be {(inside ? "floor" : "stone")}.");
+                }
+                if (floor.Exit != centre) errors.Add("A vault's way out is the door at the middle of the room.");
+                if (floor.Start.Manhattan(centre) != 1) errors.Add("A vault's hero arrives on a tile beside its door.");
             }
             else
             {
