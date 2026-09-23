@@ -63,7 +63,7 @@ namespace ClickDungeon.Tests
             var blows = new[]
             {
                 (Intent.Attack(run.Hero.Pos), ThreatKind.Attack, def.Damage),
-                (Intent.Charge(Direction.Left), ThreatKind.Charge, def.Damage),
+                (Intent.Charge(Direction.Left, king.Pos), ThreatKind.Charge, def.Damage),
                 (Intent.Slam(run.Hero.Pos), ThreatKind.Slam, def.SlamDamage),
             };
             foreach (var (intent, kind, dmg) in blows)

@@ -435,7 +435,9 @@ namespace ClickDungeon.Unity.Screens
             }
             else if (mode == TargetMode.Dash)
             {
-                Say("DASH: leap one or two tiles in a straight line, diagonals too, clearing traps.", Expression.Confident);
+                Say(Catalog.HeroClass(Run.Hero.ClassId).DashDistance > 1
+                    ? "DASH: leap one or two tiles in a straight line, diagonals too, clearing traps."
+                    : "DASH: leap one tile in a straight line, diagonals too, clearing traps.", Expression.Confident);
             }
 
             _mode = mode;
@@ -759,7 +761,7 @@ namespace ClickDungeon.Unity.Screens
             // campaign that plays as him shows the painted face rather than a copy laid over it.
             if (_portraitRoot != null) _portraitRoot.SetActive(!_matched || hero.IdentityId != ArtKeys.MascotId);
             if (_goal != null) _goal.text = Goal(run, Catalog);
-            if (_status != null) _status.text = $"TURN {run.Turn + 1}   ·   SLASH {hero.SlashDamage}   ·   KEY {(hero.HasKey ? "YES" : "NO")}"
+            if (_status != null) _status.text = $"TURN {run.Turn + 1}   ·   SLASH {Lines.SlashRange(run, Catalog)}   ·   KEY {(hero.HasKey ? "YES" : "NO")}"
                            + (hero.SpecialKeys > 0 ? $"   ·   SPECIAL KEYS {hero.SpecialKeys}" : "");
             RefreshPurse();
             _floorTitle.text = $"FLOOR {run.Floor.FloorIndex}";
@@ -883,7 +885,12 @@ namespace ClickDungeon.Unity.Screens
                             ? $"SLASH: tap a lit monster up to {reach} tiles away, down a straight line you have uncovered. A bomb is still armed from beside it."
                             : "SLASH: tap a lit tile next to you. Bombs can be slashed to arm them.");
                         break;
-                    case TargetMode.Dash: sb.AppendLine("DASH: tap a lit tile one or two steps away in a straight line. You jump over the middle tile."); break;
+                    case TargetMode.Dash:
+                        // MAINT-32: three classes dash a single tile; the hint used to promise them two.
+                        sb.AppendLine(Catalog.HeroClass(run.Hero.ClassId).DashDistance > 1
+                            ? "DASH: tap a lit tile one or two steps away in a straight line. You jump over the middle tile."
+                            : "DASH: tap a lit tile one step away in a straight line, diagonals too.");
+                        break;
                     default:
                         // Free Roam has no sensing (D-021), so there is nothing to learn by hovering a covered tile.
                         sb.AppendLine(run.Movement == MovementMode.Step
@@ -901,7 +908,9 @@ namespace ClickDungeon.Unity.Screens
             var p = _hover.Value;
             sb.Append(InspectTile(run, p, Catalog, out var title));
 
-            int damage = Threats.DamageAt(_threats, p);
+            // REL-42: only for ground the player has uncovered. Over a cover this printed "Danger -n next turn" about
+            // a tile the panel had just called UNKNOWN.
+            int damage = run.Floor[p].Knowledge == Knowledge.Revealed ? Threats.DamageAt(_threats, p) : 0;
             if (damage > 0) sb.AppendLine($"\n<color=#FF6B5E>Danger: -{damage} next turn to whoever stands here.</color>");
 
             _inspectTitle.text = title;
@@ -940,8 +949,9 @@ namespace ClickDungeon.Unity.Screens
             if (p == run.Hero.Pos)
             {
                 var hero = run.Hero;
-                title = "SIR CLICKINGTON";
-                sb.AppendLine($"HP {hero.Hp}/{hero.MaxHp}   Slash {hero.SlashDamage}   Potions {hero.Potions}");
+                // MAINT-32: nine heroes play this game; only one of them is the mascot.
+                title = Lines.HeroName(run, catalog).ToUpperInvariant();
+                sb.AppendLine($"HP {hero.Hp}/{hero.MaxHp}   Slash {Lines.SlashRange(run, catalog)}   Potions {hero.Potions}");
                 var heroClass = catalog.HeroClass(hero.ClassId);
                 sb.AppendLine($"Mana {hero.Mana}/{hero.MaxMana}: shield costs {Mana.ShieldCost(run, heroClass)}, dash {Mana.DashCost(run, heroClass)}.");
                 sb.AppendLine($"+{Mana.PerTurn} mana every turn, full on every new floor.");
@@ -956,7 +966,8 @@ namespace ClickDungeon.Unity.Screens
                 var def = catalog.Enemy(enemy.DefId);
                 title = def.DisplayName.ToUpperInvariant();
                 sb.AppendLine($"HP {enemy.Hp}/{enemy.MaxHp}");
-                sb.AppendLine(Lines.IntentExplain(enemy, def, Renown.Hit(run, catalog, 0)));
+                // REL-36: the same number the tile band shows, Fury included - the two disagreed on an enraged boss.
+                sb.AppendLine(Lines.IntentExplain(enemy, def, Renown.Hit(run, catalog, 0) + EnemyAi.Fury(enemy)));
                 var underfoot = UnderfootText(cell, floor, Board.ExitReadsOpen(run));
                 if (underfoot != null) sb.AppendLine(underfoot);
             }
@@ -992,6 +1003,13 @@ namespace ClickDungeon.Unity.Screens
                 sb.AppendLine(cell.IsOpenDoor
                     ? "Open. Step in for the treasure room: guards inside, and the way back is this door."
                     : "Locked. Find the pressure plate on this floor to open it.");
+            }
+            // REL-39: a sleeping mimic is drawn as a closed chest, so it must read as one too. Falling through to
+            // STONE FLOOR / "Nothing here." identified every mimic on the floor without spending a turn.
+            else if (Board.SleepingMimicAt(floor, p))
+            {
+                title = "CHEST";
+                sb.AppendLine($"Tap it from its tile or beside it: {Chests.TapsToOpen(run, cell) - cell.ChestTaps} more tap(s), each a turn.");
             }
             else
             {
@@ -1497,7 +1515,7 @@ namespace ClickDungeon.Unity.Screens
             "- STEP BY STEP: step to a lit tile next to you. Tiles two steps away are SENSED: red diamond ! = enemy, orange triangle ! = trap, K = key, E = exit, purple + = door, plate or teleport, $ = treasure, dot = safe.\n" +
             "- Tap an enemy beside you to SLASH - the Wizard and the Ranger shoot instead, down any straight line they have uncovered - a chest to open it (2-4 taps, each a turn), or your hero to wait.\n" +
             "- Uncovering an enemy wakes it. It shows its intent and only acts on the NEXT turn. Most must stand next to you to hit; Fire Imps shoot along a line and bosses slam from anywhere.\n" +
-            "- Tiles marked -N will be hit next turn. Step off, SHIELD to block (staggers attackers), or DASH one or two tiles over traps.\n" +
+            "- Tiles marked -N will be hit next turn. Step off, SHIELD to block (staggers attackers), or DASH over traps (one tile, or two for the classes that dash far).\n" +
             "- SHIELD and DASH cost MANA (the blue bar; the price is on each button). You get 1 back every turn and a full bar on every new floor. Moving, slashing and potions are free.\n" +
             "- Find the KEY, reach the EXIT. Every fifth floor ends in a boss - beat it to heal fully - and Lord Blobert waits at the bottom.\n\n" +
             "Keys: WASD / arrows, Space = wait, 1-5 = abilities, Esc = menu, H = help.";

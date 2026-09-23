@@ -488,6 +488,11 @@ namespace ClickDungeon.Application
                 Perks = run.Perks == null ? new Dictionary<string, int>() : new Dictionary<string, int>(run.Perks),
                 MonstersSlain = run.MonstersSlain,
                 ChestsOpened = run.ChestsOpened,
+                // REL-44: the look-ahead scored every candidate under Free Roam with no renown, because these two were
+                // never copied. Commands.Validate reads Movement, and Renown.Hit reads Threat, so the bot was judging a
+                // different game from the one it was playing.
+                Movement = run.Movement,
+                Threat = run.Threat,
             };
         }
 
@@ -521,7 +526,7 @@ namespace ClickDungeon.Application
                 copy.Enemies.Add(new EnemyState
                 {
                     Id = e.Id, DefId = e.DefId, Pos = e.Pos, Hp = e.Hp, MaxHp = e.MaxHp, Awake = e.Awake, JustWoken = e.JustWoken,
-                    Staggered = e.Staggered, Intent = e.Intent, ActionCounter = e.ActionCounter, Mode = e.Mode, ModeTurns = e.ModeTurns, Rallied = e.Rallied, Disguised = e.Disguised, CarriesKey = e.CarriesKey,
+                    Staggered = e.Staggered, Intent = e.Intent, ActionCounter = e.ActionCounter, Mode = e.Mode, ModeTurns = e.ModeTurns, Enraging = e.Enraging, Rallied = e.Rallied, Disguised = e.Disguised, CarriesKey = e.CarriesKey,
                 });
             }
             return copy;

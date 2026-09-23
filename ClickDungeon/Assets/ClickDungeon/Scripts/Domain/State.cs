@@ -51,6 +51,8 @@ namespace ClickDungeon.Domain
         public int ActionCounter;
         public EnemyMode Mode;
         public int ModeTurns;
+        /// <summary>REL-36: driven below half this turn; the rage takes hold when the turn settles, not mid-blow.</summary>
+        public bool Enraging;
         /// <summary>A Skeleton Warrior that has already fallen once and stood up: the next fall is final (D-058).</summary>
         public bool Rallied;
         /// <summary>A Mimic Chest (D-061): passed over by sight, drawn as a chest, and woken only by coming right up to it.</summary>
@@ -80,6 +82,7 @@ namespace ClickDungeon.Domain
         public bool WardSpent;
         /// <summary>Dodge (D-063) has turned a blow aside on this floor; it comes back on the next.</summary>
         public bool DodgeSpent;
+
         /// <summary>Caught in a Cave Spider's web (D-061): while above zero the hero cannot Move or Dash. One turn.</summary>
         public int WebbedTurns;
     }

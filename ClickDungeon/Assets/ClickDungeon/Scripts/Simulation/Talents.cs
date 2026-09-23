@@ -90,6 +90,9 @@ namespace ClickDungeon.Simulation
                         var from = target.Pos;
                         target.Pos = to;
                         events.Add(GameEvent.Of(GameEventKind.EnemyKnockedBack, target.Id, from, to, source: target.DefId));
+                        // REL-37: nothing needs undoing here. A declared lane or charge is anchored at the tile it was
+                        // declared from (Intent.Fire/Charge), so being shoved moves the monster without moving the line
+                        // the board already drew - and it still pays its winded turn afterwards.
                     }
                 }
                 return;

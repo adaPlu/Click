@@ -205,7 +205,19 @@ namespace ClickDungeon.Unity.Screens
                 ClearExcept(view.Labels, view.Highlight.transform);
 
                 DrawCell(view, run, floor, cell, p, exitOpen);
-                DrawThreats(view, threatKinds[p.Index], damage[p.Index], floor.EnemyAt(p)?.Awake == true);
+                // REL-42: warnings whose *extent* is read off the board - a lane or charge that stops at what a cover
+                // hides, a summon or an arrival that only lands on tiles something could enter - are drawn on uncovered
+                // ground only, or their shape reports ground truth for free. A blow, a slam and a blast are geometric:
+                // they mark the same tiles whatever is underneath, so hiding those would cost the player a warning they
+                // are owed on a tile they can step onto.
+                var kinds = threatKinds[p.Index];
+                if (cell.Knowledge != Knowledge.Revealed && kinds != null)
+                {
+                    kinds = kinds.FindAll(k => k == ThreatKind.Attack || k == ThreatKind.Slam || k == ThreatKind.BombBlast
+                                               || k == ThreatKind.BombArmed);
+                    if (kinds.Count == 0) kinds = null;
+                }
+                DrawThreats(view, kinds, kinds == null ? 0 : damage[p.Index], floor.EnemyAt(p)?.Awake == true);
 
                 // A token hides the tile art beneath it, so repeat a hazard or exit underfoot as a badge above the token.
                 bool occupied = run.Hero.Pos == p || floor.EnemyAt(p)?.Awake == true;
@@ -419,14 +431,14 @@ namespace ClickDungeon.Unity.Screens
                     new Vector2(12f, labelY), new Vector2(96f, 30f));
                 threatLabel.alignment = TextAnchor.MiddleRight;
             }
-            else if (armed || thrown)
+            if (armed || thrown)
             {
                 if (TileOverlay(view, ArtKeys.DangerOverlay(ThreatKind.BombArmed)) == null)
                     Icons.Shape(view.Overlay, Shapes.Rounded, Palette.Fuse.WithAlpha(0.14f), Vector2.zero, new Vector2(CellWidth - 6f, CellSize - 6f));
                 // A lit bomb lands here next turn. Worded apart from an armed bomb, which is already on the tile.
                 if (thrown && !armed)
                 {
-                    float bandY = enemyHere ? CellSize * 0.5f - 38f : CellSize * 0.5f - 24f;
+                    float bandY = BandY(enemyHere, damage > 0, 0);
                     string fuse = ColorUtility.ToHtmlStringRGB(Palette.Fuse.Dim(1.4f));
                     var landing = Icons.Label(view.Labels, $"<color=#{fuse}>BOMB</color>", 22, Color.white,
                         new Vector2(12f, bandY), new Vector2(96f, 30f));
@@ -434,11 +446,15 @@ namespace ClickDungeon.Unity.Screens
                 }
             }
 
-            if (damage <= 0 && (web || arrive))
+            // REL-38: these carry no damage, so they used to be drawn only when nothing else was on the tile - one
+            // adjacent chaser erased the spider's web warning and the bomber's landing marker, which are the only
+            // warnings either gives. They are drawn beside a damage band now, on the row above it.
+            if (web || arrive)
             {
+                // A tile can carry a blow, a landing bomb and a web at once: each warning gets its own row.
                 var tint = web ? Palette.Steel : Palette.Summon;
                 Icons.Shape(view.Overlay, Shapes.Rounded, tint.WithAlpha(0.18f), Vector2.zero, new Vector2(CellWidth - 6f, CellSize - 6f));
-                float bandY = enemyHere ? CellSize * 0.5f - 38f : CellSize * 0.5f - 24f;
+                float bandY = BandY(enemyHere, damage > 0, thrown && !armed ? 1 : 0);
                 string hex = ColorUtility.ToHtmlStringRGB(tint.Dim(1.4f));
                 var mark = Icons.Label(view.Labels, $"<color=#{hex}>{(web ? "WEB" : "ARRIVES")}</color>", 22, Color.white,
                     new Vector2(12f, bandY), new Vector2(110f, 30f));
@@ -451,6 +467,13 @@ namespace ClickDungeon.Unity.Screens
                 Icons.Label(view.Labels, "+", 40, Palette.Summon, Vector2.zero, new Vector2(40f, 40f));
             }
         }
+
+        /// <summary>
+        /// Where a warning band sits. Row 0 is the damage band; each further warning on the same tile stacks above it,
+        /// so a web and a landing bomb on one tile can both be read (REL-38).
+        /// </summary>
+        static float BandY(bool enemyHere, bool hasDamage, int row) =>
+            (enemyHere ? CellSize * 0.5f - 38f : CellSize * 0.5f - 24f) - (hasDamage ? 26f : 0f) - row * 26f;
 
         /// <summary>A danger overlay covers the whole tile, however wide.</summary>
         static Image TileOverlay(CellParts view, string key)

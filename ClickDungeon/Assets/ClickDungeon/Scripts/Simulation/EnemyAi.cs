@@ -29,6 +29,14 @@ namespace ClickDungeon.Simulation
 
         public static void Declare(RunState run, EnemyState enemy, ContentCatalog catalog, List<GameEvent> events)
         {
+            // REL-36: a rage banked during the turn takes hold now, before the next blow is chosen, so the blow the
+            // player is about to be shown is the blow that lands.
+            if (enemy.Enraging && enemy.Mode == EnemyMode.Normal)
+            {
+                enemy.Enraging = false;
+                enemy.Mode = EnemyMode.Enraged;
+                events.Add(GameEvent.Of(GameEventKind.BossEnraged, enemy.Id, to: enemy.Pos, source: enemy.DefId));
+            }
             var def = catalog.Enemy(enemy.DefId);
             // A fallen skeleton lies as bones for a while, then pulls itself back together at half its hearts (D-058).
             if (enemy.Mode == EnemyMode.Bones)
@@ -93,6 +101,12 @@ namespace ClickDungeon.Simulation
         }
 
         /// <summary>One extra point on every blow from an enraged boss (D-062). The warnings add it too.</summary>
+        /// <summary>
+        /// Where a declared lane or charge is traced from (REL-37): the tile the monster stood on when it declared.
+        /// A save written before the anchor existed carries none, and falls back to where the monster stands now.
+        /// </summary>
+        public static GridPos LineFrom(EnemyState enemy) => enemy.Intent.Target.InBounds ? enemy.Intent.Target : enemy.Pos;
+
         public static int Fury(EnemyState enemy) => enemy.Mode == EnemyMode.Enraged ? 1 : 0;
 
         /// <summary>
@@ -105,9 +119,9 @@ namespace ClickDungeon.Simulation
             int step = boss.ActionCounter % 3;
             boss.ActionCounter++;
             if (step == 1) return Intent.Slam(run.Hero.Pos);
-            if (step == 2 && Board.HeroInChargeLane(run, boss.Pos, def.Range, out var line)) return Intent.Charge(line);
+            if (step == 2 && Board.HeroInChargeLane(run, boss.Pos, def.Range, out var line)) return Intent.Charge(line, boss.Pos);
             if (boss.Pos.IsAdjacent(run.Hero.Pos)) return Intent.Attack(run.Hero.Pos);
-            if (Board.HeroInChargeLane(run, boss.Pos, def.Range, out var any)) return Intent.Charge(any);
+            if (Board.HeroInChargeLane(run, boss.Pos, def.Range, out var any)) return Intent.Charge(any, boss.Pos);
             return Intent.Move();
         }
 
@@ -123,9 +137,9 @@ namespace ClickDungeon.Simulation
             if (step == 0 && MinionsOf(run, def) < def.MaxMinions)
                 foreach (var cell in Board.Neighbours(boss.Pos))
                     if (Board.EnemyCanEnter(run, cell)) return Intent.Summon(cell);
-            if (step == 1 && Board.HeroInChargeLane(run, boss.Pos, def.Range, out var dive)) return Intent.Charge(dive);
+            if (step == 1 && Board.HeroInChargeLane(run, boss.Pos, def.Range, out var dive)) return Intent.Charge(dive, boss.Pos);
             if (boss.Pos.IsAdjacent(run.Hero.Pos)) return Intent.Attack(run.Hero.Pos);
-            if (Board.HeroInChargeLane(run, boss.Pos, def.Range, out var any)) return Intent.Charge(any);
+            if (Board.HeroInChargeLane(run, boss.Pos, def.Range, out var any)) return Intent.Charge(any, boss.Pos);
             return Intent.Move();
         }
 
@@ -143,7 +157,7 @@ namespace ClickDungeon.Simulation
             if (step == 1) return Intent.Slam(run.Hero.Pos);
             if (step == 2)
             {
-                if (Board.HeroInLane(run, boss.Pos, def.Range, out var lane)) return Intent.Fire(lane);
+                if (Board.HeroInLane(run, boss.Pos, def.Range, out var lane)) return Intent.Fire(lane, boss.Pos);
                 if (boss.Pos.IsAdjacent(run.Hero.Pos)) return Intent.Attack(run.Hero.Pos);
             }
             if (step == 3)
@@ -193,7 +207,7 @@ namespace ClickDungeon.Simulation
                 foreach (var cell in Board.Neighbours(enemy.Pos))
                     if (Board.EnemyCanEnter(run, cell)) return Intent.Summon(cell);
             if (enemy.Pos.IsAdjacent(run.Hero.Pos) && TryStepAway(run, enemy, out _)) return Intent.Move();
-            if (Board.HeroInLane(run, enemy.Pos, def.Range, out var dir)) return Intent.Fire(dir);
+            if (Board.HeroInLane(run, enemy.Pos, def.Range, out var dir)) return Intent.Fire(dir, enemy.Pos);
             return Intent.Move();
         }
 
@@ -226,7 +240,7 @@ namespace ClickDungeon.Simulation
         {
             if (enemy.Intent.Kind == IntentKind.Charge) return Intent.Rest();
             if (enemy.Pos.IsAdjacent(run.Hero.Pos)) return Intent.Attack(run.Hero.Pos);
-            if (Board.HeroInChargeLane(run, enemy.Pos, def.Range, out var dir)) return Intent.Charge(dir);
+            if (Board.HeroInChargeLane(run, enemy.Pos, def.Range, out var dir)) return Intent.Charge(dir, enemy.Pos);
             enemy.ActionCounter++;
             return enemy.ActionCounter % 2 == 1 ? Intent.Move() : Intent.Rest();
         }
@@ -258,7 +272,7 @@ namespace ClickDungeon.Simulation
             // Reload after every shot.
             if (enemy.Intent.Kind == IntentKind.Fire) return Intent.Rest();
             if (enemy.Pos.IsAdjacent(run.Hero.Pos) && TryStepAway(run, enemy, out _)) return Intent.Move();
-            if (Board.HeroInLane(run, enemy.Pos, def.Range, out var dir)) return Intent.Fire(dir);
+            if (Board.HeroInLane(run, enemy.Pos, def.Range, out var dir)) return Intent.Fire(dir, enemy.Pos);
             return Intent.Move();
         }
 
@@ -287,8 +301,11 @@ namespace ClickDungeon.Simulation
             boss.ActionCounter++;
             if (step == 1)
             {
-                foreach (var cell in Board.Neighbours(boss.Pos))
-                    if (Board.EnemyCanEnter(run, cell)) return Intent.Summon(cell);
+                // REL-40: with a cap on his court, he has to check it here as the other summoners do - otherwise he
+                // declares a summon the clamp then places nothing for, and the board marks tiles nothing arrives on.
+                if (MinionsOf(run, def) < def.MaxMinions)
+                    foreach (var cell in Board.Neighbours(boss.Pos))
+                        if (Board.EnemyCanEnter(run, cell)) return Intent.Summon(cell);
                 return Intent.Slam(run.Hero.Pos);
             }
             if (step == 0 || (def.DoubleSlam && step == 2)) return Intent.Slam(run.Hero.Pos);
@@ -304,10 +321,17 @@ namespace ClickDungeon.Simulation
         {
             var cells = new List<GridPos>();
             if (!Board.EnemyCanEnter(run, target)) return cells;
+            // REL-40: the cap was tested once at declare, with room for one more, and then this placed a whole batch -
+            // three bats became five against a limit of four. The room left is what may be placed. Threats calls this
+            // same method for its markers, so the two agree at the boundary; the hero moving during the turn can still
+            // free a tile, which is why a marker is only ever a promise about what is coming, not where it will stand.
+            int wanted = System.Math.Max(1, def.SummonCount);
+            if (def.MaxMinions > 0) wanted = System.Math.Min(wanted, System.Math.Max(0, def.MaxMinions - MinionsOf(run, def)));
+            if (wanted <= 0) return cells;
             cells.Add(target);
             foreach (var cell in Board.Neighbours(boss.Pos))
             {
-                if (cells.Count >= System.Math.Max(1, def.SummonCount)) break;
+                if (cells.Count >= wanted) break;
                 if (cell != target && Board.EnemyCanEnter(run, cell)) cells.Add(cell);
             }
             return cells;
@@ -358,9 +382,10 @@ namespace ClickDungeon.Simulation
 
                 case IntentKind.Fire:
                 {
-                    var fired = GameEvent.Of(GameEventKind.EnemyFired, enemy.Id, enemy.Pos, amount: Renown.Hit(run, catalog, def.Damage), source: def.Id);
+                    var origin = LineFrom(enemy);
+                    var fired = GameEvent.Of(GameEventKind.EnemyFired, enemy.Id, origin, amount: Renown.Hit(run, catalog, def.Damage), source: def.Id);
                     events.Add(fired);
-                    if (Board.TraceLane(run, enemy.Pos, intent.Dir, def.Range, out var hit))
+                    if (Board.TraceLane(run, origin, intent.Dir, def.Range, out var hit))
                     {
                         fired.To = hit;
                         if (run.Hero.Pos == hit)
@@ -405,9 +430,9 @@ namespace ClickDungeon.Simulation
                     // It runs the line it declared, straight through anything it can cross, and stops at the first thing
                     // it cannot - the hero among them, who takes the blow for staying on the line (D-058).
                     var from = enemy.Pos;
-                    var stop = enemy.Pos;
+                    var stop = LineFrom(enemy);
                     bool hitHero = false;
-                    foreach (var cell in Board.ChargeCells(run, enemy.Pos, intent.Dir, def.Range))
+                    foreach (var cell in Board.ChargeCells(run, LineFrom(enemy), intent.Dir, def.Range))
                     {
                         if (cell == run.Hero.Pos) { hitHero = true; break; }
                         stop = cell;

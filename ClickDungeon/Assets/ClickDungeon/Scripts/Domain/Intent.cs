@@ -16,14 +16,20 @@ namespace ClickDungeon.Domain
         public static Intent None() => new Intent { Kind = IntentKind.None, Target = GridPos.Invalid };
         public static Intent Attack(GridPos cell) => new Intent { Kind = IntentKind.Attack, Target = cell };
         public static Intent Move() => new Intent { Kind = IntentKind.Move, Target = GridPos.Invalid };
-        public static Intent Fire(Direction dir) => new Intent { Kind = IntentKind.Fire, Dir = dir, Target = GridPos.Invalid };
+        /// <summary>
+        /// A lane, anchored at the tile it was declared from (REL-37). Execution and the telegraph both trace from
+        /// <paramref name="from"/>, so a monster shoved out of place still fires down the line the board drew - and an
+        /// older save, whose intent carries no anchor, falls back to wherever the monster now stands.
+        /// </summary>
+        public static Intent Fire(Direction dir, GridPos from) => new Intent { Kind = IntentKind.Fire, Dir = dir, Target = from };
         public static Intent Rest() => new Intent { Kind = IntentKind.Rest, Target = GridPos.Invalid };
         public static Intent Recover() => new Intent { Kind = IntentKind.Recover, Target = GridPos.Invalid };
         public static Intent Summon(GridPos cell) => new Intent { Kind = IntentKind.Summon, Target = cell };
         public static Intent Slam(GridPos center) => new Intent { Kind = IntentKind.Slam, Target = center };
         public static Intent PuffUp() => new Intent { Kind = IntentKind.PuffUp, Target = GridPos.Invalid };
         /// <summary>The boar rushes down this line next turn, through every tile it can cross (D-058).</summary>
-        public static Intent Charge(Direction dir) => new Intent { Kind = IntentKind.Charge, Dir = dir, Target = GridPos.Invalid };
+        /// <summary>A charge, anchored at the tile it was declared from, for the same reason as <see cref="Fire"/>.</summary>
+        public static Intent Charge(Direction dir, GridPos from) => new Intent { Kind = IntentKind.Charge, Dir = dir, Target = from };
         /// <summary>The bomber lobs a lit bomb onto this tile next turn (D-058).</summary>
         public static Intent Throw(GridPos cell) => new Intent { Kind = IntentKind.Throw, Target = cell };
         /// <summary>A fallen skeleton lies as bones, pulling itself back together (D-058).</summary>

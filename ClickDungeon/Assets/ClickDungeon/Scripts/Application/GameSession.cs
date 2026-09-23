@@ -228,8 +228,15 @@ namespace ClickDungeon.Application
         {
             if (run.ContentCatalogVersion > catalog.Version) return "it was made by a newer version";
             if (!catalog.HeroClasses.ContainsKey(run.Hero.ClassId) || !catalog.HeroIdentities.ContainsKey(run.Hero.IdentityId)) return "unknown hero";
-            foreach (var enemy in run.Floor.Enemies)
-                if (!catalog.HasEnemy(enemy.DefId)) return $"unknown enemy '{enemy.DefId}'";
+            // DATA-22: a save taken inside a vault keeps the real floor in OuterFloor, so checking only the floor the
+            // hero stands on let it through on the strength of the vault's guards - and leaving the vault then threw
+            // from deep inside a turn instead of refusing the save here.
+            foreach (var floor in new[] { run.Floor, run.OuterFloor, run.VisitedVault })
+            {
+                if (floor?.Enemies == null) continue;
+                foreach (var enemy in floor.Enemies)
+                    if (!catalog.HasEnemy(enemy.DefId)) return $"unknown enemy '{enemy.DefId}'";
+            }
             return null;
         }
 

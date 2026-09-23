@@ -7,13 +7,13 @@
 # anything below a floor, or a run with no summary line at all.
 #
 # Usage: test-gate.ps1 -OutputFile <captured dotnet test output> [-ExitCode <n>] [-MinimumTests <n>]
+# MAINT-34: the floor is raised with the suite. At 280 against ~355 tests, 75 could vanish and still package green.
 # On success it writes the total test count to stdout and exits 0; otherwise it throws.
 param(
     [Parameter(Mandatory = $true)][string]$OutputFile,
     [int]$ExitCode = 0,
-    # The suite was 289 tests when this floor was set. It is deliberately close: it is meant to
-    # catch "the suite stopped running", not to be re-tuned every time a test is added.
-    [int]$MinimumTests = 280
+        # catch "the suite stopped running", not to be re-tuned every time a test is added.
+    [int]$MinimumTests = 340
 )
 
 $ErrorActionPreference = 'Stop'

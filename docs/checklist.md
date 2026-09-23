@@ -24,10 +24,10 @@ Evidence key: **T** = automated test (headless `dotnet test` + Unity EditMode), 
 | Key unlock | ✅ | T `KeyUnlocksExitAndDescends` |
 | Chest reward cannot duplicate | ✅ | T `ChestCannotBeOpenedTwice`, `RewardSurvivesSaveAndCannotDuplicateAfterLoad` |
 | Exit advances floor | ✅ | T `KeyUnlocksExitAndDescends` |
-| Five-floor run can complete | ✅ | T `FinalExitWinsTheRun`, boss death unlocks exit; `BalanceTests` assert novice AutoPlayer runs beat Lord Blobert |
+| Twenty-floor run can complete | ✅ | T `FinalExitWinsTheRun`, boss death unlocks exit; four acts with a boss every fifth floor (D-062). `BalanceTests` assert a novice *reaches* the last floor on Knight's Trial and wins on Squire's Stroll |
 | Death ends run cleanly | ✅ | T `DeathEndsTheRunAndRejectsFurtherCommands`, save cleared on death |
 | Save and resume | ✅ | T `ResumedRunContinuesIdentically`, atomic store + backup recovery |
-| Core rules have automated tests | ✅ | 137 headless tests (`dotnet test`); Unity EditMode 199 (196 passed, 3 explicit tuning tools skipped) |
+| Core rules have automated tests | ✅ | 374 headless tests (`dotnet test`); Unity EditMode 465 (451 passed, 14 explicit tuning tools skipped) |
 | Generation validation rejects illegal boards | ✅ | T validator tests + 2,000-floor fuzz |
 | Three enemy behaviours + boss | ✅ | Goblin, Crowned Slime, Fire Imp, Lord Blobert (Slam / Summon / Puff Up / Deflate) |
 | Windows build | ✅ | B `ClickDungeon/Builds/Windows/ClickDungeon.exe` via **ClickDungeon → Build Windows** |
@@ -69,7 +69,7 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 ## Gate 2 tuning — difficulty tiers
 - [x] Three tiers chosen when starting a run: Squire's Stroll, Knight's Trial, Blobert's Wrath (D-017, rules §10).
 - [x] AutoPlayer balance tool: `BalanceReport` (explicit) plus `BalanceTests` guards; kit bot demo uses it (`-cdBot`).
-- [x] Floor 5 reachable: novice AutoPlayer reaches Blobert in 100% (easy) and 99% (medium) of runs.
+- [x] Last floor reachable: on 240 blind seeds a novice reaches floor 20 in 100% (easy) and 16% (medium) of runs; a casual player 100% / 69% (rules 10.1).
 - [x] Exit tile reads open once the key is held.
 - [x] Refine Knight's Trial and Blobert's Wrath numbers (D-017 amendment, retuned for adjacent-only melee).
 - [ ] Check tiers against real playtest telemetry.
@@ -116,7 +116,7 @@ Measured over 200 seeds per tier, both modes, with `BalanceReport`.
 
 ## Chest quality and tap-to-open (D-022, rules §7)
 - [x] Common 2 / Rare 3 / Epic 4 taps; every tap is a full turn that the monsters answer.
-- [x] Vault great chests are Epic and still grant three rewards.
+- [x] Vault great chests are Epic and grant five rewards.
 - [x] Quality drawn from a hash at floor setup: floors from a seed are unchanged, saves carry it, ruleset bumped to 5.
 - [ ] Board art: per-quality chest treatments and the 2/3/4-segment progress meter (`ui_tap_progress` is in the sheets).
 - [ ] Telemetry: record taps, so we can see how often a player starts a chest and walks away from it.

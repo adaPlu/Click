@@ -308,6 +308,8 @@ namespace ClickDungeon.Content
     {
         public int PerMonster = 3;
         public int ForTheBoss = 30;
+        /// <summary>An act boss's share of the boss experience (DATA-21); Lord Blobert pays <see cref="ForTheBoss"/>.</summary>
+        public int ForAnActBoss = 10;
         public int PerFloor = 10;
         public int ForAWin = 20;
     }
@@ -322,6 +324,13 @@ namespace ClickDungeon.Content
         /// <summary>Lord Blobert's hoard (D-026): gems price the special key.</summary>
         public int GemsForTheBoss = 5;
         /// <summary>
+        /// What an act boss pays (DATA-21). Blobert's hoard was written for the one boss a run had; with four of them
+        /// (D-062) paying it in full, a won run banked four times the gems and boss experience the rules promise. An act
+        /// boss pays a share instead - a won run comes to 11 gems and 60 boss experience, against 20 and 120 before -
+        /// and the gear roll stays Lord Blobert's alone (rules 13).
+        /// </summary>
+        public int GemsForAnActBoss = 2;
+        /// <summary>
         /// Chances in percent that an item drops (D-040): gear is a find, not a given. A premium chest, opened with a bought
         /// special key, always holds one.
         /// </summary>
@@ -333,6 +342,14 @@ namespace ClickDungeon.Content
         /// <summary>Rewards in a premium chest, opened with a special key.</summary>
         public int PremiumChestRewards = 5;
         /// <summary>The earliest and latest floor a premium chest is placed on (never the boss floor).</summary>
+        /// <summary>
+        /// How many special keys one run may carry (DATA-21). It used to be the width of the floor range, which at twenty
+        /// floors meant eighteen keys and up to fifteen guaranteed-item chests in a single run; the rules always said three.
+        /// Keys beyond this stay in the profile.
+        /// </summary>
+        public int PremiumChestsPerRun = 3;
+
+        /// <summary>The earliest floor a premium chest is placed on.</summary>
         public int PremiumFirstFloor = 2;
         /// <summary>The last floor a premium chest may appear on: every floor but Blobert's (D-059 widened it from 4).</summary>
         public int PremiumLastFloor = 19;

@@ -59,9 +59,11 @@ namespace ClickDungeon.Application
             profile.ManaTonics = profile.StrengthElixirs = profile.FortuneScrolls = profile.WisdomScrolls = 0;
             if (profile.SpecialKeys > 0)
             {
-                // One premium chest per key, on the floors that can hold one; any key beyond that stays in the pocket.
+                // One premium chest per key, up to the run's ceiling; any key beyond that stays in the pocket.
+                // DATA-21: this used to be the width of the floor range, which at twenty floors let one run carry
+                // eighteen keys and place a guaranteed-item chest on every non-boss floor.
                 int floors = Math.Max(0, catalog.Treasure.PremiumLastFloor - catalog.Treasure.PremiumFirstFloor + 1);
-                int carried = Math.Min(profile.SpecialKeys, floors);
+                int carried = Math.Min(profile.SpecialKeys, Math.Min(catalog.Treasure.PremiumChestsPerRun, floors));
                 run.Hero.SpecialKeys += carried;
                 run.PremiumChestsToPlace += carried;
                 profile.SpecialKeys -= carried;

@@ -345,6 +345,25 @@ namespace ClickDungeon.Unity.Screens
             }
         }
 
+        /// <summary>
+        /// What the hero's slash really deals (MAINT-32). The flat field was wrong for every hero whose damage depends
+        /// on the run: Rage grows with each heart lost and Bloodlust with being wounded, so those are in the low number;
+        /// the bonuses that depend on which monster is struck - Ambush, Longshot, Opening Strike, Executioner, Judgement
+        /// and Dawnstrike - widen it into a span, because the HUD cannot know the target.
+        /// </summary>
+        public static string SlashRange(RunState run, ContentCatalog catalog)
+        {
+            var hero = run.Hero;
+            int low = hero.SlashDamage;
+            int rage = run.Perk(TalentEffect.Rage);
+            if (rage > 0) low += (hero.MaxHp - hero.Hp) / rage;
+            if (hero.Hp * 2 <= hero.MaxHp) low += run.Perk(TalentEffect.Bloodlust);
+            int high = low + run.Perk(TalentEffect.Ambush) + run.Perk(TalentEffect.Longshot)
+                       + System.Math.Max(run.Perk(TalentEffect.OpeningStrike), run.Perk(TalentEffect.Executioner))
+                       + System.Math.Max(run.Perk(TalentEffect.Judgement), run.Perk(TalentEffect.Dawnstrike));
+            return high > low ? $"{low}-{high}" : low.ToString();
+        }
+
         public static string IntentBadge(EnemyState enemy, EnemyDefinition def, int extraDamage = 0)
         {
             switch (enemy.Intent.Kind)

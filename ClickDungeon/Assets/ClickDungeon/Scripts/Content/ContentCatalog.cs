@@ -679,6 +679,11 @@ namespace ClickDungeon.Content
             Achieve(c, "first_steps", "First Steps", "Finish a run", AchievementStat.RunsFinished, 1, new RewardBundle { Label = "25 coins", Coins = 25 });
             Achieve(c, "deep_diver", "Deep Diver", "Reach floor 3", AchievementStat.DeepestFloor, 3, new RewardBundle { Label = "40 coins", Coins = 40 });
             Achieve(c, "into_the_lair", "Into the Lair", "Reach floor 5", AchievementStat.DeepestFloor, 5, new RewardBundle { Label = "a potion ration", PotionRations = 1 });
+            // DATA-23: the depth goals stopped at floor 5 when the dungeon grew to twenty, leaving three quarters of it
+            // with nothing to reach for. One for the end of each act.
+            Achieve(c, "past_the_roost", "Past the Roost", "Reach floor 10", AchievementStat.DeepestFloor, 10, new RewardBundle { Label = "3 gems", Gems = 3 });
+            Achieve(c, "backstage_pass", "Backstage Pass", "Reach floor 15", AchievementStat.DeepestFloor, 15, new RewardBundle { Label = "a heart token", HeartTokens = 1 });
+            Achieve(c, "the_long_way_down", "The Long Way Down", "Reach floor 20", AchievementStat.DeepestFloor, 20, new RewardBundle { Label = "a special key", SpecialKeys = 1 });
             Achieve(c, "blobert_bested", "Blobert Bested", "Defeat Lord Blobert", AchievementStat.RunsWon, 1, new RewardBundle { Label = "5 gems", Gems = 5 });
             Achieve(c, "champion", "Champion", "Win 5 runs", AchievementStat.RunsWon, 5, new RewardBundle { Label = "a special key", SpecialKeys = 1 });
             Achieve(c, "monster_hunter", "Monster Hunter", "Slay 25 monsters", AchievementStat.MonstersSlain, 25, new RewardBundle { Label = "50 coins", Coins = 50 });
@@ -737,7 +742,7 @@ namespace ClickDungeon.Content
                 Id = "lord_blobert", DisplayName = "Lord Blobert", Behavior = EnemyBehavior.Boss, IsBoss = true,
                 // D-039: he never landed a blow (a telegraphed slam is always dodged in Free Roam), so he has more to chew
                 // through, a slam that shakes its row and column, two minions per summon, and covered traps on his floor.
-                MaxHp = 18, Damage = 2, SlamDamage = 4, PuffTurns = 2, SummonId = "slimelet", SummonCount = 2, SlamShakesLines = true,
+                MaxHp = 18, Damage = 2, SlamDamage = 4, PuffTurns = 2, SummonId = "slimelet", SummonCount = 2, MaxMinions = 4, SlamShakesLines = true,
                 DoubleSlam = true,  // D-040: a second slam in every cycle, so even careful play has to keep moving
             });
 

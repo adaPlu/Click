@@ -39,14 +39,18 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
-        public void KeysAreCarriedIntoTheRunOnePerFloorThatCanHoldAChest()
+        public void OneRunCarriesAtMostTheRunsCeilingOfKeysAndBanksTheRest()
         {
-            int floors = Catalog.Treasure.PremiumLastFloor - Catalog.Treasure.PremiumFirstFloor + 1;
-            var profile = new ProfileState { SpecialKeys = floors + 2 };
+            // DATA-21: the ceiling used to be the width of the floor range, so at twenty floors a run could carry
+            // eighteen keys and place a guaranteed-item chest on nearly every floor. The rules always said three.
+            int cap = Catalog.Treasure.PremiumChestsPerRun;
+            Assert.That(cap, Is.LessThan(Catalog.Treasure.PremiumLastFloor - Catalog.Treasure.PremiumFirstFloor + 1),
+                "A run must not be able to key every floor that could hold a chest.");
+            var profile = new ProfileState { SpecialKeys = cap + 2 };
             var run = RunFactory.NewRun(3UL, Catalog, new List<GameEvent>(), ContentCatalog.DefaultHeroId, MovementMode.Free);
             ProfileSystem.Provision(profile, run, Catalog);
-            Assert.That(run.Hero.SpecialKeys, Is.EqualTo(floors));
-            Assert.That(run.PremiumChestsToPlace, Is.EqualTo(floors));
+            Assert.That(run.Hero.SpecialKeys, Is.EqualTo(cap));
+            Assert.That(run.PremiumChestsToPlace, Is.EqualTo(cap));
             Assert.That(profile.SpecialKeys, Is.EqualTo(2), "Keys the run cannot use stay in the pocket.");
         }
 

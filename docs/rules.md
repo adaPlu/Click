@@ -396,7 +396,9 @@ A floor is valid only if:
 3. key reachable from start, and exit reachable from key, **without stepping on
    hazards** and treating closed chests as blocked (enemies may be in the way);
 4. every enemy on Floor, not on a hazard/content cell, one actor per cell;
-5. no enemy within Manhattan distance 2 of the start (no instant wake);
+5. no enemy within Manhattan distance 2 of the start (no instant wake). **A Key Warden is exempt**
+   (D-061): it is handed the key after the floor validates, it backs away rather than ambushing, and it is the
+   floor's key, so it stands where the key was placed;
 6. at most one of Exit/Hazard/Content per cell;
 7. every content/enemy id exists in the catalog;
 8. boss floor: boss placed, and at least 8 enterable cells.
@@ -437,17 +439,23 @@ Damage and HP never drop below 1.
 
 ### 10.1 Measured difficulty
 
-**Current** (D-062: twenty floors in four acts, the second wave of monsters). `DifficultySweep`, **240** blind
-seeds (60 is too few over twenty floors), Free Roam — reach the last floor / won:
+**Current** (after audit 4's repairs, 2026-09-22). `DifficultySweep`, **240** blind seeds (60 is too few over twenty
+floors), Free Roam — reach the last floor / won:
 
 | Player             | Squire's Stroll | Knight's Trial | Blobert's Wrath |
 |--------------------|-----------------|----------------|-----------------|
-| casual (20%)       | 100% / 100%     | 69% / 69%      | 52% / 51%       |
-| novice (50%)       | 100% / 100%     | 16% / 15%      | 12% / 11%       |
+| casual (20%)       | 100% / 100%     | 62% / 62%      | 53% / 52%       |
+| novice (50%)       | 100% / 100%     | 13% / 12%      | 10% / 8%        |
 
-No run stalled. Floor 5, the Goblin King, is where novices die most: 41 of 205 deaths on Knight's Trial, 61 of 214 on
-Blobert's Wrath. Class parity is held by the parity guard in `BalanceTests`; `ClassSweep` now prints only candidate
-variants, so its rows are not the shipped game.
+No run stalled in any tier. The repairs cost a few points across the board — a boss no longer revives a hero who died
+in the same step, summons no longer overrun their caps, and Dodge no longer eats spikes — and they brought Knight's
+Trial and Blobert's Wrath closer together for a blind novice (12% against 8%). That gap is real at 240 seeds but too
+small for the 40-seed `TiersKeepTheirOrder` guard to resolve, so that guard asserts the ordering is not inverted and
+leaves the separation to this sweep.
+
+Per class on Knight's Trial (`ClassSweep`, 40 blind seeds, no talents), casual / novice wins: knight 25/4,
+paladin 22/8, rogue 20/1, wizard 25/3, ranger 23/6, cleric 28/8, berserker 21/8, engineer 20/5. The parity guard
+holds the spread to a ratio of 8/5 between the weakest and strongest class.
 
 These numbers are for a hero with **no talents, gear or renown**: `AutoPlayer.PlayRun` starts every run from an
 empty profile. They measure the dungeon and cannot see the class trees at all — a talent could be broken, as
@@ -702,7 +710,7 @@ capstone** only, so a build commits to a path.
 |---|---|---|---|---|
 | Hammer | 1 | Judgement | 3 | +1 slash damage against a staggered enemy |
 | Hammer | 2 | Consecrate | 1 | SHIELD deals 1 to every awake enemy next to you |
-| Hammer | 3 | Dawnstrike | 2 | +1 slash damage against Lord Blobert |
+| Hammer | 3 | Dawnstrike | 2 | +1 slash damage against **any boss** (four of them since D-062) |
 | Hammer | 4 | Wrath of Dawn | 1 | A slash kill staggers every other awake enemy next to you |
 | Aegis | 1 | Plated | 3 | +1 max heart |
 | Aegis | 2 | Holy Bulwark | 1 | A blocked attack restores 2 mana |
@@ -722,6 +730,114 @@ The level shows as a badge on the portrait on both screens. The TALENTS button
 wears its red "!" only while a point is waiting. A run never reads the profile:
 talents become the hero's starting numbers, so bots and tier guards (which play
 an empty profile) still measure a first run.
+
+
+#### The six new trees (D-063)
+
+Twelve talents a class, three paths of four, on the same tiers and the same capstone rule as above. Each row is
+what one rank gives; the ranks column is how many may be bought.
+
+**Rogue (Shadowcut)**
+
+| Path | Tier | Talent | Ranks | Each rank |
+|---|---|---|---|---|
+| evasion | 1 | Supple Leathers | 3 | +1 max heart |
+| evasion | 2 | Light Feet | 1 | DASH costs 1 less mana (never below 1) |
+| evasion | 3 | Slippery | 1 | Once per floor, the first hit that would land on you misses |
+| evasion | 4 | Vanishing Act | 1 | Arriving on a new floor restores 3 more hearts |
+| greed | 1 | Fence | 2 | +3 coins for every chest reward |
+| greed | 2 | Lockpick | 1 | Chests open with one tap fewer (never below 1) |
+| greed | 3 | Casing the Joint | 1 | Each new floor starts with its key uncovered |
+| greed | 4 | Pickpocket | 1 | Every monster you slay with a slash drops 5 coins |
+| shadows | 1 | Cruel Edge | 3 | +1 ambush damage |
+| shadows | 2 | Twin Fangs | 1 | A slash also deals 1 damage to every other awake enemy next to you |
+| shadows | 3 | Coup de Grace | 2 | +1 slash damage against an enemy at 2 hearts or fewer |
+| shadows | 4 | Eviscerate | 1 | An ambush that does not kill staggers the target (not bosses) |
+
+**Wizard (Emberwisp)**
+
+| Path | Tier | Talent | Ranks | Each rank |
+|---|---|---|---|---|
+| arcana | 1 | Deep Well | 3 | +1 max mana |
+| arcana | 2 | Meditation | 1 | Waiting a turn restores 1 extra mana |
+| arcana | 3 | Soul Siphon | 1 | Slaying an enemy with a slash restores 1 heart and 2 mana |
+| arcana | 4 | Alchemy | 1 | Potions also refill your mana, and fountains heal you fully |
+| pyromancy | 1 | Searing Bolt | 3 | +1 slash damage against an enemy at full health |
+| pyromancy | 2 | Fireball | 1 | A slash also deals 1 damage to every other awake enemy next to your target |
+| pyromancy | 3 | Cinders | 2 | +1 slash damage against an enemy at 2 hearts or fewer |
+| pyromancy | 4 | Blinding Flash | 1 | Slaying an enemy with a slash staggers every other awake enemy next to you |
+| warding | 1 | Warded Robes | 3 | +1 max heart |
+| warding | 2 | Quick Ward | 1 | SHIELD costs 1 less mana |
+| warding | 3 | Flame Ward | 1 | SHIELD deals 1 damage to every awake enemy next to you |
+| warding | 4 | Phoenix Feather | 1 | Once per floor, a blow that would end you leaves you at 1 heart and heals 3 |
+
+**Ranger (Windsong)**
+
+| Path | Tier | Talent | Ranks | Each rank |
+|---|---|---|---|---|
+| awareness | 1 | Fleet Foot | 2 | DASH costs 1 less mana (never below 1) |
+| awareness | 2 | Tracker | 1 | Each new floor starts with its key uncovered |
+| awareness | 3 | Scavenger | 2 | +3 coins for every chest reward |
+| awareness | 4 | Hawkeye | 1 | Each new floor starts with its exit uncovered |
+| marksman | 1 | Aimed Shot | 3 | +1 slash damage against an enemy at full health |
+| marksman | 2 | Piercing Arrow | 1 | A slash also deals 1 damage to the enemy right behind your target |
+| marksman | 3 | Kill Shot | 2 | +1 slash damage against an enemy at 2 hearts or fewer |
+| marksman | 4 | Pinning Shot | 1 | A shot from 3 or more tiles away staggers the target (not bosses) |
+| survival | 1 | Ranger's Leathers | 3 | +1 max heart |
+| survival | 2 | Herbalism | 1 | Potions heal 1 more |
+| survival | 3 | Endurance | 1 | While at half hearts or fewer, every hit deals 1 less damage (never below 1) |
+| survival | 4 | Second Wind | 1 | Arriving on a new floor restores 3 more hearts |
+
+**Cleric (Lightbringer)**
+
+| Path | Tier | Talent | Ranks | Each rank |
+|---|---|---|---|---|
+| judgement | 1 | Rebuke | 3 | +1 slash damage against a staggered enemy |
+| judgement | 2 | Holy Light | 1 | SHIELD deals 1 damage to every awake enemy next to you |
+| judgement | 3 | Smite the Mighty | 2 | +1 slash damage against bosses |
+| judgement | 4 | Radiance | 1 | Every SHIELD also restores 1 heart |
+| mercy | 1 | Blessed Draught | 3 | Potions heal 1 more |
+| mercy | 2 | Prayer | 1 | Waiting a turn restores 1 extra mana |
+| mercy | 3 | Renewal | 1 | Arriving on a new floor restores 3 more hearts |
+| mercy | 4 | Holy Water | 1 | Potions also refill your mana, and fountains heal you fully |
+| sanctity | 1 | Faith | 3 | +1 max heart |
+| sanctity | 2 | Swift Grace | 1 | SHIELD costs 1 less mana |
+| sanctity | 3 | Blessed Ward | 1 | Blocked attacks heal 1 more |
+| sanctity | 4 | Miracle | 1 | Once per floor, a blow that would end you leaves you at 1 heart and heals 3 |
+
+**Berserker (Rageclaw)**
+
+| Path | Tier | Talent | Ranks | Each rank |
+|---|---|---|---|---|
+| fury | 1 | Bloodlust | 3 | +1 slash damage while at half hearts or fewer |
+| fury | 2 | Wide Swing | 1 | A slash also deals 1 damage to every other awake enemy next to you |
+| fury | 3 | Brutal Finish | 2 | +1 slash damage against an enemy at 2 hearts or fewer |
+| fury | 4 | Blood Frenzy | 1 | Slaying an enemy with a slash restores 1 heart and 2 mana |
+| hide | 1 | Thick Hide | 3 | +1 max heart |
+| hide | 2 | Iron Gut | 1 | Potions heal 2 more |
+| hide | 3 | Pain Is Progress | 1 | While at half hearts or fewer, every hit deals 1 less damage (never below 1) |
+| hide | 4 | Undying Rage | 1 | Once per floor, a blow that would end you leaves you at 1 heart and heals 3 |
+| warpath | 1 | Headlong | 2 | DASH costs 1 less mana (never below 1) |
+| warpath | 2 | Smash Open | 1 | Chests open with one tap fewer (never below 1) |
+| warpath | 3 | Plunder | 2 | +3 coins for every chest reward |
+| warpath | 4 | War Cry | 1 | Slaying an enemy with a slash staggers every other awake enemy next to you |
+
+**Engineer (Gearspark)**
+
+| Path | Tier | Talent | Ranks | Each rank |
+|---|---|---|---|---|
+| control | 1 | Riveted Plating | 3 | +1 max heart |
+| control | 2 | Quick Deploy | 1 | SHIELD costs 1 less mana |
+| control | 3 | Shock Plating | 2 | An attack your shield blocks deals 1 damage back to the attacker |
+| control | 4 | Static Field | 1 | SHIELD deals 1 damage to every awake enemy next to you |
+| invention | 1 | Calibrated Wrench | 3 | +1 slash damage against an enemy at full health |
+| invention | 2 | Overclock | 1 | Your drone zaps for 1 more |
+| invention | 3 | Long-Range Coil | 1 | Your drone reaches monsters 2 tiles away |
+| invention | 4 | Tesla Coil | 1 | Your drone zaps every monster in reach, not just one |
+| tactics | 1 | Salvage | 2 | +3 coins for every chest reward |
+| tactics | 2 | Lockpicks | 1 | Chests open with one tap fewer (never below 1) |
+| tactics | 3 | Survey Drone | 1 | Each new floor starts with its exit uncovered |
+| tactics | 4 | Field Repairs | 1 | Arriving on a new floor restores 3 more hearts |
 
 ### 14.1 Renown *(D-040, tune numbers)*
 

@@ -37,7 +37,7 @@ namespace ClickDungeon.Simulation
                         Add(threats, ThreatKind.Attack, intent.Target, Renown.Hit(run, catalog, def.Damage) + EnemyAi.Fury(enemy), enemy.Id);
                         break;
                     case IntentKind.Fire:
-                        foreach (var cell in Board.LaneCells(run, enemy.Pos, intent.Dir, def.Range))
+                        foreach (var cell in Board.LaneCells(run, EnemyAi.LineFrom(enemy), intent.Dir, def.Range))
                             Add(threats, ThreatKind.Fire, cell, Renown.Hit(run, catalog, def.Damage), enemy.Id);
                         break;
                     case IntentKind.Slam:
@@ -45,13 +45,14 @@ namespace ClickDungeon.Simulation
                             Add(threats, ThreatKind.Slam, cell, Renown.Hit(run, catalog, def.SlamDamage) + EnemyAi.Fury(enemy), enemy.Id);
                         break;
                     case IntentKind.Summon:
-                        Add(threats, ThreatKind.Summon, intent.Target, 0, enemy.Id);
+                        // REL-40/REL-21: exactly the tiles that will fill. Marking the declared tile unconditionally
+                        // drew a ring for a summon the cap had already cancelled.
                         foreach (var cell in EnemyAi.SummonCells(run, enemy, def, intent.Target))
-                            if (cell != intent.Target) Add(threats, ThreatKind.Summon, cell, 0, enemy.Id);
+                            Add(threats, ThreatKind.Summon, cell, 0, enemy.Id);
                         break;
                     // The whole path of a charge is dangerous: the boar hits the hero anywhere on it (D-058).
                     case IntentKind.Charge:
-                        foreach (var cell in Board.ChargeCells(run, enemy.Pos, intent.Dir, def.Range))
+                        foreach (var cell in Board.ChargeCells(run, EnemyAi.LineFrom(enemy), intent.Dir, def.Range))
                             Add(threats, ThreatKind.Charge, cell, Renown.Hit(run, catalog, def.Damage) + EnemyAi.Fury(enemy), enemy.Id);
                         break;
                     // Where a bomb will land. It does no harm on landing; the lit bomb then telegraphs its own blast.

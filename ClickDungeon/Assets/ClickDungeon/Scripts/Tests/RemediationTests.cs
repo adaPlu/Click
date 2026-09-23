@@ -363,14 +363,15 @@ namespace ClickDungeon.Tests
             }
         }
 
-        const string PassedLine = "Passed!  - Failed:     0, Passed:   289, Skipped:     0, Total:   289, Duration: 19 s - ClickDungeon.Sim.Tests.dll (net10.0)";
+        // MAINT-34: a sample of a real full run. It has to stay at or above the gate's floor, which tracks the suite.
+        const string PassedLine = "Passed!  - Failed:     0, Passed:   357, Skipped:     0, Total:   357, Duration: 19 s - ClickDungeon.Sim.Tests.dll (net10.0)";
 
         [Test]
         public void TheKitGateAcceptsAFullRun()
         {
             var ran = Gate("Determining projects to restore...\n" + PassedLine + "\n");
             Assert.That(ran.Code, Is.EqualTo(0), ran.Output);
-            Assert.That(ran.Output.Trim(), Does.Contain("289"), "The gate reports the count it verified, for VERSION.txt.");
+            Assert.That(ran.Output.Trim(), Does.Contain("357"), "The gate reports the count it verified, for VERSION.txt.");
         }
 
         [Test]

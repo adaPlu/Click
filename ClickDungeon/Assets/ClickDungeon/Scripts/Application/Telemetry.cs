@@ -270,6 +270,44 @@ namespace ClickDungeon.Application
                     case GameEventKind.EnemyWoke:
                         Emit("enemy_woke", run, floor, turn, D("enemy", e.Source, "cell", Cell(e.To)));
                         break;
+                    // MAINT-33: the mechanics D-061/062/063 added left no trace at all, so a returned playtest log could
+                    // not say whether a web, a bomb, a drone or an enrage had ever mattered. One line each.
+                    case GameEventKind.HeroWebbed:
+                        Emit("hero_webbed", run, floor, turn, D("enemy", e.Source, "cell", Cell(e.To)));
+                        break;
+                    case GameEventKind.HeroDodged:
+                        Emit("hero_dodged", run, floor, turn, D("source", e.Source, "damage", e.Amount));
+                        break;
+                    case GameEventKind.EnemySummoned:
+                        Emit("enemy_summoned", run, floor, turn, D("minion", e.Source, "cell", Cell(e.To)));
+                        break;
+                    case GameEventKind.EnemyCharged:
+                        Emit("enemy_charged", run, floor, turn, D("enemy", e.Source, "cell", Cell(e.To)));
+                        break;
+                    case GameEventKind.BombThrown:
+                        Emit("bomb_thrown", run, floor, turn, D("enemy", e.Source, "cell", Cell(e.To)));
+                        break;
+                    case GameEventKind.EnemyCollapsed:
+                        Emit("enemy_collapsed", run, floor, turn, D("enemy", e.Source, "cell", Cell(e.To)));
+                        break;
+                    case GameEventKind.EnemyReassembled:
+                        Emit("enemy_reassembled", run, floor, turn, D("enemy", e.Source, "cell", Cell(e.To)));
+                        break;
+                    case GameEventKind.EnemyKnockedBack:
+                        Emit("enemy_knocked_back", run, floor, turn, D("enemy", e.Source, "cell", Cell(e.To)));
+                        break;
+                    case GameEventKind.DroneZapped:
+                        Emit("drone_zapped", run, floor, turn, D("enemy", e.Subject, "damage", e.Amount));
+                        break;
+                    case GameEventKind.KeyDropped:
+                        Emit("key_dropped", run, floor, turn, D("cell", Cell(e.To)));
+                        break;
+                    case GameEventKind.BossEnraged:
+                        Emit("boss_enraged", run, floor, turn, D("boss", e.Source));
+                        break;
+                    case GameEventKind.BossVanished:
+                        Emit("boss_vanished", run, floor, turn, D("boss", e.Source, "cell", Cell(e.To)));
+                        break;
                     case GameEventKind.EnemyDamaged:
                         lastHitBy[e.ActorId] = e.Source;
                         break;

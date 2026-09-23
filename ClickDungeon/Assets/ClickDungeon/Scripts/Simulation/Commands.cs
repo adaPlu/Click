@@ -93,7 +93,9 @@ namespace ClickDungeon.Simulation
             if (!target.InBounds
                 || !Directions.TryStepFromDelta(target.X - hero.Pos.X, target.Y - hero.Pos.Y, out var step)
                 || distance < 1 || distance > heroClass.DashDistance)
-                return Fail(out reason, $"Dash moves one or {heroClass.DashDistance} tiles in a straight line.");
+                return Fail(out reason, heroClass.DashDistance > 1
+                    ? $"Dash moves one or {heroClass.DashDistance} tiles in a straight line."
+                    : "Dash moves one tile in a straight line.");
 
             for (int i = 1; i < distance; i++)
             {
@@ -160,7 +162,10 @@ namespace ClickDungeon.Simulation
             if (hero.Pos.IsAdjacent(cell))
             {
                 if (enemy != null && enemy.Awake) command = PlayerCommand.Slash(cell);
-                else if (run.Floor[cell].IsClosedChest && run.Floor[cell].Knowledge == Knowledge.Revealed) command = PlayerCommand.Interact(cell);
+                // REL-39: an uncovered sleeping mimic is tapped exactly as the chest it looks like - the tap wakes it
+                // (TurnResolver turns it into a bump). Routing it to Move instead answered differently from a chest.
+                else if ((run.Floor[cell].IsClosedChest || Board.SleepingMimicAt(run.Floor, cell))
+                         && run.Floor[cell].Knowledge == Knowledge.Revealed) command = PlayerCommand.Interact(cell);
                 else command = PlayerCommand.Move(cell);
                 return true;
             }

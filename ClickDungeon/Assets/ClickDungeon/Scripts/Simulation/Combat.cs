@@ -38,16 +38,18 @@ namespace ClickDungeon.Simulation
                 }
                 return true;
             }
-            // Dodge (D-063): once per floor, the first blow that would land is turned aside.
-            if (run.Perk(TalentEffect.Dodge) > 0 && !hero.DodgeSpent)
+            // Dodge (D-063): once per floor, the first blow that would land is turned aside. Only a blow: spikes, lava
+            // and a fall are unblockable (rules 4), and REL-43 had Dodge turning aside the one damage Guard may not.
+            if (blockable && run.Perk(TalentEffect.Dodge) > 0 && !hero.DodgeSpent)
             {
                 hero.DodgeSpent = true;
                 events.Add(GameEvent.Of(GameEventKind.HeroDodged, to: hero.Pos, amount: amount, source: source));
                 return false;
             }
-            // Unyielding (D-037): at half hearts or fewer, every hit is softened, never below 1.
+            // Unyielding (D-037): at half hearts or fewer, every blow is softened, never below 1. REL-46: blows only -
+            // it read the same way Dodge did (REL-43) and softened spikes, lava and falls, which nothing may soften.
             int soften = run.Perk(TalentEffect.Unyielding);
-            if (soften > 0 && hero.Hp * 2 <= hero.MaxHp) amount = Math.Max(1, amount - soften);
+            if (blockable && soften > 0 && hero.Hp * 2 <= hero.MaxHp) amount = Math.Max(1, amount - soften);
             hero.Hp = Math.Max(0, hero.Hp - amount);
             events.Add(GameEvent.Of(GameEventKind.HeroDamaged, to: hero.Pos, amount: amount, source: source));
             // Divine Shield (D-037): once per floor, the last heart holds.
@@ -74,10 +76,13 @@ namespace ClickDungeon.Simulation
             enemy.Hp = Math.Max(0, enemy.Hp - amount);
             events.Add(GameEvent.Of(GameEventKind.EnemyDamaged, enemy.Id, to: enemy.Pos, amount: amount, source: source, subject: enemy.DefId));
             // The Goblin Brute King enrages at half his hearts (D-062): from then on every blow is one harder.
-            if (enemy.Hp > 0 && enemy.Mode == EnemyMode.Normal && enemy.Hp * 2 <= enemy.MaxHp && catalog.Enemy(enemy.DefId).EnragesAtHalf)
+            // REL-36: the rage is only banked here and takes hold when the turn settles (EnemyAi.Declare). Flipping the
+            // mode mid-turn raised a blow the boss had already declared and the board had already drawn one point lower -
+            // the player read 2 and took 3. A blow never changes after it has been shown.
+            if (enemy.Hp > 0 && enemy.Mode == EnemyMode.Normal && !enemy.Enraging
+                && enemy.Hp * 2 <= enemy.MaxHp && catalog.Enemy(enemy.DefId).EnragesAtHalf)
             {
-                enemy.Mode = EnemyMode.Enraged;
-                events.Add(GameEvent.Of(GameEventKind.BossEnraged, enemy.Id, to: enemy.Pos, source: enemy.DefId));
+                enemy.Enraging = true;
             }
         }
 
@@ -88,8 +93,12 @@ namespace ClickDungeon.Simulation
         static void DropKey(RunState run, GridPos at, List<GameEvent> events)
         {
             var floor = run.Floor;
+            // REL-45: nobody may be standing on it either. The fallen carrier is already out of the list, so its own
+            // tile still qualifies; without this the nearest-tile search could put the key under the hero or under a
+            // sleeping mimic, where it cannot be picked up by walking onto it.
             bool Clear(GridPos p) => p.InBounds && floor[p].Terrain == Terrain.Floor && floor[p].Hazard == HazardKind.None
-                                     && floor[p].Content == ContentKind.None && !floor[p].IsExit;
+                                     && floor[p].Content == ContentKind.None && !floor[p].IsExit
+                                     && floor.EnemyAt(p) == null && run.Hero.Pos != p;
             var spot = GridPos.Invalid;
             if (Clear(at)) spot = at;
             else
@@ -109,6 +118,7 @@ namespace ClickDungeon.Simulation
         {
             var floor = run.Floor;
             bool bossDied = false;
+            bool bossWasLast = false;
             for (int i = 0; i < floor.Enemies.Count;)
             {
                 var enemy = floor.Enemies[i];
@@ -137,9 +147,20 @@ namespace ClickDungeon.Simulation
                 if (enemy.CarriesKey) DropKey(run, enemy.Pos, events);
                 if (fallen.LootCoins > 0) Treasure.Coins(run, fallen.LootCoins, enemy.Pos, events);
                 bool boss = catalog.Enemy(enemy.DefId).IsBoss;
-                run.XpEarned += boss ? catalog.Xp.ForTheBoss : catalog.Xp.PerMonster;
+                // DATA-21: the last boss pays the hoard the rules describe; the three act bosses pay a share each.
+                bool lastBoss = boss && run.Floor.FloorIndex >= run.FloorCount;
+                run.XpEarned += !boss ? catalog.Xp.PerMonster : lastBoss ? catalog.Xp.ForTheBoss : catalog.Xp.ForAnActBoss;
                 run.MonstersSlain++;
-                if (boss) bossDied = true;
+                if (boss) { bossDied = true; bossWasLast = lastBoss; }
+            }
+
+            // REL-41: the run ends before an act is cleared. The heal below used to run first, so a hero killed by the
+            // same blast that felled the boss was restored to full and played on.
+            if (run.Hero.Hp <= 0 && run.Status == RunStatus.InProgress)
+            {
+                run.Status = RunStatus.Lost;
+                events.Add(GameEvent.Of(GameEventKind.RunLost));
+                return;
             }
 
             if (bossDied)
@@ -152,8 +173,10 @@ namespace ClickDungeon.Simulation
                 hero.Hp = hero.MaxHp;
                 Mana.Refill(hero);
                 if (restored > 0) events.Add(GameEvent.Of(GameEventKind.HeroHealed, to: hero.Pos, amount: restored, source: "act_cleared"));
-                Treasure.Gems(run, catalog.Treasure.GemsForTheBoss, run.Hero.Pos, events);
-                Treasure.Item(run, catalog, run.Hero.Pos, 3UL, catalog.Treasure.ItemChanceBoss, events);
+                Treasure.Gems(run, bossWasLast ? catalog.Treasure.GemsForTheBoss : catalog.Treasure.GemsForAnActBoss,
+                    run.Hero.Pos, events);
+                // DATA-21: one hoard a run. An act boss pays gems and experience; the gear roll belongs to the last.
+                if (bossWasLast) Treasure.Item(run, catalog, run.Hero.Pos, 3UL, catalog.Treasure.ItemChanceBoss, events);
                 foreach (var minion in floor.Enemies)
                     events.Add(GameEvent.Of(GameEventKind.EnemyDied, minion.Id, to: minion.Pos, source: minion.DefId));
                 floor.Enemies.Clear();
@@ -164,11 +187,6 @@ namespace ClickDungeon.Simulation
                 }
             }
 
-            if (run.Hero.Hp <= 0 && run.Status == RunStatus.InProgress)
-            {
-                run.Status = RunStatus.Lost;
-                events.Add(GameEvent.Of(GameEventKind.RunLost));
-            }
         }
     }
 }

@@ -89,7 +89,12 @@ namespace ClickDungeon.Unity.Screens
         /// <summary>Pose name that changes the token's standing art: Lord Blobert boasts while a slam is telegraphed, slimes rest.</summary>
         public static string Pose(EnemyState enemy, EnemyDefinition def)
         {
-            if (def.IsBoss) return enemy.Mode == EnemyMode.Normal && enemy.Intent.Kind == IntentKind.Slam ? "boast" : "";
+            // MAINT-38: a puffed or deflated boss is drawn by its mode, so it has no pose - but an enraged one is still
+            // drawn by its intent, and gating this on Normal pinned the pose string the moment a boss enraged, after
+            // which BoardView's visual key stopped changing and the body was never redrawn again.
+            if (def.IsBoss)
+                return enemy.Mode != EnemyMode.Puffed && enemy.Mode != EnemyMode.Deflated
+                       && enemy.Intent.Kind == IntentKind.Slam ? "boast" : "";
             return enemy.Intent.Kind == IntentKind.Rest ? "rest" : "";
         }
 

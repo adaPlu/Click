@@ -714,3 +714,157 @@ growing-profile playthrough, 30 seeds, talented Paladin — Judgement alone move
 4. A PlayMode assembly (TEST-15) is the prerequisite for ever proving a Node B fix, a coroutine, or a rotation.
 5. Still open from audit 3: DATA-18, DATA-19, REL-08, REL-25, REL-30, REL-32…35, SEC-05, CI-08, CI-11, PERF-02,
    MAINT-17…29, TEST-09, TEST-11…15.
+
+# Audit 4 — 2026-09-22
+
+Scope: D-061 (second-wave monsters), D-062 (act bosses, twenty floors in four acts), D-063 (six hero classes and
+their class rules and talents). Commit `2f0d6e0`, branch `main`. Five read-only auditors by component, then one
+reconciliation/adversarial reviewer; every High re-traced by the lead before it entered this table.
+
+## Findings
+
+| ID | Sev | Evidence | Title |
+|---|---|---|---|
+| REL-36 | **High** | VERIFIED (lead) | Enrage raises a blow that was already declared **and already drawn**. `Threats.Compute` runs at the stable boundary; `EnemyAi.Fury` is read at execution (EnemyAi.cs:326,381,419) and the player's own slash flips `Mode` (Combat.cs:77-81). Drawn 2, lands 3. The Engineer's drone can flip it with no attack at all (TurnResolver.cs:115). `Lines.IntentExplain` omits Fury entirely (GameScreen.cs:959), so tile band and inspect panel disagree in the same frame |
+| REL-37 | Medium (was High) | VERIFIED, severity corrected during remediation | A knockback moves the shooter but not its declared line: `Talents.AfterSlash` mutates `target.Pos` (Talents.cs:85-93) and `Fire`/`Charge` execute from `enemy.Pos` with the old `intent.Dir` (EnemyAi.cs:363,410). The Wizard carries Knockback on every slash, so a surviving Boar or Spellbook charges/fires down a line the board never marked. Cross-component: invisible to both the class and the monster auditors. **Correction found while fixing it:** a knockback is always collinear with hero->target, so the re-aimed line is the drawn line extended backwards through the tile the monster just vacated - which the hero cannot occupy that turn. The hero's exposure was therefore unchanged, and the audit's "the far end becomes safe" was wrong. The defect is real as an invariant break (execution traced from a different origin than the drawing) and would bite the moment anything displaces a monster off the line - a pad, a pull, a second shove - so it was fixed, at Medium |
+| REL-38 | **High** | VERIFIED (lead) | `BoardView.DrawThreats` gates the WEB/ARRIVES band on `damage <= 0` (BoardView.cs:437) and BOMB on an `else if` (:422), and `damage` is a **sum across sources** - so one adjacent chaser erases the Spider's web warning and the Bomber's landing marker on the hero's own tile. That band is the only warning either monster gives |
+| REL-39 | **High** | VERIFIED (lead) | A sleeping Mimic is drawn as a chest but INSPECT reads "STONE FLOOR / Nothing here" (GameScreen.cs:996-998) where a real chest reads "CHEST - N more taps" (:1028-1033). A free probe that identifies every mimic without spending a turn; `Commands.TryContextual` also routes a mimic tap to Move and a chest tap to Interact |
+| DATA-21 | **High** | VERIFIED (lead) | Economy: premium keys are sized `PremiumLastFloor-PremiumFirstFloor+1` = 18 (ProfileSystem.cs:63) against a documented three, and up to 15 land as guaranteed-item chests; **every** act boss pays Blobert's hoard (Combat.cs:139-156), so a won run banks 20 gems / 120 boss XP / four 50% gear rolls against a documented 5 / 30 / one. No guard test bounds any of it |
+| MAINT-30 | **High** | VERIFIED (lead) | The shipped playtest kit describes a different game: PLAYTEST-README.txt:17 "Lord Blobert on floor 5", names the mascot as the hero, describes none of the D-058/061/062 monsters, and instructs testers to tap chests while the Mimic is in the floor-2 pool |
+| TEST-17 | **High** | VERIFIED (measured) | `TheClassesWinAboutAsOftenAsEachOther` passes with **zero margin**: measured cleric 30, engineer 22, `allowed = min(22+8, 22*8/5) = 30`, asserts `30 <= 30`. One win either way red-builds it. It also measures casual only since D-063, and the ignored novice row spreads rogue 2 to berserker 9 |
+| TEST-18 | **High** | CONFIRMED | 72 of 96 talents have neither a test asserting their catalog row (effect/amount) nor an icon file: three quarters of D-063's content is unverified end to end. `EachPlayableClassHasItsOwnWellFormedTree` checks tiers and strings, never `talent.Effect` |
+| TEST-19 | **High** | CONFIRMED | The new run state is never round-tripped with a value in it (`Perks`, `CarriesKey`, `Disguised`, `DodgeSpent`, enemy `Mode`), and `JsonRoundTripIsLossless` structurally cannot detect a dropped field. `CarriesKey` lost on resume = an unwinnable floor on 4, 8, 14, 18 |
+| REL-40 | Medium | VERIFIED (lead) | Summon cap checked only at declare with `<` (EnemyAi.cs:123,140) while `SummonCells` places up to `SummonCount` (:303-314): 3 bats become 5 against a cap of 4, 2 masks become 4 against 3. Lord Blobert has **no** `MaxMinions` at all. Telegraphed faithfully, so this is balance, not fairness |
+| REL-41 | Medium | VERIFIED (lead) | `Combat.ResolveDeaths` applies the act-clear heal (Combat.cs:145-154) **before** the hero-death check (:167): a hero killed by the same blast that fells the boss is restored to full and the run continues. `Talents.Drone` (TurnResolver.cs:115) is a second entry, firing before deaths resolve with no hero-alive guard |
+| REL-42 | Medium | VERIFIED (lead) | Ground truth leaks through telegraphs drawn on covered tiles: `BoardView.cs:208` draws threats with no `Knowledge` gate and `GameScreen.cs:904` prints "Danger -n" over a tile INSPECT just called UNKNOWN. A truncated lane/charge (Board.cs:84-94,206-217) reveals a covered hazard or monster, and distinguishes a sleeping Mimic (stops a lane) from a chest (does not) |
+| REL-43 | Medium | VERIFIED (lead) | `Dodge` ignores the `blockable` flag (Combat.cs:42-47) and so turns aside spikes, lava and pit-fall damage - the one category the rules say nothing blocks. Guard, Unyielding and Sanctuary all respect it |
+| REL-44 | Medium | VERIFIED (lead) | `AutoPlayer.Copy` omits `RunState.Movement` and `RunState.Threat` (AutoPlayer.cs:456-492): the look-ahead scores every candidate under Free-Roam rules with zero renown. `CopySerializesExactlyLikeTheRun` cannot see it because its fixture leaves both at their defaults - the two values the copy drops |
+| TEST-20 | Medium | CONFIRMED | One missing test shape would have caught REL-36, REL-37, REL-38 and REL-40 at once: `TheTelegraphIsWhatHappens` - snapshot `Threats.Compute` at the boundary, then assert every point of damage taken appears in that snapshot at the hero's tile and that no monster acted on an unmarked tile |
+| TEST-21 | Medium | CONFIRMED | `AssertTheBotWasPlaying` is not wired into `TiersKeepTheirOrder` or the parity guard, and `Wins()` discards the stall count - the exact MAINT-15 pattern the helper was written for, now spanning eight classes |
+| DATA-22 | Medium | CONFIRMED | `GameSession.ContentProblem` walks only `run.Floor.Enemies`, not `OuterFloor`/`VisitedVault`: a save taken inside a vault skips the content check and throws `KeyNotFoundException` from `LeaveVault` on the next resume. Latent until an id is renamed |
+| MAINT-31 | Medium | CONFIRMED | Docs drift: rules 14 documents 24 of 96 talents; Dawnstrike reads "against Lord Blobert" while the effect is every boss (4x its value since D-062); checklist claims 137/199 tests against ~355/446 and still says "five-floor run"; rules 8.5 does not mention the Key Warden exemption the validator deliberately grants |
+| MAINT-32 | Medium | CONFIRMED | HUD and INSPECT "SLASH n" ignore Rage/Ambush/Longshot; the hero's own tile is titled "SIR CLICKINGTON" for all nine heroes; the DASH hint promises two tiles to the three classes that dash one, whose refusal then reads "one or 1 tiles" |
+| MAINT-33 | Medium | CONFIRMED | Telemetry records none of the 13 new event kinds (web, summon, charge, thrown bomb, vanish, enrage, collapse, reassemble, stagger, knockback, drone zap, dodge, key drop), so the playtest the kit exists for cannot measure the content it was built to measure |
+| REL-45 | Low | DOWNGRADED (adversarial) | `DropKey`'s `Clear()` ignores actors and the hero (Combat.cs:91-92). Unreachable in shipped content: the validator keeps enemies off hazards/content, so the warden's own tile is always clear. Reachable only via a thrown bomb, since `CanHoldBomb` does not check actors |
+| DATA-23 | Low | CONFIRMED | Depth achievements stop at "reach floor 5" of 20, and `CrownAndMailTests.cs:96` asserts `Target <= RunFloorCount` - an assertion that can no longer fail. Floors 6-20 carry no crown goal |
+| DATA-24 | Low | DOWNGRADED (adversarial) | `SaveSystem` never ties `run.FloorCount` to `catalog.RunFloorCount`. The generation gate (Enums.cs:22, SaveSystem.cs:51) refuses any such save today, so the harm is a missing invariant test, not a live hazard |
+| MAINT-34 | Low | CONFIRMED | `test-gate.ps1` floor is 280 against ~355 declared tests: 75 tests can be deleted and the kit still packages green |
+| MAINT-35 | Low | CONFIRMED | `ApplyDifficulty` touches only HP/damage/slam, so a Cave Spider's web, every `SummonCount`, `Range`, `ThrowRange` and `ReassembleTurns` are identical on all three tiers; the Bat Leader also carries a phantom `SlamDamage` of 1 it never uses |
+| MAINT-36 | Low | CONFIRMED | Renown was tuned for a five-floor run: `FirstFloor = 3`, `MaxThreat = 3`, so the threat is flat and identical from floor 3 to floor 20, with nothing left to answer a levelled hero in the back half |
+| MAINT-37 | Low | CONFIRMED | Art: 72 `icon_talent_*` keys, 48 expression portraits and 3 enemy portraits (`crowned_slime`, `fire_imp`, `lord_blobert`) are wired with no file. Tree nodes fall back to a letter; the detail panel and hero-select cards draw empty discs; boss inspect shows a blank portrait |
+| MAINT-38 | Low | CONFIRMED | An enraged boss's token never changes pose again (`ActorAnimations.Pose` returns "" for any non-Normal mode, so `BoardView`'s visual key stops changing); `-cdOverlay talents<unknown>` throws out of `TalentOverlay.ShowClass` |
+
+### Rejected / downgraded this round
+
+- **Warden within Manhattan 2 of the start** - FALSE POSITIVE as a rules break. `FloorValidator.cs:80` exempts
+  `CarriesKey` deliberately, with the reason on the line above. Real residual: rules 8.5 was never amended (MAINT-31).
+- **Hand-edited `FloorCount` wins the run early** - FALSE POSITIVE. The generation-version gate refuses the save
+  first (DATA-24 keeps the missing-test residual).
+- **`watch-bot.bat` sized for a five-floor dungeon** - WITHDRAWN. `-cdRuns 5` is five runs, and the per-run cap
+  already scales with `RunFloorCount`. Residual is ergonomic only (its comment still claims a two-hero roster).
+- **Dodge gives a free pit descent every floor** - DOWNGRADED. Falling forfeits that floor's key, chest, coins and
+  XP, and pits are barred on all boss floors. REL-43 stands on the unblockable-damage half alone.
+- **Unspent premium keys are lost** - FALSE POSITIVE: `ProfileSystem.cs:24` banks them back.
+- **Ambush's `Threats.Compute` call is a performance risk** - REJECTED. It short-circuits for seven of eight classes
+  and adds well under 1.3x for the Rogue; no re-entrancy (`Threats.Compute` never calls `SlashDamage`).
+- **Mimic parity in the simulation** - CLEAN, re-verified command by command. The only divergences are REL-39 (UI)
+  and REL-42 (lane truncation).
+- **Ranged slashes and the cover rule** - CLEAN. `HeroHasShot` requires every intermediate tile Revealed, both
+  refusal strings turn only on facts already on screen, and a sleeping mimic deliberately does not block a shot.
+- **Perk lifecycle** - CLEAN. `ApplyClassTraits` and `Progression.Apply` have one caller each and cannot both run
+  on a resume.
+
+## Remediation graph
+
+```
+REL-44 (bot copy) ---------------------------------> TEST-17 (re-baseline parity, LAST)
+                                                          ^
+REL-41 --> DATA-21 (boss hoard) --------------------------|   both edit Combat.ResolveDeaths: SERIALIZE
+REL-36 (freeze Fury at declare) --+                       |
+REL-40 (summon cap) --------------+-- EnemyAi.cs: SERIALIZE
+REL-37 (knockback vs declared line) ----------------------+
+REL-38 --+- BoardView.DrawThreats: same function: SERIALIZE
+REL-42 --+   (+ the GameScreen inspect danger line, separate)
+REL-39 --+- GameScreen.InspectTile: same function: SERIALIZE
+MAINT-32 -+
+REL-43, DATA-22, DATA-21 (keys), MAINT-33, MAINT-34 -- independent, parallel-safe
+TEST-18, TEST-19, TEST-20, TEST-21 -- after the rules they pin
+MAINT-30, MAINT-31 (docs/kit) -- independent; ship-blockers for the kit
+```
+
+**Ship-blockers if the kit goes out as-is:** MAINT-30, REL-38, REL-39, DATA-21, REL-41.
+
+## Coverage and limits
+
+- Five component auditors plus one reconciliation/adversarial pass; every High re-traced by the lead against the
+  source before entering this table. No build or test run by the auditors; the lead ran `ClassSweep` (the measured
+  numbers behind TEST-17) and the headless suite earlier in the session (357 pass, 434 Unity).
+- Not covered: the art-catalog builder itself, Android/iOS build paths, the `Sim/` telemetry reporter, PlayMode
+  behaviour (no PlayMode assembly exists - TEST-15 from audit 3 is still the prerequisite for proving a Unity-layer
+  fix), and the rendered pixels behind REL-38/REL-39 (traced in source only; Unity was not run).
+- Prior audit-3 items remain open and were not re-checked this round.
+
+## Remediation — 2026-09-22 (graphRepair, audit 4)
+
+Nothing committed. Suites after the work: **377 headless**, **454 Unity EditMode**, 0 failures, run repeatedly.
+
+Evidence rule for this table: **VERIFIED** means the fix was reverted and a named test went red. Fifteen mutations were
+run in two sweeps; every one is caught. The first sweep caught only 4 of 10 — the six that were merely COMPILED are
+listed with the test written for them.
+
+| ID | Outcome | Evidence | What changed |
+|---|---|---|---|
+| REL-36 | FIXED | VERIFIED (`EnragingDoesNotRaiseABlowThatIsAlreadyDeclared`, `AnEnragedBlowCostsTheHeartsItsWarningPromised`) | `EnemyState.Enraging` banks the rage in `Combat.DamageEnemy`; `EnemyAi.Declare` applies it when the turn settles, so it can only raise blows declared after it. `IntentExplain` now adds Fury, so panel and tile band agree |
+| REL-37 | FIXED (severity corrected to Medium) | VERIFIED (`ADeclaredLineIsTracedFromWhereItWasDeclared`, `AShovedShooterStillFiresDownTheLineItDrew`) | `Intent.Fire/Charge` carry the tile they were declared from; `EnemyAi.LineFrom` anchors both execution and telegraph there. **First attempt was wrong**: cancelling the shoved monster's intent skipped its winded turn and was invisible to the player (caught in review) |
+| REL-38 | FIXED | COMPILED (no PlayMode assembly exists - TEST-15) | WEB/ARRIVES and BOMB draw beside a damage band, each on its own row via `BandY(enemyHere, hasDamage, row)`. The first attempt still collided the two zero-damage bands on one row (caught in review) |
+| REL-39 | FIXED | COMPILED | `InspectTile` reads a sleeping mimic as CHEST with its tap count, word for word with a real chest; `Commands.TryContextual` routes the tap to Interact |
+| REL-40 | FIXED | VERIFIED (`LordBlobertStopsSummoningWhenHisCourtIsFull`, `EverySummonedMinionStandsOnATileTheBoardMarked`, `ASummonNeverPutsOutMoreMinionsThanItsLimit`) | `SummonCells` clamps to the room the cap leaves; `Threats` derives its markers from that same list. **First attempt was REJECTED in review**: capping Blobert without gating his declare reopened REL-21 on the last boss - he now checks the cap like the other summoners |
+| REL-41 | FIXED | VERIFIED (`AHeroKilledInTheSameStepThatFelledTheBossStillLosesTheRun`, `TheDroneNeverCarriesADeadHeroThroughABossFight`) | `ResolveDeaths` ends the run before the act-clear heal. The drone test was **vacuous** at first (no boss on the board) and was rewritten |
+| REL-42 | FIXED | COMPILED | Board-dependent warnings (lane, charge, summon, arrival, web, thrown bomb) draw on uncovered ground only; geometric ones (attack, slam, blast) still draw everywhere. The first attempt gated every kind, which cost the player warnings they are owed (caught in review) |
+| REL-43 | FIXED | VERIFIED (`SlipperyTurnsAsideABlowButNotSpikesOrAFall`) | `Dodge` tests `blockable` |
+| REL-44 | FIXED | VERIFIED (`TheCopyCarriesEveryFieldARunHas`) | `AutoPlayer.Copy` carries `Movement` and `Threat`; the new test puts a non-default value in every field the look-ahead reads |
+| REL-45 | FIXED | VERIFIED (`ADroppedKeyNeverLandsUnderAnActor`) | `DropKey`'s `Clear()` excludes tiles holding an actor or the hero |
+| REL-46 (new) | FIXED | VERIFIED (`UnyieldingSoftensBlowsButNotSpikes`) | Found while reviewing REL-43: `Unyielding` softened spikes, lava and falls the same way Dodge did |
+| DATA-21 | FIXED | VERIFIED (`AnActBossPaysAShareAndOnlyTheLastOnePaysTheHoard`, `OneRunCarriesAtMostTheRunsCeilingOfKeysAndBanksTheRest`) | Act bosses pay `GemsForAnActBoss`/`ForAnActBoss` (2/10) and no gear roll; Lord Blobert keeps the hoard (5/30/50%). Key carry capped by `PremiumChestsPerRun = 3`. The gear roll was missed on the first pass (caught in review) |
+| DATA-22 | FIXED | VERIFIED (`AVaultSaveNamingAMonsterThisBuildLacksIsRefused`) | `ContentProblem` walks `Floor`, `OuterFloor` and `VisitedVault` |
+| DATA-23 | FIXED | COMPILED | Depth achievements at floors 10, 15 and 20 |
+| TEST-17 | FIXED | VERIFIED by construction | The parity band is the ratio alone (the absolute +8 was sized for a different sample and bound by accident), plus a new assertion that it never again passes sitting exactly on its ceiling |
+| TEST-18 | FIXED | VERIFIED (`TalentWiringTests`, 3 tests) | All 96 talents pinned to effect/amount/ranks, their per-rank text checked against their number, and every one walked through the real `TryLearn`/`Apply` path |
+| TEST-19 | FIXED | VERIFIED (`ARunCarriesItsClassRuleAndItsMonstersSecretsThroughASave`) | Perks, `CarriesKey`, `Disguised`, `DodgeSpent`, `Enraging` and enemy `Mode` read back one by one after a round trip |
+| TEST-20 | FIXED | VERIFIED (`TheTelegraphIsWhatHappens`) | Plays 12 seeded bot runs (Ironheart and Emberwisp), snapshots `Threats.Compute` before each command and asserts every blow landed on a marked tile for the marked number; guards its own coverage on depth and on bosses having acted |
+| TEST-21 | FIXED | COMPILED | `AssertTheBotWasPlaying` wired into `TiersKeepTheirOrder`; the parity guard counts stalls per class |
+| MAINT-30 | FIXED | docs | The kit README describes twenty floors, four acts, nine heroes, the monsters testers will meet, and warns that not everything that looks like treasure is |
+| MAINT-31 | FIXED | docs | All 96 talents documented (generated from the catalog); Dawnstrike reads "any boss"; rules 8.5 states the Key Warden exemption; checklist counts and claims corrected |
+| MAINT-32 | FIXED | COMPILED | Hero tile titled by the playing hero; HUD shows the slash span a class rule produces; dash hints, the dash refusal and the help page all follow `DashDistance` |
+| MAINT-33 | FIXED | COMPILED | Telemetry for 13 new event kinds |
+| MAINT-34 | FIXED | VERIFIED (`TheKitGateAcceptsAFullRun`) | Gate floor 280 -> 340 |
+| MAINT-38 | FIXED | VERIFIED (`AnimationsFallBackToSimilarOnesAndPosesFollowIntent`) | An enraged boss poses with its intent again; a puffed one is still drawn by its mode |
+| DATA-24, MAINT-35, MAINT-36, MAINT-37 | NOT_FIXED | - | Left deliberately: the missing `FloorCount` invariant test, difficulty tiers that do not touch the new monsters' non-damage numbers, renown tuned for a five-floor run, and art files for 72 talent icons and 48 expressions. The first three are design calls; the last is art |
+
+### Corrections to the audit made while fixing it
+
+- **REL-37 was overstated.** A knockback is collinear with hero->target, so the re-aimed line is the drawn line extended
+  backwards through the tile the monster has just vacated - which the hero cannot occupy that turn. The hero's exposure
+  was unchanged, and "the far end becomes safe" was wrong. The invariant break is real and was fixed at Medium.
+- **The first regression test for it could not fail**, because it was written against that symptom. It now asserts the
+  invariant directly: displace a monster after it declares, and the lane still resolves from where it was drawn.
+
+### Measured after the repairs (240 blind seeds, `DifficultySweep`)
+
+| Player | Squire's Stroll | Knight's Trial | Blobert's Wrath |
+|---|---|---|---|
+| casual | 100% | 62% | 52% |
+| novice | 100% | 12% | 8% |
+
+No stalls. Knight's Trial and Blobert's Wrath are now close for a blind novice; `TiersKeepTheirOrder` asserts the
+ordering is not inverted and leaves the separation to the sweep, because 40 seeds cannot resolve 12% against 8%.
+Per class, casual/novice of 40: knight 25/4, paladin 22/8, rogue 20/1, wizard 25/3, ranger 23/6, cleric 28/8,
+berserker 21/8, engineer 20/5.
+
+### Next order
+
+1. **The three design calls above** (DATA-24, MAINT-35, MAINT-36) - renown in particular: it is flat from floor 3 to 20.
+2. **A PlayMode assembly** (TEST-15, open since audit 3). REL-38, REL-39, REL-42 and MAINT-32 are all COMPILED-level
+   because nothing in the repo can exercise a drawn tile; they were verified by reading the draw path only.
+3. MAINT-37: 72 talent icons and 48 expression portraits are wired with no file.
+4. Audit 3's open items remain open.
