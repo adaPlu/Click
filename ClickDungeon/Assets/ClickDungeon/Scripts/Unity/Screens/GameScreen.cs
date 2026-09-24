@@ -682,26 +682,39 @@ namespace ClickDungeon.Unity.Screens
 
         // ------------------------------------------------------------------ rendering
 
+        /// <summary>The hero whose face the panel, the bubble and the chest overlay wear: whoever is playing (D-065).</summary>
+        string FaceId => Run?.Hero.IdentityId ?? ArtKeys.HeroId;
+
+        /// <summary>
+        /// The portrait key for a hero pulling this face, or null if nothing is drawn for it. Their own face first, then
+        /// their neutral one, and only then the default hero's: a hero short of portraits must not borrow another's face
+        /// for an expression, because the face is who is speaking (D-065). Every hero has all eight since D-064, so the
+        /// fallbacks only matter to a build with art missing.
+        /// </summary>
+        public static string SpeechPortraitKey(string heroId, Expression face)
+        {
+            string own = ArtKeys.Portrait(heroId, face.ToString());
+            if (Art.Has(own)) return own;
+            string neutral = ArtKeys.Portrait(heroId, "neutral");
+            if (Art.Has(neutral)) return neutral;
+            string standIn = ArtKeys.Portrait(ArtKeys.HeroId, face.ToString());
+            return Art.Has(standIn) ? standIn : null;
+        }
+
         void Say(string line, Expression face)
         {
             _speech.text = line;
             _speechUntil = Time.unscaledTime + SpeechSeconds;
             _speechFace.text = Lines.Face(face);
             _face.text = Lines.Face(face);
-            // This hero's face for the expression, then its neutral one: a hero with few portraits must not borrow another's face.
-            string heroId = Run?.Hero.IdentityId ?? ArtKeys.HeroId;
-            if (_portraitArt != null && (Art.TryGetSprite(ArtKeys.Portrait(heroId, face.ToString()), out var portrait)
-                    || Art.TryGetSprite(ArtKeys.Portrait(heroId, "neutral"), out portrait)
-                    || Art.TryGetSprite(ArtKeys.Portrait(ArtKeys.HeroId, face.ToString()), out portrait)))
-                _portraitArt.sprite = portrait;
-            // The speech bubble shows the playing hero's own face for this expression.
-            if (_speechPortrait != null && Art.TryGetSprite(ArtKeys.Portrait(heroId, face.ToString()), out var bubbleFace)
-                    || _speechPortrait != null && Art.TryGetSprite(ArtKeys.Portrait(heroId, "neutral"), out bubbleFace))
-            {
-                _speechPortrait.sprite = bubbleFace;
-                _speechPortrait.enabled = true;
-                _speechFace.enabled = false;
-            }
+            var key = SpeechPortraitKey(FaceId, face);
+            if (key == null || !Art.TryGetSprite(key, out var portrait)) return;
+            if (_portraitArt != null) _portraitArt.sprite = portrait;
+            // The speech bubble shows the same face, and replaces the text one it was drawn with.
+            if (_speechPortrait == null) return;
+            _speechPortrait.sprite = portrait;
+            _speechPortrait.enabled = true;
+            _speechFace.enabled = false;
         }
 
         void AppendLog(List<GameEvent> events, Discovery discovery)
@@ -748,6 +761,8 @@ namespace ClickDungeon.Unity.Screens
             if (run == null) return;
             WarnIfSaveFailed();
             var hero = run.Hero;
+            // Set here rather than at each Open, so a chest opened from anywhere celebrates in the playing hero's face.
+            _chest.HeroId = FaceId;
 
             _hpText.text = $"{hero.Hp} / {hero.MaxHp}";
             _hpFill.anchorMax = new Vector2(Mathf.Clamp01(hero.Hp / (float)hero.MaxHp), 1f);
@@ -1126,7 +1141,7 @@ namespace ClickDungeon.Unity.Screens
             var portrait = UiFactory.Rect(Root, "Portrait");
             portrait.Place(TopLeft, TopLeft, new Vector2(572f, -12f), new Vector2(128f, 128f));
             _face = Icons.Portrait(portrait, 128f);
-            _portraitArt = Icons.TryArtImage(portrait, ArtKeys.Portrait(ArtKeys.HeroId, "neutral"), 128f);
+            _portraitArt = Icons.TryArtImage(portrait, ArtKeys.Portrait(FaceId, "neutral"), 128f);
             var portraitFrame = UiFactory.Image(portrait, "Frame", Palette.Gold, Shapes.Frame, true);
             portraitFrame.rectTransform.Stretch();
             UiArt.Apply(portraitFrame, ArtKeys.PortraitFrame);
@@ -1196,7 +1211,7 @@ namespace ClickDungeon.Unity.Screens
             _portraitRoot = portrait.gameObject;
             UiFactory.Image(portrait, "Back", new Color(0.06f, 0.07f, 0.1f), Shapes.Rounded, true).rectTransform.Stretch();
             _face = Icons.Portrait(portrait, 110f * Scale);
-            _portraitArt = Icons.TryArtImage(portrait, ArtKeys.Portrait(ArtKeys.HeroId, "neutral"), 110f * Scale);
+            _portraitArt = Icons.TryArtImage(portrait, ArtKeys.Portrait(FaceId, "neutral"), 110f * Scale);
             var portraitFrame = UiFactory.Image(portrait, "Frame", Palette.Gold, Shapes.Frame, true);
             portraitFrame.rectTransform.Stretch();
             UiArt.Apply(portraitFrame, ArtKeys.PortraitFrame);

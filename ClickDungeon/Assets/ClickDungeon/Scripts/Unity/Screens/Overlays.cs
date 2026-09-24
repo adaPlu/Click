@@ -161,6 +161,12 @@ namespace ClickDungeon.Unity.Screens
         Action _onClosed;
         IReadOnlyList<RewardRecord> _rewards = Array.Empty<RewardRecord>();
 
+        /// <summary>
+        /// Whose face celebrates the loot. The screen sets it to the hero playing; the chest is opened by whoever is
+        /// holding the sword, and it used to be the default hero's face over every run (D-065).
+        /// </summary>
+        public string HeroId = ArtKeys.HeroId;
+
         public ChestOverlay(RectTransform parent, MonoBehaviour host)
         {
             _host = host;
@@ -380,11 +386,18 @@ namespace ClickDungeon.Unity.Screens
         void ShowReaction(string step)
         {
             bool pose = Art.TryGetSprite(ArtKeys.ChestReaction(step), out var sprite);
-            bool portrait = !pose && Art.TryGetSprite(ArtKeys.Portrait(ArtKeys.HeroId, ArtKeys.ChestReactionFallback(step)), out sprite);
+            bool portrait = !pose && Art.TryGetSprite(ReactionPortraitKey(HeroId, step), out sprite);
             _reaction.gameObject.SetActive(pose || portrait);
             if (!pose && !portrait) return;
             SetSprite(_reactionImage, sprite);
             _reactionFrame.enabled = portrait;
+        }
+
+        /// <summary>The face this beat of the chest sequence wears: the playing hero's, or the default hero's if they lack it.</summary>
+        public static string ReactionPortraitKey(string heroId, string step)
+        {
+            string own = ArtKeys.Portrait(heroId, ArtKeys.ChestReactionFallback(step));
+            return Art.Has(own) ? own : ArtKeys.Portrait(ArtKeys.HeroId, ArtKeys.ChestReactionFallback(step));
         }
 
         static bool TryRewardIcon(RewardRecord reward, out Sprite icon)

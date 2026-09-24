@@ -105,6 +105,13 @@ namespace ClickDungeon.Unity.Screens
                         face = Expression.Shocked;
                         return 70;
                     }
+                    // A blow worth four hearts is not a scratch, and the face that answers it is not a worried one (D-065).
+                    if (e.Amount >= 4)
+                    {
+                        line = Pick("Right. That does it.", "Now I'm cross.", "You will regret that.");
+                        face = Expression.Angry;
+                        return 52;
+                    }
                     line = e.Source == "spikes" ? "Pointy. Noted." : Pick("Ow. Totally meant that.", "That's going to bruise.", "'Tis but a scratch!");
                     face = Expression.Worried;
                     return 50;
@@ -209,6 +216,13 @@ namespace ClickDungeon.Unity.Screens
                     face = Expression.Shocked;
                     return 48;
                 case GameEventKind.EnemyDied:
+                    // A boss going down is the moment of the act, not one more kill, so it takes the turn's line (D-065).
+                    if (catalog.HasEnemy(e.Source) && catalog.Enemy(e.Source).IsBoss)
+                    {
+                        line = $"{SourceName(e.Source, catalog)} is down!";
+                        face = Expression.Victorious;
+                        return 90;
+                    }
                     line = $"{HeroName(run, catalog)}: 1. Dungeon: 0.";
                     face = Expression.Confident;
                     return 30;

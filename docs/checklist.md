@@ -78,6 +78,8 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 ## Production tile set (D-018, D-019, rules §11)
 - [x] Every tile in both sheets has a rule or an explicit decoration role.
 - [x] New mechanics: lava, teleport pads, healing fountains, pressure plates, vault doors, great chests.
+- [x] The hero's face in the speech bubble, on the HUD and over an opened chest is the playing hero's own, pulling
+      the expression the line calls for; all nine heroes carry all eight faces (D-064, D-065).
 - [x] Vault rooms behind doors: nine tiles, three by three, with the door you came in by at the middle of them;
       awake guards two tiles clear of where you arrive, one great chest or several ordinary ones (D-064).
 - [x] Decoration only: cracked and mossy floors, wall corners, torches, water (pits), stair up (entrance).

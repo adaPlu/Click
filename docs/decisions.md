@@ -999,3 +999,26 @@ Rules referenced here live in `docs/rules.md`.
 - **TESTS**: six in `VaultRoomTests`. Widening the room, leaving the stone as a cover, letting the hero walk into it,
   spawning guards in their face, arriving on the door, dropping the outer floor from the bot's scoring and putting the
   returning hero back on the arrival tile regardless - each turns one of them red.
+
+## D-065 The face in the bubble is the face of whoever is playing
+
+- **THE FACES WERE CUT BUT HALF-USED**: D-064 cut 48 expression portraits and the catalog carries all 72 (nine heroes
+  by eight faces), but two of the eight only ever appeared as the run ended - Victorious on a win, Defeated on a death -
+  and two places drew the **default hero's** face over every run whoever was playing: the chest overlay's reaction and
+  the HUD portrait it is built with. Playing Rageclaw, Ironheart celebrated your loot.
+- **ONE PLACE DECIDES WHOSE FACE IT IS**: `GameScreen.SpeechPortraitKey(heroId, face)` - their own face for that
+  expression, then their neutral one, and only then the default hero's. A hero short of a portrait keeps their own face
+  with the wrong feeling rather than borrowing another hero's with the right one, because the face is who is speaking.
+  `ChestOverlay.HeroId` carries the same hero to the chest, set on every refresh so a chest opened from anywhere
+  celebrates in the right face.
+- **TWO FACES THAT HAD NOWHERE TO APPEAR**: a **boss going down** now takes the turn's line at priority 90 - "Goblin
+  Brute King is down!" with the victorious face - rather than sharing the ordinary kill line at 30. A **blow worth four
+  hearts or more** answers angry rather than worried; below that the old worried line stands, and at three hearts or
+  fewer the shocked one still wins.
+- **THE GUARD THAT MATTERS**: `EveryHeroHasAFaceForEveryExpressionADialogueLineCanAskFor` reads the **shipped** art
+  catalog, not a stub, and fails if any of the 72 is missing - the fallback above is exactly what would otherwise hide
+  it. A second test pins the `Expression` enum to the list of expressions the slicer cuts, so adding one to either side
+  alone is caught.
+- **TESTS**: six in `SpeechPortraitTests`. Four mutations - the bubble and the chest each forced back to the default
+  hero, an expression dropped from the art list, and one portrait renamed in the built catalog - each turn a named test
+  red.
