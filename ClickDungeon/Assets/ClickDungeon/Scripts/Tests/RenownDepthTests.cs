@@ -124,6 +124,11 @@ namespace ClickDungeon.Tests
             Assert.That(Renown.Level(AtFloor(10, 0), tuned), Is.Zero, "The first step falls at FirstFloor + 8, not before.");
             Assert.That(Renown.Level(AtFloor(11, 0), tuned), Is.EqualTo(1));
             Assert.That(Renown.Level(AtFloor(19, 0), tuned), Is.EqualTo(2));
+            // And the clamp itself, which none of the above reaches: (20-3)/4 is 4, and MaxDepthThreat holds it at 2.
+            var clamped = ContentCatalog.CreateDefault();
+            clamped.Renown.FloorsPerThreat = 4;
+            clamped.Renown.MaxDepthThreat = 2;
+            Assert.That(Renown.Level(AtFloor(Catalog.RunFloorCount, 0), clamped), Is.EqualTo(2), "The cap binds.");
             Assert.That(Renown.Level(AtFloor(Catalog.Renown.FirstFloor, 0), tuned), Is.Zero);
         }
 
@@ -176,6 +181,9 @@ namespace ClickDungeon.Tests
             var def = Catalog.Enemy(summoner.DefId);
             Assert.That(Catalog.HasEnemy(def.SummonId), Is.True, "Test setup: a Spooky Spellbook summons.");
             int before = run.Floor.Enemies.Count;
+            // Watched, because giving the minion its share by re-running the whole floor's fan-out would pass every
+            // assertion below while handing every other monster a second helping (TEST-97).
+            int summonerHp = summoner.MaxHp;
             for (int turn = 0; turn < 12 && run.Floor.Enemies.Count == before; turn++)
                 TurnResolver.Apply(run, PlayerCommand.Wait(), Catalog);
             Assert.That(run.Floor.Enemies.Count, Is.GreaterThan(before), "Test setup: something was summoned.");
@@ -185,6 +193,15 @@ namespace ClickDungeon.Tests
             Assert.That(minion.MaxHp, Is.EqualTo(bare + level * Catalog.Renown.HpPerThreat),
                 "A summoned minion carries the floor's threat in its hearts, as a placed one does.");
             Assert.That(minion.Hp, Is.EqualTo(minion.MaxHp));
+            Assert.That(summoner.MaxHp, Is.EqualTo(summonerHp), "And nobody else took a second helping of threat.");
+
+            // Hp += extra, not Hp = MaxHp: the assertion above cannot tell those apart, because a summon arrives whole.
+            // A monster already wounded when it takes its share has to keep the wound, or threat is a free heal (TEST-98).
+            int woundedMax = summoner.MaxHp;
+            summoner.Hp = 1;
+            RunFactory.ApplyThreatTo(run, Catalog, summoner);
+            Assert.That(summoner.MaxHp, Is.GreaterThan(woundedMax), "Test setup: the share is worth measuring.");
+            Assert.That(summoner.Hp, Is.EqualTo(1 + (summoner.MaxHp - woundedMax)), "The share is added to the hearts it had left.");
         }
 
         [Test]
@@ -269,8 +286,11 @@ namespace ClickDungeon.Tests
             // ruleset), and a threat below zero (a corrupt one). Neither may produce more threat than the cap.
             var past = AtFloor(14, Catalog.Renown.MaxThreat);
             past.FloorCount = 10;
-            Assert.That(Renown.Level(past, Catalog), Is.LessThanOrEqualTo(Catalog.Renown.MaxThreat),
-                "A floor past the run's length saturates rather than running away.");
+            // Exact, not a ceiling: `<= MaxThreat` is also satisfied by returning 0, which would silently strip a
+            // longer-ruleset save of all its threat - the case this test exists for (TEST-95). span = max(10,14)-3+1 = 12,
+            // so the player term is 3*12/12.
+            Assert.That(Renown.Level(past, Catalog), Is.EqualTo(3),
+                "A floor past the run's length saturates at what renown earned, rather than running away or vanishing.");
 
             var negative = AtFloor(Catalog.RunFloorCount, -1);
             Assert.That(Renown.Level(negative, Catalog), Is.Zero, "A threat below zero is no threat.");

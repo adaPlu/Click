@@ -141,6 +141,15 @@ namespace ClickDungeon.UnityTests
             Assert.That(boss.priority, Is.LessThan(nearlyDead.priority),
                 "A boss falling must not talk over the hero being down to their last hearts.");
             Assert.That(React(GameEventKind.RunLost, run).priority, Is.GreaterThan(boss.priority), "And dying outranks both.");
+            // "Below the hero's last hearts and above every ordinary event" is what the rule says; only the first half
+            // was pinned, so dropping the boss line to 51 would have passed while a routine block talked over it.
+            // On a HEALTHY hero: the run above is down to three hearts, and at three hearts every blow is the peril
+            // line, so asking it about an ordinary one would be asking the wrong question of the wrong hero.
+            var healthy = AtFullHealth();
+            Assert.That(boss.priority, Is.GreaterThan(React(GameEventKind.HeroBlocked, healthy).priority),
+                "A boss falling is not talked over by a block.");
+            Assert.That(boss.priority, Is.GreaterThan(React(GameEventKind.HeroDamaged, healthy, amount: 4).priority),
+                "Nor by a heavy blow a hero with all their hearts shrugged off.");
         }
 
         [Test]

@@ -400,9 +400,11 @@ Ordering is covered by automated tests.
 
 - **Floor complete** → next floor generates, hero HP/potions/boons carry over,
   mana refills, key is cleared.
-- **The stairs' mercy** *(D-071)*: on top of the tier's breather, the stairs never leave a hero below **half**
-  their hearts. It is help that only arrives when it is needed — a careful player is under half on 6% of turns
-  and a careless one on up to a third of them — so it lifts the floor of the game without raising its ceiling.
+- **The stairs' mercy** *(D-071, D-073)*: on top of the tier's breather, the stairs never leave a hero below a
+  share of their hearts **set by the tier** — half on Squire's Stroll and Knight's Trial, and **none at all on
+  Blobert's Wrath**, whose card has always ended "No mercy." It is help that only arrives when it is needed — a
+  careful player is under half on 6% of turns and a careless one on up to a third of them — so on the tiers that
+  give it, it lifts the floor of the game without raising its ceiling.
 - **Run**: 20 floors in four acts of five (D-062; it was 7). Floors 5, 10 and 15 are act bosses (§3.6); floor 20 is
   Lord Blobert's arena, whose exit is unlocked when he dies and stepping on it wins the run.
 - **Death**: hero HP ≤ 0 ends the run. The save is cleared (roguelike run).
@@ -461,6 +463,7 @@ it adds one monster a floor (D-038).
 | Spikes / bomb damage                   | 1 / 3                  | 3 / 5 (+1)              | 3 / 5 (+1)                 |
 | Enemies on normal floors               | profile                | profile +1              | profile                    |
 | HP restored on arriving at a new floor | 3                      | 0                       | 0                          |
+| The stairs never leave the hero below  | half their hearts      | half their hearts       | — (no mercy)               |
 
 Hero max HP is the Knight's. The Paladin has one more heart on every tier (D-047).
 

@@ -80,7 +80,9 @@ namespace ClickDungeon.Tests
                 Assert.That(guard.Hp, Is.EqualTo(guard.MaxHp));
             }
             // The blow the guards deal is raised by the same number their hearts were.
-            Assert.That(Renown.Hit(run, Catalog, 2), Is.EqualTo(2 + level / Catalog.Renown.ThreatPerExtraDamage));
+            // Literal, not `2 + level / TPED` - that restates Renown.Hit and cannot fail for any Level-based bug,
+            // which is how the committed off-by-one survived 391 tests (TEST-93).
+            Assert.That(Renown.Hit(run, Catalog, 2), Is.EqualTo(3), "Level 2 at the bottom: one more damage.");
         }
 
         [Test]
@@ -101,8 +103,8 @@ namespace ClickDungeon.Tests
             // The bottom, not the first floor renown reaches: threat arrives with the depth now (D-067).
             var bottom = Run(Catalog.RunFloorCount, 7UL, ".....", ".....", ".H^..", ".....", ".....");
             bottom.Threat = 3;
-            Assert.That(Stepped(Catalog.RunFloorCount, 3),
-                Is.EqualTo(plain + Renown.Level(bottom, Catalog) / Catalog.Renown.ThreatPerExtraTrapDamage));
+            Assert.That(Stepped(Catalog.RunFloorCount, 3), Is.EqualTo(plain + 1),
+                "Level 3 at the bottom, and traps have their own divisor: one more, written out.");
             Assert.That(Stepped(Catalog.RunFloorCount, 3), Is.GreaterThan(plain), "A renowned hero's traps bite deeper down.");
         }
     }

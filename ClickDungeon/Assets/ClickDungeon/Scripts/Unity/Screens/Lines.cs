@@ -369,15 +369,7 @@ namespace ClickDungeon.Unity.Screens
         /// </summary>
         public static string SlashRange(RunState run, ContentCatalog catalog)
         {
-            var hero = run.Hero;
-            int low = hero.SlashDamage;
-            int rage = run.Perk(TalentEffect.Rage);
-            if (rage > 0) low += (hero.MaxHp - hero.Hp) / rage;
-            if (hero.Hp * 2 <= hero.MaxHp) low += run.Perk(TalentEffect.Bloodlust);
-            int high = low + run.Perk(TalentEffect.Ambush) + run.Perk(TalentEffect.Longshot)
-                       + System.Math.Max(run.Perk(TalentEffect.OpeningStrike), run.Perk(TalentEffect.Executioner))
-                       + System.Math.Max(run.Perk(TalentEffect.Judgement),
-                           System.Math.Max(run.Perk(TalentEffect.Dawnstrike), run.Perk(TalentEffect.HolyWrath)));
+            Talents.SlashSpan(run, catalog, out int low, out int high);
             return high > low ? $"{low}-{high}" : low.ToString();
         }
 

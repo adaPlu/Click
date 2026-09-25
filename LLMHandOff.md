@@ -1012,3 +1012,160 @@ eight classes, and a class tree is worth between 25 and 46 points depending on t
 own for a hero with no renown, at five points of casual win rate and a class spread of exactly 1.60 against the parity
 band's 1.60 ceiling. `PuffedIsImmuneThenDeflatedTakesDouble` hard-codes Lord Blobert's hearts, so it fails if the knob
 is turned on - de-hardcode it first.
+
+# Audit 6 (2026-09-25, HEAD 43ba193)
+
+Scope: D-068 (the audit-5 repair itself), D-069 (`ProvisionRun`, `BuiltUp`), D-071 (the stairs' mercy, the Sanctuary
+gate, Rage 4→6), D-072 (the undead tag and Holy Wrath). Four read-only auditors. The brief was not "find bugs in the new
+code" but **"the repair claimed to close the vacuous-assertion class - did it"**, and the answer is no: the single
+highest finding is that the test D-068 wrote to close an even/odd rounding blind spot was itself written with an even
+parameter.
+
+### Findings
+
+| ID | Sev | Verdict | What |
+|---|---|---|---|
+| TEST-90 | High | VERIFIED | `TheStairsNeverLeaveABadlyHurtHeroBelowHalf` used `MaxHp = 20` and asserted `>=`. Twenty is even, so `20/2` and `21/2` both give 10: the exact blind spot audit 5 found, reintroduced by the repair that claimed to close it. No hero with odd max hearts (Paladin 11, Berserker 9) takes a staircase anywhere in the suite |
+| TEST-85 | High | CONFIRMED (mechanism); measured this session | A "mistake" in the bot is a uniform draw from every legal command that survives the turn. In Free Roam that list is up to 24 Moves against a handful of everything else, so ~3 mistakes in 4 are a teleport to a random tile, and the hero can never walk into a telegraphed killing blow. D-071's three balance changes were justified on that model |
+| TEST-82 | High | VERIFIED | `NoClassIsHopelessForACarelessPlayer` ran 30 seeds with the weakest class 1.3σ above its floor; the ratio arm needed 7 wins of an expected 9.9. ~1 change in 7 that merely perturbs the RNG stream turns it red for no balance reason |
+| REL-90 | Medium | VERIFIED | The HUD kept a second copy of the slash-bonus list and took Judgement, Dawnstrike and Holy Wrath as *alternatives* where `Talents.SlashDamage` **adds** them. A Paladin reading "3-4" hits a risen boss for 6 |
+| REL-91 | Medium | VERIFIED by measurement | Monsters never cross a vault's doorway, so a vault's other eight tiles are one ring and two chests cut it in half. **17% of 600 generated rooms** walled a guard off behind the treasure permanently |
+| DATA-50/51 | Medium | VERIFIED | The Berserker's card said "+1 for every 4 hearts missing" after D-071 moved Rage to 6; the Cleric's said Sanctuary heals on every block after D-071 gated it on being at half or fewer. Two shipped lies on the class-select screen |
+| DATA-52 | Medium | VERIFIED | `MercyOnStairs` sat on the catalog rather than the tier, so Blobert's Wrath - whose card ends "No mercy." - brought a dying hero back to half exactly as Squire's Stroll does, and each tier's `FloorClearHeal` was dead weight for anyone hurt enough to feel it |
+| MAINT-92 | Medium | VERIFIED | `LeaveVault` parks a live vault in `run.VisitedVault` (REL-26); neither `Score` nor `EnemyHp` reads it, so stepping out of a guarded vault scored as if the guards had been killed. And `_bestProgress` is a running maximum over the whole run with no reset, so a nine-tile vault was judged against the 25-tile floor outside it and caution sat at its floor for most of every vault visit |
+| MAINT-90 | Medium | VERIFIED | A class may learn one capstone, and `BuiltUp` spent in list order, so it always took the first-listed branch's. **16 of the 24 capstones** were measured by nothing - in the guard whose stated purpose is catching a tree broken end to end |
+| TEST-80/81 | Medium | VERIFIED | `BuiltUp` granted every item but `Inventory.Grant` only fills an *empty* slot, so the "built-up" player wore six Commons with every Epic in the bag - while the guard's own failure message said "the best gear worn". It carried no provisions at all |
+| TEST-83 | Medium | VERIFIED | `strongest <= weakest * 8/5` with the Berserker pinned at 40/40 is really "the weakest must win 25 of 40" - a 62.5% floor, three times stricter than the 50% the other arm advertises, and the one that would have gone red first |
+| TEST-84 | Medium | VERIFIED | `NoClassIsHopelessForACarelessPlayer` had no stall check, at the mistake rate likeliest to stall. A bot that stopped playing would read as eight classes that all got worse at once - the MAINT-15 failure this file was written for |
+| CI-20 | Medium | VERIFIED | `unity-gate.ps1` read Unity's exit code and never compared it to zero, and had no floor under the test count (its headless twin has had one since CI-09). An asmdef change takes EditMode from 488 to 20 and the kit packages green |
+| CI-21 | Medium | VERIFIED | `-SkipTests`, documented as skipping the headless suite, silently skipped EditMode and PlayMode too - 491 tests off the board with nothing in VERSION.txt to say so |
+| CI-22 | Medium | VERIFIED | With `-AllowVersionMismatch`, VERSION.txt read "Test gate: passed, N headless tests" three lines above the warning explaining that those tests never ran against the player in the box |
+| TEST-92/102/103 | Medium | VERIFIED | The undead/boss stacking rule was "tested" with a monster that is only one of the two, the undead roster was a subset check rather than an exhaustive one, and the Theater Curtain Demon - the exclusion D-072 argues hardest about - was in neither list. Tagging it undead would have passed every test |
+| TEST-93/95/96/97 | Medium | VERIFIED | Renown expectations computed by calling the function under test; a guard-clause value nothing pinned; a depth clamp with no case at it; `ApplyThreatTo` on a summon with nothing watching the rest of the floor |
+| TEST-98/99/101/105 | Medium-Low | VERIFIED | `Hp == MaxHp` on a summon that arrives whole cannot tell `Hp += extra` from `Hp = MaxHp`; the vault-guard test called the same `IsAdjacent` the generator filters with; the blind-vault test asserted only absences, which a blanked board satisfies perfectly; the boss-line ordering was pinned above but never below |
+| MAINT-80 | Low | VERIFIED | Two copies of the slash rule, so every new talent had to be added twice - the root cause under REL-90 |
+| MAINT-91 | Low | VERIFIED | `Math.Max(3, weakest.won * 3)` can only pick its 3 when the weakest won one run or none, which the assert above has already refused. It reads as a guard against a vacuous ratio and had never once executed |
+| MAINT-93 | Low | VERIFIED | The `Terrain.Wall` skip in `RevealedCells` is load-bearing only inside a vault, and nothing asserted either it or the invariant it rests on (D-021: a dungeon floor never generates a wall) |
+| MAINT-94 | Low | VERIFIED | `Provision` **mutates** the profile it is handed. Sharing one `BuiltUp` across a seed loop was harmless only while `BuiltUp` carried no provisions - so fixing TEST-81 would have quietly armed seed 1 and no other |
+
+### Rejected / downgraded
+
+- **Double-counted monsters across a vault transition** - traced: `run.Floor` and `run.OuterFloor` are never the same
+  object at any instant, so neither `Score` nor `EnemyHp` can double-count. `Copy()` deep-copies both boards and
+  `VisitedVault`, so look-ahead cannot mutate shared state.
+- **`BuiltUp`'s talent loop looping forever or building illegally** - hand-traced: every `true` from `TryLearn` strictly
+  increases points spent, bounded by level−1. The build is legal and spends every point. The defect was *which*
+  capstone, not termination (MAINT-90).
+- **REL-91 at 43%** - the larger number counts guards blocked by other guards. Played out (whoever can reach the hero
+  falls, ask again) every one of 600 rooms clears: that is three monsters queueing in a nine-tile room, not a defect.
+  The permanent, terrain-only case is the finding, and it was 17%.
+- **`unity-gate.ps1`'s Unity path resolution and stale-results handling** - checked and sound.
+
+### Remediation graph
+
+```
+A player-facing text (DATA-50/51)                    ─ independent, a live lie on the class-select screen
+B HUD truth (REL-90, MAINT-80)                       ─┐
+C vault reachability (REL-91)                         ├─> E re-measure ─> F docs + handoff
+D tier mercy (DATA-52)                                ─┘   (C and D move win rates)
+G test oracles (TEST-90/92/93/95/96/97/98/99/101/102/103/105) ─ must land before E is trusted
+H instruments (TEST-80/81/82/83/84, MAINT-90/91/92/93/94) ─> E
+I gates (CI-20/21/22)                                 ─ independent
+J TEST-85 error model                                 ─ decide, don't patch
+```
+
+**G before E**, the same inversion as audit 5: fixing the mercy's tier-awareness first would leave the rounding
+guarded only by a test that cannot see it.
+
+### Repair (D-073, same session)
+
+| ID | Outcome | Evidence | What changed |
+|---|---|---|---|
+| TEST-90 | FIXED | VERIFIED - mutation `MaxHp / 2` → `(MaxHp + 1) / 2` reddens it | `MaxHp = 21`, `Is.EqualTo(10)`, and a boundary loop over 9/10/11 hearts |
+| TEST-92/102/103 | FIXED | VERIFIED - two mutations (drop the undead bonus; make Dawnstrike skip the undead) redden it | `ARisenBossTakesBothBonuses` clones the catalog and makes a monster that is both; the undead roster is exhaustive via `Is.EquivalentTo`, with the mimic and the Theater Curtain Demon named as exclusions |
+| TEST-93/95/96/97 | FIXED | VERIFIED - the guard-clause mutation reddens the renown suites | Literal expectations; the exact guard value; a case at the depth clamp; the summoner's hearts watched while the minion takes its share |
+| TEST-98 | FIXED | VERIFIED - `Hp = MaxHp` reddens it | A monster wounded before it takes its share must keep the wound |
+| TEST-99 | FIXED | VERIFIED - disabling the generator's filter reddens it | Asserts `Chebyshev >= 2`, not the `IsAdjacent` the generator itself filters with |
+| TEST-101 | FIXED | VERIFIED - blanking the whole board reddens it | The positive half: what the player HAS seen is still there, and awake monsters outside are still counted |
+| TEST-105 | FIXED | VERIFIED (Unity EditMode, after the gate caught the first attempt) | A boss falling outranks a block and an ordinary heavy blow, not only "is outranked by dying". The ladder it now pins: RunLost 100, RunWon 99, the hero's last hearts 70, a boss falling 68, a chest 60, a block 55, a heavy blow 52, an ordinary one 50 |
+| DATA-50/51 | FIXED | VERIFIED (`EveryClassCardNamesTheNumbersItsRuleActuallyUses`) | Both cards restated; the new guard reddens when Rage moves and the card does not |
+| REL-90, MAINT-80 | FIXED | VERIFIED (`TheSlashTheHudPromisesIsTheSlashTheHeroLands`; the Max-instead-of-sum mutation reddens it) | One `Talents.SlashSpan` in the simulation; the HUD formats what it returns. The span is now the best target on the board rather than a catalogue of everything the hero owns |
+| REL-91 | FIXED | VERIFIED (`EveryGuardInAVaultCanWalkToTheHero`; measured 17% → **0%** of 600 rooms) | `FloorValidator` refuses a vault where a guard cannot walk to the hero; the generator makes another room |
+| DATA-52 | FIXED | VERIFIED (`TheMercyOnTheStairsIsTheTiersOwnAndTheCardSaysHowMuch`) | `MercyOnStairs` is a tier field: Squire's Stroll 2, Knight's Trial 2, **Blobert's Wrath 0** - which is what its card has always said. The test also pins the card against the number |
+| TEST-80/81 | FIXED | VERIFIED (`TheBuiltUpProfileIsActuallyBuiltUp`) | `BuiltUp` wears the best of each slot outright and carries one of every shop provision |
+| MAINT-94 | FIXED | VERIFIED (`AProfileIsSpentByTheRunItIsHandedTo`) | Every guard builds its profile inside the seed loop. Landed **with** TEST-81, which is the fix that would otherwise have armed seed 1 and no other |
+| MAINT-90 | FIXED | VERIFIED (`EveryCapstoneCarriesABuild`) | `BuiltUp` takes the branch whose capstone it climbs to, and a new guard plays all **24** of them, asserting the capstone was actually learned before it counts a single run |
+| MAINT-92 | FIXED | VERIFIED by re-measurement | One `Boards(run)` enumerating every board the run owns, read by both `Score` and `EnemyHp`; `_bestProgress` resets with the floor stamp, so a vault is judged against the vault |
+| MAINT-91, MAINT-93 | FIXED | VERIFIED / VERIFIED (`TheStoneAroundAVaultIsNotSomethingTheBotCountsAsUncovered`) | The unreachable `Math.Max` stated plainly; `RevealedCells` pinned inside a vault, and D-021's no-walls invariant pinned under it |
+| TEST-82/83/84 | FIXED | VERIFIED, and it changed what one guard is for - see below | 60 seeds, the number D-071 was measured at; the ratio arm gone from `EveryClassTreeIsWorthPlaying` and a 30-of-40 floor in its place; stalls tallied |
+| CI-20/21/22 | FIXED | VERIFIED - the headless gate fed a real summary returns 413, fed an all-skipped one refuses; the Unity gate run for real | Per-platform floors on tests that **passed** (EditMode 480, PlayMode 3), because NUnit counts a skipped case in the total and 15 `[Explicit]` tuning aids are skipped on purpose every run - so "skipped must be zero" is not the rule and a floor on the total is not either. A non-zero editor exit is a failure; `-SkipTests` and `-SkipUnityTests` are independent and VERSION.txt names whichever ran; on a version mismatch the gate line says it tested the tree and not the player. `test-gate.ps1` had the same blind spot - it captured Skipped and never read it - and is closed the same way |
+| MAINT-95 (new) | FIXED | VERIFIED (`AFloorHasAtMostOneVaultDoorBecauseARunRemembersOneRoom`) | A run remembers one vault room and the one door it hangs off, which is only enough because a floor has at most one. Found while reading for MAINT-92; the invariant was nowhere written down, and a second door would have restocked a looted room |
+| TEST-85 | DECIDED, NOT TUNED ON | measured this session | See below |
+
+### TEST-85: the decision
+
+A second error model is in the bot (`MistakeModel.Misjudged`): a slip takes the second, third or fourth best command
+instead of the best, and losing commands stay on the table, because misreading a telegraph is the mistake being
+modelled. The default is unchanged, so every shipped guard still measures what it measured.
+
+Forty blind seeds a class, careless rate, built-up:
+
+| model | ordering |
+|---|---|
+| RandomCommand (the one every number was measured with) | knight 38, cleric 38, berserker 37, engineer 33, paladin 31, wizard 30, **rogue 25**, ranger 22 |
+| Misjudged | knight 39, berserker 39, **rogue 37**, engineer 35, paladin 33, **cleric 33**, ranger 31, wizard 30 |
+
+The two disagree, and they disagree in exactly the direction the finding predicted. The Rogue - the class whose rule
+pays for reading a telegraph and standing in the right place - goes from seventh to third. The Cleric - the recovery
+class - goes from joint first to joint fifth. The spread goes 1.73 → 1.30, which is the careful-play parity band.
+
+**The decision is to record this and change no balance number on it.** The second instrument is not trustworthy yet: it
+stalls 1-10 runs in 40 depending on class (the wizard 10), where the first stalls none, so a tenth of its "losses" are
+the bot failing to finish rather than the hero dying. Re-justifying D-071 on a model with a 25% stall rate would repeat
+the mistake the finding is about.
+
+**What would settle it**, in order: make the Misjudged model stop stalling (`_barren` filters the *best* command's
+travel, not a deliberately suboptimal one's, so the bot oscillates); then measure the pre-D-071 catalog under it. If the
+4:1 careless spread that motivated D-071 is 1.3 under a plausible-error model, the mercy and the Sanctuary gate want
+re-justifying on their own merits rather than on that spread.
+
+`AutoPlayer.CasualMistakeRate` and `NoviceMistakeRate` now say in their own doc comments what they model.
+
+### What fixing the instrument showed (E, the re-measurement)
+
+With the gear and the provisions the fixture had always claimed, **a built-up casual player saturates the game**:
+
+| tier | 40 blind seeds a class, casual, built-up |
+|---|---|
+| Knight's Trial | knight 40, paladin 40, rogue 38, wizard 37, ranger 37, cleric 40, berserker 40, engineer 40 |
+| Blobert's Wrath | knight 40, paladin 39, rogue 39, wizard 37, ranger 38, cleric 40, berserker 40, engineer 38 |
+
+Five of eight win every seed on Knight's Trial, and the hardest tier costs such a player between nothing and two runs
+in forty. `EveryClassTreeIsWorthPlaying` therefore cannot measure a spread at all any more - which is why its ratio arm
+is gone rather than widened. It keeps one job, the one it was written for: a tree that has stopped paying. The floor is
+30 of 40 against a measured minimum of 37, and D-069 puts these same classes at 50-66% on an **empty** profile, so a
+tree broken end to end lands at 20-26 and still reddens it.
+
+The spread is measured where there is room to see one - `NoClassIsHopelessForACarelessPlayer`, at 60 seeds.
+
+**Recorded, not tuned**: the top end of the progression is worth more than the hardest tier. That is a design call for
+another session, and the number to argue with is in the table above.
+
+### Two mistakes this repair made, and what caught them
+
+Recorded because this audit is about repairs that introduce the thing they were fixing.
+
+1. **The TEST-105 assertion was written wrong.** It asked whether a boss falling outranks "a heavy blow the hero
+   survived comfortably" - using the run the test had already dropped to three hearts for the case above it. At three
+   hearts every blow is the peril line, so it was the wrong question asked of the wrong hero. The EditMode gate went
+   red on it; a fresh full-health hero fixed it. Had the kit still gated the headless suite only, this would have
+   shipped, because `SpeechPortraitTests` is EditMode-only.
+2. **A PowerShell interpolation bug got through a parse check that said it was fine.** `"$Platform: $skipped ..."`
+   is not valid - `$Platform:` reads as a drive-qualified variable - and a `[ScriptBlock]::Create` smoke test reported
+   the script as parsing anyway. The check that actually reports is
+   `[System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$errs)`, which names the line.
+3. **The first CI-20 fix was too strict.** "No test may be skipped" refused a perfectly good run: the repo has 15
+   `[Explicit]` tuning aids that are skipped every time. The floor belongs under **passed**, which covers the
+   all-skipped case the finding actually described and lets the tuning aids alone.
+
+Suites after the repair: **413 headless** (405 before), **498 EditMode passed of 513** (15 `[Explicit]`), **3 PlayMode**.

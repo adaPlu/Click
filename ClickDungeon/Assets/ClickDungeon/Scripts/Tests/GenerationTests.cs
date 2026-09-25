@@ -55,6 +55,26 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
+        public void AFloorHasAtMostOneVaultDoorBecauseARunRemembersOneRoom()
+        {
+            // MAINT-92: a run carries one vault room and the single door it hangs off (RunState.VisitedVault).
+            // EnterVault compares the door it is handed against that one and builds a fresh room when they differ, so on
+            // a floor with two doors, stepping through the second and back through the first would rebuild the first with
+            // its chests shut - the loop REL-26 closed. The generator makes one door; until now nothing said so, and the
+            // day a floor grew a second one the memory would have gone quietly wrong rather than loudly.
+            int withDoor = 0;
+            for (ulong seed = 1; seed <= 200; seed++)
+            for (int floorIndex = 1; floorIndex <= Catalog.RunFloorCount; floorIndex++)
+            {
+                var floor = FloorGenerator.Generate(seed, floorIndex, Catalog);
+                int doors = Board.AllCells.Count(p => floor[p].Terrain == Terrain.Door);
+                Assert.That(doors, Is.LessThanOrEqualTo(1), $"seed {seed} floor {floorIndex} has {doors} vault doors.");
+                if (doors == 1) withDoor++;
+            }
+            Assert.That(withDoor, Is.GreaterThan(0), "Test setup: some floors do have a vault door.");
+        }
+
+        [Test]
         public void GenerationIsDeterministic()
         {
             for (ulong seed = 1; seed <= 30; seed++)

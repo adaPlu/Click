@@ -52,12 +52,13 @@ namespace ClickDungeon.Content
         /// <summary>HP restored when the hero arrives on the next floor.</summary>
         public int FloorClearHeal;
         /// <summary>
-        /// The stairs never leave the hero below `MaxHp / MercyOnStairs` (D-071). Zero turns it off. This is help that
+        /// The stairs never leave the hero below `MaxHp / MercyOnStairs` (D-071), set by the tier. Zero turns it off - as
+        /// Blobert's Wrath does, where the card has always said so. This is help that
         /// only arrives when it is needed: a careful player is under half their hearts on 6% of turns and a careless one
         /// on up to 33%, so it lifts the floor of the game without raising its ceiling. It is why the four fragile
         /// classes stop being unplayable for a sloppy player while a sharp one barely notices it.
         /// </summary>
-        public int MercyOnStairs = 2;
+        public int MercyOnStairs;
 
         public readonly Dictionary<string, HeroClassDefinition> HeroClasses = new Dictionary<string, HeroClassDefinition>();
         public readonly Dictionary<string, HeroIdentityDefinition> HeroIdentities = new Dictionary<string, HeroIdentityDefinition>();
@@ -507,9 +508,9 @@ namespace ClickDungeon.Content
                 MaxMana = 6, ShieldCost = 3, DashCost = 4, DashDistance = 1,
                 RevealRadius = 1, SenseRadius = 2,
                 Traits = new Dictionary<TalentEffect, int> { [TalentEffect.Sanctuary] = 1 },
-                TraitName = "Sanctuary", TraitText = "Every attack your shield blocks heals you 1 heart.",
+                TraitName = "Sanctuary", TraitText = "At half hearts or fewer, every attack your shield blocks heals you 1 heart.",
                 Role = "Healer", Difficulty = 1, Theme = "#E8D8A0",
-                Playstyle = "Mends through every fight. The Cleric picks her moment to shield, and every blow she turns aside heals her.",
+                Playstyle = "Mends through every fight. The Cleric picks her moment to shield, and once she is hurt every blow she turns aside heals her.",
                 Branches = new[]
                 {
                     new TalentBranch { Id = "mercy", Name = "MERCY", Focus = "Potions, prayer and rest", Color = "#F4E6B0" },
@@ -549,7 +550,7 @@ namespace ClickDungeon.Content
                 MaxMana = 4, ShieldCost = 3, DashCost = 3, DashDistance = 1,
                 RevealRadius = 1, SenseRadius = 2,
                 Traits = new Dictionary<TalentEffect, int> { [TalentEffect.Rage] = 6 },
-                TraitName = "Rage", TraitText = "Slashes deal +1 for every 4 hearts you are missing.",
+                TraitName = "Rage", TraitText = "Slashes deal +1 for every 6 hearts you are missing.",
                 Role = "Melee damage", Difficulty = 2, Theme = "#D9531E",
                 Playstyle = "Wades in and gets angrier. The Berserker trades safety for a blade that sharpens with every heart he loses.",
                 Branches = new[]
@@ -995,20 +996,25 @@ namespace ClickDungeon.Content
             {
                 Id = Difficulty.Easy, DisplayName = "Squire's Stroll", Tagline = "More hearts, softer hits and a breather on every stair.",
                 HeroMaxHp = 4, StartingPotions = 1, EnemyDamage = -1, HazardDamage = -1, BossHp = -2, BossSlamDamage = -1, FloorClearHeal = 3,
+                MercyOnStairs = 2,
             };
             c.Difficulties[Difficulty.Medium] = new DifficultyDefinition
             {
                 Id = Difficulty.Medium, DisplayName = "Knight's Trial", Tagline = "Biting traps and an extra monster a floor. Click carefully.",
                 // D-038: each floor holds one more monster. D-050: traps hit one harder again, measured with a bot that no
                 // longer stalls (D-048/D-049) — blind casual wins ~78%, novice ~35% (rules §10.2).
-                ExtraEnemies = 1, HazardDamage = 1,
+                // D-071: the stairs bring a badly hurt hero back to half, which is what makes the fragile classes
+                // playable for a careless player without touching what a sharp one gets.
+                ExtraEnemies = 1, HazardDamage = 1, MercyOnStairs = 2,
             };
             c.Difficulties[Difficulty.Hardcore] = new DifficultyDefinition
             {
                 Id = Difficulty.Hardcore, DisplayName = "Blobert's Wrath", Tagline = "Tougher monsters, a mightier Blobert, one potion. No mercy.",
                 // D-050: Knight's Trial caught up on traps, so the gap here is the monsters, the boss and the missing potion.
                 // Blind casual AutoPlayer wins ~45%, novice ~15% (rules §10.2).
-                StartingPotions = -1, EnemyHp = 1, BossHp = 4, BossSlamDamage = 1, HazardDamage = 1,
+                // No mercy is what the card says, so the stairs give none here: D-071's floor is Squire's Stroll's and
+                // Knight's Trial's, and this tier is the one that is meant to make carelessness cost (DATA-52).
+                StartingPotions = -1, EnemyHp = 1, BossHp = 4, BossSlamDamage = 1, HazardDamage = 1, MercyOnStairs = 0,
             };
             return c;
         }
@@ -1017,6 +1023,7 @@ namespace ClickDungeon.Content
         {
             Difficulty = d.Id;
             FloorClearHeal = Math.Max(0, d.FloorClearHeal);
+            MercyOnStairs = Math.Max(0, d.MercyOnStairs);
 
             foreach (var hero in HeroClasses.Values)
             {

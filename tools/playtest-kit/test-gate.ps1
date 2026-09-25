@@ -38,15 +38,23 @@ if ($found.Count -eq 0) {
 }
 
 $failed = 0
+$passed = 0
+$skipped = 0
 $total = 0
 foreach ($m in $found) {
     $failed += [int]$m.Groups[1].Value
+    $passed += [int]$m.Groups[2].Value
+    $skipped += [int]$m.Groups[3].Value
     $total += [int]$m.Groups[4].Value
 }
 
 if ($failed -gt 0) { throw "Headless tests failed ($failed failing). Fix them before packaging a kit." }
-if ($total -lt $MinimumTests) {
-    throw "Test gate: only $total tests ran, below the floor of $MinimumTests. The suite shrank or stopped being discovered -- do not package this kit until you know why."
+# The floor goes under PASSED. The summary's Total counts skipped cases, so a run in which every test was skipped
+# reads exactly like one that passed - the same hole the Unity gate had, and this script captured Skipped and never
+# looked at it either (CI-20).
+if ($passed -lt $MinimumTests) {
+    throw "Test gate: only $passed tests passed ($total reported, $skipped skipped), below the floor of $MinimumTests. The suite shrank or stopped being discovered -- do not package this kit until you know why."
 }
 
-Write-Output $total
+if ($skipped -gt 0) { Write-Warning "$skipped headless tests were skipped." }
+Write-Output $passed

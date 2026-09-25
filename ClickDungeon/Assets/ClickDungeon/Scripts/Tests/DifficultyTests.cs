@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using ClickDungeon.Application;
 using ClickDungeon.Content;
 using ClickDungeon.Domain;
@@ -165,6 +166,43 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
+        public void TheMercyOnTheStairsIsTheTiersOwnAndTheCardSaysHowMuch()
+        {
+            // DATA-52: for one version the floor lived on the catalog rather than the tier, so Blobert's Wrath - whose
+            // card has always ended "No mercy." - brought a dying hero back to half exactly as Squire's Stroll does,
+            // and the FloorClearHeal each tier is tuned with was dead weight for anyone hurt enough to feel it.
+            var tiers = new[] { Difficulty.Easy, Difficulty.Medium, Difficulty.Hardcore }
+                .Select(id => ContentCatalog.CreateDefault(id)).ToArray();
+            Assert.That(tiers.Select(c => c.MercyOnStairs), Is.EqualTo(new[] { 2, 2, 0 }),
+                "Half on the two gentler tiers, none at the bottom.");
+
+            foreach (var catalog in tiers)
+            {
+                var run = Run(
+                    ".....",
+                    ".....",
+                    "HKX..",
+                    ".....",
+                    ".....");
+                run.Hero.MaxHp = 21;
+                run.Hero.Hp = 2;
+                Assert.That(TurnResolver.Apply(run, PlayerCommand.Move(P(1, 2)), catalog).Accepted, Is.True);
+                TurnResolver.Apply(run, PlayerCommand.Move(P(2, 2)), catalog);
+                Assert.That(run.Floor.FloorIndex, Is.EqualTo(2), "Test setup: the hero took the stairs.");
+
+                int expected = catalog.MercyOnStairs > 0
+                    ? 10
+                    : 2 + catalog.FloorClearHeal;
+                Assert.That(run.Hero.Hp, Is.EqualTo(expected), catalog.DifficultyInfo(catalog.Difficulty).DisplayName);
+            }
+
+            // And the card is not left saying something the numbers stopped doing (DATA-50/51 in the tier cards).
+            var wrath = ContentCatalog.CreateDefault().DifficultyInfo(Difficulty.Hardcore);
+            Assert.That(wrath.Tagline, Does.Contain("No mercy"), "The card the player reads before choosing.");
+            Assert.That(ContentCatalog.CreateDefault(Difficulty.Hardcore).MercyOnStairs, Is.Zero, "And it means it.");
+        }
+
+        [Test]
         public void TheStairsNeverLeaveABadlyHurtHeroBelowHalf()
         {
             // D-071: help that only arrives when it is needed. A careful player is under half their hearts on 6% of
@@ -178,15 +216,19 @@ namespace ClickDungeon.Tests
                 "HKX..",
                 ".....",
                 ".....");
-            run.Hero.MaxHp = 20;
+            // TWENTY-ONE, not twenty, and an exact landing rather than a bound. An even MaxHp cannot tell `MaxHp / 2`
+            // from `(MaxHp + 1) / 2` - the same rounding blind spot that let a mutation ship in 17370c1, reintroduced
+            // by the very repair that closed it. 21/2 is 10 and 22/2 is 11, so this one can see the difference, and
+            // `Is.EqualTo` sees an overshoot that `Is.GreaterThanOrEqualTo` cannot (TEST-90).
+            run.Hero.MaxHp = 21;
             run.Hero.Hp = 2;
 
             Assert.That(TurnResolver.Apply(run, PlayerCommand.Move(P(1, 2)), medium).Accepted, Is.True);
             TurnResolver.Apply(run, PlayerCommand.Move(P(2, 2)), medium);
 
             Assert.That(run.Floor.FloorIndex, Is.EqualTo(2), "Test setup: the hero took the stairs.");
-            Assert.That(run.Hero.Hp, Is.GreaterThanOrEqualTo(run.Hero.MaxHp / medium.MercyOnStairs),
-                "A hero who reaches the stairs nearly dead is brought back to half.");
+            Assert.That(run.Hero.Hp, Is.EqualTo(10),
+                "Half of 21 hearts, rounded down, and not a heart more: the stairs are mercy, not a top-up.");
 
             // And it is mercy, not a free top-up: a hero above half gets the breather and nothing more.
             var healthy = Run(
@@ -195,12 +237,27 @@ namespace ClickDungeon.Tests
                 "HKX..",
                 ".....",
                 ".....");
-            healthy.Hero.MaxHp = 20;
+            healthy.Hero.MaxHp = 21;
             healthy.Hero.Hp = 15;
             Assert.That(TurnResolver.Apply(healthy, PlayerCommand.Move(P(1, 2)), medium).Accepted, Is.True);
             TurnResolver.Apply(healthy, PlayerCommand.Move(P(2, 2)), medium);
-            Assert.That(healthy.Hero.Hp, Is.EqualTo(Math.Min(healthy.Hero.MaxHp, 15 + medium.FloorClearHeal)),
-                "Above half, the stairs give the breather and nothing else.");
+            Assert.That(healthy.Hero.Hp, Is.EqualTo(15), "Above half on Knight's Trial the stairs give nothing at all.");
+
+            // And the boundary itself: one heart under half is mercy, exactly half is not.
+            foreach (var (startHp, expected) in new[] { (9, 10), (10, 10), (11, 11) })
+            {
+                var edge = Run(
+                    ".....",
+                    ".....",
+                    "HKX..",
+                    ".....",
+                    ".....");
+                edge.Hero.MaxHp = 21;
+                edge.Hero.Hp = startHp;
+                Assert.That(TurnResolver.Apply(edge, PlayerCommand.Move(P(1, 2)), medium).Accepted, Is.True);
+                TurnResolver.Apply(edge, PlayerCommand.Move(P(2, 2)), medium);
+                Assert.That(edge.Hero.Hp, Is.EqualTo(expected), $"a hero on {startHp} of 21 hearts");
+            }
         }
 
         [Test]

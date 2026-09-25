@@ -1,8 +1,11 @@
 # Packages the Windows build into a zipped playtest kit for testers.
 # Usage: powershell -ExecutionPolicy Bypass -File tools/playtest-kit/make-kit.ps1
 # Build first with ClickDungeon -> Build Windows.
-# The headless tests gate the kit (see test-gate.ps1); -SkipTests skips them and says so in VERSION.txt.
-# The kit is named after the player's build stamp; -AllowVersionMismatch packages one that predates the tree.
+# Three suites gate the kit: the headless rules (test-gate.ps1), and Unity's EditMode and PlayMode (unity-gate.ps1).
+# -SkipTests skips the headless one and -SkipUnityTests the other two; each is independent of the other, and
+# VERSION.txt names whichever was skipped (CI-21).
+# The kit is named after the player's build stamp; -AllowVersionMismatch packages one that predates the tree, and
+# says on the gate line that the tests ran against the tree rather than against the player in the box (CI-22).
 param(
     [string]$BuildDir = (Join-Path $PSScriptRoot '..\..\ClickDungeon\Builds\Windows'),
     [string]$OutDir = (Join-Path $PSScriptRoot '..\..\ClickDungeon\Builds\Playtest'),
@@ -44,24 +47,31 @@ if (-not $SkipTests) {
 }
 else {
     # CI-09: an ungated kit must say so, or it is indistinguishable from one that passed.
-    $gateLine = 'Test gate: SKIPPED (-SkipTests) -- this kit was NOT verified'
+    $gateLine = 'Test gate: headless SKIPPED (-SkipTests) -- the rules were NOT verified'
     Write-Warning 'Packaging without running the headless tests. VERSION.txt will say so.'
 }
 
 # TEST-50: the headless suite is a third of what the repo checks. The EditMode suite is what proves every hero has
 # the face the dialogue asks for (D-065), and the PlayMode suite is the only thing that can look at a drawn tile
 # (D-066) - both of them protected nothing that shipped, because the kit never ran them.
-if (-not $SkipTests -and -not $SkipUnityTests) {
+# A floor under each count, as the headless gate has had since CI-09: `total > 0` let an asmdef change take EditMode
+# from 488 tests to 20 and still package green. These sit below what the suites hold today, so an honest addition
+# never trips one and a suite that quietly stopped being discovered always does (CI-20).
+$unityFloors = @{ EditMode = 480; PlayMode = 3 }
+# CI-21: -SkipTests used to skip these two as well, silently and with nothing in VERSION.txt to say so - 491 tests
+# off the board under a flag documented as skipping the headless suite. The switches are independent now, and the
+# Unity clause is written either way, because a record that omits what was skipped is the CI-09 defect again.
+if (-not $SkipUnityTests) {
     $unityLines = @()
     foreach ($platform in @('EditMode', 'PlayMode')) {
         Write-Output "Running $platform tests (pass -SkipUnityTests to skip)..."
-        $count = [int](& (Join-Path $PSScriptRoot 'unity-gate.ps1') -Platform $platform)
+        $count = [int](& (Join-Path $PSScriptRoot 'unity-gate.ps1') -Platform $platform -MinimumTests $unityFloors[$platform])
         $unityLines += "$count $platform"
         Write-Output "Test gate: $count $platform tests passed."
     }
-    $gateLine = "$gateLine, " + ($unityLines -join ', ')
+    $gateLine = "$gateLine; " + ($unityLines -join ', ') + ' passed'
 }
-elseif (-not $SkipTests) {
+else {
     $gateLine = "$gateLine; Unity suites SKIPPED (-SkipUnityTests) -- EditMode and PlayMode were NOT verified"
     Write-Warning 'Packaging without running the Unity suites. VERSION.txt will say so.'
 }
@@ -85,6 +95,13 @@ if ((git -C $repo status --porcelain --untracked-files=normal) -and $version -no
 $mismatch = $builtFrom -ne $version
 if ($mismatch -and -not $AllowVersionMismatch) {
     throw "The player was built from $builtFrom, but the working tree is $version. Rebuild (ClickDungeon -> Build Windows) so the kit matches, or pass -AllowVersionMismatch to package it anyway."
+}
+# CI-22: the gates test the tree they are run in, and the box holds the player built from $builtFrom. When those are
+# the same commit the gate line describes the artefact; when -AllowVersionMismatch let them differ it did not, and it
+# still read "Test gate: passed, 405 headless tests" three lines above the warning that said why it could not be.
+# -AllowVersionMismatch is the flag someone reaches for when they cannot rebuild, which is when the two differ most.
+if ($mismatch) {
+    $gateLine = "$gateLine -- but against the packaging tree ($version), NOT against the player in this kit ($builtFrom)"
 }
 
 $date = Get-Date -Format 'yyyy-MM-dd'

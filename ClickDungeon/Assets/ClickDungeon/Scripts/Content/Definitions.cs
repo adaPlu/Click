@@ -238,6 +238,13 @@ namespace ClickDungeon.Content
         public int ExtraEnemies;
         /// <summary>HP restored when the hero arrives on the next floor.</summary>
         public int FloorClearHeal;
+        /// <summary>
+        /// The fraction of full hearts the stairs will not leave the hero below, as a divisor - 2 is half, 3 a third,
+        /// 0 no floor at all (D-071). A tier's own number, not the catalog's: for one version every tier had the same
+        /// one, so Blobert's Wrath promised "No mercy" and handed out exactly as much of it as Squire's Stroll, and the
+        /// FloorClearHeal each tier is tuned with was dead weight for any hero hurt enough to notice it (DATA-52).
+        /// </summary>
+        public int MercyOnStairs;
     }
 
     /// <summary>What a vault room holds (D-018): either one great chest or a handful of ordinary ones.</summary>

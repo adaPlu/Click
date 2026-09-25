@@ -112,10 +112,14 @@ namespace ClickDungeon.Tests
         {
             // The tag carries rules, so what wears it is a design statement, not a convenience. Bones and spectres and
             // the book that animates them are risen; a mimic is furniture and a demon was never alive (D-072).
-            foreach (var id in new[] { "skeleton", "spooky_spellbook", "spectral_page" })
-                Assert.That(Catalog.Enemy(id).Undead, Is.True, id);
-            foreach (var id in new[] { "goblin", "crowned_slime", "mimic_chest", "cave_spider", "bat", "armored_boar" })
-                Assert.That(Catalog.Enemy(id).Undead, Is.False, id);
+            // Both directions, exhaustively. A list of "these are not undead" cannot see a fourth monster being tagged,
+            // and the one D-072 argues hardest about - the Theater Curtain Demon, the only boss in that sentence - was
+            // missing from it. Tagging a boss undead would stack Holy Wrath with Dawnstrike silently (TEST-102).
+            Assert.That(Catalog.Enemies.Values.Where(e => e.Undead).Select(e => e.Id),
+                Is.EquivalentTo(new[] { "skeleton", "spooky_spellbook", "spectral_page" }),
+                "The risen are exactly these three.");
+            Assert.That(Catalog.Enemy("mimic_chest").Undead, Is.False, "A mimic is furniture.");
+            Assert.That(Catalog.Enemy("theater_curtain_demon").Undead, Is.False, "A demon was never alive.");
         }
 
         [Test]
@@ -130,18 +134,59 @@ namespace ClickDungeon.Tests
                 "Two ranks of Holy Wrath, two more damage to what is risen.");
             Assert.That(Talents.SlashDamage(living, living.Floor.Enemies[0], Catalog), Is.EqualTo(bare),
                 "A goblin is alive and feels nothing of it.");
+
+            // A Skeleton Warrior is the only undead that also reassembles, so testing only against it would pass if the
+            // rule read the wrong flag. A Spectral Page is risen and does not get back up (TEST-103).
+            var page = Run(".....", ".....", ".H...", ".....", ".....");
+            EnemyAi.Spawn(page.Floor, Catalog.Enemy("spectral_page"), P(2, 2), awake: true);
+            var spectral = As(page, "dawnward");
+            spectral.Perks[TalentEffect.HolyWrath.ToString()] = 2;
+            Assert.That(Catalog.Enemy("spectral_page").Reassembles, Is.False, "Test setup: it is risen but does not rise again.");
+            Assert.That(Talents.SlashDamage(spectral, spectral.Floor.Enemies[0], Catalog),
+                Is.EqualTo(spectral.Hero.SlashDamage + 2), "Holy Wrath reads the tag, not a stand-in for it.");
         }
 
         [Test]
-        public void HolyWrathAndDawnstrikeBothAnswerARisenBoss()
+        public void ARisenBossTakesBothBonuses()
         {
-            // Nothing undead is a boss today, so this pins the rule rather than the roster: the two stack.
+            // Talents.cs says "a boss can be both, and they stack" and nothing tested it: the roster ships no undead
+            // boss, so the old test spawned a skeleton, asserted one bonus, and proved only what its neighbour already
+            // did. The rule is about a combination of two flags, so the fixture has to make that combination (TEST-92).
+            var catalog = ContentCatalog.CreateDefault();
+            catalog.Enemy("skeleton").IsBoss = true;
             var run = With(As(Run(".....", ".....", ".HZ..", ".....", "....."), "dawnward"),
                 (TalentEffect.HolyWrath, 1), (TalentEffect.Dawnstrike, 1));
-            var skeleton = run.Floor.Enemies[0];
+            var risenBoss = run.Floor.Enemies[0];
             int bare = run.Hero.SlashDamage;
 
-            Assert.That(Talents.SlashDamage(run, skeleton, Catalog), Is.EqualTo(bare + 1), "Undead, not a boss: one bonus.");
+            Assert.That(Talents.SlashDamage(run, risenBoss, catalog), Is.EqualTo(bare + 2),
+                "Risen and a boss: both bonuses, added, not the larger of the two.");
+            Assert.That(Catalog.Enemies.Values.Any(e => e.IsBoss && e.Undead), Is.False,
+                "No shipped monster is both today - this test pins the rule, and says so rather than implying a roster.");
+        }
+
+        [Test]
+        public void TheSlashTheHudPromisesIsTheSlashTheHeroLands()
+        {
+            // REL-90: the HUD kept its own copy of the bonus list and took Judgement, Dawnstrike and Holy Wrath as
+            // alternatives where the rule adds them. Literal numbers, because "the same as what SlashDamage returns"
+            // is a tautology against a second copy of the arithmetic - the whole defect was two copies agreeing.
+            var catalog = ContentCatalog.CreateDefault();
+            catalog.Enemy("skeleton").IsBoss = true;
+            var run = With(As(Run(".....", ".....", ".HZ..", ".....", "....."), "dawnward"),
+                (TalentEffect.HolyWrath, 1), (TalentEffect.Dawnstrike, 1), (TalentEffect.Judgement, 1));
+            run.Hero.SlashDamage = 3;
+            var risenBoss = run.Floor.Enemies[0];
+            risenBoss.Staggered = true;
+
+            Talents.SlashSpan(run, catalog, out int low, out int high);
+            Assert.That(low, Is.EqualTo(3), "What a slash carries whatever it meets.");
+            Assert.That(high, Is.EqualTo(6), "Risen, a boss and reeling: all three, added. The HUD used to say 4.");
+
+            // And it is the board's best target, not a catalogue of everything the hero owns: out of reach, out of the span.
+            risenBoss.Pos = P(4, 4);
+            Talents.SlashSpan(run, catalog, out low, out high);
+            Assert.That(high, Is.EqualTo(low), "Nothing within reach, nothing to promise.");
         }
 
         // ------------------------------------------------------------------ Knight

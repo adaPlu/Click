@@ -34,11 +34,13 @@ namespace ClickDungeon.Simulation
 
             int exits = 0;
             int keys = 0;
+            int doors = 0;
             GridPos keyPos = GridPos.Invalid;
             foreach (var p in Board.AllCells)
             {
                 var cell = floor[p];
                 if (cell.IsExit) exits++;
+                if (cell.Terrain == Terrain.Door) doors++;
                 int things = (cell.IsExit ? 1 : 0) + (cell.Hazard != HazardKind.None ? 1 : 0) + (cell.Content != ContentKind.None ? 1 : 0);
                 if (things > 1) errors.Add($"Cell {p} holds more than one exit/hazard/content.");
                 if (things > 0 && cell.Terrain != Terrain.Floor) errors.Add($"Cell {p} has objects on non-floor terrain.");
@@ -49,6 +51,11 @@ namespace ClickDungeon.Simulation
                 }
             }
             if (exits != 1) errors.Add($"Expected exactly one exit, found {exits}.");
+            // A run remembers one vault room and the one door it hangs off (RunState.VisitedVault), which is only enough
+            // because a floor has at most one. A second door would send the hero back into a room that had been dropped
+            // for the other one, and a fresh room means chests shut again - the loot loop REL-26 closed. The invariant is
+            // written down here so a second door fails on the bench rather than quietly paying out twice (MAINT-92).
+            if (doors > 1) errors.Add($"A floor has at most one vault door, found {doors}.");
             if (!floor.Exit.InBounds || !floor[floor.Exit].IsExit) errors.Add("Exit position does not match the exit cell.");
 
             var occupied = new HashSet<GridPos>();
@@ -121,6 +128,14 @@ namespace ClickDungeon.Simulation
                 {
                     if (fromStart[floor.Exit.Index] == Pathfinding.Unreachable)
                         errors.Add("Vault exit is unreachable from its entrance.");
+                    // REL-91: a guard that cannot walk to the hero is scenery. Monsters never cross the doorway
+                    // (Board.EnemyPathable), so a vault's eight remaining tiles are one ring, and two chests on it cut
+                    // the room in half. Measured before this check: 17% of rooms walled a guard off behind the treasure
+                    // for good, and 53% had one that could not move at all while its neighbours stood where they were.
+                    // The generator makes another room rather than shipping this one.
+                    foreach (var enemy in floor.Enemies)
+                        if (!CanWalkTo(floor, enemy.Pos, floor.Start))
+                            errors.Add($"Vault guard at {enemy.Pos} cannot reach the hero at {floor.Start}.");
                 }
                 else if (floor.IsBossFloor)
                 {
@@ -152,6 +167,30 @@ namespace ClickDungeon.Simulation
         /// an edge to its partner rather than a tile with neighbours of its own (REL-27). Straight steps only, like the
         /// distance field this replaced.
         /// </summary>
+        /// <summary>
+        /// Whether a monster standing on <paramref name="from"/> could walk within reach of <paramref name="target"/>.
+        /// Eight-way, as monsters move (Board.Neighbours), and over the tiles a monster may stand on - other monsters do
+        /// not block, because they shuffle, but a chest or a trap never moves.
+        /// </summary>
+        static bool CanWalkTo(FloorState floor, GridPos from, GridPos target)
+        {
+            var seen = new HashSet<GridPos> { from };
+            var queue = new Queue<GridPos>();
+            queue.Enqueue(from);
+            while (queue.Count > 0)
+            {
+                var p = queue.Dequeue();
+                if (p.IsAdjacent(target)) return true;
+                foreach (var n in Board.Neighbours(p))
+                {
+                    if (seen.Contains(n) || !Board.EnemyPathable(floor, n)) continue;
+                    seen.Add(n);
+                    queue.Enqueue(n);
+                }
+            }
+            return false;
+        }
+
         static int[] Reachable(FloorState floor, GridPos source, Func<GridPos, bool> safe)
         {
             var dist = new int[BoardRules.CellCount];

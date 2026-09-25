@@ -29,12 +29,40 @@ namespace ClickDungeon.Application
     /// cells, so it plays better than a human who can only read what is revealed; construct it <c>blind</c> to decide on
     /// a redacted board instead. Commands still go through the normal rules. Use one instance per run.
     /// </summary>
+    /// <summary>
+    /// What a mistake IS. The bot has always had one kind, and it was never written down: on a slip it threw away the
+    /// look-ahead and drew uniformly from every legal command that does not lose on the spot. In Free Roam that list is
+    /// up to twenty-four Move commands against a handful of anything else, so three mistakes in four were a teleport to
+    /// a random tile - and the hero could never walk into a telegraphed killing blow, which is the most characteristic
+    /// novice death there is. "Careless play" meant "tolerance to position-independent chip damage", and D-071 read the
+    /// class spread off it (TEST-85).
+    /// </summary>
+    public enum MistakeModel
+    {
+        /// <summary>A uniform draw from every legal command that survives the turn. The model every number before D-072 was measured with.</summary>
+        RandomCommand = 0,
+        /// <summary>
+        /// The second, third or fourth best command instead of the best: a player who read the board and read it wrong,
+        /// rather than one who forgot where they were. Losing moves are on the table, because misreading a telegraph is
+        /// the mistake being modelled.
+        /// </summary>
+        Misjudged = 1,
+    }
+
     public sealed class AutoPlayer
     {
+        /// <summary>How many of the best-scoring commands a <see cref="MistakeModel.Misjudged"/> slip picks among, the best one excepted.</summary>
+        public const int MisjudgedChoices = 3;
+
         /// <summary>Turns without progress before the player takes full risks.</summary>
         public const int PatienceTurns = 8;
 
-        /// <summary>Mistake rate used for balance targets: roughly a first-time player who mostly reads the telegraphs.</summary>
+        /// <summary>
+        /// Mistake rate used for balance targets. Read it with <see cref="MistakeModel"/>: under the default model this
+        /// is "one turn in five is a uniform draw from the legal commands that survive it", which on a 5x5 board in Free
+        /// Roam is mostly a step to a random tile. It is NOT "a first-time player who mostly reads the telegraphs" -
+        /// that is what it used to say, and the difference is what TEST-85 is about.
+        /// </summary>
         public const double CasualMistakeRate = 0.2;
 
         /// <summary>
@@ -82,12 +110,17 @@ namespace ClickDungeon.Application
             }
         }
 
-        public AutoPlayer(double mistakeRate = 0, bool blind = false, bool loots = true)
+        public AutoPlayer(double mistakeRate = 0, bool blind = false, bool loots = true,
+            MistakeModel model = MistakeModel.RandomCommand)
         {
             MistakeRate = Math.Max(0, Math.Min(1, mistakeRate));
             Blind = blind;
             Loots = loots;
+            Model = model;
         }
+
+        /// <summary>What a slip does. See <see cref="MistakeModel"/>: the default is the one every balance number was measured with.</summary>
+        public MistakeModel Model { get; }
 
         /// <summary>
         /// True when the player opens the chests it knows about. False plays key-to-exit only, which is how chest value is
@@ -171,6 +204,13 @@ namespace ClickDungeon.Application
                 _barren.Clear();
                 // Going down a floor leaves its vaults behind; stepping in and out of one does not.
                 if (view.Floor.FloorIndex != _lastFloorStamp / 2) _vaultsVisited.Clear();
+                // And the high-water mark goes with them. It was a running maximum over the whole run, so a nine-tile
+                // vault was judged against the twenty-five-tile floor outside it: entering cost some eleven thousand
+                // points of revealed tiles that could not be won back inside, the bot could not beat its own best for
+                // most of the visit, and caution sank to its floor for the thirteen floors in twenty that have a vault.
+                // Every win rate in D-069 and D-071 was measured through that (MAINT-92).
+                _bestProgress = long.MinValue;
+                _turnsWithoutProgress = 0;
                 _lastFloorStamp = floorStamp;
                 _lastWasTravel = false;
             }
@@ -190,6 +230,9 @@ namespace ClickDungeon.Application
             var best = PlayerCommand.Wait();
             double bestScore = double.NegativeInfinity;
             var survivable = new List<PlayerCommand>();
+            // Only built for a Misjudged slip, and only on the turns one happens: ranking every candidate on every turn
+            // of every seed is a measurable cost in a sweep that plays tens of thousands of runs.
+            var ranked = slip && Model == MistakeModel.Misjudged ? new List<(PlayerCommand command, double score)>() : null;
             // The exit is always one click away in Free Roam, so a healthy player finishes the chests they know about first;
             // only danger is a reason to leave loot behind.
             bool holdForLoot = Loots && view.Hero.Hp * 2 > view.Hero.MaxHp && KnownLoot(view, catalog) > 0 && !AnyAwakeEnemy(view);
@@ -207,13 +250,29 @@ namespace ClickDungeon.Application
                 if (copy.Status != RunStatus.Lost) survivable.Add(command);
                 double score = Score(copy, catalog, caution, Blind, Loots) + rng.Next(8);
                 if (holdForLoot && LeftTheFloor(view, copy)) score -= LeaveLootPenalty;
+                ranked?.Add((command, score));
                 if (score > bestScore)
                 {
                     bestScore = score;
                     best = command;
                 }
             }
-            var chosen = slip && survivable.Count > 0 ? survivable[rng.Next(survivable.Count)] : best;
+            var chosen = best;
+            if (slip)
+            {
+                if (Model == MistakeModel.Misjudged && ranked.Count > 1)
+                {
+                    // Runners-up, best excepted: the board was read, and read wrong. A losing command stays in - that is
+                    // the telegraph the player misread, and the death the other model cannot produce.
+                    ranked.Sort((x, y) => y.score.CompareTo(x.score));
+                    int span = Math.Min(MisjudgedChoices, ranked.Count - 1);
+                    chosen = ranked[1 + rng.Next(span)].command;
+                }
+                else if (Model == MistakeModel.RandomCommand && survivable.Count > 0)
+                {
+                    chosen = survivable[rng.Next(survivable.Count)];
+                }
+            }
             if (IsTravel(chosen))
             {
                 _lastWasTravel = true;
@@ -237,9 +296,9 @@ namespace ClickDungeon.Application
         /// </summary>
         public static AutoRunResult PlayRun(ContentCatalog catalog, ulong seed, int maxCommands, double mistakeRate = 0,
             MovementMode movement = MovementMode.Free, bool blind = false, bool loots = true, string heroId = null,
-            ProfileState profile = null)
+            ProfileState profile = null, MistakeModel model = MistakeModel.RandomCommand)
         {
-            var player = new AutoPlayer(mistakeRate, blind, loots);
+            var player = new AutoPlayer(mistakeRate, blind, loots, model);
             var events = new List<GameEvent>();
             var run = RunFactory.NewRun(seed, catalog, events, heroId ?? ContentCatalog.DefaultHeroId, movement);
             // The same five steps the game takes, through the same function, so the harness cannot drift from it.
@@ -332,15 +391,14 @@ namespace ClickDungeon.Application
 
             // Telegraphed damage can still be dodged or blocked next turn, so it weighs less than a step of progress.
             score -= Threats.DamageAt(Threats.Compute(run, catalog), hero.Pos) * 25 * caution;
-            // Sleeping enemies count too: waking one costs nothing, wounding one is progress.
-            foreach (var enemy in floor.Enemies)
-                score -= enemy.Hp * (catalog.Enemy(enemy.DefId).IsBoss ? 90 : 35);
-            // The floor a vault hangs off is still there, monsters and all. Counting only the board underfoot made them
+            // Sleeping enemies count too: waking one costs nothing, wounding one is progress. Every board the run owns,
+            // not just the one underfoot: the floor a vault hangs off is still there, monsters and all, and so is a
+            // vault the hero has stepped back out of. Counting only the board underfoot made the outer floor's monsters
             // vanish while the hero was inside, so walking back out - which puts them back - always scored worse than
             // staying, and in a room of nine tiles there is nowhere to wander to instead: the bot circled it to the
-            // command cap (D-064).
-            if (run.OuterFloor != null)
-                foreach (var enemy in run.OuterFloor.Enemies)
+            // command cap (D-064). The exit side was the same bug mirrored, and survived that fix (MAINT-92).
+            foreach (var board in Boards(run))
+                foreach (var enemy in board.Enemies)
                     score -= enemy.Hp * (catalog.Enemy(enemy.DefId).IsBoss ? 90 : 35);
 
             // Without hints, uncovering tiles is the only way to find the key, so a blind player values it directly.
@@ -373,7 +431,7 @@ namespace ClickDungeon.Application
         /// is generated - they are its shape, not something the hero found - so counting them made stepping through a
         /// door look like uncovering half a floor (MAINT-50).
         /// </summary>
-        static int RevealedCells(FloorState floor)
+        public static int RevealedCells(FloorState floor)
         {
             int count = 0;
             foreach (var p in Board.AllCells)
@@ -433,10 +491,23 @@ namespace ClickDungeon.Application
         static int EnemyHp(RunState run)
         {
             int total = 0;
-            foreach (var enemy in run.Floor.Enemies) total += enemy.Hp;
-            if (run.OuterFloor != null)
-                foreach (var enemy in run.OuterFloor.Enemies) total += enemy.Hp;
+            foreach (var floor in Boards(run))
+                foreach (var enemy in floor.Enemies) total += enemy.Hp;
             return total;
+        }
+
+        /// <summary>
+        /// Every board this run currently owns: the one underfoot, the floor a vault hangs off, and a vault the hero
+        /// has stepped back out of. That last one is the half D-068 left: LeaveVault parks the room, live guards and
+        /// all, in <see cref="RunState.VisitedVault"/> so a revisit finds it as it was left (REL-26) - and both the
+        /// score and the progress meter read only the first two, so walking out of a guarded vault was scored exactly
+        /// as if the guards had been killed. Two readers, one list, the way Redact was given one Hide (MAINT-92).
+        /// </summary>
+        static IEnumerable<FloorState> Boards(RunState run)
+        {
+            if (run.Floor != null) yield return run.Floor;
+            if (run.OuterFloor != null) yield return run.OuterFloor;
+            if (run.VisitedVault != null) yield return run.VisitedVault;
         }
 
         /// <summary>Steps to the current objective: key, then exit; on the boss floor, Blobert until he falls.</summary>

@@ -277,6 +277,21 @@ namespace ClickDungeon.Tests
         // ------------------------------------------------------------------ Cleric: Sanctuary
 
         [Test]
+        public void EveryClassCardNamesTheNumbersItsRuleActuallyUses()
+        {
+            // D-071 changed two class rules, updated the rulebook, and left the cards the player actually reads saying
+            // the old thing: the Berserker advertised a ramp he no longer had, and the Cleric promised a heal on every
+            // block after it had been gated. The rulebook is not what anyone reads at the hero select screen (D-073).
+            var berserker = Catalog.HeroClass("berserker");
+            Assert.That(berserker.TraitText, Does.Contain(berserker.Traits[TalentEffect.Rage].ToString()),
+                $"Rage is +1 per {berserker.Traits[TalentEffect.Rage]} hearts, and the card says: {berserker.TraitText}");
+
+            var cleric = Catalog.HeroClass("cleric");
+            Assert.That(cleric.TraitText.ToLowerInvariant(), Does.Contain("half"),
+                $"Sanctuary only answers at half hearts or fewer, and the card says: {cleric.TraitText}");
+        }
+
+        [Test]
         public void TheClericsBlocksHeal()
         {
             // D-071: Sanctuary answers danger. Ungated, it paid on every block of the run and made the one class that

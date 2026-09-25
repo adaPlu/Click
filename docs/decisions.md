@@ -1227,3 +1227,101 @@ and are not started here.
   the Cleric's Dispel as the first two. That needs a new verb, a cost, a target rule and UI, and one caution recorded
   in advance: a castable Cleric heal cuts against D-071, where she was the strongest class under pressure until
   Sanctuary was gated. Measure her the moment it exists.
+
+## D-073 Audit 6, and the tests that were written to close a blind spot and reopened it
+
+Audit 5 found that a mutation had shipped through a 391-test suite and set out to close the "vacuous assertion" class.
+Audit 6 asked whether it had. It had not: the test D-068 wrote to pin the stairs' half-hearts rounding used an **even**
+max HP, where `MaxHp / 2` and `(MaxHp + 1) / 2` give the same answer - the same blind spot, in the repair for it. Every
+hero that crosses a staircase in a unit test had even max hearts; the Paladin's eleven and the Berserker's nine never
+did.
+
+Twelve test oracles were rewritten and then **mutated to prove they bite**: nine mutations, nine named tests red.
+
+- **TWO SHIPPED LIES ON THE CLASS-SELECT SCREEN**: the Berserker's card still said "+1 for every 4 hearts missing"
+  after D-071 moved Rage to 6, and the Cleric's still said Sanctuary heals on every block after D-071 gated it on being
+  at half hearts or fewer. `EveryClassCardNamesTheNumbersItsRuleActuallyUses` now reads the numbers off the rules and
+  compares them to the text.
+- **THE HUD WAS UNDERSTATING A SLASH**: D-072 said the slash span includes Holy Wrath, and it did - as an *alternative*
+  to Judgement and Dawnstrike, where the rule **adds** them. A Paladin reading "3-4" was hitting a risen, reeling boss
+  for 6. There were two copies of the bonus list; now there is one, `Talents.SlashSpan`, and the HUD formats what it
+  returns. The span is also the best target actually on the board rather than a catalogue of everything the hero owns.
+- **A VAULT GUARD THAT COULD NEVER REACH ANYONE**: monsters do not cross a vault's doorway, so a vault's other eight
+  tiles are one ring - and two chests on that ring cut the room in half. **17% of 600 generated rooms** walled a guard
+  off behind the treasure for the whole visit. `FloorValidator` refuses such a room and the generator makes another:
+  measured 17% → 0%. (A further 43% have a guard queueing behind another guard in a nine-tile room. That resolves as
+  they fall, and is not a defect.)
+- **"NO MERCY" NOW MEANS IT**: D-071's stairs mercy was a single catalog number, so Blobert's Wrath - whose card has
+  always ended "No mercy." - brought a dying hero back to half exactly as Squire's Stroll does, and each tier's
+  `FloorClearHeal` was dead weight for anyone hurt enough to feel it. `MercyOnStairs` is a tier field now: Squire's
+  Stroll 2, Knight's Trial 2, **Blobert's Wrath 0**, which is the tier's behaviour before D-071 and the number its card
+  describes.
+- **THE INSTRUMENT, AGAIN**: `LeaveVault` parks a live vault in `VisitedVault` so a revisit finds it as it was left,
+  and neither the bot's score nor its progress meter read that board - so walking out of a guarded vault scored exactly
+  as if the guards had been killed. That is the D-068 bug mirrored, and it survived the fix. One `Boards(run)` now
+  enumerates every board a run owns and both readers use it. Separately, the progress high-water mark never reset, so a
+  nine-tile vault was judged against the 25-tile floor outside it and the bot ran at minimum caution through most of
+  every vault visit - on the 13 floors in 20 that have one. It resets with the floor stamp.
+- **THE BUILT-UP PLAYER WAS WEARING COMMONS**: `Inventory.Grant` fills a slot only while it is empty, and the balance
+  fixture granted the catalogue in its own order, so "the best gear worn" - the words in the guard's own failure
+  message - was six Commons with every Epic in the bag. It also carried no shop provisions at all. Both fixed, and the
+  fixture's own claim is now a test.
+- **SIXTEEN CAPSTONES IN TWENTY-FOUR WERE MEASURED BY NOTHING**: a class may learn one capstone, and the fixture spent
+  points in list order, so it always took the first-listed branch's. `BuiltUp` takes the branch to climb, and
+  `EveryCapstoneCarriesABuild` plays all 24 - asserting the capstone was actually learned before counting a run.
+- **AND THE TRAP UNDER THAT FIX**: `Provision` **spends** the profile it is handed. One profile shared across a seed
+  loop would have armed seed 1 and left the other thirty-nine measuring a different player - harmless only while the
+  fixture carried no provisions, which is what had just been fixed. The profile is built inside the loop, and the
+  coupling has a test of its own.
+- **GUARDS THAT WOULD HAVE GONE RED FOR NO REASON**: the careless-play parity guard ran 30 seeds with 1.3σ of margin -
+  about one change in seven that merely perturbs the RNG stream would have turned it red, and the reflex this repo
+  records for that is to widen the band until it guards nothing. Sixty seeds now, the number D-071 was measured at.
+  Its sibling's `strongest <= weakest * 8/5` was, with the Berserker pinned at 40/40, really "the weakest must win 25
+  of 40" - a 62.5% floor under an arm advertising 50%; a class at the ceiling is caught by a headroom assert instead.
+- **THE KIT GATES**: `unity-gate.ps1` read Unity's exit code and never compared it to zero, had no floor under the test
+  count, and accepted a run in which every test was skipped. `-SkipTests`, documented as skipping the headless suite,
+  silently skipped 491 Unity tests as well with nothing in VERSION.txt to say so. And with `-AllowVersionMismatch`,
+  VERSION.txt read "Test gate: passed" three lines above the warning explaining that those tests never ran against the
+  player in the box. All three closed.
+
+### What was decided rather than fixed
+
+A **mistake** in the balance bot has always been a uniform draw from every legal command that survives the turn. On a
+5x5 board in Free Roam that list is up to twenty-four Moves against a handful of anything else, so roughly three
+mistakes in four are a step to a random tile - and the hero can never walk into a telegraphed killing blow, which is
+the most characteristic novice death there is. D-071 read the class spread off that model and shipped three balance
+changes on it.
+
+A second model is now in the bot (`MistakeModel.Misjudged`: the second, third or fourth best command instead of the
+best, losing commands included). The default is unchanged. Forty blind seeds a class, careless, built-up:
+
+| model | ordering |
+|---|---|
+| RandomCommand | knight 38, cleric 38, berserker 37, engineer 33, paladin 31, wizard 30, **rogue 25**, ranger 22 |
+| Misjudged | knight 39, berserker 39, **rogue 37**, engineer 35, paladin 33, **cleric 33**, ranger 31, wizard 30 |
+
+They disagree, and in exactly the predicted direction: the Rogue, whose rule pays for reading a telegraph and standing
+in the right place, goes seventh to third; the Cleric, the recovery class, goes joint first to joint fifth; the spread
+goes 1.73 to 1.30.
+
+### And what fixing the instrument showed
+
+The balance fixture now wears what it always claimed to wear. Forty blind seeds a class, casual, built-up:
+
+| tier | wins of 40 |
+|---|---|
+| Knight's Trial | knight 40, paladin 40, rogue 38, wizard 37, ranger 37, cleric 40, berserker 40, engineer 40 |
+| Blobert's Wrath | knight 40, paladin 39, rogue 39, wizard 37, ranger 38, cleric 40, berserker 40, engineer 38 |
+
+**A player who has been here before saturates the game**, and the hardest tier costs them at most two runs in forty.
+`EveryClassTreeIsWorthPlaying` cannot measure a spread through that, so its ratio arm is gone rather than widened: it
+keeps the one job it was written for, catching a tree that has stopped paying, with a 30-of-40 floor against a measured
+minimum of 37 and an empty-profile baseline of 50-66% to fall through. Parity is measured by the careless guard, where
+there is still room to see it. That the top of the progression outruns the hardest tier is recorded here and not tuned.
+
+**No balance number was changed on the error model.** The second instrument stalls 1-10 runs in 40 depending on class where the
+first stalls none, so a tenth of its losses are the bot failing to finish rather than the hero dying. Re-justifying
+D-071 on a model with that stall rate would repeat the mistake the finding is about. What would settle it, in order:
+stop the Misjudged model stalling, then measure the **pre**-D-071 catalog under it. If the 4:1 careless spread that
+motivated D-071 is 1.3 under a plausible-error model, the mercy and the Sanctuary gate want re-justifying on their own
+merits rather than on that spread.

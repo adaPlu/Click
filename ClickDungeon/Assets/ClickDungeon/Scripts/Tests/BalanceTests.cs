@@ -114,7 +114,13 @@ namespace ClickDungeon.Tests
             return tally;
         }
 
-        /// <summary>Half the turns spent on random moves: a first-time player still learning the telegraphs.</summary>
+        /// <summary>
+        /// Half the turns spent on a command the look-ahead did not choose. Under the default error model that is a
+        /// uniform draw from everything legal that survives the turn - mostly a step to a random tile, and never a walk
+        /// into a telegraphed killing blow, which is the most characteristic novice death there is. Careless play here
+        /// means "tolerance to position-independent chip damage"; it does not mean a person misreading a board
+        /// (TEST-85, and MistakeModel.Misjudged for the other model).
+        /// </summary>
         public const double NoviceMistakeRate = 0.5;
 
         /// <summary>
@@ -123,9 +129,34 @@ namespace ClickDungeon.Tests
         /// empty profile without saying so, which meant none of them could see a talent, a worn item or renown at all
         /// (TEST-23, D-069). `BuiltUp` is the other half of the picture, not a replacement for the first.
         /// </summary>
-        public static ProfileState BuiltUp(ContentCatalog catalog, string classId, int level = 12)
+        /// <param name="capstoneBranch">
+        /// Which branch's capstone this build takes. A class may learn one (Progression.Locked), so spending in list
+        /// order silently always took the first-listed branch's - two capstones in three were measured by nothing at
+        /// all, by the guard whose whole purpose is catching a talent that has stopped paying (MAINT-90). Null keeps
+        /// the old build, for the guards that want one build a class.
+        /// </param>
+        public static ProfileState BuiltUp(ContentCatalog catalog, string classId, int level = 12, string capstoneBranch = null)
         {
             var profile = new ProfileState { Xp = Progression.XpForLevel(level) };
+            if (capstoneBranch != null)
+            {
+                // Climb the named branch first. Skipping the other capstones is not enough on its own: a capstone opens
+                // at seven points spent and needs its own tier-3 beneath it, and a build that spreads evenly reaches
+                // whichever branch the catalogue happens to list first. So: take the next rung of this branch if one is
+                // open, and otherwise buy a point anywhere below tier 4 to move the tier gate along.
+                var chain = catalog.TalentsOf(classId).Where(t => t.BranchId == capstoneBranch).OrderBy(t => t.Tier).ToList();
+                string capstoneId = chain.Last(t => t.Tier == 4).Id;
+                bool progress = true;
+                while (Progression.Rank(profile, capstoneId) == 0 && progress)
+                {
+                    progress = false;
+                    foreach (var talent in chain)
+                        if (Progression.TryLearn(profile, catalog, talent.Id)) { progress = true; break; }
+                    if (progress) continue;
+                    foreach (var talent in catalog.TalentsOf(classId))
+                        if (talent.Tier < 4 && Progression.TryLearn(profile, catalog, talent.Id)) { progress = true; break; }
+                }
+            }
             // Spend every point the level bought, in the order the tree lists them: a real player's build is not this
             // tidy, but it is a build rather than a blank, and it is the same one on every seed.
             bool spent = true;
@@ -133,13 +164,62 @@ namespace ClickDungeon.Tests
             {
                 spent = false;
                 foreach (var talent in catalog.TalentsOf(classId))
+                {
+                    if (capstoneBranch != null && talent.Tier == 4 && talent.BranchId != capstoneBranch) continue;
                     if (Progression.TryLearn(profile, catalog, talent.Id)) spent = true;
+                }
             }
             foreach (var item in catalog.Items) Inventory.Grant(profile, catalog, item.Id);
+            // Grant fills a slot only while it is empty, and the catalogue lists Commons first, so owning everything
+            // dressed this profile head to toe in Commons and left every Epic in the bag - while the guard below has
+            // been failing with "the best gear worn" in its message all along (TEST-80). Wear the best of each slot,
+            // ties going to the one the catalogue lists first so every seed sees the same build.
+            foreach (var slot in Inventory.SlotOrder)
+            {
+                ItemDefinition best = null;
+                foreach (var item in catalog.Items)
+                    if (item.Slot == slot && (best == null || item.Rarity > best.Rarity)) best = item;
+                if (best != null) Inventory.Equip(profile, catalog, best.Id);
+            }
+            // And they have been to the shop (TEST-81). One of each: the smallest stock that is not nothing, so every
+            // branch of ProfileSystem.Provision is on the board rather than only the ones a blank profile reaches.
+            profile.HeartTokens = profile.PotionRations = profile.ManaTonics = 1;
+            profile.StrengthElixirs = profile.FortuneScrolls = profile.WisdomScrolls = 1;
+            // A run SPENDS these: ProfileSystem.Provision zeroes them on the profile it is handed. One profile shared
+            // across a seed loop would therefore arm the first run and no other, so every guard below builds its own
+            // inside the loop (MAINT-94).
             return profile;
         }
 
-        /// <summary>Most turns spent on random moves. Separates the tiers clearly.</summary>
+        /// <summary>
+        /// What `BuiltUp` claims to be. Every measurement of a returning player in this file reads it, so a fixture that
+        /// quietly stops building one turns eight guards into eight measurements of something else (TEST-80, TEST-81).
+        /// </summary>
+        [Test]
+        public void TheBuiltUpProfileIsActuallyBuiltUp()
+        {
+            var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
+            var profile = BuiltUp(catalog, "knight");
+
+            Assert.That(profile.Talents, Is.Not.Empty, "A build, not a blank.");
+            foreach (var slot in Inventory.SlotOrder)
+            {
+                var worn = catalog.Item(Inventory.Worn(profile, slot));
+                Assert.That(worn, Is.Not.Null, $"Nothing worn in the {slot} slot.");
+                var bestAvailable = catalog.Items.Where(i => i.Slot == slot).Max(i => i.Rarity);
+                Assert.That(worn.Rarity, Is.EqualTo(bestAvailable),
+                    $"{slot}: wearing a {worn.Rarity} {worn.DisplayName} with a {bestAvailable} in the bag.");
+            }
+
+            var run = new RunState { Hero = new HeroState { MaxHp = 20, Hp = 20 }, Floor = FloorState.CreateEmpty() };
+            int bareSlash = run.Hero.SlashDamage, barePotions = run.Hero.Potions;
+            ProfileSystem.ProvisionRun(profile, run, catalog, new List<GameEvent>());
+            Assert.That(run.Hero.SlashDamage, Is.GreaterThan(bareSlash), "The gear reaches the run.");
+            Assert.That(run.Hero.Potions, Is.GreaterThan(barePotions), "And so do the provisions.");
+            Assert.That(run.Hero.MaxHp, Is.GreaterThan(20), "Hearts from the token and the armour both.");
+        }
+
+        /// <summary>Most turns spent on a command the look-ahead did not choose (see NoviceMistakeRate). Separates the tiers clearly.</summary>
         public const double FlailingMistakeRate = 0.7;
 
         /// <summary>
@@ -380,13 +460,15 @@ namespace ClickDungeon.Tests
             foreach (var heroClass in catalog.HeroClasses.Values)
             {
                 string heroId = System.Linq.Enumerable.First(catalog.HeroIdentities.Values, h => h.ClassId == heroClass.Id).Id;
-                var profile = BuiltUp(catalog, heroClass.Id);
-                Assert.That(profile.Talents, Is.Not.Empty, $"{heroClass.Id}: the build spent no points, so this measures nothing.");
+                Assert.That(BuiltUp(catalog, heroClass.Id).Talents, Is.Not.Empty,
+                    $"{heroClass.Id}: the build spent no points, so this measures nothing.");
                 int won = 0, stalled = 0;
                 for (ulong seed = 1; seed <= runs; seed++)
                 {
+                    // A fresh profile a seed: a run spends the provisions off the one it is given, so sharing one would
+                    // arm seed 1 and leave the other thirty-nine measuring a different player (MAINT-94).
                     var r = AutoPlayer.PlayRun(catalog, seed, MaxCommands, AutoPlayer.CasualMistakeRate,
-                        MovementMode.Free, blind: true, loots: true, heroId: heroId, profile: profile);
+                        MovementMode.Free, blind: true, loots: true, heroId: heroId, profile: BuiltUp(catalog, heroClass.Id));
                     if (r.Status == RunStatus.Won) won++;
                     else if (r.Status == RunStatus.InProgress) stalled++;
                 }
@@ -396,20 +478,86 @@ namespace ClickDungeon.Tests
 
             string table = string.Join(", ", wins.ConvertAll(w => $"{w.id} {w.won}"));
             var weakest = wins[0];
-            var strongest = wins[0];
             foreach (var row in wins)
-            {
                 if (row.won < weakest.won) weakest = row;
-                if (row.won > strongest.won) strongest = row;
-            }
-            // Measured 75-97% over 80 seeds a class (D-069). Half of forty sits well under the weakest and far above a
-            // tree that has stopped paying at all, which is what this is for.
-            Assert.That(weakest.won, Is.GreaterThanOrEqualTo(runs / 2),
+            // ONE question, and it is not parity. Measured after D-073 gave this fixture the gear and the provisions it
+            // had always claimed: 37-40 of 40 on Knight's Trial, five of the eight winning every seed, and 37-40 on
+            // Blobert's Wrath too. A player who has been here before, wearing the best of every slot with a full shelf
+            // behind them, saturates the game - which is a design fact worth knowing and makes a spread unmeasurable
+            // here. The ratio arm that used to stand below could not have failed without this floor failing first, and
+            // while the Berserker sat at 40/40 it silently demanded the weakest class win 25 of 40 - a 62.5% floor
+            // under an arm advertising 50%, and the one that would have gone red first (TEST-83). The spread is
+            // measured where there is room to see one, by NoClassIsHopelessForACarelessPlayer.
+            //
+            // Thirty of forty, against a measured minimum of 37. It is the broken-tree floor: D-069 puts the same eight
+            // classes at 50-66% with an EMPTY profile, so a tree that has stopped paying altogether lands at 20-26 and
+            // this catches it, while four sigma of room keeps it from going red on noise.
+            Assert.That(weakest.won, Is.GreaterThanOrEqualTo(runs * 3 / 4),
                 $"{weakest.id} won {weakest.won}/{runs} with its whole tree spent and the best gear worn. A class tree "
                 + $"that buys nothing is a broken talent, not a hard dungeon. ({table})");
-            // The same ratio the empty-profile guard uses: a tree may be stronger, not half again stronger.
-            Assert.That(strongest.won, Is.LessThanOrEqualTo(weakest.won * 8 / 5),
-                $"{strongest.id} won {strongest.won}/{runs} where {weakest.id} won {weakest.won}. ({table})");
+        }
+
+        /// <summary>
+        /// MAINT-90: a class may learn one capstone, so a build that spends in list order always took the first-listed
+        /// branch's. Sixteen of the twenty-four capstones in the game were measured by nothing at all - by the guard
+        /// whose stated purpose is catching a tree broken end to end, as Judgement was until audit 3.
+        /// </summary>
+        [Test]
+        public void EveryCapstoneCarriesABuild()
+        {
+            const int runs = 12;
+            var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
+            var table = new List<string>();
+            foreach (var heroClass in catalog.HeroClasses.Values)
+            {
+                string heroId = catalog.HeroIdentities.Values.First(h => h.ClassId == heroClass.Id).Id;
+                foreach (var branch in heroClass.Branches)
+                {
+                    var capstone = catalog.TalentsOf(heroClass.Id).Single(t => t.Tier == 4 && t.BranchId == branch.Id);
+                    // The assertion that keeps this from measuring the first capstone three times over.
+                    Assert.That(Progression.Rank(BuiltUp(catalog, heroClass.Id, capstoneBranch: branch.Id), capstone.Id),
+                        Is.GreaterThan(0), $"{capstone.Id} was never learned, so this run measures a different build.");
+
+                    int won = 0, stalled = 0;
+                    for (ulong seed = 1; seed <= runs; seed++)
+                    {
+                        var r = AutoPlayer.PlayRun(catalog, seed, MaxCommands, AutoPlayer.CasualMistakeRate,
+                            MovementMode.Free, blind: true, loots: true, heroId: heroId,
+                            profile: BuiltUp(catalog, heroClass.Id, capstoneBranch: branch.Id));
+                        if (r.Status == RunStatus.Won) won++;
+                        else if (r.Status == RunStatus.InProgress) stalled++;
+                    }
+                    table.Add($"{capstone.Id} {won}");
+                    Assert.That(stalled, Is.LessThanOrEqualTo(1 + runs / 6),
+                        $"{capstone.Id} stalled {stalled}/{runs}: the bot stopped playing, so this measures nothing.");
+                    // A third of a dozen. Far below what any of them win today and far above a capstone that has
+                    // stopped paying: this is a smoke test for twenty-four builds, not a parity guard.
+                    Assert.That(won, Is.GreaterThanOrEqualTo(runs / 3),
+                        $"{capstone.Id} won {won}/{runs} as the capstone of a full build. ({string.Join(", ", table)})");
+                }
+            }
+        }
+
+        /// <summary>
+        /// MAINT-94: a run SPENDS the provisions on the profile it is handed. Sharing one profile across a seed loop
+        /// therefore arms the first run and no other, and the guard reports a blend of two players without a word. The
+        /// coupling is invisible at the call site, so it is written down here.
+        /// </summary>
+        [Test]
+        public void AProfileIsSpentByTheRunItIsHandedTo()
+        {
+            var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
+            var profile = BuiltUp(catalog, "knight");
+            Assert.That(profile.PotionRations, Is.GreaterThan(0), "Test setup: there is something to spend.");
+
+            var first = new RunState { Hero = new HeroState { MaxHp = 20, Hp = 20 }, Floor = FloorState.CreateEmpty() };
+            ProfileSystem.ProvisionRun(profile, first, catalog, new List<GameEvent>());
+            Assert.That(profile.PotionRations, Is.Zero, "The first run took them.");
+
+            var second = new RunState { Hero = new HeroState { MaxHp = 20, Hp = 20 }, Floor = FloorState.CreateEmpty() };
+            ProfileSystem.ProvisionRun(profile, second, catalog, new List<GameEvent>());
+            Assert.That(second.Hero.Potions, Is.LessThan(first.Hero.Potions),
+                "And the second run is a different player - which is why the guards build a profile a seed.");
         }
 
         /// <summary>
@@ -422,17 +570,31 @@ namespace ClickDungeon.Tests
         [Test]
         public void NoClassIsHopelessForACarelessPlayer()
         {
-            const int runs = 30;
+            // SIXTY, the number D-071 was measured at, not thirty. At 30 seeds the weakest class sat 1.3 sigma above
+            // the floor and the ratio arm needed 7 wins of an expected 9.9, so roughly one change in seven that merely
+            // perturbed the RNG stream would have turned this red for no balance reason - and the reflex this file
+            // records for that is to widen the band until it guards nothing. At 60 the floor is 2.2 sigma out (TEST-82).
+            const int runs = 60;
             var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
             var wins = new List<(string id, int won)>();
             foreach (var heroClass in catalog.HeroClasses.Values)
             {
                 string heroId = System.Linq.Enumerable.First(catalog.HeroIdentities.Values, h => h.ClassId == heroClass.Id).Id;
-                var profile = BuiltUp(catalog, heroClass.Id);
-                int won = 0;
+                Assert.That(BuiltUp(catalog, heroClass.Id).Talents, Is.Not.Empty,
+                    $"{heroClass.Id}: the build spent no points, so this measures nothing.");
+                int won = 0, stalled = 0;
                 for (ulong seed = 1; seed <= runs; seed++)
-                    if (AutoPlayer.PlayRun(catalog, seed, MaxCommands, NoviceMistakeRate,
-                            MovementMode.Free, blind: true, loots: true, heroId: heroId, profile: profile).Status == RunStatus.Won) won++;
+                {
+                    // Fresh a seed (MAINT-94), and the stalls counted (TEST-84). This guard runs at the rate the bot is
+                    // likeliest to burn the command cap at, and without the tally a bot that had stopped playing would
+                    // read as eight classes that all got worse at once - the MAINT-15 failure this file was written for.
+                    var r = AutoPlayer.PlayRun(catalog, seed, MaxCommands, NoviceMistakeRate,
+                        MovementMode.Free, blind: true, loots: true, heroId: heroId, profile: BuiltUp(catalog, heroClass.Id));
+                    if (r.Status == RunStatus.Won) won++;
+                    else if (r.Status == RunStatus.InProgress) stalled++;
+                }
+                Assert.That(stalled, Is.LessThanOrEqualTo(1 + runs / 30),
+                    $"{heroClass.Id} stalled {stalled}/{runs} careless runs: the bot stopped playing, so this measures nothing.");
                 wins.Add((heroClass.Id, won));
             }
 
@@ -450,8 +612,48 @@ namespace ClickDungeon.Tests
                 $"{weakest.id} won {weakest.won}/{runs} for a careless player. ({table})");
             // Three to one, not the eight-fifths careful play is held to: these are sloppy runs and the spread is wider
             // by nature. What this refuses is the four-to-one the classes sat at before D-071.
-            Assert.That(strongest.won, Is.LessThanOrEqualTo(Math.Max(3, weakest.won * 3)),
+            // Plainly three to one. The `Math.Max(3, ...)` that stood here could only pick its 3 when the weakest had
+            // won one run or none, which the floor assert above has already refused: it read as a guard against a
+            // vacuous ratio and had never once executed (MAINT-91).
+            Assert.That(strongest.won, Is.LessThanOrEqualTo(weakest.won * 3),
                 $"{strongest.id} won {strongest.won}/{runs} where {weakest.id} won {weakest.won}. ({table})");
+        }
+
+        /// <summary>
+        /// TEST-85: the two error models side by side. "Careless play" has always meant one thing - a uniform draw from
+        /// the legal commands that survive the turn - and on a 5x5 board in Free Roam that list is dominated by Move,
+        /// so three mistakes in four were a teleport. D-071 read the class spread off that model and shipped three
+        /// balance changes on it. This prints the same classes under a slip that misreads the board instead, so the
+        /// question "is the ordering a fact about the game or about the noise" has an answer on the record.
+        /// </summary>
+        [Test, Explicit("Measurement: the class ordering under each error model (TEST-85)")]
+        public void CompareTheTwoErrorModels()
+        {
+            const int runs = 40;
+            var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
+            foreach (var model in new[] { MistakeModel.RandomCommand, MistakeModel.Misjudged })
+            {
+                var rows = new List<(string id, int won, int died, int stalled)>();
+                foreach (var heroClass in catalog.HeroClasses.Values)
+                {
+                    string heroId = catalog.HeroIdentities.Values.First(h => h.ClassId == heroClass.Id).Id;
+                    int won = 0, stalled = 0, died = 0;
+                    for (ulong seed = 1; seed <= runs; seed++)
+                    {
+                        var r = AutoPlayer.PlayRun(catalog, seed, MaxCommands, NoviceMistakeRate, MovementMode.Free,
+                            blind: true, loots: true, heroId: heroId,
+                            profile: BuiltUp(catalog, heroClass.Id), model: model);
+                        if (r.Status == RunStatus.Won) won++;
+                        else if (r.Status == RunStatus.InProgress) stalled++;
+                        else died++;
+                    }
+                    rows.Add((heroClass.Id, won, died, stalled));
+                }
+                rows.Sort((x, y) => y.won.CompareTo(x.won));
+                TestContext.Progress.WriteLine($"{model} ({runs} blind seeds a class, careless, built-up): "
+                    + string.Join(", ", rows.ConvertAll(r => $"{r.id} {r.won}")));
+                TestContext.Progress.WriteLine("   stalls: " + string.Join(", ", rows.ConvertAll(r => $"{r.id} {r.stalled}")));
+            }
         }
 
         [Test, Explicit("Tuning aid: every class on the shipped numbers, on the same dungeons")]

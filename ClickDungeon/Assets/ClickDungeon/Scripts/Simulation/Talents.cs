@@ -40,6 +40,27 @@ namespace ClickDungeon.Simulation
         }
 
         /// <summary>
+        /// What a slash does right now: <paramref name="low"/> is what every slash carries whatever it hits,
+        /// <paramref name="high"/> what the best target within reach would take. The HUD reads this instead of keeping
+        /// its own copy of the list - the copy took Judgement, Dawnstrike and Holy Wrath as alternatives when
+        /// <see cref="SlashDamage"/> adds them, so a Paladin reading "3-4" was hitting a risen boss for 6 (REL-90, MAINT-80).
+        /// </summary>
+        public static void SlashSpan(RunState run, ContentCatalog catalog, out int low, out int high)
+        {
+            var hero = run.Hero;
+            low = hero.SlashDamage;
+            int rage = run.Perk(TalentEffect.Rage);
+            if (rage > 0) low += (hero.MaxHp - hero.Hp) / rage;
+            if (hero.Hp * 2 <= hero.MaxHp) low += run.Perk(TalentEffect.Bloodlust);
+            high = low;
+            int reach = Board.SlashReach(run);
+            if (run.Floor == null) return;
+            foreach (var enemy in run.Floor.Enemies)
+                if (enemy.Hp > 0 && hero.Pos.Chebyshev(enemy.Pos) <= reach)
+                    high = System.Math.Max(high, SlashDamage(run, enemy, catalog));
+        }
+
+        /// <summary>
         /// Ambush (D-063): the Rogue strikes an opening - a monster whose declared action is not aimed at the hero's tile.
         /// It reads the same telegraph the player sees, so an ambush is always visible before it is taken.
         /// </summary>
