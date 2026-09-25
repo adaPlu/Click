@@ -987,6 +987,16 @@ broken renown formula is a 40-seed win-rate threshold.
 
 Suites after the repair: **398 headless**, **497 Unity EditMode**, **3 Unity PlayMode**.
 
+### TEST-23 closed (D-069)
+
+`PlayRun` takes a `ProfileState`, and both it and `GameSession.StartNewRun` provision through one function
+(`ProfileSystem.ProvisionRun`). `EveryClassTreeIsWorthPlaying` measures all eight classes built-up and is verified by
+neutering every talent at once. First numbers for a built-up player: 75-97% on Knight's Trial against 50-66% empty -
+recorded in D-069, not tuned. Suites: **399 headless**, EditMode re-run after.
+
+**Two design calls now visible and deliberately left alone**: a returning player wins Knight's Trial ~88%+ on four of
+eight classes, and a class tree is worth between 25 and 46 points depending on the class.
+
 **Still open from this pass**: `Renown.FloorsPerThreat` ships at zero. Turning it on gives the dungeon a curve of its
 own for a hero with no renown, at five points of casual win rate and a class spread of exactly 1.60 against the parity
 band's 1.60 ceiling. `PuffedIsImmuneThenDeflatedTakesDouble` hard-codes Lord Blobert's hearts, so it fails if the knob

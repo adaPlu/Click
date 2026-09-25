@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using System;
 using System.IO;
 using System.Text;
 using ClickDungeon.Content;
 using ClickDungeon.Domain;
+using ClickDungeon.Simulation;
 using Newtonsoft.Json;
 
 namespace ClickDungeon.Application
@@ -34,6 +36,23 @@ namespace ClickDungeon.Application
         /// Hands the bought provisions to a new run and spends them. A provision is consumed when the run starts, so quitting
         /// to the title does not get it back.
         /// </summary>
+        /// <summary>
+        /// Everything a profile spends into a run: its provisions, its talents, its worn gear, the threat its renown
+        /// earns and the tiles its talents reveal. Written once because there were two callers waiting to disagree -
+        /// the game and the balance harness - and a harness that provisions differently is measuring a different game
+        /// (TEST-23, D-069).
+        /// </summary>
+        public static void ProvisionRun(ProfileState profile, RunState run, ContentCatalog catalog, List<GameEvent> events)
+        {
+            if (profile == null || run == null) return;
+            Provision(profile, run, catalog);
+            Progression.Apply(profile, run, catalog);
+            Inventory.Apply(profile, run, catalog);
+            // Renown's threat (D-040, D-067). Floor 1 is already laid out, and threat only reaches the deep floors.
+            run.Threat = Progression.Threat(profile, catalog);
+            RunFactory.RevealByTalents(run, events ?? new List<GameEvent>());
+        }
+
         public static void Provision(ProfileState profile, RunState run, ContentCatalog catalog)
         {
             if (profile == null || run == null) return;

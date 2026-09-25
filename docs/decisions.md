@@ -1128,3 +1128,33 @@ and 3 PlayMode tests all passed with it in place.** That is the finding the rest
   - and verifying the list needs `ArtKeys.Wired` at runtime, so it is left with its evidence rather than guessed at.
   REL-62 (blast telegraphs painted on a vault's stone), REL-71 (a lane marks the raised number but deals the base one to
   an enemy it stops on), DATA-40/42 and MAINT-51 are recorded in `LLMHandOff.md` with their traces.
+
+## D-069 The balance harness can see a player who has been here before
+
+- **THE BLIND SPOT**: `AutoPlayer.PlayRun` built its run with `RunFactory.NewRun` and stopped there, so every balance
+  number this repo has ever published - the tier guards, the class parity band, the difficulty tables, the ten-playthrough
+  sweeps - measured a hero with **no talents, no gear, no provisions and no renown** (TEST-23). A whole class tree could
+  be broken, as Judgement was until audit 3, without moving any of them.
+- **THE FIX IS ONE FUNCTION, NOT TWO**: `ProfileSystem.ProvisionRun` is now the single place a profile becomes a run's
+  numbers - provisions, talents, worn gear, renown's threat, and the tiles talents reveal. `GameSession.StartNewRun`
+  calls it and so does `PlayRun`. Copying those five steps into the harness instead is exactly the drift this audit
+  spent its day on; a harness that provisions differently measures a different game.
+- **WHAT A BUILT-UP PLAYER LOOKS LIKE** (80 blind seeds a class, Knight's Trial, casual, level 12 with the tree spent
+  and the dungeon's gear worn - the first time these numbers have existed):
+
+  | | knight | paladin | rogue | wizard | ranger | cleric | berserker | engineer |
+  |---|---|---|---|---|---|---|---|---|
+  | empty profile | 62% | 53% | 50% | 60% | 52% | 66% | 51% | 53% |
+  | full tree + gear | **95%** | 85% | **75%** | 80% | 78% | 95% | **97%** | 88% |
+
+- **TWO THINGS TO SIT WITH**. The classes stay about as far apart built as they are empty (ratio 1.29 against 1.32), so
+  the trees are not pulling them apart. But **Knight's Trial is close to a formality for a returning player** - four of
+  eight classes above 88% - and a tree is worth wildly different amounts depending on the class: the Berserker gains 46
+  points, the Rogue 25. Neither is touched here. They are design calls that were invisible before today and should be
+  made deliberately, with the instrument that can now see them.
+- **THE GUARD**: `EveryClassTreeIsWorthPlaying` plays all eight classes built-up at 40 seeds and refuses a class that
+  wins fewer than half its runs with its whole tree spent, plus the same 8/5 ratio fence the empty-profile guard uses.
+  Verified by neutering every talent effect at once: the weakest class falls to 10/40 and the guard names it.
+- **A NOTE FOR THE NEXT MUTATION RUN**: a mutation sweep leaves the build cache holding the mutated assembly, and the
+  next `dotnet test` can run it against restored source. The talent suite failed that way here and looked like a
+  regression for a minute. Build with `--no-incremental` after a sweep, or do not trust the first run afterwards.

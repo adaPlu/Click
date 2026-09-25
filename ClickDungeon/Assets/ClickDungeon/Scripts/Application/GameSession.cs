@@ -110,12 +110,7 @@ namespace ClickDungeon.Application
             var events = new List<GameEvent>();
             Run = RunFactory.NewRun(seed, Catalog, events, heroId, movement);
             // Provisions are spent into the run's own numbers, so the simulation stays a function of its inputs.
-            ProfileSystem.Provision(Profile, Run, Catalog);
-            Progression.Apply(Profile, Run, Catalog);
-            Inventory.Apply(Profile, Run, Catalog);
-            // Renown's threat (D-040). Floor 1 is already laid out, and threat only reaches the deep floors.
-            Run.Threat = Progression.Threat(Profile, Catalog);
-            RunFactory.RevealByTalents(Run, events);
+            ProfileSystem.ProvisionRun(Profile, Run, Catalog, events);
             SaveProfile();
             Persist();
             Telemetry?.RunStarted(Run, events);

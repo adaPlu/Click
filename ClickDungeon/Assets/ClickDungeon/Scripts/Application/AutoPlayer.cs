@@ -228,11 +228,22 @@ namespace ClickDungeon.Application
         static bool IsTravel(PlayerCommand command) => command.Kind == CommandKind.Move || command.Kind == CommandKind.Dash;
 
         /// <summary>Plays a whole run headless, stopping after <paramref name="maxCommands"/> commands.</summary>
+        /// <summary>
+        /// Plays one run to its end and reports how it went. Pass a <paramref name="profile"/> to measure a player who
+        /// has been here before - their talents, their gear, their provisions and the threat their renown earns. With no
+        /// profile this measures the dungeon against a hero who has never played, which is what every balance number in
+        /// this repo used to mean without saying so: `Threat` was never set, so renown was invisible to all of them, and
+        /// a talent could be broken without moving a single one (TEST-23, D-069).
+        /// </summary>
         public static AutoRunResult PlayRun(ContentCatalog catalog, ulong seed, int maxCommands, double mistakeRate = 0,
-            MovementMode movement = MovementMode.Free, bool blind = false, bool loots = true, string heroId = null)
+            MovementMode movement = MovementMode.Free, bool blind = false, bool loots = true, string heroId = null,
+            ProfileState profile = null)
         {
             var player = new AutoPlayer(mistakeRate, blind, loots);
-            var run = RunFactory.NewRun(seed, catalog, new List<GameEvent>(), heroId ?? ContentCatalog.DefaultHeroId, movement);
+            var events = new List<GameEvent>();
+            var run = RunFactory.NewRun(seed, catalog, events, heroId ?? ContentCatalog.DefaultHeroId, movement);
+            // The same five steps the game takes, through the same function, so the harness cannot drift from it.
+            ProfileSystem.ProvisionRun(profile, run, catalog, events);
             for (int i = 0; i < maxCommands && run.Status == RunStatus.InProgress; i++)
                 TurnResolver.Apply(run, player.Choose(run, catalog, seed * 7919UL + (ulong)i), catalog);
             return new AutoRunResult

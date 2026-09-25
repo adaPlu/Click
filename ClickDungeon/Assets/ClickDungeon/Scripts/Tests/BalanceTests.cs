@@ -117,6 +117,28 @@ namespace ClickDungeon.Tests
         /// <summary>Half the turns spent on random moves: a first-time player still learning the telegraphs.</summary>
         public const double NoviceMistakeRate = 0.5;
 
+        /// <summary>
+        /// A player who has been here before: levelled, their class tree spent as far as the rules allow, wearing what
+        /// the dungeon drops, and carrying the threat their renown earns. Every guard in this file used to measure an
+        /// empty profile without saying so, which meant none of them could see a talent, a worn item or renown at all
+        /// (TEST-23, D-069). `BuiltUp` is the other half of the picture, not a replacement for the first.
+        /// </summary>
+        public static ProfileState BuiltUp(ContentCatalog catalog, string classId, int level = 12)
+        {
+            var profile = new ProfileState { Xp = Progression.XpForLevel(level) };
+            // Spend every point the level bought, in the order the tree lists them: a real player's build is not this
+            // tidy, but it is a build rather than a blank, and it is the same one on every seed.
+            bool spent = true;
+            while (spent)
+            {
+                spent = false;
+                foreach (var talent in catalog.TalentsOf(classId))
+                    if (Progression.TryLearn(profile, catalog, talent.Id)) spent = true;
+            }
+            foreach (var item in catalog.Items) Inventory.Grant(profile, catalog, item.Id);
+            return profile;
+        }
+
         /// <summary>Most turns spent on random moves. Separates the tiers clearly.</summary>
         public const double FlailingMistakeRate = 0.7;
 
@@ -342,6 +364,52 @@ namespace ClickDungeon.Tests
             // one run of noise and gets widened. Reported separately so a real parity break reads as one.
             Assert.That(more, Is.Not.EqualTo(allowed),
                 $"The band has no headroom left: {strongest} {more}, {weakest} {fewer}, ceiling {allowed}. ({table})");
+        }
+
+        /// <summary>
+        /// D-069: the same eight classes, played by someone who has been here before. Every other guard in this file
+        /// measures an empty profile, so a talent tree could be broken end to end - as Judgement was until audit 3 -
+        /// without moving one of them. This is the guard that would have seen it.
+        /// </summary>
+        [Test]
+        public void EveryClassTreeIsWorthPlaying()
+        {
+            const int runs = 40;
+            var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
+            var wins = new List<(string id, int won)>();
+            foreach (var heroClass in catalog.HeroClasses.Values)
+            {
+                string heroId = System.Linq.Enumerable.First(catalog.HeroIdentities.Values, h => h.ClassId == heroClass.Id).Id;
+                var profile = BuiltUp(catalog, heroClass.Id);
+                Assert.That(profile.Talents, Is.Not.Empty, $"{heroClass.Id}: the build spent no points, so this measures nothing.");
+                int won = 0, stalled = 0;
+                for (ulong seed = 1; seed <= runs; seed++)
+                {
+                    var r = AutoPlayer.PlayRun(catalog, seed, MaxCommands, AutoPlayer.CasualMistakeRate,
+                        MovementMode.Free, blind: true, loots: true, heroId: heroId, profile: profile);
+                    if (r.Status == RunStatus.Won) won++;
+                    else if (r.Status == RunStatus.InProgress) stalled++;
+                }
+                Assert.That(stalled, Is.LessThanOrEqualTo(1 + runs / 30), $"{heroClass.Id} stalled {stalled}/{runs} built-up runs.");
+                wins.Add((heroClass.Id, won));
+            }
+
+            string table = string.Join(", ", wins.ConvertAll(w => $"{w.id} {w.won}"));
+            var weakest = wins[0];
+            var strongest = wins[0];
+            foreach (var row in wins)
+            {
+                if (row.won < weakest.won) weakest = row;
+                if (row.won > strongest.won) strongest = row;
+            }
+            // Measured 75-97% over 80 seeds a class (D-069). Half of forty sits well under the weakest and far above a
+            // tree that has stopped paying at all, which is what this is for.
+            Assert.That(weakest.won, Is.GreaterThanOrEqualTo(runs / 2),
+                $"{weakest.id} won {weakest.won}/{runs} with its whole tree spent and the best gear worn. A class tree "
+                + $"that buys nothing is a broken talent, not a hard dungeon. ({table})");
+            // The same ratio the empty-profile guard uses: a tree may be stronger, not half again stronger.
+            Assert.That(strongest.won, Is.LessThanOrEqualTo(weakest.won * 8 / 5),
+                $"{strongest.id} won {strongest.won}/{runs} where {weakest.id} won {weakest.won}. ({table})");
         }
 
         [Test, Explicit("Tuning aid: every class on the shipped numbers, on the same dungeons")]
