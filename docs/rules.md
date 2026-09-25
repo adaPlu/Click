@@ -469,15 +469,47 @@ Hero max HP is the Knight's. The Paladin has one more heart on every tier (D-047
 
 Damage and HP never drop below 1.
 
+### 10.0 What the dungeon does differently *(D-074)*
+
+Everything in the table above is a magnitude. These are the things a tier changes about how the dungeon **behaves** —
+how long the player has, and how fast the board fills. Squire's Stroll gives time and fewer bodies; Blobert's Wrath
+takes the time away and adds bodies.
+
+| Behaviour                                   | Squire's Stroll | Knight's Trial | Blobert's Wrath |
+|---------------------------------------------|-----------------|----------------|-----------------|
+| Turns stuck in a spider's web                | 1               | 1              | **2**           |
+| Turns a bomb sits before it goes off         | **3**           | 2              | 2               |
+| Turns Lord Blobert is puffed and untouchable | **1**           | 2              | **3**           |
+| Turns he lies deflated afterwards            | **2**           | 1              | 1               |
+| Minions a summon brings                      | **1**           | 2              | **3**           |
+| Turns a skeleton lies as bones               | **3**           | 2              | **1**           |
+| Pages a Spooky Spellbook keeps up            | 2               | 2              | **3**           |
+
+Two floors are the telegraph contract (§3.2) and not taste: a bomb always waits at least one full turn, because a blow
+with no warning is not a difficulty setting, and a summon always brings at least one minion, or the warning promises
+someone who never arrives. `ApplyDifficulty` clamps both.
+
 ### 10.1 Measured difficulty
 
-**Current** (after audit 4's repairs, 2026-09-22). `DifficultySweep`, **240** blind seeds (60 is too few over twenty
-floors), Free Roam — reach the last floor / won:
+**Current** (after D-074, 2026-09-25). **240** blind seeds, Free Roam, empty profile — won:
 
-| Player             | Squire's Stroll | Knight's Trial | Blobert's Wrath |
-|--------------------|-----------------|----------------|-----------------|
-| casual (20%)       | 100% / 100%     | 62% / 62%      | 53% / 52%       |
-| novice (50%)       | 100% / 100%     | 13% / 12%      | 10% / 8%        |
+| Player       | Squire's Stroll | Knight's Trial | Blobert's Wrath |
+|--------------|-----------------|----------------|-----------------|
+| casual (20%) | 99%             | 76%            | 46%             |
+| novice (50%) | 100%            | 21%            | 4%              |
+
+No run stalled in any tier. Knight's Trial and Blobert's Wrath sit higher than audit 4 recorded (62% and 53% casual)
+because D-071's stairs mercy landed in between; Blobert's Wrath came back down when D-073 took that mercy away again
+from the one tier whose card promises none.
+
+**D-074's behavioural numbers barely move these, and that is the expected result rather than a disappointing one.**
+Flat behaviour against tiered, same 240 seeds: Squire's Stroll novice 97% → 100%, Blobert's Wrath casual 45% → 46%,
+novice 5% → 4%, Knight's Trial unchanged either way. A bot with a one-turn look-ahead does not feel a web that holds a
+turn longer or a fuse that gives a turn more — it reads the board perfectly and has no reaction time to pressure. These
+knobs are aimed at a person, and **the bot is the wrong instrument for them** (the same point TEST-85 makes about what
+"careless play" measures). They were therefore NOT tuned upward until the bot noticed; doing that would be tuning
+against an instrument that cannot see the thing being tuned, which is how D-067 happened. What the sweep is good for
+here is confirming no tier was accidentally inverted, and none was.
 
 No run stalled in any tier. The repairs cost a few points across the board — a boss no longer revives a hero who died
 in the same step, summons no longer overrun their caps, and Dodge no longer eats spikes — and they brought Knight's
@@ -485,7 +517,7 @@ Trial and Blobert's Wrath closer together for a blind novice (12% against 8%). T
 small for the 40-seed `TiersKeepTheirOrder` guard to resolve, so that guard asserts the ordering is not inverted and
 leaves the separation to this sweep.
 
-Per class on Knight's Trial (`ClassSweep`, 40 blind seeds, no talents), casual / novice wins: knight 25/4,
+Per class on Knight's Trial (`ClassSweep`, 40 blind seeds, no talents; pre-D-071 numbers), casual / novice wins: knight 25/4,
 paladin 22/8, rogue 20/1, wizard 25/3, ranger 23/6, cleric 28/8, berserker 21/8, engineer 20/5. The parity guard
 holds the spread to a ratio of 8/5 between the weakest and strongest class.
 

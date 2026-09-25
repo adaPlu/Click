@@ -165,6 +165,166 @@ namespace ClickDungeon.Tests
             Assert.That(result.Events.Exists(e => e.Kind == GameEventKind.HeroHealed && e.Source == "stairs"), Is.True);
         }
 
+        static ContentCatalog[] Tiers() => new[] { Difficulty.Easy, Difficulty.Medium, Difficulty.Hardcore }
+            .Select(id => ContentCatalog.CreateDefault(id)).ToArray();
+
+        [Test]
+        public void TheTiersDifferInWhatTheDungeonDoesAndNotOnlyInHowHardItHits()
+        {
+            // D-074. For twelve versions a tier was a column of magnitudes: more hearts, harder blows, one more monster
+            // a floor. Every behavioural number in the game - how long a web holds, how long a bomb sits there, how long
+            // Blobert is untouchable and how long his guard is down afterwards, how many minions a summon brings, how
+            // fast a skeleton gets back up - was the same on Squire's Stroll as on Blobert's Wrath. The three tiers hit
+            // differently and played identically.
+            var tiers = Tiers();
+            int[] Of(System.Func<ContentCatalog, int> read) => tiers.Select(read).ToArray();
+
+            Assert.That(Of(c => c.WebTurns), Is.EqualTo(new[] { 1, 1, 2 }), "Turns stuck in a web.");
+            Assert.That(Of(c => c.Hazards.BombFuse), Is.EqualTo(new[] { 2, 1, 1 }), "Turns before a bomb goes off.");
+            Assert.That(Of(c => c.DeflatedTurns), Is.EqualTo(new[] { 2, 1, 1 }), "Turns the boss lies open afterwards.");
+            Assert.That(Of(c => c.Enemy("lord_blobert").PuffTurns), Is.EqualTo(new[] { 1, 2, 3 }), "Turns the boss is untouchable.");
+            Assert.That(Of(c => c.Enemy("lord_blobert").SummonCount), Is.EqualTo(new[] { 1, 2, 3 }), "Minions a summon brings.");
+            Assert.That(Of(c => c.Enemy("skeleton").ReassembleTurns), Is.EqualTo(new[] { 3, 2, 1 }), "Turns a skeleton lies as bones.");
+            Assert.That(Of(c => c.Enemy("spooky_spellbook").MaxMinions), Is.EqualTo(new[] { 2, 2, 3 }), "Pages a spellbook keeps up.");
+
+            // The clamps, which are the part that can quietly go wrong. Squire's Stroll takes one off every summon, and
+            // the Spooky Spellbook only ever brought one page - a tier may soften a rule, never switch it off, or a
+            // summoner would stand there summoning nobody and the telegraph would promise a minion that never came.
+            Assert.That(Of(c => c.Enemy("spooky_spellbook").SummonCount), Is.EqualTo(new[] { 1, 1, 2 }),
+                "A summon always brings somebody.");
+            // And a bomb always waits at least one turn, because a blow with no warning is not a difficulty setting
+            // (rules 3.2). Nothing ships a fuse of 0; this is the floor that keeps one from being typed in.
+            var reckless = ContentCatalog.CreateDefault().DifficultyInfo(Difficulty.Hardcore);
+            reckless.BombFuse = 0;
+            reckless.WebTurns = -3;
+            reckless.DeflatedTurns = 0;
+            reckless.SummonCount = -9;
+            var clamped = ContentCatalog.CreateTuned(reckless);
+            Assert.That(clamped.Hazards.BombFuse, Is.EqualTo(1), "A bomb is telegraphed or it is not a bomb.");
+            Assert.That(clamped.WebTurns, Is.EqualTo(1));
+            Assert.That(clamped.DeflatedTurns, Is.EqualTo(1));
+            Assert.That(clamped.Enemy("lord_blobert").SummonCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void AWebHoldsLongerAtTheBottomOfTheDungeon()
+        {
+            foreach (var (catalog, held) in new[] { (Tiers()[1], 1), (Tiers()[2], 2) })
+            {
+                var run = Revealed(Run(".....", ".....", "A..H.", ".....", "....."));
+                Assert.That(run.Floor.Enemies[0].Intent.Kind, Is.EqualTo(IntentKind.Web), "Test setup: the spider is spinning.");
+                TurnResolver.Apply(run, PlayerCommand.Wait(), catalog);
+                Assert.That(run.Hero.WebbedTurns, Is.EqualTo(held), $"{catalog.Difficulty}: turns stuck.");
+
+                // Held for every one of them, and free on the turn after the last.
+                for (int turn = 0; turn < held; turn++)
+                {
+                    Assert.That(TurnResolver.Apply(run, PlayerCommand.Move(P(4, 1)), catalog).Accepted, Is.False,
+                        $"{catalog.Difficulty}: still stuck on turn {turn + 1}.");
+                    TurnResolver.Apply(run, PlayerCommand.Wait(), catalog);
+                }
+                Assert.That(run.Hero.WebbedTurns, Is.Zero, $"{catalog.Difficulty}: free again.");
+            }
+        }
+
+        [Test]
+        public void TheBossLiesOpenLongerOnTheGentlestTierAndIsUntouchableLongerOnTheHardest()
+        {
+            // The punish window and the immunity either side of it, which is the whole shape of the Blobert fight.
+            foreach (var (catalog, puffed, open) in new[] { (Tiers()[0], 1, 2), (Tiers()[1], 2, 1), (Tiers()[2], 3, 1) })
+            {
+                var run = Run(Catalog.RunFloorCount, 42UL, "....X", ".....", "H...B", ".....", ".....");
+                var boss = run.Floor.Enemies[0];
+                var def = catalog.Enemy(boss.DefId);
+                boss.Mode = EnemyMode.Puffed;
+                boss.ModeTurns = def.PuffTurns;
+                boss.ActionCounter = 4;
+                var events = new List<GameEvent>();
+
+                for (int turn = 0; turn < puffed; turn++)
+                {
+                    EnemyAi.Declare(run, boss, catalog, events);
+                    Assert.That(boss.Mode, Is.EqualTo(EnemyMode.Puffed), $"{catalog.Difficulty}: untouchable on turn {turn + 1}.");
+                }
+                for (int turn = 0; turn < open; turn++)
+                {
+                    EnemyAi.Declare(run, boss, catalog, events);
+                    Assert.That(boss.Mode, Is.EqualTo(EnemyMode.Deflated), $"{catalog.Difficulty}: open on turn {turn + 1}.");
+                    Assert.That(boss.Intent.Kind, Is.EqualTo(IntentKind.Rest), "And resting, which is what the board shows.");
+                }
+                EnemyAi.Declare(run, boss, catalog, events);
+                Assert.That(boss.Mode, Is.EqualTo(EnemyMode.Normal), $"{catalog.Difficulty}: back on his feet.");
+            }
+        }
+
+        [Test]
+        public void ASummonBringsMoreAtTheBottomOfTheDungeon()
+        {
+            foreach (var (catalog, expected) in new[] { (Tiers()[0], 1), (Tiers()[1], 2), (Tiers()[2], 3) })
+            {
+                var run = Run(Catalog.RunFloorCount, 42UL, "....X", ".....", "H...B", ".....", ".....");
+                var boss = run.Floor.Enemies[0];
+                boss.ActionCounter = 1;   // slam done; the summon is next
+                var events = new List<GameEvent>();
+                EnemyAi.Declare(run, boss, catalog, events);
+                Assert.That(boss.Intent.Kind, Is.EqualTo(IntentKind.Summon), "Test setup: he is calling for help.");
+
+                int before = run.Floor.Enemies.Count;
+                TurnResolver.Apply(run, PlayerCommand.Wait(), catalog);
+                Assert.That(run.Floor.Enemies.Count - before, Is.EqualTo(expected), $"{catalog.Difficulty}: minions summoned.");
+            }
+        }
+
+        [Test]
+        public void BonesStayDownLongerOnTheGentlestTier()
+        {
+            foreach (var (catalog, down) in new[] { (Tiers()[0], 3), (Tiers()[1], 2), (Tiers()[2], 1) })
+            {
+                var run = Revealed(Run(".....", ".....", "HZ...", ".....", "....."));
+                var skeleton = run.Floor.Enemies[0];
+                var def = catalog.Enemy(skeleton.DefId);
+                Assert.That(def.Reassembles, Is.True, "Test setup: a skeleton gets back up.");
+                skeleton.Hp = 1;
+                run.Hero.Hp = run.Hero.MaxHp = 99;
+
+                TurnResolver.Apply(run, PlayerCommand.Slash(skeleton.Pos), catalog);
+                Assert.That(skeleton.Mode, Is.EqualTo(EnemyMode.Bones), $"{catalog.Difficulty}: knocked down.");
+
+                // Counted, not read off the field: the turn it is knocked down is also a turn the skeleton acts on, so
+                // what matters is how many turns the player actually gets before it is standing again.
+                int waited = 0;
+                while (skeleton.Mode == EnemyMode.Bones && waited < 10)
+                {
+                    TurnResolver.Apply(run, PlayerCommand.Wait(), catalog);
+                    waited++;
+                }
+                Assert.That(waited, Is.EqualTo(down), $"{catalog.Difficulty}: turns the bones stayed down.");
+            }
+        }
+
+        [Test]
+        public void ABombWaitsALongerFuseOnTheGentlestTier()
+        {
+            foreach (var (catalog, fuse) in new[] { (Tiers()[0], 2), (Tiers()[1], 1), (Tiers()[2], 1) })
+            {
+                var run = Revealed(Run(".....", ".....", "H....", ".....", "....."));
+                run.Floor[P(2, 2)].Hazard = HazardKind.Bomb;
+                run.Floor[P(2, 2)].BombFuse = catalog.Hazards.BombFuse;
+                Assert.That(catalog.Hazards.BombFuse, Is.EqualTo(fuse), $"{catalog.Difficulty}: the fuse it arms with.");
+
+                // Fuse + 1, counted rather than assumed. The fuse ticks down one an environment step and the bomb goes
+                // off on the step that finds it at zero, so a fuse of 1 explodes on the SECOND turn after arming - the
+                // field's own comment said "the following turn" and had done since it was written.
+                int ticked = 0;
+                while (run.Floor[P(2, 2)].Hazard == HazardKind.Bomb && ticked < 10)
+                {
+                    TurnResolver.Apply(run, PlayerCommand.Wait(), catalog);
+                    ticked++;
+                }
+                Assert.That(ticked, Is.EqualTo(fuse + 1), $"{catalog.Difficulty}: turns the bomb sat there.");
+            }
+        }
+
         [Test]
         public void TheMercyOnTheStairsIsTheTiersOwnAndTheCardSaysHowMuch()
         {

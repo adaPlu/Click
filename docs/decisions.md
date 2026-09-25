@@ -1325,3 +1325,57 @@ D-071 on a model with that stall rate would repeat the mistake the finding is ab
 stop the Misjudged model stalling, then measure the **pre**-D-071 catalog under it. If the 4:1 careless spread that
 motivated D-071 is 1.3 under a plausible-error model, the mercy and the Sanctuary gate want re-justifying on their own
 merits rather than on that spread.
+
+## D-074 The tiers do something different, not just more of the same
+
+For twelve versions a difficulty tier was a column of magnitudes: more hearts, harder blows, one more monster a floor,
+a bigger Blobert. Every number that decides how the dungeon *behaves* was identical on all three - how long a web
+holds, how long a bomb sits there, how long the boss is untouchable and how long his guard is down afterwards, how
+many minions a summon brings, how fast a skeleton gets back on its feet. Squire's Stroll and Blobert's Wrath hit
+differently and played the same.
+
+| Behaviour | Squire's Stroll | Knight's Trial | Blobert's Wrath |
+|---|---|---|---|
+| Turns stuck in a spider's web | 1 | 1 | **2** |
+| Turns a bomb sits before it goes off | **3** | 2 | 2 |
+| Turns Lord Blobert is puffed and untouchable | **1** | 2 | **3** |
+| Turns he lies deflated afterwards | **2** | 1 | 1 |
+| Minions a summon brings | **1** | 2 | **3** |
+| Turns a skeleton lies as bones | **3** | 2 | **1** |
+| Pages a Spooky Spellbook keeps up | 2 | 2 | **3** |
+
+One idea, applied seven times: **the gentle tier gives you time and fewer bodies; the hard one takes the time away and
+adds bodies.** Knight's Trial is the base every other tier is written as a distance from.
+
+- **TWO OF THESE KNOBS DID NOT EXIST.** `WebbedTurns = 1` was a literal in `EnemyAi`, where no tier could reach it. And
+  the boss's deflated window - the free-hit window, the whole point of the puff cycle - was `ModeTurns = 1` assigned on
+  the way in and then overwritten by the next branch without ever being read. The field looked like it set the window
+  and did nothing; the window was one turn on every tier because it was hard-coded in the control flow.
+- **TWO FLOORS ARE CONTRACT, NOT TASTE.** A bomb fuse never goes below 1: a blow that lands in the turn it is announced
+  is a blow with no warning, and the telegraph rule (§3.2) is not a difficulty setting. A summon never brings fewer
+  than one: the telegraph says a minion is coming, so one comes. Both are clamped in `ApplyDifficulty`, and the test
+  types in a reckless tier (fuse 0, summon −9) to prove the clamps hold.
+- **A COMMENT THAT HAD ALWAYS BEEN WRONG.** `BombFuse`'s doc said "1 = explodes in the environment step of the
+  following turn". It does not: the fuse ticks down one a step and explodes on the step that finds it at zero, so a
+  bomb sits for `fuse + 1` turns and a fuse of 1 goes off on the *second* turn. The test counts the turns rather than
+  reading the field, and the comment now says what the code does.
+- **SEVEN MUTATIONS, SEVEN RED.** Every tier value and both clamps have a test that fails when the value goes back.
+
+### What the measurement said, and why nothing was tuned on it
+
+240 blind seeds a tier, empty profile, flat behaviour against tiered:
+
+| | Squire's Stroll | Knight's Trial | Blobert's Wrath |
+|---|---|---|---|
+| casual, before → after | 100% → 99% | 76% → 76% | 45% → 46% |
+| novice, before → after | 97% → 100% | 21% → 21% | 5% → 4% |
+
+**The bot barely notices, and that is the expected answer.** A one-turn look-ahead player does not feel a web that
+holds a turn longer or a fuse that gives a turn more: it reads the board perfectly and has no reaction time to lose.
+These knobs are aimed at a person.
+
+So they were **not** tuned upward until the win rate moved. Pushing numbers until a bot that cannot perceive them
+finally reacts would be tuning against a blind instrument, which is exactly how D-067 happened and what TEST-85 says
+about "careless play" already. What the sweep is good for here is confirming that no tier was accidentally inverted,
+and none was. Validating the feel of these needs a human at the keyboard, and that is the next thing to ask testers
+for rather than the next thing to measure.

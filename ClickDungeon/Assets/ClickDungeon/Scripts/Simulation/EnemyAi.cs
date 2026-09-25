@@ -71,7 +71,7 @@ namespace ClickDungeon.Simulation
                     enemy.Intent = LaneIntent(run, enemy, def);
                     break;
                 case EnemyBehavior.Boss:
-                    enemy.Intent = BossIntent(run, enemy, def, events);
+                    enemy.Intent = BossIntent(run, enemy, def, catalog, events);
                     break;
                 case EnemyBehavior.Charger:
                     enemy.Intent = ChargerIntent(run, enemy, def);
@@ -276,7 +276,7 @@ namespace ClickDungeon.Simulation
             return Intent.Move();
         }
 
-        static Intent BossIntent(RunState run, EnemyState boss, EnemyDefinition def, List<GameEvent> events)
+        static Intent BossIntent(RunState run, EnemyState boss, EnemyDefinition def, ContentCatalog catalog, List<GameEvent> events)
         {
             if (boss.Mode == EnemyMode.Puffed)
             {
@@ -286,12 +286,20 @@ namespace ClickDungeon.Simulation
                     return ChaseIntent(run, boss);
                 }
                 boss.Mode = EnemyMode.Deflated;
-                boss.ModeTurns = 1;
+                boss.ModeTurns = catalog.DeflatedTurns;
                 events.Add(GameEvent.Of(GameEventKind.BossDeflated, boss.Id, to: boss.Pos));
                 return Intent.Rest();
             }
             if (boss.Mode == EnemyMode.Deflated)
             {
+                // The free-hit window, and it is the tier's to set (D-074). `ModeTurns = 1` was assigned on the way in
+                // and then thrown away here without ever being read, so the window was one turn on every tier and the
+                // field that looked like it decided that did nothing at all.
+                if (boss.ModeTurns > 1)
+                {
+                    boss.ModeTurns--;
+                    return Intent.Rest();
+                }
                 boss.Mode = EnemyMode.Normal;
                 boss.ModeTurns = 0;
             }
@@ -464,7 +472,7 @@ namespace ClickDungeon.Simulation
                     // Only a hero still standing on the marked tile is caught (D-061).
                     if (run.Hero.Pos == intent.Target)
                     {
-                        run.Hero.WebbedTurns = 1;
+                        run.Hero.WebbedTurns = catalog.WebTurns;
                         events.Add(GameEvent.Of(GameEventKind.HeroWebbed, enemy.Id, enemy.Pos, intent.Target, source: def.Id));
                     }
                     else

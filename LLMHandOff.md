@@ -1169,3 +1169,21 @@ Recorded because this audit is about repairs that introduce the thing they were 
    all-skipped case the finding actually described and lets the tuning aids alone.
 
 Suites after the repair: **413 headless** (405 before), **498 EditMode passed of 513** (15 `[Explicit]`), **3 PlayMode**.
+
+### D-074 the tiers' behavioural numbers (2026-09-25)
+
+The last item outstanding from the audit-5 list. Seven behavioural numbers - web, bomb fuse, boss puff, boss deflate,
+summon count, reassemble, minion cap - were identical on all three tiers; they are now the tier's. Two of them were not
+knobs at all: `WebbedTurns = 1` was a literal in `EnemyAi`, and the boss's deflated window was a `ModeTurns` assignment
+the next branch overwrote without reading, so the field that appeared to set the free-hit window did nothing.
+
+Seven mutations, seven named tests red. Clamps: a fuse never under 1 and a summon never under 1 minion, both because
+of the telegraph contract rather than taste, both with a reckless-tier test.
+
+Measured 240 blind seeds a tier, flat behaviour against tiered: Squire's Stroll novice 97% → 100%, Blobert's Wrath
+casual 45% → 46% and novice 5% → 4%, Knight's Trial unchanged. **The bot cannot feel these knobs** - it has a perfect
+read of the board and no reaction time - so nothing was tuned upward to make the number move. That would be tuning
+against a blind instrument (D-067, and TEST-85's point about what "careless play" measures). The sweep's job here was
+to confirm no tier inverted, and none did. Ruleset 14 → 15.
+
+**Open**: whether the seven values feel right needs a person, not the bot. It is a question for testers.

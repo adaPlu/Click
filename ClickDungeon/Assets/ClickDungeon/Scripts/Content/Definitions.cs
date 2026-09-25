@@ -161,7 +161,12 @@ namespace ClickDungeon.Content
         /// never change it, so the cost of taking the shortcut reads the same in every run.
         /// </summary>
         public int FallDamage = 3;
-        /// <summary>Fuse set on arming. 1 = explodes in the environment step of the following turn.</summary>
+        /// <summary>
+        /// Fuse set on arming, counted down one per environment step and exploding on the step that finds it at zero -
+        /// so a bomb sits there for `BombFuse + 1` turns, and a fuse of 1 goes off on the SECOND turn after it was
+        /// armed, not the following one. (The comment here said "the following turn" for as long as the field has
+        /// existed; the code has always done this.) Set by the tier (D-074).
+        /// </summary>
         public int BombFuse = 1;
         public int BombRadius = 1;
     }
@@ -245,6 +250,25 @@ namespace ClickDungeon.Content
         /// FloorClearHeal each tier is tuned with was dead weight for any hero hurt enough to notice it (DATA-52).
         /// </summary>
         public int MercyOnStairs;
+
+        // The behavioural numbers (D-074). Everything above this line is a magnitude - more hearts, harder blows, one
+        // more monster - and for twelve tiers' worth of tuning that was the whole difference between them: the dungeon
+        // never ACTED differently, it only hit harder. These change how long the player has and how fast the board
+        // fills, which is what the three tiers are actually meant to feel like.
+        /// <summary>Turns the hero is stuck in a spider's web. Absolute, minimum 1.</summary>
+        public int WebTurns;
+        /// <summary>Turns between a bomb arming and going off. Absolute, minimum 1 - a bomb that lands and explodes in the same turn was never telegraphed (rules 3.2).</summary>
+        public int BombFuse;
+        /// <summary>Added to how many turns Lord Blobert stays puffed up and untouchable. Minimum 1.</summary>
+        public int BossPuffTurns;
+        /// <summary>Turns the boss stays deflated afterwards - the free-hit window. Absolute, minimum 1.</summary>
+        public int DeflatedTurns;
+        /// <summary>Added to the minions every summon brings. Minimum 1 for a summoner that has a summon at all.</summary>
+        public int SummonCount;
+        /// <summary>Added to how long a fallen skeleton lies as bones before standing back up. Minimum 1.</summary>
+        public int ReassembleTurns;
+        /// <summary>Added to how many minions a non-boss summoner keeps alive at once. Minimum 1 where there was a cap.</summary>
+        public int MaxMinions;
     }
 
     /// <summary>What a vault room holds (D-018): either one great chest or a handful of ordinary ones.</summary>

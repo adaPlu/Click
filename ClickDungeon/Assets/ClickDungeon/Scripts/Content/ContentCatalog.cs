@@ -60,6 +60,18 @@ namespace ClickDungeon.Content
         /// </summary>
         public int MercyOnStairs;
 
+        /// <summary>
+        /// Turns the hero is stuck when a spider webs them (D-061), set by the tier (D-074). It was the literal 1,
+        /// written into EnemyAi where no tier could reach it.
+        /// </summary>
+        public int WebTurns = 1;
+        /// <summary>
+        /// Turns Lord Blobert stays deflated after puffing up - the window in which he rests and takes double damage
+        /// (D-039), set by the tier (D-074). It was a literal 1 assigned to a field the Deflated branch then overwrote
+        /// without reading, so the knob existed and did nothing.
+        /// </summary>
+        public int DeflatedTurns = 1;
+
         public readonly Dictionary<string, HeroClassDefinition> HeroClasses = new Dictionary<string, HeroClassDefinition>();
         public readonly Dictionary<string, HeroIdentityDefinition> HeroIdentities = new Dictionary<string, HeroIdentityDefinition>();
         public readonly Dictionary<string, EnemyDefinition> Enemies = new Dictionary<string, EnemyDefinition>();
@@ -997,6 +1009,10 @@ namespace ClickDungeon.Content
                 Id = Difficulty.Easy, DisplayName = "Squire's Stroll", Tagline = "More hearts, softer hits and a breather on every stair.",
                 HeroMaxHp = 4, StartingPotions = 1, EnemyDamage = -1, HazardDamage = -1, BossHp = -2, BossSlamDamage = -1, FloorClearHeal = 3,
                 MercyOnStairs = 2,
+                // Time, and fewer bodies (D-074): two turns to walk away from a bomb, a shorter stretch of untouchable
+                // Blobert and a longer one with his guard down, one minion a summon, and bones that stay down longer.
+                WebTurns = 1, BombFuse = 2, BossPuffTurns = -1, DeflatedTurns = 2,
+                SummonCount = -1, ReassembleTurns = 1, MaxMinions = 0,
             };
             c.Difficulties[Difficulty.Medium] = new DifficultyDefinition
             {
@@ -1006,6 +1022,9 @@ namespace ClickDungeon.Content
                 // D-071: the stairs bring a badly hurt hero back to half, which is what makes the fragile classes
                 // playable for a careless player without touching what a sharp one gets.
                 ExtraEnemies = 1, HazardDamage = 1, MercyOnStairs = 2,
+                // The base numbers: every other tier is written as a distance from these (D-074).
+                WebTurns = 1, BombFuse = 1, BossPuffTurns = 0, DeflatedTurns = 1,
+                SummonCount = 0, ReassembleTurns = 0, MaxMinions = 0,
             };
             c.Difficulties[Difficulty.Hardcore] = new DifficultyDefinition
             {
@@ -1015,6 +1034,10 @@ namespace ClickDungeon.Content
                 // No mercy is what the card says, so the stairs give none here: D-071's floor is Squire's Stroll's and
                 // Knight's Trial's, and this tier is the one that is meant to make carelessness cost (DATA-52).
                 StartingPotions = -1, EnemyHp = 1, BossHp = 4, BossSlamDamage = 1, HazardDamage = 1, MercyOnStairs = 0,
+                // Less time, more bodies (D-074): a web that holds for two turns, a third turn of untouchable Blobert,
+                // an extra minion every summon, a bigger swarm kept alive, and bones back on their feet a turn sooner.
+                WebTurns = 2, BombFuse = 1, BossPuffTurns = 1, DeflatedTurns = 1,
+                SummonCount = 1, ReassembleTurns = -1, MaxMinions = 1,
             };
             return c;
         }
@@ -1024,6 +1047,11 @@ namespace ClickDungeon.Content
             Difficulty = d.Id;
             FloorClearHeal = Math.Max(0, d.FloorClearHeal);
             MercyOnStairs = Math.Max(0, d.MercyOnStairs);
+            // The behavioural numbers (D-074). A fuse under 1 would go off in the same turn it was thrown, which is a
+            // blow with no warning, so the floor here is the telegraph contract and not a taste call (rules 3.2).
+            WebTurns = Math.Max(1, d.WebTurns);
+            DeflatedTurns = Math.Max(1, d.DeflatedTurns);
+            Hazards.BombFuse = Math.Max(1, d.BombFuse);
 
             foreach (var hero in HeroClasses.Values)
             {
@@ -1035,6 +1063,13 @@ namespace ClickDungeon.Content
                 enemy.MaxHp = Math.Max(1, enemy.MaxHp + (enemy.IsBoss ? d.BossHp : d.EnemyHp));
                 enemy.Damage = Math.Max(1, enemy.Damage + d.EnemyDamage);
                 if (enemy.IsBoss) enemy.SlamDamage = Math.Max(1, enemy.SlamDamage + d.BossSlamDamage);
+                // Behaviour, not size (D-074). Each stays at least 1 where the monster had one at all, so a tier can
+                // soften a rule without switching it off: a summoner with no summon keeps none, and one with a summon
+                // never brings nobody.
+                if (enemy.IsBoss) enemy.PuffTurns = Math.Max(1, enemy.PuffTurns + d.BossPuffTurns);
+                if (enemy.SummonId != null) enemy.SummonCount = Math.Max(1, enemy.SummonCount + d.SummonCount);
+                if (enemy.MaxMinions > 0) enemy.MaxMinions = Math.Max(1, enemy.MaxMinions + d.MaxMinions);
+                if (enemy.Reassembles) enemy.ReassembleTurns = Math.Max(1, enemy.ReassembleTurns + d.ReassembleTurns);
             }
             Hazards.SpikeDamage = Math.Max(1, Hazards.SpikeDamage + d.HazardDamage);
             Hazards.BombDamage = Math.Max(1, Hazards.BombDamage + d.HazardDamage);
