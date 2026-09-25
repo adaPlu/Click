@@ -31,7 +31,7 @@ namespace ClickDungeon.Tests
             ("k_treasure_sense", TalentEffect.ChestTapCut, 1, 1),
             ("k_fortune", TalentEffect.CoinsPerChestReward, 3, 2),
             ("k_second_wind", TalentEffect.SecondWind, 3, 1),
-            ("p_judgement", TalentEffect.Judgement, 1, 3),
+            ("p_holy_wrath", TalentEffect.HolyWrath, 1, 3),
             ("p_consecrate", TalentEffect.Consecrate, 1, 1),
             ("p_dawnstrike", TalentEffect.Dawnstrike, 1, 2),
             ("p_wrath_of_dawn", TalentEffect.WrathOfDawn, 1, 1),

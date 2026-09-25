@@ -345,10 +345,10 @@ namespace ClickDungeon.Content
             Talent(c, "k_second_wind", "knight", "adventurer", 4, 1, "Second Wind", "Every staircase is a fresh start.",
                 "Arriving on a new floor restores 3 more hearts", TalentEffect.SecondWind, amount: 3, requires: "k_fortune");
 
-            Talent(c, "p_judgement", "paladin", "hammer", 1, 3, "Judgement", "Strike the one who faltered.",
-                "+1 slash damage against a staggered enemy", TalentEffect.Judgement);
+            Talent(c, "p_holy_wrath", "paladin", "hammer", 1, 3, "Holy Wrath", "What is risen should lie down.",
+                "+1 slash damage against the undead", TalentEffect.HolyWrath);
             Talent(c, "p_consecrate", "paladin", "hammer", 2, 1, "Consecrate", "Holy light bursts from the raised shield.",
-                "SHIELD deals 1 damage to every awake enemy next to you", TalentEffect.Consecrate, requires: "p_judgement");
+                "SHIELD deals 1 damage to every awake enemy next to you", TalentEffect.Consecrate, requires: "p_holy_wrath");
             Talent(c, "p_dawnstrike", "paladin", "hammer", 3, 2, "Dawnstrike", "The mighty fall hardest.",
                 "+1 slash damage against bosses", TalentEffect.Dawnstrike, requires: "p_consecrate");
             Talent(c, "p_wrath_of_dawn", "paladin", "hammer", 4, 1, "Wrath of Dawn", "One falls, the rest reel.",
@@ -707,7 +707,7 @@ namespace ClickDungeon.Content
 
             // First expansion monsters (D-058). Each adds one new rule, and every rule is telegraphed a turn ahead.
             // Skeleton Warrior: slow, and its first fall leaves bones that stand up again unless broken.
-            AddEnemy(c, new EnemyDefinition { Id = "skeleton", DisplayName = "Skeleton Warrior", Behavior = EnemyBehavior.SlowChaser, MaxHp = 3, Damage = 2, Reassembles = true });
+            AddEnemy(c, new EnemyDefinition { Id = "skeleton", DisplayName = "Skeleton Warrior", Behavior = EnemyBehavior.SlowChaser, MaxHp = 3, Damage = 2, Reassembles = true, Undead = true });
             // Armored Boar: heavy, and charges down any clear line - the whole path is marked the turn before.
             AddEnemy(c, new EnemyDefinition { Id = "armored_boar", DisplayName = "Armored Boar", Behavior = EnemyBehavior.Charger, MaxHp = 5, Damage = 3, Range = 4 });
             // Goblin Bomber: fragile, keeps its distance and lobs a lit bomb where the hero stands.
@@ -718,8 +718,8 @@ namespace ClickDungeon.Content
             AddEnemy(c, new EnemyDefinition { Id = "cave_spider", DisplayName = "Cave Spider", Behavior = EnemyBehavior.Spinner, MaxHp = 3, Damage = 2, Range = 3 });
             // Spooky Spellbook: an imp's fire lanes, plus a spectral page summoned beside it every third turn.
             AddEnemy(c, new EnemyDefinition { Id = "spooky_spellbook", DisplayName = "Spooky Spellbook", Behavior = EnemyBehavior.Caster, MaxHp = 3, Damage = 2, Range = 3,
-                SummonId = "spectral_page", SummonCount = 1, MaxMinions = 2 });
-            AddEnemy(c, new EnemyDefinition { Id = "spectral_page", DisplayName = "Spectral Page", Behavior = EnemyBehavior.Chaser, MaxHp = 1, Damage = 1 });
+                SummonId = "spectral_page", SummonCount = 1, MaxMinions = 2, Undead = true });
+            AddEnemy(c, new EnemyDefinition { Id = "spectral_page", DisplayName = "Spectral Page", Behavior = EnemyBehavior.Chaser, MaxHp = 1, Damage = 1, Undead = true });
             // Mimic Chest: looks like a chest until the hero comes right up to it; pays out in coins when it falls.
             AddEnemy(c, new EnemyDefinition { Id = "mimic_chest", DisplayName = "Mimic Chest", Behavior = EnemyBehavior.Chaser, MaxHp = 4, Damage = 3, Disguised = true, LootCoins = 15 });
             // Goblin Key Warden: holds the floor's key and backs away with it (placed by FloorProfile.KeyWarden, not by pools).

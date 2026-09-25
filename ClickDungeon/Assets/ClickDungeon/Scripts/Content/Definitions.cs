@@ -111,6 +111,12 @@ namespace ClickDungeon.Content
         public int Damage;
         public int Range = 1;
         public bool IsBoss;
+        /// <summary>
+        /// Risen rather than alive (D-072). A content tag with rules attached: holy damage answers it, and the
+        /// abilities that will banish the undead need something to name. Bones, spectres and the books that animate
+        /// them carry it; a mimic is furniture and a demon was never alive, so neither does.
+        /// </summary>
+        public bool Undead;
 
         // Boss script values (ignored by normal enemies).
         public int SlamDamage;

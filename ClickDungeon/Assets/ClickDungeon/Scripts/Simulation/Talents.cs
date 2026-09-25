@@ -27,7 +27,10 @@ namespace ClickDungeon.Simulation
             // it into Intent.Recover, which is the "does nothing next turn, free hit" the player is shown. Judgement has to read
             // that durable state, or it can never fire on the player's turn (REL-23).
             if (enemy.Staggered || enemy.Intent.Kind == IntentKind.Recover) damage += run.Perk(TalentEffect.Judgement);
-            if (catalog.Enemy(enemy.DefId).IsBoss) damage += run.Perk(TalentEffect.Dawnstrike);
+            var def = catalog.Enemy(enemy.DefId);
+            if (def.IsBoss) damage += run.Perk(TalentEffect.Dawnstrike);
+            // Holy Wrath (D-072): the Paladin hits what is risen harder. A boss can be both, and they stack.
+            if (def.Undead) damage += run.Perk(TalentEffect.HolyWrath);
             if (IsAmbush(run, enemy, catalog)) damage += run.Perk(TalentEffect.Ambush);
             if (hero.Pos.Chebyshev(enemy.Pos) >= FarShot) damage += run.Perk(TalentEffect.Longshot);
             int rage = run.Perk(TalentEffect.Rage);

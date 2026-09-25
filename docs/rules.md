@@ -175,6 +175,12 @@ avoids the hit. This is the core of Shield/Dash decisions.
 | Fire Imp       | 2  | 2   | Hero in a straight clear lane within 3 → `Fire(dir)` (the telegraph *is* the aim). After firing → `Rest` (reload). Otherwise `Move` toward a lane cell at distance 2–3. Adjacent → steps away if possible. |
 | Slimelet (summon) | 1 | 1 | Goblin behaviour.                                                       |
 
+**The undead** *(D-072)*. Three monsters are risen rather than alive: the **Skeleton Warrior**, the
+**Spooky Spellbook** and the **Spectral Page** it sends out. Holy damage answers them — today that is the
+Paladin's Holy Wrath — and the Inspect panel says so on the tile, because a bonus the player cannot see is
+one they cannot plan around. A Mimic Chest is furniture and the Theater Curtain Demon was never alive, so
+neither is undead.
+
 **First expansion monsters (D-058).** Each adds one rule, telegraphed a turn ahead like every other.
 
 | Enemy            | HP | Dmg | From floor | Behaviour |
@@ -734,7 +740,7 @@ capstone** only, so a build commits to a path.
 
 | Path | Tier | Talent | Ranks | Per rank |
 |---|---|---|---|---|
-| Hammer | 1 | Judgement | 3 | +1 slash damage against a staggered enemy |
+| Hammer | 1 | Holy Wrath | 3 | +1 slash damage against **the undead** (D-072) |
 | Hammer | 2 | Consecrate | 1 | SHIELD deals 1 to every awake enemy next to you |
 | Hammer | 3 | Dawnstrike | 2 | +1 slash damage against **any boss** (four of them since D-062) |
 | Hammer | 4 | Wrath of Dawn | 1 | A slash kill staggers every other awake enemy next to you |
@@ -748,8 +754,9 @@ capstone** only, so a build commits to a path.
 | Devotion | 4 | Sanctified | 1 | Potions also refill mana; fountains heal fully |
 
 Paths meet: the Knight's Riposte and Bastion reward shielding, which Shield Wall makes
-cheap; the Paladin's Judgement hits hardest on the enemies a block staggers, and Holy
-Bulwark pays for the next shield. Talents learned before the trees (D-027) are
+cheap; the Paladin's Holy Wrath answers the risen, and Holy Bulwark pays for the next
+shield. The Cleric keeps Judgement under its own name, Rebuke — before D-072 both
+classes opened their offence with the same talent twice over. Talents learned before the trees (D-027) are
 refunded.
 
 The level shows as a badge on the portrait on both screens. The TALENTS button

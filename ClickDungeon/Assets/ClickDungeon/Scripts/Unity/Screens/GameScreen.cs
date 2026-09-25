@@ -981,6 +981,8 @@ namespace ClickDungeon.Unity.Screens
                 var def = catalog.Enemy(enemy.DefId);
                 title = def.DisplayName.ToUpperInvariant();
                 sb.AppendLine($"HP {enemy.Hp}/{enemy.MaxHp}");
+                // A bonus the player cannot see is a bonus they cannot plan around (D-072).
+                if (def.Undead) sb.AppendLine("<color=#B8BCC4>Undead.</color> Holy damage answers it.");
                 // REL-36: the same number the tile band shows, Fury included - the two disagreed on an enraged boss.
                 sb.AppendLine(Lines.IntentExplain(enemy, def, Renown.Hit(run, catalog, 0) + EnemyAi.Fury(enemy)));
                 var underfoot = UnderfootText(cell, floor, Board.ExitReadsOpen(run));

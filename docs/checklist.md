@@ -78,6 +78,8 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 ## Production tile set (D-018, D-019, rules §11)
 - [x] Every tile in both sheets has a rule or an explicit decoration role.
 - [x] New mechanics: lava, teleport pads, healing fountains, pressure plates, vault doors, great chests.
+- [x] The undead are a tagged thing the rules can name, and the Paladin's opening talent answers them (D-072).
+- [ ] Three equipped skill slots per class, drawn from a larger pool: the Paladin's heal and the Cleric's dispel first.
 - [x] No class is hopeless for a careless player: the spread under sloppy play is 2.15 to 1, was 4.1 (D-071),
       and a guard measures that axis rather than the careful one where every class looks the same.
 - [x] The tests pin numbers, not restatements of the code: the renown curve is written out as literal digits, and

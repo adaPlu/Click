@@ -96,15 +96,52 @@ namespace ClickDungeon.Tests
         {
             var profile = new ProfileState { Xp = Progression.XpForLevel(5) };
             Progression.TryLearn(profile, Catalog, "k_sturdy");
-            Progression.TryLearn(profile, Catalog, "p_judgement");
+            Progression.TryLearn(profile, Catalog, "p_holy_wrath");
             var knight = RunFactory.NewRun(3UL, Catalog, new List<GameEvent>());
             Progression.Apply(profile, knight, Catalog);
             Assert.That(knight.Hero.MaxHp, Is.EqualTo(Catalog.HeroClass("knight").MaxHp + 1));
-            Assert.That(knight.Perk(TalentEffect.Judgement), Is.Zero);
+            Assert.That(knight.Perk(TalentEffect.HolyWrath), Is.Zero);
             var paladin = RunFactory.NewRun(3UL, Catalog, new List<GameEvent>(), "dawnward");
             Progression.Apply(profile, paladin, Catalog);
             Assert.That(paladin.Hero.MaxHp, Is.EqualTo(Catalog.HeroClass("paladin").MaxHp));
-            Assert.That(paladin.Perk(TalentEffect.Judgement), Is.EqualTo(1));
+            Assert.That(paladin.Perk(TalentEffect.HolyWrath), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void TheUndeadAreTheRisenAndNothingElse()
+        {
+            // The tag carries rules, so what wears it is a design statement, not a convenience. Bones and spectres and
+            // the book that animates them are risen; a mimic is furniture and a demon was never alive (D-072).
+            foreach (var id in new[] { "skeleton", "spooky_spellbook", "spectral_page" })
+                Assert.That(Catalog.Enemy(id).Undead, Is.True, id);
+            foreach (var id in new[] { "goblin", "crowned_slime", "mimic_chest", "cave_spider", "bat", "armored_boar" })
+                Assert.That(Catalog.Enemy(id).Undead, Is.False, id);
+        }
+
+        [Test]
+        public void HolyWrathAnswersTheRisenAndLeavesTheLivingAlone()
+        {
+            // Z is a Skeleton Warrior, G a goblin: same slash, one of them holy.
+            var undead = With(As(Run(".....", ".....", ".HZ..", ".....", "....."), "dawnward"), (TalentEffect.HolyWrath, 2));
+            var living = With(As(Run(".....", ".....", ".HG..", ".....", "....."), "dawnward"), (TalentEffect.HolyWrath, 2));
+            int bare = living.Hero.SlashDamage;
+
+            Assert.That(Talents.SlashDamage(undead, undead.Floor.Enemies[0], Catalog), Is.EqualTo(bare + 2),
+                "Two ranks of Holy Wrath, two more damage to what is risen.");
+            Assert.That(Talents.SlashDamage(living, living.Floor.Enemies[0], Catalog), Is.EqualTo(bare),
+                "A goblin is alive and feels nothing of it.");
+        }
+
+        [Test]
+        public void HolyWrathAndDawnstrikeBothAnswerARisenBoss()
+        {
+            // Nothing undead is a boss today, so this pins the rule rather than the roster: the two stack.
+            var run = With(As(Run(".....", ".....", ".HZ..", ".....", "....."), "dawnward"),
+                (TalentEffect.HolyWrath, 1), (TalentEffect.Dawnstrike, 1));
+            var skeleton = run.Floor.Enemies[0];
+            int bare = run.Hero.SlashDamage;
+
+            Assert.That(Talents.SlashDamage(run, skeleton, Catalog), Is.EqualTo(bare + 1), "Undead, not a boss: one bonus.");
         }
 
         // ------------------------------------------------------------------ Knight

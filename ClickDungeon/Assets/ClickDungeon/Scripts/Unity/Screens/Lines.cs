@@ -376,7 +376,8 @@ namespace ClickDungeon.Unity.Screens
             if (hero.Hp * 2 <= hero.MaxHp) low += run.Perk(TalentEffect.Bloodlust);
             int high = low + run.Perk(TalentEffect.Ambush) + run.Perk(TalentEffect.Longshot)
                        + System.Math.Max(run.Perk(TalentEffect.OpeningStrike), run.Perk(TalentEffect.Executioner))
-                       + System.Math.Max(run.Perk(TalentEffect.Judgement), run.Perk(TalentEffect.Dawnstrike));
+                       + System.Math.Max(run.Perk(TalentEffect.Judgement),
+                           System.Math.Max(run.Perk(TalentEffect.Dawnstrike), run.Perk(TalentEffect.HolyWrath)));
             return high > low ? $"{low}-{high}" : low.ToString();
         }
 

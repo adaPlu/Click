@@ -134,7 +134,7 @@ namespace ClickDungeon.UnityTests
             Assert.That(Learn().interactable, Is.False, "Out of points.");
 
             Buttons().First(b => b.name == "Class paladin").onClick.Invoke();
-            Assert.That(Buttons().Any(b => b.name == "Node p_judgement"), Is.True, "The Paladin's own tree, with its own point.");
+            Assert.That(Buttons().Any(b => b.name == "Node p_holy_wrath"), Is.True, "The Paladin's own tree, with its own point.");
             Assert.That(Learn().interactable, Is.True);
         }
     }

@@ -101,6 +101,8 @@ namespace ClickDungeon.Domain
         Ambush, Reach, Knockback, Longshot, Sanctuary, Rage, Drone,
         // The new classes' talents (D-063).
         MaxMana, Eviscerate, Dodge, Pickpocket, Fireball, PiercingArrow, PinningShot, Hawkeye, Bloodlust, DroneRange, ArcChain,
+        // The Paladin's holy wrath against the risen (D-072).
+        HolyWrath,
     }
 
     /// <summary>How rare an item is (D-036): its drop weight, its shop price and the colour of its frame.</summary>

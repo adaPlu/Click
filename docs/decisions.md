@@ -1198,3 +1198,32 @@ careful player and wildly unbalanced for a careless one.
 - **THE GUARD**: `NoClassIsHopelessForACarelessPlayer` measures the sloppy axis - which nothing did before - and
   refuses a class under a fifth of its runs or a spread past three to one. Verified by reverting the mercy: the
   Wizard falls to 3/30 against the Cleric's 21/30 and the guard names it.
+
+## D-072 The undead, and the Paladin's answer to them
+
+First half of the class-ability work. The tag and the passive need no new system; the usable skills that follow do,
+and are not started here.
+
+- **THE TAG**: `EnemyDefinition.Undead`. Three monsters carry it - the Skeleton Warrior, the Spooky Spellbook and the
+  Spectral Page it summons. A **Mimic Chest is furniture** and the **Theater Curtain Demon was never alive**, so
+  neither is tagged; the tag means risen, not merely unpleasant. It exists because "a bonus against undead" has to
+  name something, and because the skills to come - banishing, unmaking, stopping a skeleton from standing back up -
+  all need the same noun.
+- **THE PALADIN'S PASSIVE**: `Holy Wrath`, hammer branch tier 1, three ranks, +1 slash damage per rank against the
+  undead. It **replaces** `p_judgement` rather than joining the tree beside it: the talent overlay draws one node per
+  branch and tier, so a thirteenth Paladin talent would sit on top of an existing one.
+- **WHICH IS ALSO A FIX**: the Paladin and the Cleric shared six of their twelve effects - Judgement/Rebuke,
+  Consecrate/Holy Light, Dawnstrike/Smite, both Blessed Draught, both Prayer, Sanctified/Holy Water. Their trees were
+  near-duplicates under different names. Holy Wrath removes one of those pairs and gives the Paladin an opening
+  talent that is his own. `Judgement` stays in the game on the Cleric's Rebuke, so no effect was lost.
+- **VISIBLE OR IT DOES NOT COUNT**: the Inspect panel names an undead monster on its tile, and the HUD's slash span
+  includes Holy Wrath - the panel understating the blow a player is about to land is the same class of bug as a
+  telegraph that lies.
+- **SAVES**: `p_judgement` no longer exists, and `Progression.PointsSpent` already ignores ranks in talents no class
+  has any more, so an old profile's points come back rather than stranding. `TalentEffect.HolyWrath` is appended, so
+  no saved perk changes meaning.
+- **TESTS**: three. Reverting the tag on the skeleton, or letting Holy Wrath hit everything, each turns named tests red.
+- **NEXT, NOT NOW**: three equipped skill slots drawn from a larger per-class pool, with the Paladin's Lay on Hands and
+  the Cleric's Dispel as the first two. That needs a new verb, a cost, a target rule and UI, and one caution recorded
+  in advance: a castable Cleric heal cuts against D-071, where she was the strongest class under pressure until
+  Sanctuary was gated. Measure her the moment it exists.

@@ -189,7 +189,7 @@
     { "key": "icon_talent_k_treasure_sense", "source": "ref-core-ui", "rect": [792, 461, 95, 95], "mode": "wide", "size": 192, "folder": "Icons", "circle": true, "circle_inset": 0.08, "wired": true },
     { "key": "icon_talent_k_fortune", "source": "ref-sir-sheet", "rect": [410, 1102, 106, 106], "mode": "wide", "size": 192, "folder": "Icons", "circle": true, "circle_inset": 0.08, "wired": true },
     { "key": "icon_talent_k_second_wind", "source": "ref-sir-sheet", "rect": [289, 1102, 106, 106], "mode": "wide", "size": 192, "folder": "Icons", "circle": true, "circle_inset": 0.08, "wired": true },
-    { "key": "icon_talent_p_judgement", "source": "ref-dawnward-sheet", "rect": [42, 1100, 108, 114], "mode": "wide", "size": 192, "folder": "Icons", "circle": true, "circle_inset": 0.08, "wired": true },
+    { "key": "icon_talent_p_holy_wrath", "source": "ref-dawnward-sheet", "rect": [42, 1100, 108, 114], "mode": "wide", "size": 192, "folder": "Icons", "circle": true, "circle_inset": 0.08, "wired": true },
     { "key": "icon_talent_p_consecrate", "source": "ref-dawnward-sheet", "rect": [411, 1100, 108, 114], "mode": "wide", "size": 192, "folder": "Icons", "circle": true, "circle_inset": 0.08, "wired": true },
     { "key": "icon_talent_p_dawnstrike", "source": "ref-lightbringer-sheet", "rect": [42, 1146, 108, 114], "mode": "wide", "size": 192, "folder": "Icons", "circle": true, "circle_inset": 0.08, "wired": true },
     { "key": "icon_talent_p_wrath_of_dawn", "source": "ref-dawnward-sheet", "rect": [572, 1090, 216, 250], "mode": "wide", "size": 192, "folder": "Icons", "circle": true, "circle_inset": 0.08, "wired": true },

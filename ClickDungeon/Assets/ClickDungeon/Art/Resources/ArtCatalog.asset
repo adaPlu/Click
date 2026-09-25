@@ -1388,9 +1388,9 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 6dfed79b6fa64e6429dc292ff371bc5b, type: 3}
     Fps: 12
     Placeholder: 1
-  - Key: icon_talent_p_judgement
+  - Key: icon_talent_p_holy_wrath
     Frames:
-    - {fileID: 21300000, guid: a089953215cabce429f1feddee34614b, type: 3}
+    - {fileID: 21300000, guid: 13925e13025ad804b82242bb604437fa, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: icon_talent_p_plated
