@@ -228,13 +228,18 @@ namespace ClickDungeon.Simulation
             }
         }
 
-        /// <summary>Renown's threat (D-040): extra hearts for every monster on the deep floors, more for Lord Blobert.</summary>
+        /// <summary>
+        /// Renown's threat (D-040): extra hearts for every monster on the deep floors, more for Lord Blobert. Read through
+        /// <see cref="Renown.Level"/>, so the hearts a monster is given follow the same threat its blows do - the depth's
+        /// share included (D-067).
+        /// </summary>
         public static void ApplyThreat(RunState run, ContentCatalog catalog)
         {
-            if (!Renown.Reaches(run, catalog)) return;
+            int threat = Renown.Level(run, catalog);
+            if (threat <= 0) return;
             foreach (var enemy in run.Floor.Enemies)
             {
-                int extra = run.Threat * (catalog.Enemy(enemy.DefId).IsBoss ? catalog.Renown.BossHpPerThreat : catalog.Renown.HpPerThreat);
+                int extra = threat * (catalog.Enemy(enemy.DefId).IsBoss ? catalog.Renown.BossHpPerThreat : catalog.Renown.HpPerThreat);
                 enemy.MaxHp += extra;
                 enemy.Hp += extra;
             }

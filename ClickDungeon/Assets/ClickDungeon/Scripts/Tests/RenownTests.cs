@@ -27,27 +27,32 @@ namespace ClickDungeon.Tests
         [Test]
         public void ThreatAddsHeartsAndDamageOnlyFromTheDeepFloorsAndMoreHeartsToBlobert()
         {
-            int deepFloor = Catalog.Renown.FirstFloor;
-            var shallow = Run(deepFloor - 1, 7UL, ".....", ".....", ".HG..", ".....", ".....");
+            // Since D-067 the threat a floor carries is Renown.Level, not the run's threat flat: it arrives with the
+            // depth. What this test holds is the shape - nothing above the first floor renown reaches, hearts and blows
+            // raised by the same number below it, and more hearts for a boss than for a goblin.
+            var shallow = Run(Catalog.Renown.FirstFloor - 1, 7UL, ".....", ".....", ".HG..", ".....", ".....");
             shallow.Threat = 2;
             int goblinHp = Enemy(shallow, "goblin").MaxHp;
             RunFactory.ApplyThreat(shallow, Catalog);
             Assert.That(Enemy(shallow, "goblin").MaxHp, Is.EqualTo(goblinHp), "A floor above the deep ones is untouched.");
             Assert.That(Renown.Hit(shallow, Catalog, 2), Is.EqualTo(2));
 
-            var deep = Run(deepFloor, 7UL, ".....", ".....", ".HG..", ".....", ".....");
+            var deep = Run(Catalog.RunFloorCount, 7UL, ".....", ".....", ".HG..", ".....", ".....");
             deep.Threat = 2;
+            int level = Renown.Level(deep, Catalog);
+            Assert.That(level, Is.GreaterThan(0), "Test setup: the bottom of the dungeon carries this hero's renown.");
             RunFactory.ApplyThreat(deep, Catalog);
-            Assert.That(Enemy(deep, "goblin").MaxHp, Is.EqualTo(goblinHp + 2 * Catalog.Renown.HpPerThreat));
+            Assert.That(Enemy(deep, "goblin").MaxHp, Is.EqualTo(goblinHp + level * Catalog.Renown.HpPerThreat));
             Assert.That(Enemy(deep, "goblin").Hp, Is.EqualTo(Enemy(deep, "goblin").MaxHp));
-            Assert.That(Renown.Hit(deep, Catalog, 2), Is.EqualTo(2 + 2 / Catalog.Renown.ThreatPerExtraDamage));
+            Assert.That(Renown.Hit(deep, Catalog, 2), Is.EqualTo(2 + level / Catalog.Renown.ThreatPerExtraDamage));
 
             var court = Run(Catalog.RunFloorCount, 7UL, ".....", ".....", ".HB..", ".....", "....X");
             var blobert = Enemy(court, "lord_blobert");
             int bossHp = blobert.MaxHp;
             court.Threat = 2;
             RunFactory.ApplyThreat(court, Catalog);
-            Assert.That(blobert.MaxHp, Is.EqualTo(bossHp + 2 * Catalog.Renown.BossHpPerThreat));
+            Assert.That(blobert.MaxHp, Is.EqualTo(bossHp + Renown.Level(court, Catalog) * Catalog.Renown.BossHpPerThreat));
+            Assert.That(Catalog.Renown.BossHpPerThreat, Is.GreaterThan(Catalog.Renown.HpPerThreat), "A boss answers renown harder.");
         }
 
         [Test]
@@ -55,9 +60,12 @@ namespace ClickDungeon.Tests
         {
             // D-046: a vault keeps its floor's index, so Renown.Hit already raised its guards' blows. The hearts come
             // from ApplyThreat, which only SetupFloor used to run — and a vault arrives through EnterVault.
-            var run = Run(Catalog.Renown.FirstFloor, 5UL, ".....", ".....", "HdK.X", ".....", ".....");
+            // Deep enough that renown has arrived (D-067): a vault off floor 3 now carries as little threat as floor 3 does.
+            var run = Run(Catalog.RunFloorCount, 5UL, ".....", ".....", "HdK.X", ".....", ".....");
             run.Hero.HasKey = true;
             run.Threat = 2;
+            int level = Renown.Level(run, Catalog);
+            Assert.That(level, Is.GreaterThan(0), "Test setup: this floor carries threat.");
             DoOk(run, PlayerCommand.Move(P(1, 2)));
             Assert.That(run.Floor.IsVault, Is.True, "Test setup: the hero is in the vault.");
             Assert.That(run.Floor.Enemies.Count, Is.GreaterThan(0), "Test setup: a vault has guards.");
@@ -65,11 +73,12 @@ namespace ClickDungeon.Tests
             foreach (var guard in run.Floor.Enemies)
             {
                 int baseHp = Catalog.Enemy(guard.DefId).MaxHp;
-                Assert.That(guard.MaxHp, Is.EqualTo(baseHp + 2 * Catalog.Renown.HpPerThreat), "A vault guard carries its renown hearts.");
+                Assert.That(guard.MaxHp, Is.EqualTo(baseHp + level * Catalog.Renown.HpPerThreat), "A vault guard carries its renown hearts.");
                 Assert.That(guard.Hp, Is.EqualTo(guard.MaxHp));
             }
-            // The blow and the hearts now come from the same rule.
-            Assert.That(Renown.Hit(run, Catalog, 2), Is.EqualTo(2 + 2 / Catalog.Renown.ThreatPerExtraDamage));
+            // The blow and the hearts come from the same rule, and the vault is as deep as the floor it hangs off.
+            Assert.That(Renown.Level(run, Catalog), Is.EqualTo(level));
+            Assert.That(Renown.Hit(run, Catalog, 2), Is.EqualTo(2 + level / Catalog.Renown.ThreatPerExtraDamage));
         }
 
         [Test]
@@ -87,7 +96,12 @@ namespace ClickDungeon.Tests
             int plain = Stepped(Catalog.Renown.FirstFloor, 0);
             Assert.That(plain, Is.EqualTo(Catalog.Hazards.SpikeDamage));
             Assert.That(Stepped(Catalog.Renown.FirstFloor - 1, 3), Is.EqualTo(plain), "Shallow floors keep their traps (D-041).");
-            Assert.That(Stepped(Catalog.Renown.FirstFloor, 3), Is.EqualTo(plain + 3 / Catalog.Renown.ThreatPerExtraTrapDamage));
+            // The bottom, not the first floor renown reaches: threat arrives with the depth now (D-067).
+            var bottom = Run(Catalog.RunFloorCount, 7UL, ".....", ".....", ".H^..", ".....", ".....");
+            bottom.Threat = 3;
+            Assert.That(Stepped(Catalog.RunFloorCount, 3),
+                Is.EqualTo(plain + Renown.Level(bottom, Catalog) / Catalog.Renown.ThreatPerExtraTrapDamage));
+            Assert.That(Stepped(Catalog.RunFloorCount, 3), Is.GreaterThan(plain), "A renowned hero's traps bite deeper down.");
         }
     }
 }

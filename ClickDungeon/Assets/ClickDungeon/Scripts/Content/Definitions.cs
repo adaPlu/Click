@@ -301,6 +301,16 @@ namespace ClickDungeon.Content
         public int ThreatPerExtraDamage = 2;
         /// <summary>Spikes, lava and bombs on those floors hurt one more per this much threat (D-041).</summary>
         public int ThreatPerExtraTrapDamage = 2;
+        /// <summary>
+        /// How many floors the dungeon descends before it adds a point of threat on its own account, for a player who has
+        /// earned no renown yet (D-067). **Off by default**: measured at 8 floors a step it cost the casual bot five points
+        /// on Knight's Trial (64% to 59%) and stretched the spread between the strongest and weakest class to exactly the
+        /// ratio `TheClassesWinAboutAsOftenAsEachOther` refuses. The floors' own profiles already carry that curve; this is
+        /// here for when it is wanted, with its price measured.
+        /// </summary>
+        public int FloorsPerThreat;
+        /// <summary>The most depth alone can add, whatever the run's length.</summary>
+        public int MaxDepthThreat = 1;
     }
 
     /// <summary>Experience a run earns (D-027, rules §14).</summary>

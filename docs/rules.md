@@ -478,7 +478,9 @@ paladin 22/8, rogue 20/1, wizard 25/3, ranger 23/6, cleric 28/8, berserker 21/8,
 holds the spread to a ratio of 8/5 between the weakest and strongest class.
 
 These numbers are for a hero with **no talents, gear or renown**: `AutoPlayer.PlayRun` starts every run from an
-empty profile. They measure the dungeon and cannot see the class trees at all — a talent could be broken, as
+empty profile and never sets `Threat`, so **none of them say anything about renown** (D-067). A renowned run is
+measured on its own by `ARenownedRunIsStillARunSomeoneCanWin`: 30 wins in 100 at full renown against the 64 a hero
+with none gets. They measure the dungeon and cannot see the class trees at all — a talent could be broken, as
 Judgement was until audit 3, without moving any of them. The curve a levelled player meets is measured only by the
 explicit `TenPlaythroughs`.
 
@@ -860,13 +862,23 @@ what one rank gives; the ranks column is how many may be bought.
 | tactics | 3 | Survey Drone | 1 | Each new floor starts with its exit uncovered |
 | tactics | 4 | Field Repairs | 1 | Arriving on a new floor restores 3 more hearts |
 
-### 14.1 Renown *(D-040, tune numbers)*
+### 14.1 Renown *(D-040, D-067, tune numbers)*
 
 The deeper floors answer a built-up hero. **Renown** is levels past the first plus items worn; every
-**2** renown is one point of **threat**, up to **3**. From **floor 3** on, every monster has one extra
-heart per threat (Lord Blobert two), and every enemy blow (hits, fire, slams) deals one more per 2
-threat. Spikes, lava and bombs there hurt one more per 2 threat too (D-041); a pit's fall does not
-change. A new hero has no threat. The telegraphs and the tile descriptions show the raised damage.
+**2** renown is one point of **threat**, up to **3**. A new hero has no threat.
+
+**Threat arrives with the depth** (D-067). From **floor 3** on, the threat a floor carries is the hero's
+own, scaled by how far down the run has come: none of it on floor 3, half of it halfway, all of it on the
+last floor. On that floor's threat, every monster has one extra heart per point (Lord Blobert two), and
+every enemy blow — hits, fire, slams — deals one more per 2 points. Spikes, lava and bombs there hurt one
+more per 2 points too (D-041); a pit's fall does not change. The telegraphs and the tile descriptions show
+the raised damage, and a vault carries its floor's threat because it carries its floor's index (D-046).
+
+Before D-067 the hero's whole threat landed on floor 3 and stayed flat to floor 20. A hero at full renown
+then won 5 runs in 100 instead of 64 and died around floor 7; nothing was red because nothing measured it
+(see the note under §10.2). The dungeon can also add threat of its own for a hero who has earned none —
+`FloorsPerThreat` — but that ships **off**: measured at one step per 8 floors it cost the casual bot five
+points on Knight's Trial and stretched the classes to the edge of the parity band.
 
 ## 15. Inventory *(D-028, tune numbers)*
 

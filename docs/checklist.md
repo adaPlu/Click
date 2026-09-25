@@ -78,6 +78,10 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 ## Production tile set (D-018, D-019, rules §11)
 - [x] Every tile in both sheets has a rule or an explicit decoration role.
 - [x] New mechanics: lava, teleport pads, healing fountains, pressure plates, vault doors, great chests.
+- [x] Renown's threat arrives with the depth rather than landing whole on floor 3, and a renowned run is measured
+      rather than assumed: it was won 5 times in 100 and nothing was looking (D-067, MAINT-36).
+- [x] A PlayMode test assembly, so warnings, covers and the vault's stone can be checked as drawn rather than as
+      read from the draw path (D-066, TEST-15).
 - [x] The hero's face in the speech bubble, on the HUD and over an opened chest is the playing hero's own, pulling
       the expression the line calls for; all nine heroes carry all eight faces (D-064, D-065).
 - [x] Vault rooms behind doors: nine tiles, three by three, with the door you came in by at the middle of them;

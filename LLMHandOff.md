@@ -866,8 +866,8 @@ berserker 21/8, engineer 20/5.
 ### Next order
 
 1. **The three design calls above** (DATA-24, MAINT-35, MAINT-36) - renown in particular: it is flat from floor 3 to 20.
-2. **A PlayMode assembly** (TEST-15, open since audit 3). REL-38, REL-39, REL-42 and MAINT-32 are all COMPILED-level
-   because nothing in the repo can exercise a drawn tile; they were verified by reading the draw path only.
+2. ~~A PlayMode assembly (TEST-15)~~ - done, D-066. REL-39 and MAINT-32 are still COMPILED: the assembly exists now,
+   so they can be pinned properly whenever they are next touched.
 3. Audit 3's open items remain open.
 
 ---
@@ -885,3 +885,23 @@ Not an audit: feature work, recorded here because two bugs it exposed belong wit
 | MAINT-37 | DONE | VERIFIED by contact sheet | The 48 expression portraits are cut. `ArtCatalog.Portrait` already asked for them and fell back to the neutral face |
 
 Suites after the work: **383 headless**, **474 Unity EditMode**. Seven mutations run, every one caught.
+
+## D-065, D-066 - the dialogue faces and a PlayMode assembly (2026-09-24/25)
+
+| ID | Outcome | Evidence | What changed |
+|---|---|---|---|
+| D-065 | DONE | VERIFIED (`SpeechPortraitTests`, 6) | The panel, the speech bubble and the chest overlay all wear the playing hero's face; `GameScreen.SpeechPortraitKey` is the one place that decides. A boss falling takes the turn's line with the victorious face, and a blow of four hearts or more answers angry. A test reads the **shipped** catalog and fails if any of the 72 hero faces is missing |
+| TEST-15 | FIXED (open since audit 3) | VERIFIED (`BoardDrawTests`, 3) | `ClickDungeon.Unity.PlayTests`: a board can be built and rendered, and what it drew read back. REL-38 and REL-42 are no longer COMPILED-only - reverting each to the bug it was written for turns its test red. Run with `-testPlatform PlayMode` |
+
+| MAINT-36 | FIXED | VERIFIED (`RenownDepthTests`, 8) | Renown's threat ramps in with the depth instead of landing whole on floor 3 (D-067) |
+| REL-49 (new) | FIXED | VERIFIED (`ARenownedRunIsStillARunSomeoneCanWin`) | **The flatness was hiding a cliff.** At threat 2 the casual bot won 10 of 100 runs of Knight's Trial and died around floor 8; at threat 3, 5 of 100. With the ramp: 59% and 30% |
+| TEST-23 (new) | FIXED | VERIFIED by construction | `AutoPlayer.PlayRun` never sets `Threat`, so **every balance number in this repo is a no-renown run** - sweeps, tier guards, class parity, all of it. A renowned run now has a guard of its own, and `TheTelegraphIsWhatHappens` carries renown on half its seeds |
+
+Suites: **390 headless**, **480 Unity EditMode**, **3 Unity PlayMode**. Seven mutations across the earlier two items,
+every one caught; the renown work was verified by its own measurements and by five existing tests going red for the
+right reasons (three pinned the old flat rule, one hard-coded a boss's hearts, and the parity guard moved).
+
+**Still open from this pass**: `Renown.FloorsPerThreat` ships at zero. Turning it on gives the dungeon a curve of its
+own for a hero with no renown, at five points of casual win rate and a class spread of exactly 1.60 against the parity
+band's 1.60 ceiling. `PuffedIsImmuneThenDeflatedTakesDouble` hard-codes Lord Blobert's hearts, so it fails if the knob
+is turned on - de-hardcode it first.

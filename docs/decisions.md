@@ -1022,3 +1022,54 @@ Rules referenced here live in `docs/rules.md`.
 - **TESTS**: six in `SpeechPortraitTests`. Four mutations - the bubble and the chest each forced back to the default
   hero, an expression dropped from the art list, and one portrait renamed in the built catalog - each turn a named test
   red.
+
+## D-066 A PlayMode assembly, so a drawn tile can be looked at
+
+- **THE GAP**: `ClickDungeon.Unity.Tests` is `includePlatforms: ["Editor"]`, so nothing in the repo could stand up a
+  board and read what it drew. That is why REL-38, REL-39, REL-42 and MAINT-32 were all recorded **COMPILED** in audit
+  4 - fixed by reading the draw path, never seen - and the vault's wall ring (D-064) would have joined them.
+- **THE ASSEMBLY**: `ClickDungeon.Unity.PlayTests`, all platforms, referencing the game rather than the editor, run
+  with `-testPlatform PlayMode`. `BoardView` needs only a `RectTransform` and a `MonoBehaviour` host, and `Render`
+  takes the threat list straight, so a test can hand it exactly the warnings it wants to see drawn.
+- **WHAT THE FIRST THREE PIN**: a web and a landing bomb stay readable on a tile that is also being hit, each on its own
+  row (REL-38); a cover keeps the warnings whose extent reads the board and not the geometric ones (REL-42); and the
+  stone around a vault is not drawn like a cover, because a cover is a tile the player is invited to click (D-064).
+- **THE LABELS ARE NOT ON THE TILE**: warning labels are parented to the board's label layer, named `Labels x,y`, so
+  they draw over the tiles around them. The first version of these tests looked under `Cell x,y`, found nothing, and
+  failed - worth knowing before writing the next one.
+- **TESTS**: three in `BoardDrawTests`. Reverting each fix to the bug it was written for - the web erased by a blow, the
+  warnings drawn over covers, the stone tinted like a cover - turns exactly one of them red.
+- **HOW TO RUN**: `-runTests -testPlatform PlayMode` alongside the EditMode pass; the kit gate still runs the headless
+  suite only, which is unchanged at 383.
+
+## D-067 Renown arrives with the depth, and the bot had never met it
+
+- **WHAT WAS WRONG WAS NOT ONLY FLATNESS**: renown's threat landed whole on **floor 3** and stayed there to floor 20, so
+  a twenty-floor dungeon had no curve of its own (MAINT-36). Measuring it turned up something worse. With threat 2 the
+  casual bot won **10 of 100** runs of Knight's Trial and died around floor 8; at threat 3, **5 of 100**, floor 7. A
+  hero with no renown wins 64. Renown is meant to be a rubber band and was a wall.
+- **WHY NOBODY SAW IT**: `AutoPlayer.PlayRun` builds its run with `RunFactory.NewRun` and never sets `Threat`, so every
+  balance number in this repo - every sweep, every tier guard, every class comparison - is a run with **no renown at
+  all**. The one number that mattered was the one nothing measured.
+- **THE FIX**: `Renown.Level(run, catalog)` is now the single place a floor's threat comes from, and the hero's own
+  threat ramps in over the run: none of it on the first floor renown reaches, all of it on the last. `ApplyThreat`
+  reads the same function, so a monster's hearts and its blows keep coming from one number (D-046). It ramps over
+  `run.FloorCount`, so a ten-floor run is not the first half of a twenty-floor one.
+- **MEASURED** (120 blind seeds, Knight's Trial, casual):
+
+  | player threat | flat (before) | ramped (now) |
+  |---|---|---|
+  | 0 | 64% | 64% |
+  | 2 | 10% (avg floor 8.3) | 59% (F15.5) |
+  | 3 | 5% (avg floor 7.3) | 30% (F14.0) |
+
+- **THE DUNGEON'S OWN CURVE SHIPS OFF**: `FloorsPerThreat` adds threat for a hero who has earned none. At one step per
+  8 floors it cost the casual bot five points (64% to 59%) and stretched the classes to **cleric 67, rogue 42 of 100 -
+  a ratio of exactly 1.60**, which is the fence `TheClassesWinAboutAsOftenAsEachOther` refuses. The floors' own profiles
+  already carry that curve, so the knob is documented with its price and left at zero.
+- **THE GUARD THAT WAS MISSING**: `ARenownedRunIsStillARunSomeoneCanWin` plays 40 seeds at full renown and requires 6
+  wins - well under the 30% measured, well over the 5% the cliff gave. `TheTelegraphIsWhatHappens` now carries renown on
+  half its seeds, because a blow whose number changes with depth is exactly the case its invariant is for.
+- **VERSIONS**: Ruleset 12 -> 13. Floor generation is untouched, so seeds deal the same dungeons.
+- **TESTS**: eight in `RenownDepthTests`, plus three in `RenownTests` restated for the new rule - they pinned "threat 2
+  at floor 3 means +2 hearts", which was the flatness itself.

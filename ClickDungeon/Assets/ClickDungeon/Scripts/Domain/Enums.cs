@@ -13,8 +13,9 @@ namespace ClickDungeon.Domain
         public const int SaveSchema = 1;
         // Bumped for renown's threat, rarer gear and Blobert's second slam (D-040); 9 for the first expansion monsters (D-058);
         // 10 for the second wave, the act bosses and the act-clear heal (D-061, D-062); 11 for the six new classes and
-        // their rules (D-063); 12 for the vault room being nine tiles around the door it was entered by (D-064).
-        public const int Ruleset = 12;
+        // their rules (D-063); 12 for the vault room being nine tiles around the door it was entered by (D-064); 13 for
+        // renown's threat arriving with the depth instead of landing whole on floor 3 (D-067).
+        public const int Ruleset = 13;
         // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
         // 3: the first expansion monsters join the floors' enemy pools (D-058), so floors from seed N differ again.
         // 4: twenty floors in acts, the second wave in the pools and the key warden holding keys (D-062). A seven-floor save

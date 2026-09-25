@@ -36,6 +36,9 @@ namespace ClickDungeon.Tests
                 var player = new AutoPlayer(0.0, blind: false, loots: true);
                 var run = RunFactory.NewRun(seed, catalog, new List<GameEvent>(),
                     seed % 3 == 0 ? "emberwisp" : ContentCatalog.DefaultHeroId);
+                // Half the seeds carry a built-up profile's renown. Since D-067 the threat a blow is raised by changes
+                // with depth, so a run without it never exercises the number the telegraph has to agree with.
+                run.Threat = seed % 2 == 0 ? catalog.Renown.MaxThreat : 0;
                 for (int turn = 0; turn < 400 && run.Status == RunStatus.InProgress; turn++)
                 {
                     // What the player is looking at when they commit: the board at a stable boundary.
