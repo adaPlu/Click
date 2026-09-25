@@ -412,6 +412,48 @@ namespace ClickDungeon.Tests
                 $"{strongest.id} won {strongest.won}/{runs} where {weakest.id} won {weakest.won}. ({table})");
         }
 
+        /// <summary>
+        /// D-071: the classes measured where they actually come apart. Every other parity guard here watches careful
+        /// play, where the eight compress into 1.3 of each other and say nothing; under sloppy play they spread 4 to 1,
+        /// and on Blobert's Wrath 10 to 1. A class whose rule only pays when you position well is a demanding class,
+        /// which is a design choice (the Rogue is marked as one); a class that wins one run in sixteen while another
+        /// wins two in three is a balance failure, and nothing in this file could see it.
+        /// </summary>
+        [Test]
+        public void NoClassIsHopelessForACarelessPlayer()
+        {
+            const int runs = 30;
+            var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
+            var wins = new List<(string id, int won)>();
+            foreach (var heroClass in catalog.HeroClasses.Values)
+            {
+                string heroId = System.Linq.Enumerable.First(catalog.HeroIdentities.Values, h => h.ClassId == heroClass.Id).Id;
+                var profile = BuiltUp(catalog, heroClass.Id);
+                int won = 0;
+                for (ulong seed = 1; seed <= runs; seed++)
+                    if (AutoPlayer.PlayRun(catalog, seed, MaxCommands, NoviceMistakeRate,
+                            MovementMode.Free, blind: true, loots: true, heroId: heroId, profile: profile).Status == RunStatus.Won) won++;
+                wins.Add((heroClass.Id, won));
+            }
+
+            string table = string.Join(", ", wins.ConvertAll(w => $"{w.id} {w.won}"));
+            var weakest = wins[0];
+            var strongest = wins[0];
+            foreach (var row in wins)
+            {
+                if (row.won < weakest.won) weakest = row;
+                if (row.won > strongest.won) strongest = row;
+            }
+            // Measured 33% to 71% over 60 seeds a class after D-071, against 15% to 61% before it. A fifth of the runs
+            // sits well below the weakest and far above a class that has stopped working for a careless player.
+            Assert.That(weakest.won, Is.GreaterThanOrEqualTo(runs / 5),
+                $"{weakest.id} won {weakest.won}/{runs} for a careless player. ({table})");
+            // Three to one, not the eight-fifths careful play is held to: these are sloppy runs and the spread is wider
+            // by nature. What this refuses is the four-to-one the classes sat at before D-071.
+            Assert.That(strongest.won, Is.LessThanOrEqualTo(Math.Max(3, weakest.won * 3)),
+                $"{strongest.id} won {strongest.won}/{runs} where {weakest.id} won {weakest.won}. ({table})");
+        }
+
         [Test, Explicit("Tuning aid: every class on the shipped numbers, on the same dungeons")]
         public void ClassSweep()
         {

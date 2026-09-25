@@ -78,6 +78,8 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 ## Production tile set (D-018, D-019, rules §11)
 - [x] Every tile in both sheets has a rule or an explicit decoration role.
 - [x] New mechanics: lava, teleport pads, healing fountains, pressure plates, vault doors, great chests.
+- [x] No class is hopeless for a careless player: the spread under sloppy play is 2.15 to 1, was 4.1 (D-071),
+      and a guard measures that axis rather than the careful one where every class looks the same.
 - [x] The tests pin numbers, not restatements of the code: the renown curve is written out as literal digits, and
       eight mutations that once passed the whole suite now turn named tests red (D-068).
 - [x] A kit cannot ship without the Unity suites: EditMode and PlayMode are gated, or VERSION.txt says they were not.

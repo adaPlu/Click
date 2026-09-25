@@ -257,6 +257,9 @@ namespace ClickDungeon.Simulation
 
             // Difficulty breather: heal on arrival, never above max. Second Wind (D-037) adds to it.
             int heal = Math.Min(catalog.FloorClearHeal + run.Perk(TalentEffect.SecondWind), hero.MaxHp - hero.Hp);
+            // Whatever the breather gives, a hero who reaches the stairs badly hurt is brought back to half (D-071).
+            if (catalog.MercyOnStairs > 0)
+                heal = Math.Max(heal, Math.Min(hero.MaxHp / catalog.MercyOnStairs - hero.Hp, hero.MaxHp - hero.Hp));
             if (heal > 0)
             {
                 hero.Hp += heal;

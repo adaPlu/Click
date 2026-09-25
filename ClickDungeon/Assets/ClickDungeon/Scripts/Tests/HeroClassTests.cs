@@ -279,11 +279,18 @@ namespace ClickDungeon.Tests
         [Test]
         public void TheClericsBlocksHeal()
         {
+            // D-071: Sanctuary answers danger. Ungated, it paid on every block of the run and made the one class that
+            // blocks at all the strongest class under pressure by a distance.
             var run = As(Run(".....", ".....", ".HG..", ".....", "....X"), "lightbringer");
-            run.Hero.Hp = 5;
+            run.Hero.Hp = run.Hero.MaxHp / 2;
             var result = DoOk(run, PlayerCommand.Shield());
             Assert.That(Has(result, GameEventKind.HeroBlocked), Is.True);
-            Assert.That(run.Hero.Hp, Is.EqualTo(6));
+            Assert.That(run.Hero.Hp, Is.EqualTo(run.Hero.MaxHp / 2 + 1), "Hurt, her block heals.");
+
+            var healthy = As(Run(".....", ".....", ".HG..", ".....", "....X"), "lightbringer");
+            healthy.Hero.Hp = healthy.Hero.MaxHp - 1;
+            DoOk(healthy, PlayerCommand.Shield());
+            Assert.That(healthy.Hero.Hp, Is.EqualTo(healthy.Hero.MaxHp - 1), "In no danger, her block only blocks.");
 
             var knight = Run(".....", ".....", ".HG..", ".....", "....X");
             knight.Hero.Hp = 5;

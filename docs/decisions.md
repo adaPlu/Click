@@ -1158,3 +1158,43 @@ and 3 PlayMode tests all passed with it in place.** That is the finding the rest
 - **A NOTE FOR THE NEXT MUTATION RUN**: a mutation sweep leaves the build cache holding the mutated assembly, and the
   next `dotnet test` can run it against restored source. The talent suite failed that way here and looked like a
   regression for a minute. Build with `--no-incremental` after a sweep, or do not trust the first run afterwards.
+
+## D-071 Class balance where the classes actually come apart
+
+D-069 made a built-up player measurable. The first thing it showed was that the eight classes are balanced for a
+careful player and wildly unbalanced for a careless one.
+
+| built-up, Knight's Trial | kni | pal | rog | wiz | ran | cle | ber | eng | spread |
+|---|---|---|---|---|---|---|---|---|---|
+| careful | 96 | 88 | 76 | 80 | 80 | 98 | 100 | 90 | 1.3 |
+| **careless** | 41 | 25 | 16 | **15** | 23 | 60 | **61** | 51 | **4.1** |
+| careless, Blobert's Wrath | 38 | 16 | **6** | 8 | 6 | 63 | **65** | 48 | **10.8** |
+
+- **THE CAUSE IS NOT WHAT IT LOOKS LIKE.** The obvious story - conditional class rules stop firing when the player
+  plays badly - is **false**, and measuring it said so: under sloppy play the Rogue's Ambush still fires on 43% of
+  slashes (52% careful), the Wizard and Ranger still shoot at range on 15-16% (16% and 14% careful). The rules keep
+  paying. What differs is **recovery**. Turns spent under half hearts, careful to careless: Cleric 1% to 11%,
+  Berserker 1% to 9%, but Rogue 12% to **33%** and Wizard 12% to **26%**. The Cleric heals damage back - she is the
+  only class that blocks at all, 3-4 blocks per 100 turns against everyone else's 0-1, because Sanctuary makes
+  blocking worth the turn - and the Berserker ends fights sooner the more hurt he is. The fragile four have no way
+  back, so one bad sequence compounds until it kills them.
+- **WHAT WAS TRIED AND REJECTED**: +2 hearts moved the Paladin 25% to 21% (noise). +1 slash moved the Rogue 16% to
+  13%. Stat levers do not touch this. Softening the three strong classes alone took the spread from 4.1 to 3.7 and
+  left the Wizard at 15% - lowering the top does not raise the bottom. Every general recovery lever (more potions,
+  bigger potions, a bigger breather) lifted the floor **and** pushed careful play to 93-100%, which is the endgame
+  problem in D-070's notes.
+- **WHAT SHIPPED**: help that only arrives when it is needed, plus two softenings.
+  1. **The stairs' mercy**: the stairs never leave a hero below half their hearts. A careful player is under half on
+     6% of turns and a careless one on up to 33%, so it is self-targeting.
+  2. **Sanctuary answers danger**: the Cleric's blocks heal while she is at half hearts or fewer. Ungated it paid on
+     every block of a run and made the one class that blocks the strongest class under pressure by a distance.
+  3. **Rage starts later**: +1 damage per 6 hearts missing rather than 4.
+- **MEASURED AFTER** (60 blind seeds a class, built-up, Knight's Trial): careless **33 to 71** against 15 to 61, a
+  spread of **2.15** against 4.1. Careful play 86 to 100 against 76 to 100 - the ceiling did not move, the floor did.
+  The Sanctuary gate earned its place: the Cleric is 63% careless where mercy alone left her at 76%.
+- **NOT SOLVED**: on **Blobert's Wrath** the careless spread is still about 4 to 1 (Ranger 16%, Berserker 65%). The
+  mercy helps less where monsters hit hard enough that half hearts is still one blow from death. That tier is opt-in
+  and is meant to be brutal, so it is recorded rather than tuned.
+- **THE GUARD**: `NoClassIsHopelessForACarelessPlayer` measures the sloppy axis - which nothing did before - and
+  refuses a class under a fifth of its runs or a spread past three to one. Verified by reverting the mercy: the
+  Wizard falls to 3/30 against the Cleric's 21/30 and the guard names it.

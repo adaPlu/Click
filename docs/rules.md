@@ -304,8 +304,8 @@ with, so a talent that sharpens it simply raises the same perk.
 | **Ambush** | Rogue | Slashes deal **+2** against a monster whose declared action is not aimed at the hero's tile — the same telegraph the player is shown (§3.2), so the opening is always visible before it is taken. |
 | **Firebolt** | Wizard | Slash reaches **3** tiles in a straight line, diagonals included, and knocks the target back one tile. |
 | **Longshot** | Ranger | Slash reaches **4** tiles in a straight line, **+1** damage against a target 3 or more tiles away. |
-| **Sanctuary** | Cleric | Every attack the shield blocks heals **1** heart. |
-| **Rage** | Berserker | Slashes deal **+1** for every **4** hearts missing. |
+| **Sanctuary** | Cleric | Every attack the shield blocks heals **1** heart, **while she is at half hearts or fewer** (D-071). |
+| **Rage** | Berserker | Slashes deal **+1** for every **6** hearts missing (D-071; it was 4). |
 | **Spark Drone** | Engineer | On every turn the hero does **not** slash, the drone zaps one awake monster within 1 tile for **1**. |
 
 **A slash that reaches** (Wizard, Ranger) obeys the cover rule (§2.1): every tile between the hero and the target must
@@ -394,6 +394,9 @@ Ordering is covered by automated tests.
 
 - **Floor complete** → next floor generates, hero HP/potions/boons carry over,
   mana refills, key is cleared.
+- **The stairs' mercy** *(D-071)*: on top of the tier's breather, the stairs never leave a hero below **half**
+  their hearts. It is help that only arrives when it is needed — a careful player is under half on 6% of turns
+  and a careless one on up to a third of them — so it lifts the floor of the game without raising its ceiling.
 - **Run**: 20 floors in four acts of five (D-062; it was 7). Floors 5, 10 and 15 are act bosses (§3.6); floor 20 is
   Lord Blobert's arena, whose exit is unlocked when he dies and stepping on it wins the run.
 - **Death**: hero HP ≤ 0 ends the run. The save is cleared (roguelike run).

@@ -154,13 +154,53 @@ namespace ClickDungeon.Tests
                 ".....");
             // Scenario builds a Medium hero; give it Easy's health so this is a state the game can produce.
             run.Hero.MaxHp = easy.HeroClass("knight").MaxHp;
-            run.Hero.Hp = 3;
+            // Exactly half: the stairs' mercy (D-071) contributes nothing here, so this measures the breather alone.
+            run.Hero.Hp = run.Hero.MaxHp / 2;
             Assert.That(TurnResolver.Apply(run, PlayerCommand.Move(P(1, 2)), easy).Accepted, Is.True);
             var result = TurnResolver.Apply(run, PlayerCommand.Move(P(2, 2)), easy);
 
             Assert.That(run.Floor.FloorIndex, Is.EqualTo(2));
-            Assert.That(run.Hero.Hp, Is.EqualTo(Math.Min(run.Hero.MaxHp, 3 + easy.FloorClearHeal)));
+            Assert.That(run.Hero.Hp, Is.EqualTo(Math.Min(run.Hero.MaxHp, run.Hero.MaxHp / 2 + easy.FloorClearHeal)));
             Assert.That(result.Events.Exists(e => e.Kind == GameEventKind.HeroHealed && e.Source == "stairs"), Is.True);
+        }
+
+        [Test]
+        public void TheStairsNeverLeaveABadlyHurtHeroBelowHalf()
+        {
+            // D-071: help that only arrives when it is needed. A careful player is under half their hearts on 6% of
+            // turns and a careless one on up to 33%, so this lifts the floor of the game without raising its ceiling -
+            // it is what took the weakest class from 15% of runs won to 33% while the strongest stayed where it was.
+            var medium = ContentCatalog.CreateDefault(Difficulty.Medium);
+            Assume.That(medium.MercyOnStairs, Is.GreaterThan(0));
+            var run = Run(
+                ".....",
+                ".....",
+                "HKX..",
+                ".....",
+                ".....");
+            run.Hero.MaxHp = 20;
+            run.Hero.Hp = 2;
+
+            Assert.That(TurnResolver.Apply(run, PlayerCommand.Move(P(1, 2)), medium).Accepted, Is.True);
+            TurnResolver.Apply(run, PlayerCommand.Move(P(2, 2)), medium);
+
+            Assert.That(run.Floor.FloorIndex, Is.EqualTo(2), "Test setup: the hero took the stairs.");
+            Assert.That(run.Hero.Hp, Is.GreaterThanOrEqualTo(run.Hero.MaxHp / medium.MercyOnStairs),
+                "A hero who reaches the stairs nearly dead is brought back to half.");
+
+            // And it is mercy, not a free top-up: a hero above half gets the breather and nothing more.
+            var healthy = Run(
+                ".....",
+                ".....",
+                "HKX..",
+                ".....",
+                ".....");
+            healthy.Hero.MaxHp = 20;
+            healthy.Hero.Hp = 15;
+            Assert.That(TurnResolver.Apply(healthy, PlayerCommand.Move(P(1, 2)), medium).Accepted, Is.True);
+            TurnResolver.Apply(healthy, PlayerCommand.Move(P(2, 2)), medium);
+            Assert.That(healthy.Hero.Hp, Is.EqualTo(Math.Min(healthy.Hero.MaxHp, 15 + medium.FloorClearHeal)),
+                "Above half, the stairs give the breather and nothing else.");
         }
 
         [Test]

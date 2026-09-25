@@ -51,6 +51,13 @@ namespace ClickDungeon.Content
         public Difficulty Difficulty = Difficulty.Medium;
         /// <summary>HP restored when the hero arrives on the next floor.</summary>
         public int FloorClearHeal;
+        /// <summary>
+        /// The stairs never leave the hero below `MaxHp / MercyOnStairs` (D-071). Zero turns it off. This is help that
+        /// only arrives when it is needed: a careful player is under half their hearts on 6% of turns and a careless one
+        /// on up to 33%, so it lifts the floor of the game without raising its ceiling. It is why the four fragile
+        /// classes stop being unplayable for a sloppy player while a sharp one barely notices it.
+        /// </summary>
+        public int MercyOnStairs = 2;
 
         public readonly Dictionary<string, HeroClassDefinition> HeroClasses = new Dictionary<string, HeroClassDefinition>();
         public readonly Dictionary<string, HeroIdentityDefinition> HeroIdentities = new Dictionary<string, HeroIdentityDefinition>();
@@ -541,7 +548,7 @@ namespace ClickDungeon.Content
                 MaxHp = 9, SlashDamage = 2, StartingPotions = 2, PotionHeal = 4,
                 MaxMana = 4, ShieldCost = 3, DashCost = 3, DashDistance = 1,
                 RevealRadius = 1, SenseRadius = 2,
-                Traits = new Dictionary<TalentEffect, int> { [TalentEffect.Rage] = 4 },
+                Traits = new Dictionary<TalentEffect, int> { [TalentEffect.Rage] = 6 },
                 TraitName = "Rage", TraitText = "Slashes deal +1 for every 4 hearts you are missing.",
                 Role = "Melee damage", Difficulty = 2, Theme = "#D9531E",
                 Playstyle = "Wades in and gets angrier. The Berserker trades safety for a blade that sharpens with every heart he loses.",

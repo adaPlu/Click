@@ -28,9 +28,11 @@ namespace ClickDungeon.Simulation
                 int riposte = run.Perk(TalentEffect.Riposte);
                 if (riposte > 0 && attacker != null && catalog != null)
                     DamageEnemy(run, attacker, riposte, "riposte", catalog, events);
-                // Sanctuary (D-063): the Cleric's blocks heal.
+                // Sanctuary (D-063): the Cleric's blocks heal - while she is in danger. Ungated it paid on every block
+                // of the run and made the one class that blocks at all the strongest under pressure by a distance
+                // (D-071); her blocks still heal when it matters, which is what the rule is for.
                 int mend = run.Perk(TalentEffect.Sanctuary);
-                if (mend > 0 && hero.Hp < hero.MaxHp)
+                if (mend > 0 && hero.Hp * 2 <= hero.MaxHp)
                 {
                     int before = hero.Hp;
                     hero.Hp = Math.Min(hero.MaxHp, hero.Hp + mend);

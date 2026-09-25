@@ -192,7 +192,8 @@ namespace ClickDungeon.Tests
             var winded = With(Run(".....", ".....", ".HxK.", ".....", "....."), (TalentEffect.SecondWind, 3));
             foreach (var run in new[] { plain, winded })
             {
-                run.Hero.Hp = 2;
+                // Exactly half, so the stairs' mercy (D-071) adds nothing and this measures Second Wind alone.
+                run.Hero.Hp = run.Hero.MaxHp / 2;
                 DoOk(run, PlayerCommand.Move(P(3, 2)));
                 DoOk(run, PlayerCommand.Move(P(2, 2)));
             }

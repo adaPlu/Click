@@ -994,6 +994,17 @@ Suites after the repair: **398 headless**, **497 Unity EditMode**, **3 Unity Pla
 neutering every talent at once. First numbers for a built-up player: 75-97% on Knight's Trial against 50-66% empty -
 recorded in D-069, not tuned. Suites: **399 headless**, EditMode re-run after.
 
+### D-071 class balance under pressure
+
+Built on D-069's instrument. The classes are balanced for a careful player (spread 1.3) and were not for a careless one
+(4.1 on Knight's Trial, 10.8 on Blobert's Wrath). **The cause was recovery, not rules failing to fire** - measured: the
+Rogue's Ambush still pays on 43% of slashes when the player is sloppy, but the Rogue spends 33% of turns under half
+hearts against the Cleric's 11%. Shipped: the stairs never leave a hero below half; Sanctuary heals only while the
+Cleric is at half or fewer; Rage starts at 6 hearts missing rather than 4. Careless spread **4.1 -> 2.15**, careful
+ceiling unmoved. `NoClassIsHopelessForACarelessPlayer` guards the axis, verified by reverting the mercy (Wizard 3/30).
+
+**Open**: Blobert's Wrath is still ~4:1 careless. Recorded, not tuned - that tier is opt-in.
+
 **Two design calls now visible and deliberately left alone**: a returning player wins Knight's Trial ~88%+ on four of
 eight classes, and a class tree is worth between 25 and 46 points depending on the class.
 
