@@ -40,7 +40,7 @@ namespace ClickDungeon.Simulation
 
         /// <summary>An enemy blow on this floor: its base damage plus one per <see cref="RenownTuning.ThreatPerExtraDamage"/> threat.</summary>
         public static int Hit(RunState run, ContentCatalog catalog, int baseDamage) =>
-            baseDamage + (Level(run, catalog) + 1) / Math.Max(1, catalog.Renown.ThreatPerExtraDamage);
+            baseDamage + Level(run, catalog) / Math.Max(1, catalog.Renown.ThreatPerExtraDamage);
 
         /// <summary>
         /// A trap on this floor (D-041): spikes, lava and bombs deal their base damage plus one per
