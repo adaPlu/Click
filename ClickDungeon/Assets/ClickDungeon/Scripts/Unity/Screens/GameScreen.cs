@@ -1141,7 +1141,7 @@ namespace ClickDungeon.Unity.Screens
             var portrait = UiFactory.Rect(Root, "Portrait");
             portrait.Place(TopLeft, TopLeft, new Vector2(572f, -12f), new Vector2(128f, 128f));
             _face = Icons.Portrait(portrait, 128f);
-            _portraitArt = Icons.TryArtImage(portrait, ArtKeys.Portrait(FaceId, "neutral"), 128f);
+            _portraitArt = Icons.TryArtImage(portrait, SpeechPortraitKey(FaceId, Expression.Neutral), 128f);
             var portraitFrame = UiFactory.Image(portrait, "Frame", Palette.Gold, Shapes.Frame, true);
             portraitFrame.rectTransform.Stretch();
             UiArt.Apply(portraitFrame, ArtKeys.PortraitFrame);
@@ -1211,7 +1211,7 @@ namespace ClickDungeon.Unity.Screens
             _portraitRoot = portrait.gameObject;
             UiFactory.Image(portrait, "Back", new Color(0.06f, 0.07f, 0.1f), Shapes.Rounded, true).rectTransform.Stretch();
             _face = Icons.Portrait(portrait, 110f * Scale);
-            _portraitArt = Icons.TryArtImage(portrait, ArtKeys.Portrait(FaceId, "neutral"), 110f * Scale);
+            _portraitArt = Icons.TryArtImage(portrait, SpeechPortraitKey(FaceId, Expression.Neutral), 110f * Scale);
             var portraitFrame = UiFactory.Image(portrait, "Frame", Palette.Gold, Shapes.Frame, true);
             portraitFrame.rectTransform.Stretch();
             UiArt.Apply(portraitFrame, ArtKeys.PortraitFrame);

@@ -414,6 +414,8 @@ namespace ClickDungeon.Simulation
                     foreach (var cell in SummonCells(run, enemy, def, intent.Target))
                     {
                         var minion = Spawn(run.Floor, catalog.Enemy(def.SummonId), cell, awake: true);
+                        // The floor's threat, the same share every monster the generator placed here already carries.
+                        RunFactory.ApplyThreatTo(run, catalog, minion);
                         minion.JustWoken = true;
                         events.Add(GameEvent.Of(GameEventKind.EnemySummoned, minion.Id, enemy.Pos, cell, source: minion.DefId));
                     }

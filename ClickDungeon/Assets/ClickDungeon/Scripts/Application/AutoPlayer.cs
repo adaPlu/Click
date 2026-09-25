@@ -357,11 +357,16 @@ namespace ClickDungeon.Application
             return score;
         }
 
+        /// <summary>
+        /// Tiles the player has actually uncovered. A vault's sixteen tiles of stone are written Revealed when the room
+        /// is generated - they are its shape, not something the hero found - so counting them made stepping through a
+        /// door look like uncovering half a floor (MAINT-50).
+        /// </summary>
         static int RevealedCells(FloorState floor)
         {
             int count = 0;
             foreach (var p in Board.AllCells)
-                if (floor[p].Knowledge == Knowledge.Revealed) count++;
+                if (floor[p].Knowledge == Knowledge.Revealed && floor[p].Terrain != Terrain.Wall) count++;
             return count;
         }
 
@@ -372,7 +377,17 @@ namespace ClickDungeon.Application
         public static RunState Redact(RunState run)
         {
             var copy = Copy(run);
-            var floor = copy.Floor;
+            Hide(copy.Floor);
+            // The floor left outside a vault is weighed too, and the hero walks back onto it, so it has to be hidden the
+            // same way this one is. Stripping only its sleepers left its key and its exit readable, and the one command
+            // that returns the hero to it - the one this is all for - was scored against them (DATA-30).
+            if (copy.OuterFloor != null) Hide(copy.OuterFloor);
+            return copy;
+        }
+
+        /// <summary>Blanks one board down to what the player has uncovered of it.</summary>
+        static void Hide(FloorState floor)
+        {
             foreach (var p in Board.AllCells)
             {
                 var cell = floor[p];
@@ -396,16 +411,20 @@ namespace ClickDungeon.Application
             }
             // A sleeping monster is part of its cover; an awake one is drawn wherever it stands, so the player sees it.
             floor.Enemies.RemoveAll(e => !e.Awake && floor[e.Pos].Knowledge != Knowledge.Revealed);
-            // The floor left outside a vault is weighed too, so what is still hidden on it has to stay hidden (D-064).
-            var outer = copy.OuterFloor;
-            if (outer != null) outer.Enemies.RemoveAll(e => !e.Awake && outer[e.Pos].Knowledge != Knowledge.Revealed);
-            return copy;
         }
 
+        /// <summary>
+        /// Every monster still standing between the hero and the end of this floor, the ones waiting outside a vault
+        /// included. `Score` was taught to count them in D-064 and this was not, so a vault visit looked like most of the
+        /// floor's monsters dying: progress spiked on the way in, could never be beaten on the way out, and the bot spent
+        /// the rest of the floor at minimum caution. It is the instrument behind every blind sweep (MAINT-50).
+        /// </summary>
         static int EnemyHp(RunState run)
         {
             int total = 0;
             foreach (var enemy in run.Floor.Enemies) total += enemy.Hp;
+            if (run.OuterFloor != null)
+                foreach (var enemy in run.OuterFloor.Enemies) total += enemy.Hp;
             return total;
         }
 

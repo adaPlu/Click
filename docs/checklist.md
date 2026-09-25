@@ -78,6 +78,9 @@ Design risks to watch in playtests (tunable without rule changes unless noted):
 ## Production tile set (D-018, D-019, rules §11)
 - [x] Every tile in both sheets has a rule or an explicit decoration role.
 - [x] New mechanics: lava, teleport pads, healing fountains, pressure plates, vault doors, great chests.
+- [x] The tests pin numbers, not restatements of the code: the renown curve is written out as literal digits, and
+      eight mutations that once passed the whole suite now turn named tests red (D-068).
+- [x] A kit cannot ship without the Unity suites: EditMode and PlayMode are gated, or VERSION.txt says they were not.
 - [x] Renown's threat arrives with the depth rather than landing whole on floor 3, and a renowned run is measured
       rather than assumed: it was won 5 times in 100 and nothing was looking (D-067, MAINT-36).
 - [x] A PlayMode test assembly, so warnings, covers and the vault's stone can be checked as drawn rather than as

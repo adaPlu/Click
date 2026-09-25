@@ -515,6 +515,20 @@ def render(crop: Image.Image, spec: dict) -> Image.Image:
 
 def run(manifest: dict, refs: Path, out: Path, sheet_path: Path | None, only=None) -> dict:
     sources = manifest["sources"]
+    # Two entries sharing a key both get cut and the later one overwrites the earlier PNG, silently. Thirteen of those
+    # accumulated unnoticed - twelve of them hero portraits, where the good crop won only because it sat lower in the
+    # file. Sorting or reordering this manifest would have swapped them for 84x84 roster thumbnails with nothing to say so.
+    seen: dict[str, str] = {}
+    duplicates = []
+    for spec in manifest["slices"]:
+        key = spec["key"]
+        if key in seen:
+            duplicates.append(f'{key} (from {seen[key]} and {spec["source"]})')
+        seen[key] = spec["source"]
+    if duplicates:
+        raise SystemExit("slices.json has duplicate keys; the later entry would silently win: "
+                         + "; ".join(duplicates))
+
     images, boxes = {}, {}
     written, missing_sources, warnings, sheet_entries = [], set(), [], []
     borders = {}

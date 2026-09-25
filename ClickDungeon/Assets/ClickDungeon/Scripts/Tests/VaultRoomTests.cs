@@ -70,14 +70,41 @@ namespace ClickDungeon.Tests
                 foreach (var enemy in floor.Enemies)
                 {
                     Assert.That(enemy.Awake, Is.True, "Vault guards are awake.");
-                    Assert.That(enemy.Pos.Manhattan(floor.Start), Is.GreaterThanOrEqualTo(2),
-                        $"A guard at {enemy.Pos} is in the hero's face at {floor.Start}.");
+                    // Not Manhattan: melee and movement are diagonal-inclusive, so Manhattan 2 includes the diagonal,
+                    // which is adjacent. This test asserted the weak bound and so agreed with the bug for 79% of rooms.
+                    Assert.That(enemy.Pos.IsAdjacent(floor.Start), Is.False,
+                        $"A guard at {enemy.Pos} is within reach of the hero arriving at {floor.Start}.");
                     Assert.That(enemy.Pos, Is.Not.EqualTo(Centre), "Nothing starts in the doorway.");
                 }
                 var chests = Board.AllCells.Where(p => floor[p].IsClosedChest).ToList();
                 Assert.That(chests.Count, Is.GreaterThanOrEqualTo(1), "A vault holds treasure.");
                 Assert.That(chests.Contains(floor.Start) || chests.Contains(Centre), Is.False,
                     "Chests stand in the room, not on the hero or the door.");
+            }
+        }
+
+        [Test]
+        public void NothingStandsInTheDoorwayWhileTheHeroIsInTheRoom()
+        {
+            // "Nobody ever stands in a doorway" was written into the generator and never enforced after it. The door is
+            // the only way out of a nine-tile room, and the guard chasing the hero is the one most likely to be on it.
+            var run = Run(6, 3UL,
+                ".....",
+                ".....",
+                "HdK.X",
+                ".....",
+                ".....");
+            run.Hero.HasKey = true;
+            Assert.That(Scenario.DoOk(run, PlayerCommand.Move(P(1, 2))).Accepted, Is.True);
+            Assert.That(run.Floor.IsVault, Is.True, "Test setup: the hero is in the vault.");
+            Assert.That(run.Floor.Enemies, Is.Not.Empty, "Test setup: the room is guarded.");
+
+            var exit = run.Floor.Exit;
+            Assert.That(Board.EnemyPathable(run.Floor, exit), Is.False, "No monster paths onto the way out.");
+            for (int turn = 0; turn < 12 && run.Status == RunStatus.InProgress && run.Floor.IsVault; turn++)
+            {
+                TurnResolver.Apply(run, PlayerCommand.Wait(), Catalog);
+                Assert.That(run.Floor.EnemyAt(exit), Is.Null, $"turn {turn}: a guard is standing in the doorway.");
             }
         }
 
@@ -101,6 +128,34 @@ namespace ClickDungeon.Tests
             Assert.That(refused.Accepted, Is.False, "Solid stone is not a tile to step on.");
             Assert.That(run.Turn, Is.EqualTo(turn), "A refused command costs no turn.");
             Assert.That(run.Hero.Pos, Is.Not.EqualTo(stone));
+        }
+
+        [Test]
+        public void ABlindBotInAVaultCannotReadTheFloorWaitingOutside()
+        {
+            // DATA-30: Redact blanked the room and left the floor outside it readable, so the one command this is all
+            // about - stepping back through the door - was scored against a key and an exit the player has not found.
+            var run = Run(6, 8UL,
+                ".....",
+                ".....",
+                "HdK.X",
+                ".....",
+                ".....");
+            run.Hero.HasKey = true;
+            Assert.That(Scenario.DoOk(run, PlayerCommand.Move(P(1, 2))).Accepted, Is.True);
+            Assert.That(run.Floor.IsVault, Is.True, "Test setup: the hero is in the vault.");
+            var outer = run.OuterFloor;
+            var hidden = Board.AllCells.Where(p => outer[p].Knowledge != Knowledge.Revealed).ToList();
+            Assert.That(hidden, Is.Not.Empty, "Test setup: the floor outside still has covers on it.");
+
+            var view = AutoPlayer.Redact(run);
+
+            foreach (var p in hidden)
+            {
+                Assert.That(view.OuterFloor[p].Content, Is.EqualTo(ContentKind.None), $"{p} still reports what it holds.");
+                Assert.That(view.OuterFloor[p].IsExit, Is.False, $"{p} still reports the way down.");
+                Assert.That(view.OuterFloor[p].Hazard, Is.EqualTo(HazardKind.None), $"{p} still reports its trap.");
+            }
         }
 
         [Test]

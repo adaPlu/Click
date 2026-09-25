@@ -869,8 +869,14 @@ The deeper floors answer a built-up hero. **Renown** is levels past the first pl
 
 **Threat arrives with the depth** (D-067). From **floor 3** on, the threat a floor carries is the hero's
 own, scaled by how far down the run has come: none of it on floor 3, half of it halfway, all of it on the
-last floor. On that floor's threat, every monster has one extra heart per point (Lord Blobert two), and
-every enemy blow — hits, fire, slams — deals one more per 2 points. Spikes, lava and bombs there hurt one
+last floor. On that floor's threat, every monster has one extra heart per point (Lord Blobert two) — a
+monster **summoned** mid-fight takes the same share as one the floor was built with (D-046) — and
+every enemy blow — hits, fire, slams — deals one more per 2 points.
+
+Two truncating divisions compose there, so the damage half is coarser than that sentence suggests (D-068).
+In a twenty-floor run a hero at **threat 1 meets no raised blow on any floor**; at threat 2, only on floor
+20; at threat 3, on floors 14-20. The hearts are what the first point of renown buys. This is the shipped
+behaviour, measured rather than intended, and it is recorded here so it is a decision and not a surprise. Spikes, lava and bombs there hurt one
 more per 2 points too (D-041); a pit's fall does not change. The telegraphs and the tile descriptions show
 the raised damage, and a vault carries its floor's threat because it carries its floor's index (D-046).
 

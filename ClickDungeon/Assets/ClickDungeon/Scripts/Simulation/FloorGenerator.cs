@@ -294,8 +294,11 @@ namespace ClickDungeon.Simulation
             int guards = rng.Range(vault.MinEnemies, vault.MaxEnemies);
             for (int i = 0; i < guards; i++)
             {
-                // Two tiles clear of the hero, as on any other floor: a guard is in the room, not in your face.
-                var spots = Free(p => p.Manhattan(start) >= 2);
+                // Clear of the hero, as on any other floor. Manhattan is the wrong ruler for it: melee and movement are
+                // both diagonal-inclusive, so `Manhattan >= 2` still allowed a guard on the diagonal - which is adjacent,
+                // and did it in 79% of rooms. A normal floor's `>= 3` happens to force real separation; here it has to be
+                // said outright (REL-60).
+                var spots = Free(p => !p.IsAdjacent(start));
                 if (spots.Count == 0) break;
                 var pos = rng.Pick(spots);
                 EnemyAi.Spawn(floor, catalog.Enemy(rng.Pick(pool)), pos, awake: true);

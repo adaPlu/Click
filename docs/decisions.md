@@ -1073,3 +1073,58 @@ Rules referenced here live in `docs/rules.md`.
 - **VERSIONS**: Ruleset 12 -> 13. Floor generation is untouched, so seeds deal the same dungeons.
 - **TESTS**: eight in `RenownDepthTests`, plus three in `RenownTests` restated for the new rule - they pinned "threat 2
   at floor 3 means +2 hearts", which was the flatness itself.
+
+## D-068 Audit 5, and closing the class of test that passes either way
+
+The audit was started by a defect that shipped: `17370c1` carried `(Level + 1) / ThreatPerExtraDamage` in `Renown.Hit`,
+left behind by a mutation script killed between applying a mutation and restoring the file. **391 headless, 488 EditMode
+and 3 PlayMode tests all passed with it in place.** That is the finding the rest of the audit generalises.
+
+- **WHY IT PASSED**: `Level / 2` and `(Level + 1) / 2` differ only at an **odd** level. Every exact assertion on
+  `Renown.Hit` sat at level 0 or level 2. One test reached level 3 - the discriminating cell - and asserted
+  `deep > shallow`, an inequality, so it saw a wrong number and said nothing. `Renown.Trap`, one line below, **was**
+  pinned at an odd level and would have caught the same edit instantly.
+- **THE CLASS, NOT THE INSTANCE**: nine renown assertions computed their expected value by calling `Renown.Level`, the
+  function under test - `Assert.That(Hit(...), Is.EqualTo(base + Level(...) / TPED))` cannot fail for any Level-based
+  bug. The ramp itself had **no** exact-value assertion anywhere; it was fenced entirely by inequalities and
+  monotonicity. The repair is `TheRampIsTheseExactNumbersFloorByFloor`: the whole curve written out as literal digits,
+  with nothing on the right-hand side that calls into the simulation. Eight mutations that survived the old suite -
+  including the one that shipped - now each turn named tests red.
+- **WHAT THE VAULT ROOM ACTUALLY DID** (REL-60): guards were placed at `Manhattan >= 2` from the arrival tile, but
+  movement and melee are diagonal-inclusive, so that includes the diagonal. Measured over 720 generated rooms, **79%**
+  put a guard within reach of the hero before their first action. A normal floor's `>= 3` hides this by accident. The
+  rule is now `!IsAdjacent(start)`, said outright.
+- **THE DOORWAY** (REL-61): "nobody ever stands in a doorway" was enforced at generation and nowhere else. `EnemyPathable`
+  excluded `Terrain.Door` but a vault's door is `Terrain.Floor + IsExit`, so a chaser could park on the only way out of
+  a nine-tile room and the hero was told "That way is blocked".
+- **SUMMONED MONSTERS** (REL-70): `ApplyThreat` runs once at floor setup, so a minion placed mid-fight hit at the raised
+  number and died at the base one - a placed bat had six hearts and a summoned one three on the same floor. Every summon
+  takes its share now, through the same function.
+- **THE INSTRUMENT WAS BENT TOO** (MAINT-50, DATA-30): D-064 taught `Score` to count the floor waiting outside a vault
+  and left `TrackProgress` alone, so a vault visit spiked the bot's progress metric - the room's sixteen revealed stone
+  tiles read as ground it had uncovered - and nothing could beat that high-water mark afterwards, pinning caution at
+  0.15 for the rest of the floor. 13 of 20 floors have vaults. `Redact` likewise blanked the room and left the floor
+  outside it readable, so a blind bot scored "step back through the door" against a key it had not found.
+- **MEASURED AFTER THE REPAIR** (120 blind seeds, casual / novice):
+
+  | | before | after |
+  |---|---|---|
+  | Knight's Trial, no renown | 64% / 6% | **66% / 8%** |
+  | Knight's Trial, full renown | 30% / 0% | **42% / 0%** |
+  | Blobert's Wrath, no renown | 40% / 4% | **38% / 2%** |
+  | Blobert's Wrath, full renown | 17% / 0% | **25% / 0%** |
+
+  A renowned run is meaningfully more winnable, which is the vault ambush and the bot's own caution, not a softening.
+- **THE GATE** (TEST-50): the kit ran the headless suite only, so all 488 EditMode and 3 PlayMode tests - including the
+  one that proves every hero has the face the dialogue asks for - gated nothing that shipped. `unity-gate.ps1` runs both
+  platforms in batchmode and refuses a missing results file, a failure or an empty run; `make-kit.ps1` calls it, and
+  `-SkipUnityTests` says so in VERSION.txt for when the Editor has the project open.
+- **ALSO**: thirteen duplicate keys in `slices.json`, twelve of them hero portraits, where the good crop won only because
+  it sat lower in the file - removed, and the slicer refuses duplicates now. A boss falling no longer talks over the
+  hero being down to their last hearts (REL-80). `Lines.React` has tests at all for the first time (TEST-69).
+  `Renown.Reaches` is gone: D-067 took its only caller and silently changed what it meant.
+- **NOT FIXED, ON PURPOSE**: `Renown.FloorsPerThreat` stays at zero (D-067 records its price). MAINT-72, seventeen
+  `wired` flags in `slices.json` that disagree with `ArtKeys.Wired`, is cosmetic - it colours the slicer's contact sheet
+  - and verifying the list needs `ArtKeys.Wired` at runtime, so it is left with its evidence rather than guessed at.
+  REL-62 (blast telegraphs painted on a vault's stone), REL-71 (a lane marks the raised number but deals the base one to
+  an enemy it stops on), DATA-40/42 and MAINT-51 are recorded in `LLMHandOff.md` with their traces.

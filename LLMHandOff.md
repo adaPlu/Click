@@ -901,6 +901,92 @@ Suites: **390 headless**, **480 Unity EditMode**, **3 Unity PlayMode**. Seven mu
 every one caught; the renown work was verified by its own measurements and by five existing tests going red for the
 right reasons (three pinned the old flat rule, one hard-coded a boss's hearts, and the parity guard moved).
 
+---
+
+# Audit 5 (2026-09-25, HEAD faaf84c)
+
+Scope: D-064 the vault room, D-065 the dialogue faces, D-066 the PlayMode assembly, D-067 the renown ramp. Four
+read-only auditors, 37 raw findings merged to 24. **Every High and Medium below was re-verified by running it**, since
+no auditor could execute anything; the measured numbers are in the table.
+
+### What the audit was started by
+
+`17370c1` shipped with `(Level + 1) / ThreatPerExtraDamage` in `Renown.Hit` - a leftover from a mutation script killed
+between applying and restoring. The whole 391-test suite passed with it in. That is the finding the rest of the audit
+generalises: **the suite is weaker than its green tick implies.**
+
+| Claim | Measured |
+|---|---|
+| REL-60 vault guards spawn within melee reach of the arrival tile | **79%** of 720 generated rooms; a guard has declared a blow on the hero's tile before their first command |
+| REL-61 a monster can stand on the vault doorway | `Board.EnemyPathable(vault, exit)` = **true** |
+| REL-70 a summoned minion misses its threat hearts | same floor, same goblin: **placed 6 HP, summoned 3 HP** |
+| DATA-41 integer division eats the damage half of renown | threat 1 raises a blow on **no floor**; threat 2 on floor 20 only; threat 3 on floors 14-20 |
+| TEST-62 a ramp that rounds up instead of down | **survives the whole suite** |
+| TEST-61 a doubled ramp | caught, but only by the 40-seed stochastic guard |
+
+### Findings
+
+| ID | Sev | Verdict | What |
+|---|---|---|---|
+| TEST-40 | High | VERIFIED | No exact assertion pins `Renown.Hit` at an **odd** threat level - the only level where its rounding is decided. `RenownDepthTests` reached threat 3 / floor 20 and then asserted only `deep > shallow`. `Renown.Trap`, one line below, **is** pinned at an odd level |
+| TEST-41 | High | VERIFIED | The player ramp has no exact-value assertion anywhere; nine renown assertions compute their expectation by calling `Renown.Level`, the function under test |
+| TEST-50 | High | VERIFIED | `make-kit.ps1` runs the headless suite only. All 488 EditMode and 3 PlayMode tests - including D-065's "guard that matters" and the whole D-066 assembly - gate nothing that ships |
+| TEST-62 | High | VERIFIED | "None of it on floor 3" (rules 14.1) is pinned by nothing; a ceiling-rounding ramp restores the old flat rule at the shallow end and passes |
+| REL-60 | Medium | VERIFIED | Vault guards use `Manhattan >= 2` from the arrival tile, but melee and movement are diagonal-inclusive; normal floors use `>= 3`. D-064's text and `VaultRoomTests` both assert the weaker bound |
+| REL-61 | Medium | VERIFIED | `EnemyPathable` excludes `Terrain.Door` but a vault's door is `Terrain.Floor + IsExit`, so a chaser can block the only way out of a nine-tile room |
+| REL-70 | Medium | VERIFIED | `ApplyThreat` runs at floor setup; `EnemyAi.Spawn` writes `def.MaxHp`. Summoned minions hit at the raised number and die at the base one - the D-046 failure exactly |
+| DATA-41 | Medium | VERIFIED | Two truncating divisions compose: the first point of threat changes nothing on any floor, and raised blows exist on at most 7 of 20 floors. Rules 14.1 claims otherwise |
+| MAINT-50 | Medium | VERIFIED by reading | `Score` was given the outer-floor term in D-064; `TrackProgress` was not. A vault visit spikes its progress metric (16 revealed stone tiles read as uncovered ground, the outer floor's monsters vanish), so `caution` pins at 0.15 for the rest of the floor. 13 of 20 floors have vaults, and this is the instrument behind every blind sweep |
+| DATA-30 | Medium | VERIFIED by reading | `Redact` blanks the vault but not `OuterFloor`, so a blind bot scoring "leave the vault" reads the real hidden key and exit |
+| MAINT-70 | Medium | VERIFIED | 13 duplicate keys in `slices.json`, 12 of them hero portraits; the good crop wins only because it sits lower in the file |
+| TEST-63/65/66/71/72 | Medium-Low | VERIFIED | `Progression.Threat` pinned only at an even renown; the depth knob's step positions hidden by its own clamp; `ApplyThreat` not idempotent and no test would notice; assertions comparing a value to itself; guard clauses nothing reaches |
+| TEST-64 | Medium | VERIFIED | `TheTelegraphIsWhatHappens` cannot catch a renown arithmetic bug - both sides call `Renown.Hit`. The D-067 note claiming otherwise is wrong |
+| REL-62 | Low | VERIFIED | Blast telegraphs paint onto the vault's stone; the REL-42 cover filter only applies to unrevealed tiles |
+| REL-71 | Low | VERIFIED | A fire lane marks the raised number but deals the base one to an **enemy** it stops on; telemetry records the raised one |
+| REL-80 | Low | VERIFIED | The new boss-death line (90) outranks the low-HP warning (70), so the one turn that most earns "I'm fine. This is fine." cannot say it |
+| DATA-40 | Low-Med | VERIFIED by reading | A ruleset-12 save resumed on floors 3-7 keeps hearts baked under the flat rule; no migration, self-clears on the next floor |
+| DATA-42 | Low | VERIFIED by reading | `run.Threat` is unvalidated on load and `Renown.Level` multiplies before dividing |
+| DATA-31 | Info | VERIFIED by reading | An old 25-tile vault save still loads and plays; `FloorValidator` never runs on load, so D-064's shape rules never touch it |
+| MAINT-51/60/71/72 | Low | VERIFIED by reading | `VaultArrivalTile`'s last resort returns a tile it proved is occupied and its middle branch ignores hazards; `Renown.Reaches` is dead; the HUD face has no fallback the bubble has; 17 `wired` flags in `slices.json` disagree with `ArtKeys.Wired` |
+
+### Rejected / downgraded
+
+- **PlayMode assembly shipping in a player build** - checked and safe. `includePlatforms: []` with `defineConstraints: ["UNITY_INCLUDE_TESTS"]`, no `UnityEditor.TestRunner` reference, and `ProjectSettings` defines no symbols, so it is excluded from Windows/Android/iOS.
+- **The telegraph invariant across a mid-turn floor change** - traced on all five paths (pit fall, vault entry, vault exit, stair descent, boss death). Every floor swap sits in step 5 and returns before the enemy phase, so no telegraph can disagree with its blow. Not a finding, but nothing pins the ordering either (TEST-42).
+- **`Terrain.Wall` reaching a non-vault floor** - no reachable path.
+- **`ChestOverlay.HeroId` being stale** - every reachable `Open` is preceded by a `Refresh`.
+- **`AutoPlayer.Copy` missing vault state** - carries `OuterFloor`, `VisitedVault`, `ReturnPos` and `VisitedVaultDoor` as deep copies.
+
+### Remediation graph
+
+```
+A test oracles (TEST-40/41/62/63/65/66/71/72)  ─┐
+B simulation  (REL-60/61/70, DATA-41)          ─┼─> D re-measure ─> E docs + versions
+C instruments (MAINT-50, DATA-30)              ─┘
+F gate (TEST-50)   G slices (MAINT-70)   H presentation (REL-80, MAINT-71/72)   - independent
+```
+
+**A before B**, inverting severity on purpose: if the guard spacing is fixed first, the only thing that would report a
+broken renown formula is a 40-seed win-rate threshold.
+
+### Repair (D-068, same session)
+
+| ID | Outcome | Evidence | What changed |
+|---|---|---|---|
+| TEST-40/41/62/63/65/66/71/72 | FIXED | VERIFIED - 8 mutations, each turns named tests red | `TheRampIsTheseExactNumbersFloorByFloor` writes the whole curve as literal digits; `Hit` pinned at odd levels; floor 3 pinned at zero; odd-renown rounding; the depth knob's steps with its clamp raised out of the way; `AFloorSetUpForARenownedHeroBakesItsHeartsExactlyOnce`; `ARunLongerThanItsOwnCountAndANegativeThreatBothStaySane`. The mutation that shipped now reddens 3 tests |
+| REL-60 | FIXED | VERIFIED (`AVaultsGuardsStandClearOfTheTileTheHeroArrivesOn`, measured 79% -> 0%) | Guards use `!IsAdjacent(start)`; the old test asserted the same weak Manhattan bound and agreed with the bug |
+| REL-61 | FIXED | VERIFIED (`NothingStandsInTheDoorwayWhileTheHeroIsInTheRoom`) | `EnemyPathable` excludes a vault's exit tile |
+| REL-70 | FIXED | VERIFIED (`ASummonedMinionCarriesTheSameHeartsAsOneThatWasPlaced`) | `RunFactory.ApplyThreatTo` is called on every summon |
+| MAINT-50 | FIXED | VERIFIED by re-measurement | `TrackProgress` counts the outer floor's monsters and stops counting a vault's stone as ground the player uncovered |
+| DATA-30 | FIXED | VERIFIED (`ABlindBotInAVaultCannotReadTheFloorWaitingOutside`) | `Redact` hides both boards through one `Hide()` |
+| TEST-50 | FIXED | VERIFIED (the gate refuses a missing results file, a failure and an empty run) | `unity-gate.ps1`; `make-kit.ps1` gates EditMode and PlayMode, `-SkipUnityTests` records that it did not |
+| MAINT-70 | FIXED | VERIFIED (re-added a duplicate and watched the slicer refuse it) | 13 duplicate keys removed; `slice_references.py` refuses duplicates |
+| TEST-69, REL-80, MAINT-60, MAINT-71 | FIXED | VERIFIED (`AHeavyBlowAnswersAngryAndAnOrdinaryOneWorried`, `ABossFallingIsSpokenUnlessTheHeroIsAboutToDie`) | `Lines.React` has tests at all; a boss falling no longer outranks the hero's last hearts; `Renown.Reaches` deleted; the HUD face falls back the way the bubble does |
+| DATA-41 | DOCUMENTED | measured | Threat 1 raises no blow on any floor; threat 2 only on floor 20; threat 3 on floors 14-20. Recorded in rules 14.1 as shipped behaviour rather than changed |
+| REL-62, REL-71, DATA-40, DATA-42, DATA-31, MAINT-51, MAINT-72, TEST-42/64/67/68/70/73 | NOT_FIXED | traced, with evidence above | Left deliberately: cosmetic, latent, or a design call. MAINT-72 needs `ArtKeys.Wired` at runtime to verify rather than guess |
+
+Suites after the repair: **398 headless**, **497 Unity EditMode**, **3 Unity PlayMode**.
+
 **Still open from this pass**: `Renown.FloorsPerThreat` ships at zero. Turning it on gives the dungeon a curve of its
 own for a hero with no renown, at five points of casual win rate and a class spread of exactly 1.60 against the parity
 band's 1.60 ceiling. `PuffedIsImmuneThenDeflatedTakesDouble` hard-codes Lord Blobert's hearts, so it fails if the knob

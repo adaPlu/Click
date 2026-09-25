@@ -7,6 +7,9 @@ param(
     [string]$BuildDir = (Join-Path $PSScriptRoot '..\..\ClickDungeon\Builds\Windows'),
     [string]$OutDir = (Join-Path $PSScriptRoot '..\..\ClickDungeon\Builds\Playtest'),
     [switch]$SkipTests,
+    # TEST-50: the Unity suites need a batchmode editor, which refuses to start while the Editor has the project
+    # open. This skips them and says so in VERSION.txt, the way -SkipTests does for the headless suite.
+    [switch]$SkipUnityTests,
     # CI-10: packaging a build whose stamp disagrees with the working tree is a mistake by default.
     [switch]$AllowVersionMismatch
 )
@@ -43,6 +46,24 @@ else {
     # CI-09: an ungated kit must say so, or it is indistinguishable from one that passed.
     $gateLine = 'Test gate: SKIPPED (-SkipTests) -- this kit was NOT verified'
     Write-Warning 'Packaging without running the headless tests. VERSION.txt will say so.'
+}
+
+# TEST-50: the headless suite is a third of what the repo checks. The EditMode suite is what proves every hero has
+# the face the dialogue asks for (D-065), and the PlayMode suite is the only thing that can look at a drawn tile
+# (D-066) - both of them protected nothing that shipped, because the kit never ran them.
+if (-not $SkipTests -and -not $SkipUnityTests) {
+    $unityLines = @()
+    foreach ($platform in @('EditMode', 'PlayMode')) {
+        Write-Output "Running $platform tests (pass -SkipUnityTests to skip)..."
+        $count = [int](& (Join-Path $PSScriptRoot 'unity-gate.ps1') -Platform $platform)
+        $unityLines += "$count $platform"
+        Write-Output "Test gate: $count $platform tests passed."
+    }
+    $gateLine = "$gateLine, " + ($unityLines -join ', ')
+}
+elseif (-not $SkipTests) {
+    $gateLine = "$gateLine; Unity suites SKIPPED (-SkipUnityTests) -- EditMode and PlayMode were NOT verified"
+    Write-Warning 'Packaging without running the Unity suites. VERSION.txt will say so.'
 }
 
 # The build writes the git version it was made from; a missing stamp means an old or failed build.

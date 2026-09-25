@@ -235,14 +235,22 @@ namespace ClickDungeon.Simulation
         /// </summary>
         public static void ApplyThreat(RunState run, ContentCatalog catalog)
         {
+            foreach (var enemy in run.Floor.Enemies) ApplyThreatTo(run, catalog, enemy);
+        }
+
+        /// <summary>
+        /// One monster's share of the floor's threat. A minion put on the board mid-fight never passed through
+        /// <see cref="ApplyThreat"/>, which runs once at floor setup, so it was raised on its blows and bare on its
+        /// hearts - a placed bat had six and a summoned one three on the same floor. That is the split D-046 exists to
+        /// prevent, so every summon takes its hearts here (REL-70).
+        /// </summary>
+        public static void ApplyThreatTo(RunState run, ContentCatalog catalog, EnemyState enemy)
+        {
             int threat = Renown.Level(run, catalog);
             if (threat <= 0) return;
-            foreach (var enemy in run.Floor.Enemies)
-            {
-                int extra = threat * (catalog.Enemy(enemy.DefId).IsBoss ? catalog.Renown.BossHpPerThreat : catalog.Renown.HpPerThreat);
-                enemy.MaxHp += extra;
-                enemy.Hp += extra;
-            }
+            int extra = threat * (catalog.Enemy(enemy.DefId).IsBoss ? catalog.Renown.BossHpPerThreat : catalog.Renown.HpPerThreat);
+            enemy.MaxHp += extra;
+            enemy.Hp += extra;
         }
 
         public static void SetupFloor(RunState run, ContentCatalog catalog, List<GameEvent> events)

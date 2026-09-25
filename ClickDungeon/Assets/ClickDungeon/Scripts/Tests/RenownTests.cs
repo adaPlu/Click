@@ -15,10 +15,15 @@ namespace ClickDungeon.Tests
             var profile = new ProfileState();
             Assert.That(Progression.Threat(profile, Catalog), Is.Zero, "A new hero meets the dungeon as designed.");
 
+            // An ODD renown, first: "every 2 renown is one point of threat" only says which way it rounds if something
+            // asserts it. Level 4 with nothing worn is renown 3, which must give 1 and not 2.
             profile.Xp = Progression.XpForLevel(4);
+            Assert.That(Progression.Renown(profile, Catalog), Is.EqualTo(3));
+            Assert.That(Progression.Threat(profile, Catalog), Is.EqualTo(1), "Renown 3 is one point of threat, rounded down.");
+
             Inventory.Grant(profile, Catalog, "steel_sword");
             Assert.That(Progression.Renown(profile, Catalog), Is.EqualTo(4));
-            Assert.That(Progression.Threat(profile, Catalog), Is.EqualTo(4 / Catalog.Renown.RenownPerThreat));
+            Assert.That(Progression.Threat(profile, Catalog), Is.EqualTo(2), "Renown 4 is two.");
 
             profile.Xp = Progression.XpForLevel(20);
             Assert.That(Progression.Threat(profile, Catalog), Is.EqualTo(Catalog.Renown.MaxThreat));
@@ -38,21 +43,19 @@ namespace ClickDungeon.Tests
             Assert.That(Renown.Hit(shallow, Catalog, 2), Is.EqualTo(2));
 
             var deep = Run(Catalog.RunFloorCount, 7UL, ".....", ".....", ".HG..", ".....", ".....");
-            deep.Threat = 2;
-            int level = Renown.Level(deep, Catalog);
-            Assert.That(level, Is.GreaterThan(0), "Test setup: the bottom of the dungeon carries this hero's renown.");
+            deep.Threat = 3;
+            Assert.That(Renown.Level(deep, Catalog), Is.EqualTo(3), "Test setup: full renown at the bottom is three points.");
             RunFactory.ApplyThreat(deep, Catalog);
-            Assert.That(Enemy(deep, "goblin").MaxHp, Is.EqualTo(goblinHp + level * Catalog.Renown.HpPerThreat));
+            Assert.That(Enemy(deep, "goblin").MaxHp, Is.EqualTo(goblinHp + 3), "Three points, three hearts.");
             Assert.That(Enemy(deep, "goblin").Hp, Is.EqualTo(Enemy(deep, "goblin").MaxHp));
-            Assert.That(Renown.Hit(deep, Catalog, 2), Is.EqualTo(2 + level / Catalog.Renown.ThreatPerExtraDamage));
+            Assert.That(Renown.Hit(deep, Catalog, 2), Is.EqualTo(3), "Three points raises a two-damage blow to three.");
 
             var court = Run(Catalog.RunFloorCount, 7UL, ".....", ".....", ".HB..", ".....", "....X");
             var blobert = Enemy(court, "lord_blobert");
             int bossHp = blobert.MaxHp;
-            court.Threat = 2;
+            court.Threat = 3;
             RunFactory.ApplyThreat(court, Catalog);
-            Assert.That(blobert.MaxHp, Is.EqualTo(bossHp + Renown.Level(court, Catalog) * Catalog.Renown.BossHpPerThreat));
-            Assert.That(Catalog.Renown.BossHpPerThreat, Is.GreaterThan(Catalog.Renown.HpPerThreat), "A boss answers renown harder.");
+            Assert.That(blobert.MaxHp, Is.EqualTo(bossHp + 6), "Three points, and a boss takes two hearts a point.");
         }
 
         [Test]
@@ -76,8 +79,7 @@ namespace ClickDungeon.Tests
                 Assert.That(guard.MaxHp, Is.EqualTo(baseHp + level * Catalog.Renown.HpPerThreat), "A vault guard carries its renown hearts.");
                 Assert.That(guard.Hp, Is.EqualTo(guard.MaxHp));
             }
-            // The blow and the hearts come from the same rule, and the vault is as deep as the floor it hangs off.
-            Assert.That(Renown.Level(run, Catalog), Is.EqualTo(level));
+            // The blow the guards deal is raised by the same number their hearts were.
             Assert.That(Renown.Hit(run, Catalog, 2), Is.EqualTo(2 + level / Catalog.Renown.ThreatPerExtraDamage));
         }
 

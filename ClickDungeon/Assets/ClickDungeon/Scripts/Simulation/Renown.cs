@@ -36,8 +36,6 @@ namespace ClickDungeon.Simulation
             return player + Math.Max(0, depth);
         }
 
-        public static bool Reaches(RunState run, ContentCatalog catalog) => Level(run, catalog) > 0;
-
         /// <summary>An enemy blow on this floor: its base damage plus one per <see cref="RenownTuning.ThreatPerExtraDamage"/> threat.</summary>
         public static int Hit(RunState run, ContentCatalog catalog, int baseDamage) =>
             baseDamage + Level(run, catalog) / Math.Max(1, catalog.Renown.ThreatPerExtraDamage);

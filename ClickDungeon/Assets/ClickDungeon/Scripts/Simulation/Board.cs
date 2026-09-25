@@ -72,9 +72,15 @@ namespace ClickDungeon.Simulation
         public static bool CanFallThrough(RunState run) =>
             !run.Floor.IsVault && !run.Floor.IsBossFloor && run.Floor.FloorIndex < run.FloorCount;
 
-        /// <summary>Cells enemy AI will path through, ignoring actors. Enemies avoid live hazards.</summary>
+        /// <summary>
+        /// Cells enemy AI will path through, ignoring actors. Enemies avoid live hazards, and they never stand in a
+        /// doorway: on a dungeon floor that is a `Terrain.Door`, and in a vault it is the exit at the middle of the room,
+        /// which is the same door seen from the other side. Without the second half a chaser could park on the only way
+        /// out of a nine-tile room and the hero was told "That way is blocked" (REL-61).
+        /// </summary>
         public static bool EnemyPathable(FloorState floor, GridPos p) =>
-            p.InBounds && !BlocksMovement(floor[p]) && floor[p].Hazard == HazardKind.None && floor[p].Terrain != Terrain.Door;
+            p.InBounds && !BlocksMovement(floor[p]) && floor[p].Hazard == HazardKind.None
+            && floor[p].Terrain != Terrain.Door && !(floor.IsVault && floor[p].IsExit);
 
         public static bool EnemyCanEnter(RunState run, GridPos p) =>
             EnemyPathable(run.Floor, p) && run.Floor.EnemyAt(p) == null && run.Hero.Pos != p;

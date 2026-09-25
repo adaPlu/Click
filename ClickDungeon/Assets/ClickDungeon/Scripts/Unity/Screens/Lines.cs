@@ -221,7 +221,9 @@ namespace ClickDungeon.Unity.Screens
                     {
                         line = $"{SourceName(e.Source, catalog)} is down!";
                         face = Expression.Victorious;
-                        return 90;
+                        // Below the hero being down to their last hearts (70) and above every ordinary event: a boss
+                        // falling is the moment of the act, but not on the turn it nearly killed them (REL-80).
+                        return 68;
                     }
                     line = $"{HeroName(run, catalog)}: 1. Dungeon: 0.";
                     face = Expression.Confident;
