@@ -28,7 +28,8 @@ namespace ClickDungeon.Domain
         // what the dungeon DOES and not only in how hard it hits - web, fuse, puff, deflate, summon, reassemble (D-074);
         // 16 for the usable skills, the first verb the game has had beyond move, slash, shield, dash, drink and open
         // (D-075). A ruleset-15 save resumes with no skills until the next run starts and takes them from the profile.
-        public const int Ruleset = 16;
+        // 17 for the first run of a profile starting with a few more hearts and a potion (D-076).
+        public const int Ruleset = 17;
         // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
         // 3: the first expansion monsters join the floors' enemy pools (D-058), so floors from seed N differ again.
         // 4: twenty floors in acts, the second wave in the pools and the key warden holding keys (D-062). A seven-floor save

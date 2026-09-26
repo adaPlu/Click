@@ -60,6 +60,9 @@ namespace ClickDungeon.Content
         /// </summary>
         public int MercyOnStairs;
 
+        /// <summary>Extra hearts and potions for the first run of a profile, set by the tier (D-076).</summary>
+        public int FirstRunHearts, FirstRunPotions;
+
         /// <summary>
         /// Turns the hero is stuck when a spider webs them (D-061), set by the tier (D-074). It was the literal 1,
         /// written into EnemyAi where no tier could reach it.
@@ -1117,6 +1120,7 @@ namespace ClickDungeon.Content
                 // Blobert and a longer one with his guard down, one minion a summon, and bones that stay down longer.
                 WebTurns = 1, BombFuse = 2, BossPuffTurns = -1, DeflatedTurns = 2,
                 SummonCount = -1, ReassembleTurns = 1, MaxMinions = 0,
+                FirstRunHearts = 3, FirstRunPotions = 1,
             };
             c.Difficulties[Difficulty.Medium] = new DifficultyDefinition
             {
@@ -1129,6 +1133,7 @@ namespace ClickDungeon.Content
                 // The base numbers: every other tier is written as a distance from these (D-074).
                 WebTurns = 1, BombFuse = 1, BossPuffTurns = 0, DeflatedTurns = 1,
                 SummonCount = 0, ReassembleTurns = 0, MaxMinions = 0,
+                FirstRunHearts = 3, FirstRunPotions = 1,
             };
             c.Difficulties[Difficulty.Hardcore] = new DifficultyDefinition
             {
@@ -1142,6 +1147,9 @@ namespace ClickDungeon.Content
                 // an extra minion every summon, a bigger swarm kept alive, and bones back on their feet a turn sooner.
                 WebTurns = 2, BombFuse = 1, BossPuffTurns = 1, DeflatedTurns = 1,
                 SummonCount = 1, ReassembleTurns = -1, MaxMinions = 1,
+                // None here, for the same reason the stairs give none (D-073): this tier is opt-in, its card says so,
+                // and nobody meets the game for the first time on it by accident.
+                FirstRunHearts = 0, FirstRunPotions = 0,
             };
             return c;
         }
@@ -1153,6 +1161,8 @@ namespace ClickDungeon.Content
             MercyOnStairs = Math.Max(0, d.MercyOnStairs);
             // The behavioural numbers (D-074). A fuse under 1 would go off in the same turn it was thrown, which is a
             // blow with no warning, so the floor here is the telegraph contract and not a taste call (rules 3.2).
+            FirstRunHearts = Math.Max(0, d.FirstRunHearts);
+            FirstRunPotions = Math.Max(0, d.FirstRunPotions);
             WebTurns = Math.Max(1, d.WebTurns);
             DeflatedTurns = Math.Max(1, d.DeflatedTurns);
             Hazards.BombFuse = Math.Max(1, d.BombFuse);

@@ -294,6 +294,18 @@ namespace ClickDungeon.Content
         public int ReassembleTurns;
         /// <summary>Added to how many minions a non-boss summoner keeps alive at once. Minimum 1 where there was a cap.</summary>
         public int MaxMinions;
+
+        /// <summary>
+        /// The first run of a profile, and only the first, starts with these extra hearts and potions (D-076). It is
+        /// onboarding, not a difficulty knob: a player meeting the telegraphs for the first time dies to things they
+        /// could not have known were there, and the measurement says which - spikes killed a third of fresh careless
+        /// runs on Knight's Trial and did more damage than every monster put together.
+        ///
+        /// Hearts and potions rather than softer traps, deliberately: slack, not a lie. A trap that hits for less while
+        /// you are learning teaches you the wrong number and then changes it.
+        /// </summary>
+        public int FirstRunHearts;
+        public int FirstRunPotions;
     }
 
     /// <summary>What a vault room holds (D-018): either one great chest or a handful of ordinary ones.</summary>

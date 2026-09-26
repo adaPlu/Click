@@ -326,6 +326,54 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
+        public void TheFirstRunOfAProfileStartsWithALittleMoreAndOnlyTheFirst()
+        {
+            // D-076. Measured: on Knight's Trial, spikes killed a THIRD of fresh careless runs and did more damage than
+            // every monster put together - a new player dies to things the cover rule means they could not have known
+            // were there. This is slack while they learn, and it is gone the moment a run ends.
+            var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
+            Assert.That(catalog.FirstRunHearts, Is.GreaterThan(0), "Test setup: Knight's Trial grants a grace.");
+
+            RunState Start(ProfileState profile)
+            {
+                var run = RunFactory.NewRun(5UL, catalog, new List<GameEvent>(), "ironheart");
+                ProfileSystem.ProvisionRun(profile, run, catalog, new List<GameEvent>());
+                return run;
+            }
+
+            var bare = catalog.HeroClass("knight");
+            var first = Start(new ProfileState());
+            Assert.That(first.Hero.MaxHp, Is.EqualTo(bare.MaxHp + catalog.FirstRunHearts), "Hearts on the first run.");
+            Assert.That(first.Hero.Hp, Is.EqualTo(first.Hero.MaxHp), "And they are full, not empty.");
+            Assert.That(first.Hero.Potions, Is.EqualTo(bare.StartingPotions + catalog.FirstRunPotions));
+
+            // One run finished - won or lost, it does not matter - and the grace is over.
+            var second = Start(new ProfileState { RunsFinished = 1 });
+            Assert.That(second.Hero.MaxHp, Is.EqualTo(bare.MaxHp), "The second run is the ordinary game.");
+            Assert.That(second.Hero.Potions, Is.EqualTo(bare.StartingPotions));
+
+            // A run with no profile at all is a hero with nothing behind them, which is who this is for - and it keeps
+            // every empty-profile sweep measuring the run a new player actually gets.
+            Assert.That(Start(null).Hero.MaxHp, Is.EqualTo(bare.MaxHp + catalog.FirstRunHearts));
+        }
+
+        [Test]
+        public void TheHardestTierGivesNoGraceAndSaysSo()
+        {
+            // The same call as the stairs' mercy (D-073): Blobert's Wrath is opt-in, its card ends "No mercy.", and
+            // nobody meets the game for the first time on it by accident.
+            var wrath = ContentCatalog.CreateDefault(Difficulty.Hardcore);
+            Assert.That(wrath.FirstRunHearts, Is.Zero);
+            Assert.That(wrath.FirstRunPotions, Is.Zero);
+
+            var run = RunFactory.NewRun(5UL, wrath, new List<GameEvent>(), "ironheart");
+            int hearts = run.Hero.MaxHp, potions = run.Hero.Potions;
+            ProfileSystem.ProvisionRun(new ProfileState(), run, wrath, new List<GameEvent>());
+            Assert.That(run.Hero.MaxHp, Is.EqualTo(hearts), "A first run on the hardest tier is the hardest tier.");
+            Assert.That(run.Hero.Potions, Is.EqualTo(potions));
+        }
+
+        [Test]
         public void TheMercyOnTheStairsIsTheTiersOwnAndTheCardSaysHowMuch()
         {
             // DATA-52: for one version the floor lived on the catalog rather than the tier, so Blobert's Wrath - whose

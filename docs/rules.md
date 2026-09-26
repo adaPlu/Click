@@ -464,12 +464,37 @@ it adds one monster a floor (D-038).
 | Enemies on normal floors               | profile                | profile +1              | profile                    |
 | HP restored on arriving at a new floor | 3                      | 0                       | 0                          |
 | The stairs never leave the hero below  | half their hearts      | half their hearts       | — (no mercy)               |
+| First run of a profile starts with     | +3 hearts, +1 potion   | +3 hearts, +1 potion    | — (no grace)               |
 
 Hero max HP is the Knight's. The Paladin has one more heart on every tier (D-047).
 
 Damage and HP never drop below 1.
 
-### 10.0 What the dungeon does differently *(D-074)*
+### 10.0 The first run *(D-076)*
+
+The **first** run of a profile — and only the first, counted by `RunsFinished`, won or lost — starts with a few more
+hearts and an extra potion. It is onboarding, not a difficulty setting.
+
+Why it exists, measured: on Knight's Trial, a fresh careless player was killed by **spikes in a third of runs**, and
+spikes did more damage than every monster in the game put together (975 against the next-worst 345 over 30 runs). The
+cover rule means a new player could not have known the spikes were there — they are being punished for not yet knowing
+the game rather than for playing it badly.
+
+Hearts and potions rather than softer traps, deliberately: **slack, not a lie.** A trap that hits for less while you
+are learning teaches you the wrong number and then changes it behind your back.
+
+Measured over 240 blind seeds, grace off against on:
+
+| tier | casual | careless |
+|---|---|---|
+| Squire's Stroll | 99% → 100% | 100% → 99% |
+| Knight's Trial | **76% → 87%** | **21% → 35%** |
+| Blobert's Wrath | 46% → 46% | 4% → 4% |
+
+Blobert's Wrath gives none, the same call as the stairs' mercy (D-073): the tier is opt-in, its card ends "No mercy",
+and nobody meets the game for the first time on it by accident.
+
+### 10.0.1 What the dungeon does differently *(D-074)*
 
 Everything in the table above is a magnitude. These are the things a tier changes about how the dungeon **behaves** —
 how long the player has, and how fast the board fills. Squire's Stroll gives time and fewer bodies; Blobert's Wrath
@@ -491,12 +516,17 @@ someone who never arrives. `ApplyDifficulty` clamps both.
 
 ### 10.1 Measured difficulty
 
-**Current** (after D-074, 2026-09-25). **240** blind seeds, Free Roam, empty profile — won:
+**Current** (after D-076, 2026-09-25). **240** blind seeds, Free Roam, empty profile — won:
 
 | Player       | Squire's Stroll | Knight's Trial | Blobert's Wrath |
 |--------------|-----------------|----------------|-----------------|
-| casual (20%) | 99%             | 76%            | 46%             |
-| novice (50%) | 100%            | 21%            | 4%              |
+| casual (20%) | 100%            | 87%            | 46%             |
+| novice (50%) | 99%             | 35%            | 4%              |
+
+An empty profile is a **first** run now, so these include D-076's grace — +3 hearts and a potion on the two gentler
+tiers, none on Blobert's Wrath. Without it the same sweep gives 99 / 76 / 46 casual and 100 / 21 / 4 novice, which is
+what every measurement in this file before D-076 was taken against. A hero on their *second* run and after meets those
+older numbers, and nothing else about them changed.
 
 No run stalled in any tier. Knight's Trial and Blobert's Wrath sit higher than audit 4 recorded (62% and 53% casual)
 because D-071's stairs mercy landed in between; Blobert's Wrath came back down when D-073 took that mercy away again

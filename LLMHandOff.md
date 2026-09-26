@@ -1217,3 +1217,21 @@ walks, so a radius-1 sight skill is a no-op, and radius 2 from the middle of a 5
 ten-playthrough career caught it - a levelled knight went from ~410 turns a run to ~200, chests found fell with it -
 and the effect was removed rather than tuned, because finding the way down is the game (D-023). The five became Shield
 Bash, Bandage, Arcane Nova, Snare and EMP Charge; runs are back to 321-571 turns against 364-479 before skills.
+
+### D-076 the first run (2026-09-25)
+
+`RunEndings` on an empty profile said what actually kills a new player on Knight's Trial: spikes, 10 deaths of 30, and
+975 damage against the next-worst 345 - more than every monster combined. Spikes sit under covers, so the cover rule
+means the player could not have known. So: the first run of a profile, and only the first (`RunsFinished`, won or
+lost), starts with +3 hearts and +1 potion on the two gentler tiers, and none on Blobert's Wrath (D-073's call again).
+
+Hearts rather than softer traps on purpose - slack, not a lie. A trap that hits for less while you learn teaches the
+wrong number. A null profile counts as a first run, which also keeps the empty-profile sweeps measuring the run a real
+new player gets.
+
+Measured 240 blind seeds a tier, off against on: Knight's Trial casual **76% -> 87%**, careless **21% -> 35%**; Easy and
+Hardcore unchanged. Ruleset 16 -> 17.
+
+**Recorded**: the ten-playthrough career is now 10 of 10. The 240-seed sweep still loses one first run in eight at
+casual, so that is one seed and not over-correction - but with D-073's saturation finding it means a whole career can
+now pass with no loss at all. The late game is where the difficulty question now lives.

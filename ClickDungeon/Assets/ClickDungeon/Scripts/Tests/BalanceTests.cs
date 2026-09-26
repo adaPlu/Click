@@ -416,7 +416,11 @@ namespace ClickDungeon.Tests
         /// Knight and 22 as the Paladin - the same dungeons, twice the wins. This guard catches that gap coming back, and
         /// since D-063 it covers all eight classes, each played by the first hero of that class on the roster.
         /// </summary>
-        [Test]
+        // The most expensive guard in the repo: 100 seeds x 8 classes x 2 mistake rates is 1600 whole runs, about 104
+        // seconds headless and half again as long under Unity's EditMode runner. Unity's own default is three minutes,
+        // and D-076's extra hearts - heroes surviving longer means more turns a run - pushed it over. Raised rather
+        // than shrunk: the seed count is the guard, and the note above says why 100 and not 60.
+        [Test, Timeout(600000)]
         public void TheClassesWinAboutAsOftenAsEachOther()
         {
             // 100, not 40. At 40 the eight classes land within a few wins of each other and the band has no headroom left

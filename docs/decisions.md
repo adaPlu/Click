@@ -1460,3 +1460,51 @@ for, went 31 → 40.
 
 **Open, and the same question D-074 ended on**: whether three slots are worth having is a question about a person, and
 the bot answers a different one. The loadout is also not yet a choice — that arrives when the pool grows past three.
+
+## D-076 The first run, and what was actually killing it
+
+The ten-playthrough career kept ending the same way: lost on floor 6 of run 1, then nine straight wins. The difficulty
+of this game lives almost entirely in the first run of a fresh profile, and the question was whether that first run is
+teaching or just punishing.
+
+**What kills a new player, measured** (30 blind careless runs, empty profile, Knight's Trial):
+
+| cause | deaths |
+|---|---|
+| **spikes** | **10** |
+| goblin_brute_king (the act-1 boss) | 6 |
+| lava | 2 |
+| stage_mask | 2 |
+| five others | 1 each |
+| won | 6 |
+
+Damage taken says it louder: **spikes 975**, next-worst bomb 345. Spikes kill a fresh player more than every monster
+in the game put together. And spikes sit under covers, so by the cover rule (§2.1) the player *could not have known*
+they were there. That is being punished for not yet knowing the game rather than for playing it badly.
+
+**The fix is slack, not softer rules.** The first run of a profile — only the first, counted by `RunsFinished`, won or
+lost — starts with **+3 hearts and +1 potion** on Squire's Stroll and Knight's Trial. Blobert's Wrath gives none, the
+same call as the stairs' mercy in D-073: opt-in tier, its card ends "No mercy", nobody meets the game there by accident.
+
+Hearts and potions rather than weaker traps, deliberately. A trap that hits for less while you are learning teaches you
+the wrong number and then changes it behind your back; more hearts teaches the right number and gives you room to
+learn it.
+
+A null profile counts as a first run. That is not a convenience for the test harness: the game always has a profile, so
+null only ever means "a hero with nothing behind them", which is exactly who this is for — and it keeps every
+empty-profile sweep in this repo measuring the run a real new player gets rather than one nobody will ever play.
+
+**Measured, 240 blind seeds a tier, grace off against on:**
+
+| tier | casual | careless |
+|---|---|---|
+| Squire's Stroll | 99% → 100% | 100% → 99% |
+| Knight's Trial | **76% → 87%** | **21% → 35%** |
+| Blobert's Wrath | 46% → 46% | 4% → 4% |
+
+Nothing after run 1 moved, because nothing after run 1 is touched.
+
+**Recorded, not solved**: the ten-playthrough career is now 10 of 10. One seed is not evidence of over-correction — the
+240-seed sweep still loses one first run in eight at casual and two in three at careless — but it does underline what
+D-073 already found. A built-up player wins essentially everything, and now the first run usually survives too, so a
+whole career can pass without a loss. The difficulty of the late game is the open question, and it is not this one.

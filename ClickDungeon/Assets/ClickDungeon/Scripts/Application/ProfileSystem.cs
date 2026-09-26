@@ -44,13 +44,32 @@ namespace ClickDungeon.Application
         /// </summary>
         public static void ProvisionRun(ProfileState profile, RunState run, ContentCatalog catalog, List<GameEvent> events)
         {
-            if (profile == null || run == null) return;
+            if (run == null) return;
+            FirstRunGrace(profile, run, catalog);
+            if (profile == null) return;
             Provision(profile, run, catalog);
             Progression.Apply(profile, run, catalog);
             Inventory.Apply(profile, run, catalog);
             // Renown's threat (D-040, D-067). Floor 1 is already laid out, and threat only reaches the deep floors.
             run.Threat = Progression.Threat(profile, catalog);
             RunFactory.RevealByTalents(run, events ?? new List<GameEvent>());
+        }
+
+        /// <summary>
+        /// The first run of a profile starts with a little more (D-076). Only the first: `RunsFinished` counts every run
+        /// banked, won or lost, so the grace is gone the moment one ends.
+        ///
+        /// A null profile counts as a first run. That is not a special case for the harness's convenience - the game
+        /// always has a profile, so null only ever means "a hero with nothing behind them", which is exactly who this is
+        /// for. It also keeps the empty-profile sweeps measuring the run a real new player gets rather than one nobody
+        /// will ever play.
+        /// </summary>
+        public static void FirstRunGrace(ProfileState profile, RunState run, ContentCatalog catalog)
+        {
+            if (run?.Hero == null || (profile != null && profile.RunsFinished > 0)) return;
+            run.Hero.MaxHp += catalog.FirstRunHearts;
+            run.Hero.Hp += catalog.FirstRunHearts;
+            run.Hero.Potions += catalog.FirstRunPotions;
         }
 
         public static void Provision(ProfileState profile, RunState run, ContentCatalog catalog)
