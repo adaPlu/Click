@@ -1379,3 +1379,84 @@ finally reacts would be tuning against a blind instrument, which is exactly how 
 about "careless play" already. What the sweep is good for here is confirming that no tier was accidentally inverted,
 and none was. Validating the feel of these needs a human at the keyboard, and that is the next thing to ask testers
 for rather than the next thing to measure.
+
+## D-075 Three skill slots, and the first verb the game has had
+
+Ninety-six talents, and every one of them passive. A class could only ever be expressed as a modifier on a slash or a
+shield — "+1 when the target is at full health", "heals when you block" — so the difference between a Paladin and a
+Cleric was a list of adjustments to two buttons. There was no way to *do* a thing. That is what a skill is.
+
+- **UNLOCKED BY THE TREE, NOT BY A NEW SYSTEM.** One talent a branch, at **tier 2**, names a skill; learning the talent
+  unlocks it. No new currency, no new screen, and the build already decides the loadout — climb all three branches and
+  you carry three, specialise and you carry one. Tier 2 and not a capstone, because a class may learn only **one**
+  capstone: hang skills there and two of a class's three could never be reached at once.
+- **THREE SLOTS, AND TODAY EXACTLY THREE SKILLS A CLASS.** So the loadout is not yet a choice, and a player is not asked
+  to make one before it is. The slots exist because the pool is meant to grow and because the profile has to record
+  *which* three from the first version rather than from the day it matters; an empty slot fills itself from what the
+  build unlocked, in tree order.
+- **THE TWO THAT WERE ASKED FOR**: the Paladin's **Lay on Hands** (mend 3) and the Cleric's **Dispel Undead** (3 damage,
+  doubled against the risen). D-072 gave the undead a name so an answer to them could point at something; this is the
+  skill that was the reason for naming it.
+- **COST IS MANA.** D-032 replaced per-ability cooldowns with a pool on purpose, so the player chooses when to spend
+  rather than waiting out timers. Skills pay from the same pool. No timers came back.
+- **TWENTY-FOUR SKILLS, FIVE EFFECT KINDS**: Heal, Strike, Banish (double against the risen), Burst (everything beside
+  you) and Stagger (one monster loses its turn; bosses shrug it off, as the talents that stagger cannot stagger one).
+  Adding a skill is a line in the catalog, not a branch in the resolver. Each class carries one of three different
+  effects, so no build is three of the same button.
+- **A SIXTH EFFECT WAS WRITTEN AND CUT.** Reveal, on five of the classes. It cannot work on this board: every class
+  already uncovers radius 1 as it walks, so a radius-1 sight skill does nothing at all, and radius 2 from the middle of
+  a five-by-five board is the *whole* board - a two-mana button that deletes the fog. The ten-playthrough career found
+  it: a levelled knight's runs fell from ~410 turns to ~200 and chests found fell with them, because the bot no longer
+  had to look for anything. Finding the way down is the game (D-023), so the effect is gone rather than tuned down, and
+  the five skills became a Shield Bash, a Bandage, an Arcane Nova, a Snare and an EMP Charge. Runs are back to 321-571
+  turns against 364-479 before skills existed.
+
+### The two contracts it had to not break
+
+**A skill may not ask what a cover hides (rules §2.1).** A targeted skill reaches an **awake** monster only — exactly
+what a slash requires. Aiming one at a sleeping monster under a cover would be a way to find out it is there. The test
+refuses the sleeping target and then accepts the same monster awake, so the refusal is the rule and not a broken skill.
+
+**A skill telegraphs nothing (rules §3.2)**, because it is the hero's own action on their own turn. Nothing new has to
+be warned about.
+
+And nothing trusts the profile: an id that is not a skill, not this class's, not unlocked, or listed twice is dropped,
+and the list is cut to the slots. That is SEC-04's rule for worn gear, applied to skills.
+
+### What the measurement found — including a bug the tests could not see
+
+First measurement after wiring it: the class table came back **byte-identical** to the one from before skills existed.
+Not "barely moved" — identical, to the win. Twenty-four skills had changed nothing, which meant the bot was not using
+them.
+
+`AutoPlayer.Copy` did not carry `Skills`. The blind bot's look-ahead saw a hero with no skills, so it never tried one.
+**This is REL-44 exactly** — Movement and Threat were missing from that same copy for as long as it had existed — and
+`TheCopyCarriesEveryFieldARunHas`, the test written *for* REL-44, was green throughout, because a field nobody thought
+to set in it is a field it cannot see.
+
+So the fix is two things. `Copy` carries `Skills`; and that test now walks `RunState`'s fields by reflection and fails
+by name on any field still holding its default, so the third time this happens the test is the one that says so.
+
+With the bot actually using them, 40 blind seeds a class, careless, built-up:
+
+| class | before skills | with skills |
+|---|---|---|
+| paladin | 31 | **40** |
+| berserker | 37 | 40 |
+| cleric | 38 | 39 |
+| engineer | 33 | 39 |
+| knight | 38 | 34 |
+| ranger | 22 | **34** |
+| rogue | 25 | **33** |
+| wizard | 30 | 30 |
+
+**Spread 1.73 → 1.33.** Skills *compressed* the classes. The three that gained most — ranger +12, paladin +9, rogue +8 —
+are the ones whose passives are conditional on standing in the right place, which is what a careless player cannot do;
+an active button pays whatever your footwork is like. The knight, near the top on passives alone, lost 4.
+
+D-071's recorded caution was that a castable Cleric heal would cut against her being the strongest class under
+pressure. It did not: she moved 38 → 39 and the field came up to meet her. The Paladin, who got the heal that was asked
+for, went 31 → 40.
+
+**Open, and the same question D-074 ended on**: whether three slots are worth having is a question about a person, and
+the bot answers a different one. The loadout is also not yet a choice — that arrives when the pool grows past three.

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Linq;
 using ClickDungeon.Application;
 using ClickDungeon.Content;
@@ -30,7 +31,40 @@ namespace ClickDungeon.Tests
             run.Floor.Enemies[0].Enraging = true;
             run.Floor.Enemies[0].CarriesKey = true;
             run.Floor.Enemies[0].Disguised = true;
+            run.Skills = new List<string> { "rog_smoke" };
+            run.Turn = 7;
+            run.CoinsFound = 11;
+            run.GemsFound = 2;
+            run.XpEarned = 33;
+            run.MonstersSlain = 4;
+            run.ChestsOpened = 3;
+            run.ItemsFound = new List<string> { "steel_sword" };
+            run.Rewards.Add(new RewardRecord { TransactionId = "t1", Kind = RewardKind.Potion, Amount = 1, FloorIndex = 1, Turn = 2 });
+            run.PotionHealBonus = 1;
+            run.BonusXpPerFloor = 2;
+            run.BonusCoinsPerChestReward = 3;
+            run.DashCostCut = 1;
+            run.OuterFloor = FloorState.CreateEmpty();
+            run.ReturnPos = P(1, 1);
+            run.VisitedVault = FloorState.CreateEmpty();
+            run.VisitedVaultDoor = P(2, 2);
             Assert.That(SaveSerializer.ToJson(AutoPlayer.Copy(run)), Is.EqualTo(SaveSerializer.ToJson(run)));
+
+            // And the reason this test exists has to be enforced, not intended. Twice now a field has been added to
+            // RunState and left out of Copy - Movement and Threat (REL-44), then Skills (D-075) - and both times this
+            // test was green, because a field nobody thought to set above is a field it cannot see. So: every field of
+            // RunState must differ from a fresh one. Add a field, and this names it until it is given a value here.
+            var fresh = new RunState();
+            foreach (var field in typeof(RunState).GetFields(BindingFlags.Public | BindingFlags.Instance))
+            {
+                // The version stamps and the status of a live run are the same on any run; there is no "non-default"
+                // to give them, and Copy carrying them is pinned by the JSON comparison above.
+                if (field.Name.EndsWith("Version") || field.Name == "Status") continue;
+                Assert.That(Newtonsoft.Json.JsonConvert.SerializeObject(field.GetValue(run)),
+                    Is.Not.EqualTo(Newtonsoft.Json.JsonConvert.SerializeObject(field.GetValue(fresh))),
+                    $"RunState.{field.Name} still holds its default here, so this test cannot tell whether Copy carries it. "
+                    + "Give it a value above.");
+            }
         }
 
         [Test]

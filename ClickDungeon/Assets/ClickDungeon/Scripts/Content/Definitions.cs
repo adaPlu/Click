@@ -72,7 +72,32 @@ namespace ClickDungeon.Content
         public int Amount = 1;
         /// <summary>The talent that must be learned first, or null.</summary>
         public string Requires;
+        /// <summary>
+        /// The usable skill learning this talent unlocks, or null for the passive ones (D-075). One per branch, at tier
+        /// 2, so a build that climbs all three branches earns all three and a build that specialises does not.
+        /// </summary>
+        public string SkillId;
         public bool Capstone => Tier >= 4;
+    }
+
+    /// <summary>
+    /// A usable skill (D-075). Unlike the ninety-six talents, which are all passive, a skill is a command the player
+    /// spends a turn and some mana on. It is unlocked by learning the talent that names it, so the tree already decides
+    /// which skills a build has: skip a branch and you skip its skill.
+    /// </summary>
+    public sealed class SkillDefinition
+    {
+        public string Id;
+        public string ClassId;
+        public string Name;
+        /// <summary>What it does, in the words the button and the panel show.</summary>
+        public string Summary;
+        public int ManaCost;
+        public SkillEffect Effect;
+        public int Amount;
+        public SkillTarget Target;
+        /// <summary>For a targeted skill: how far it reaches, in king's moves. Ignored when it targets the hero.</summary>
+        public int Range = 1;
     }
 
     /// <summary>A hero shown on Hero Select as coming soon: art and words only, no class yet (D-037).</summary>

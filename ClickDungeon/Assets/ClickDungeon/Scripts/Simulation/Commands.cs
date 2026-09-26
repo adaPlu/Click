@@ -65,6 +65,11 @@ namespace ClickDungeon.Simulation
                     if (hero.Hp >= hero.MaxHp) return Fail(out reason, "Already at full health.");
                     return true;
 
+                case CommandKind.Skill:
+                    // A web pins the hero's feet, not their hands: the message has always said "Slash, shield, drink or
+                    // wait it out", and a skill is one of the things they can still do standing still (D-075).
+                    return Skills.CanUse(run, catalog, command.Slot, target, out reason);
+
                 case CommandKind.Interact:
                     // Chests do not block, so the hero may be standing on the one they open.
                     if (!target.InBounds || (target != hero.Pos && !hero.Pos.IsAdjacent(target)))

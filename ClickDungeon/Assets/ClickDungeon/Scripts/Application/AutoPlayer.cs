@@ -187,6 +187,25 @@ namespace ClickDungeon.Application
                 var command = new PlayerCommand(kind, GridPos.Invalid);
                 if (Commands.Validate(run, command, catalog, out _)) commands.Add(command);
             }
+            // The hero's skills (D-075). Without this the bot never uses one, and every balance number measured with a
+            // built-up profile would silently be measuring a hero who left three of their abilities alone - the TEST-23
+            // failure exactly, one system later.
+            for (int slot = 0; slot < (run.Skills?.Count ?? 0); slot++)
+            {
+                var skill = Skills.InSlot(run, catalog, slot);
+                if (skill == null) continue;
+                if (skill.Target == SkillTarget.Self)
+                {
+                    var command = PlayerCommand.Skill(slot);
+                    if (Commands.Validate(run, command, catalog, out _)) commands.Add(command);
+                    continue;
+                }
+                foreach (var enemy in run.Floor.Enemies)
+                {
+                    var command = PlayerCommand.Skill(slot, enemy.Pos);
+                    if (Commands.Validate(run, command, catalog, out _)) commands.Add(command);
+                }
+            }
             return commands;
         }
 
@@ -604,6 +623,11 @@ namespace ClickDungeon.Application
                 // different game from the one it was playing.
                 Movement = run.Movement,
                 Threat = run.Threat,
+                // D-075, and the same bug again: without this the look-ahead sees a hero with no skills, so the bot
+                // never tries one and every balance number taken with a built-up profile measures a hero who left three
+                // abilities alone. It was found by measuring - the class table came back byte-identical to the one from
+                // before skills existed - and not by the test below, which could not see it.
+                Skills = run.Skills == null ? new List<string>() : new List<string>(run.Skills),
             };
         }
 

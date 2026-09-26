@@ -6,6 +6,14 @@ namespace ClickDungeon.Domain
     {
         public const int Size = 5;
         public const int CellCount = Size * Size;
+
+        /// <summary>
+        /// How many usable skills a hero carries at once (D-075). Three, and each class has exactly three to find today -
+        /// one a branch - so the slots are not yet a choice. They are slots because the pool is meant to grow, and
+        /// because the profile has to record which three from the first version rather than from the day it matters.
+        /// It lives here rather than in the catalog: a save is validated against it, and validation has no catalog.
+        /// </summary>
+        public const int SkillSlots = 3;
     }
 
     public static class Versions
@@ -17,8 +25,10 @@ namespace ClickDungeon.Domain
         // renown's threat arriving with the depth instead of landing whole on floor 3 (D-067); 14 for the stairs'
         // mercy being the tier's number rather than the game's, which is how Blobert's Wrath came to mean what its
         // card says - a hero who reaches the stairs badly hurt gets nothing there (D-073); 15 for the tiers differing in
-        // what the dungeon DOES and not only in how hard it hits - web, fuse, puff, deflate, summon, reassemble (D-074).
-        public const int Ruleset = 15;
+        // what the dungeon DOES and not only in how hard it hits - web, fuse, puff, deflate, summon, reassemble (D-074);
+        // 16 for the usable skills, the first verb the game has had beyond move, slash, shield, dash, drink and open
+        // (D-075). A ruleset-15 save resumes with no skills until the next run starts and takes them from the profile.
+        public const int Ruleset = 16;
         // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
         // 3: the first expansion monsters join the floors' enemy pools (D-058), so floors from seed N differ again.
         // 4: twenty floors in acts, the second wave in the pools and the key warden holding keys (D-062). A seven-floor save
@@ -80,7 +90,40 @@ namespace ClickDungeon.Domain
     /// </summary>
     public enum MovementMode { Free = 0, Step = 1 }
 
-    public enum CommandKind { Move = 0, Wait, Slash, Shield, Dash, Potion, Interact }
+    // Skill is appended, so no saved or recorded command changes meaning (D-075).
+    public enum CommandKind { Move = 0, Wait, Slash, Shield, Dash, Potion, Interact, Skill }
+
+    /// <summary>What a usable skill needs pointed at it (D-075).</summary>
+    public enum SkillTarget
+    {
+        /// <summary>The hero. No tile is picked and none is read.</summary>
+        Self = 0,
+        /// <summary>An awake monster within range - awake, because a skill may not be aimed at something a cover hides (rules 2.1).</summary>
+        Enemy = 1,
+    }
+
+    /// <summary>
+    /// What a usable skill does (D-075). One entry per rule the simulation has to run: a skill is content, and adding
+    /// one should be a line in the catalog, not a new branch in the resolver.
+    /// </summary>
+    public enum SkillEffect
+    {
+        /// <summary>Mends the hero. Amount is hearts.</summary>
+        Heal = 0,
+        /// <summary>Hurts one monster. Amount is the damage, and it is doubled against the undead.</summary>
+        Banish = 1,
+        /// <summary>Hurts one monster. Amount is the damage.</summary>
+        Strike = 2,
+        /// <summary>Hurts every awake monster beside the hero. Amount is the damage.</summary>
+        Burst = 3,
+        /// <summary>Leaves one monster reeling, so it loses its next turn - the same stagger a talent can cause. Bosses shrug it off.</summary>
+        Stagger = 4,
+        // There was a Reveal here, and five skills used it. It cannot work on this board: every class already uncovers
+        // radius 1 as it walks, so a radius-1 sight skill does nothing at all, and radius 2 from the middle of a
+        // five-by-five board is the WHOLE board - a two-mana button that deletes the fog. Measured before it was cut: a
+        // levelled knight's runs went from ~410 turns to ~200, because the bot stopped having to look for anything.
+        // Finding the way down is the game (D-023), so the effect is gone rather than tuned.
+    }
 
     public enum RewardKind { Potion = 0, MaxHp, SlashDamage }
 

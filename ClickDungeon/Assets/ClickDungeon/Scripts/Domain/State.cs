@@ -196,6 +196,12 @@ namespace ClickDungeon.Domain
         /// </summary>
         public Dictionary<string, int> Perks = new Dictionary<string, int>();
 
+        /// <summary>
+        /// The usable skills this run carries, in slot order (D-075). Taken from the profile when the run starts, like
+        /// every other starting number; a run never reads the profile again. Empty for a hero who has learned none.
+        /// </summary>
+        public List<string> Skills = new List<string>();
+
         public int Perk(TalentEffect effect) => Perks != null && Perks.TryGetValue(effect.ToString(), out int v) ? v : 0;
 
         public bool HasReward(string transactionId)

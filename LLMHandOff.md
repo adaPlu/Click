@@ -1187,3 +1187,33 @@ against a blind instrument (D-067, and TEST-85's point about what "careless play
 to confirm no tier inverted, and none did. Ruleset 14 → 15.
 
 **Open**: whether the seven values feel right needs a person, not the bot. It is a question for testers.
+
+### D-075 three skill slots a class (2026-09-25)
+
+The first verb beyond move, slash, shield, dash, drink and open. One talent a branch at tier 2 names a usable skill;
+learning it unlocks it, so the tree is the loadout. Three slots, 24 skills, five effect kinds, mana for cost, and both
+contracts held: a targeted skill reaches only an AWAKE monster (rules 2.1), and a skill telegraphs nothing (3.2).
+
+**The finding of the day.** The first measurement came back byte-identical to the pre-skills class table - not close,
+identical - which meant the bot was not using them. `AutoPlayer.Copy` did not carry `Skills`, so the look-ahead saw a
+hero with none. That is REL-44 exactly, and `TheCopyCarriesEveryFieldARunHas` - the test written FOR REL-44 - was green
+throughout, because a field nobody thought to set in it is a field it cannot see. Copy now carries Skills, and that
+test walks RunState's fields by reflection and fails by name on any field left at its default.
+
+With the bot using them, 40 blind seeds a class, careless, built-up: paladin 31->40, ranger 22->34, rogue 25->33,
+engineer 33->39, berserker 37->40, cleric 38->39, wizard 30->30, knight 38->34. **Spread 1.73 -> 1.33**: skills compress
+the classes, because an active button pays the same whatever the player's footwork is like, and the biggest gains went
+to the classes whose passives are conditional on position. D-071's caution about a castable Cleric heal did not bite -
+she moved one win; the field came up to meet her.
+
+431 headless tests. Ruleset 15 -> 16. ProfileSchema NOT bumped: `ProfileState.Skills` is an added optional field, an
+old profile loads with it empty and fills its slots from the talents it has already learned.
+
+**Open**: the strip's visual placement is unverified by anything but a compile - no test can say it looks right. And
+whether three slots are worth having is a question about a person, which the bot answers differently (D-074's point).
+
+**And a sixth effect cut after the fact.** Reveal, on five classes. Every class already uncovers radius 1 as it
+walks, so a radius-1 sight skill is a no-op, and radius 2 from the middle of a 5x5 board is the whole board. The
+ten-playthrough career caught it - a levelled knight went from ~410 turns a run to ~200, chests found fell with it -
+and the effect was removed rather than tuned, because finding the way down is the game (D-023). The five became Shield
+Bash, Bandage, Arcane Nova, Snare and EMP Charge; runs are back to 321-571 turns against 364-479 before skills.

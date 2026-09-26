@@ -126,8 +126,45 @@ namespace ClickDungeon.Application
         /// Turns the playing class's learned talents into the new run's starting numbers and perks. Talents stay learned:
         /// unlike shop boosts they are not spent, so every run of that class starts with them.
         /// </summary>
+        /// <summary>
+        /// The skills this class has unlocked: one for each talent it has learned that names one (D-075). In tree order,
+        /// so the same profile always reports the same list.
+        /// </summary>
+        public static List<string> UnlockedSkills(ProfileState profile, ContentCatalog catalog, string classId)
+        {
+            var list = new List<string>();
+            if (profile == null || classId == null) return list;
+            foreach (var talent in catalog.TalentsOf(classId))
+                if (talent.SkillId != null && Rank(profile, talent.Id) > 0 && catalog.SkillOrNull(talent.SkillId) != null)
+                    list.Add(talent.SkillId);
+            return list;
+        }
+
+        /// <summary>
+        /// What the hero actually carries, in slot order (D-075). A profile is a file on disk, so nothing in it is
+        /// trusted: an id that is not a skill, not this class's, not unlocked, or listed twice is dropped, and the list
+        /// is cut to the number of slots. Empty slots are filled from what is unlocked, in tree order - with exactly
+        /// three skills a class today the loadout is not yet a choice, and a player should not have to make it before
+        /// it is one (SEC-04's rule for worn items, applied to skills).
+        /// </summary>
+        public static List<string> EquippedSkills(ProfileState profile, ContentCatalog catalog, string classId)
+        {
+            var unlocked = UnlockedSkills(profile, catalog, classId);
+            var equipped = new List<string>();
+            if (profile?.Skills != null && classId != null && profile.Skills.TryGetValue(classId, out var chosen) && chosen != null)
+                foreach (var id in chosen)
+                    if (unlocked.Contains(id) && !equipped.Contains(id) && equipped.Count < ContentCatalog.SkillSlots)
+                        equipped.Add(id);
+            foreach (var id in unlocked)
+                if (equipped.Count >= ContentCatalog.SkillSlots) break;
+                else if (!equipped.Contains(id)) equipped.Add(id);
+            return equipped;
+        }
+
         public static void Apply(ProfileState profile, RunState run, ContentCatalog catalog)
         {
+            if (profile != null && run?.Hero != null)
+                run.Skills = EquippedSkills(profile, catalog, run.Hero.ClassId);
             if (profile == null || run == null) return;
             var hero = run.Hero;
             if (run.Perks == null) run.Perks = new Dictionary<string, int>();

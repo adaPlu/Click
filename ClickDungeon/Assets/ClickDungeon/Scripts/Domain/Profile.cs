@@ -36,6 +36,13 @@ namespace ClickDungeon.Domain
         /// <summary>Talent ranks learned, by talent id. Points come from levels; resetting refunds them.</summary>
         public Dictionary<string, int> Talents = new Dictionary<string, int>();
 
+        /// <summary>
+        /// The usable skills carried into a run, by class id, in slot order (D-075). At most ContentCatalog.SkillSlots
+        /// a class, and each has to be one the learned talents unlock - Progression.EquippedSkills is what enforces
+        /// that, because a profile is a file on disk and anything may be written into it.
+        /// </summary>
+        public Dictionary<string, List<string>> Skills = new Dictionary<string, List<string>>();
+
         /// <summary>Items owned (D-028), by id, each at most once.</summary>
         public List<string> Items = new List<string>();
         /// <summary>What is worn, by slot name. A worn item is one of <see cref="Items"/>.</summary>

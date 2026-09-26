@@ -50,6 +50,10 @@ namespace ClickDungeon.Simulation
                     // Prayer (D-037): stillness restores extra mana.
                     if (run.Perk(TalentEffect.Prayer) > 0) hero.Mana = Math.Min(hero.MaxMana, hero.Mana + run.Perk(TalentEffect.Prayer));
                     break;
+                case CommandKind.Skill:
+                    Skills.Use(run, catalog, command.Slot, command.Target, events);
+                    break;
+
                 case CommandKind.Slash:
                 {
                     var enemy = run.Floor.EnemyAt(command.Target);

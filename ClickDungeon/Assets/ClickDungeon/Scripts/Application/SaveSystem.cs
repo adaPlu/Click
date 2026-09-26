@@ -106,6 +106,18 @@ namespace ClickDungeon.Application
             }
 
             // A vault already visited travels with the save too, so the door leads back into the room it was left in (REL-26).
+            // D-075: the skills a run carries are read by the resolver every time one is used, and a save is a file on
+            // disk. Validate is not given the catalog, so what it can check is the SHAPE - no nulls, no duplicates, no
+            // more than there are slots. Whether an id names a real skill of this hero's class is Skills.InSlot's job,
+            // and it answers "no skill in that slot" rather than trusting the list (SEC-04's rule for worn gear).
+            Require(run.Skills != null, "the run has no skill list");
+            Require(run.Skills.Count <= BoardRules.SkillSlots, "the run carries more skills than there are slots");
+            for (int i = 0; i < run.Skills.Count; i++)
+            {
+                Require(!string.IsNullOrEmpty(run.Skills[i]), "an empty skill slot id");
+                Require(run.Skills.IndexOf(run.Skills[i]) == i, $"skill '{run.Skills[i]}' is carried twice");
+            }
+
             if (run.VisitedVault != null)
             {
                 Require(run.VisitedVault.Cells != null && run.VisitedVault.Cells.Length == BoardRules.CellCount, "visited vault is incomplete");

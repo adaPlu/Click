@@ -58,6 +58,8 @@ namespace ClickDungeon.Simulation
         BombThrown,
         // Second expansion monsters (D-061), appended.
         HeroWebbed,
+        /// <summary>A skill was used (D-075): Source is its id, Amount what it did, To the tile it was aimed at.</summary>
+        SkillUsed,
         KeyDropped,
         // The act bosses (D-062), appended.
         BossEnraged,
@@ -104,11 +106,14 @@ namespace ClickDungeon.Simulation
     {
         public CommandKind Kind;
         public GridPos Target;
+        /// <summary>Which of the hero's skill slots this is, for <see cref="CommandKind.Skill"/>; -1 for everything else.</summary>
+        public int Slot;
 
-        public PlayerCommand(CommandKind kind, GridPos target)
+        public PlayerCommand(CommandKind kind, GridPos target, int slot = -1)
         {
             Kind = kind;
             Target = target;
+            Slot = slot;
         }
 
         public static PlayerCommand Move(GridPos target) => new PlayerCommand(CommandKind.Move, target);
@@ -118,8 +123,11 @@ namespace ClickDungeon.Simulation
         public static PlayerCommand Dash(GridPos target) => new PlayerCommand(CommandKind.Dash, target);
         public static PlayerCommand Potion() => new PlayerCommand(CommandKind.Potion, GridPos.Invalid);
         public static PlayerCommand Interact(GridPos target) => new PlayerCommand(CommandKind.Interact, target);
+        /// <summary>A skill from one of the hero's slots (D-075). <paramref name="target"/> is ignored by a skill aimed at the hero.</summary>
+        public static PlayerCommand Skill(int slot, GridPos target) => new PlayerCommand(CommandKind.Skill, target, slot);
+        public static PlayerCommand Skill(int slot) => new PlayerCommand(CommandKind.Skill, GridPos.Invalid, slot);
 
-        public override string ToString() => $"{Kind}{Target}";
+        public override string ToString() => Kind == CommandKind.Skill ? $"Skill{Slot}{Target}" : $"{Kind}{Target}";
     }
 
     public sealed class CommandResult

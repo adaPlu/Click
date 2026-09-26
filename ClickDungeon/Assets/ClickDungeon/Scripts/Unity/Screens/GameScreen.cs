@@ -21,7 +21,15 @@ namespace ClickDungeon.Unity.Screens
     /// </summary>
     public sealed class GameScreen
     {
-        enum TargetMode { Move, Slash, Dash }
+        enum TargetMode { Move, Slash, Dash, Skill }
+
+        sealed class SkillButton
+        {
+            public UiFactory.ButtonParts Parts;
+            public Image Selected;
+            public Text Cost;
+            public CanvasGroup Group;
+        }
 
         sealed class AbilityButton
         {
@@ -43,6 +51,10 @@ namespace ClickDungeon.Unity.Screens
         readonly ChestOverlay _chest;
         readonly FloorBanner _floorBanner;
         readonly Dictionary<CommandKind, AbilityButton> _abilities = new Dictionary<CommandKind, AbilityButton>();
+        /// <summary>The hero's usable skills (D-075), in slot order. Built once; a slot the hero has not filled is hidden.</summary>
+        readonly List<SkillButton> _skills = new List<SkillButton>();
+        /// <summary>Which slot is being aimed while <see cref="TargetMode.Skill"/> is on, or -1.</summary>
+        int _skillSlot = -1;
         readonly List<string> _log = new List<string>();
 
         Text _face;
@@ -129,6 +141,7 @@ namespace ClickDungeon.Unity.Screens
             };
 
             BuildAbilityBar();
+            BuildSkillBar();
             BuildSpeechStrip();
             BuildNavBar();
 
@@ -296,6 +309,9 @@ namespace ClickDungeon.Unity.Screens
             else if (kb.digit3Key.wasPressedThisFrame || kb.numpad3Key.wasPressedThisFrame) OnAbility(CommandKind.Shield);
             else if (kb.digit4Key.wasPressedThisFrame || kb.numpad4Key.wasPressedThisFrame) OnAbility(CommandKind.Dash);
             else if (kb.digit5Key.wasPressedThisFrame || kb.numpad5Key.wasPressedThisFrame) OnAbility(CommandKind.Potion);
+            else if (kb.digit6Key.wasPressedThisFrame || kb.numpad6Key.wasPressedThisFrame) OnSkill(0);
+            else if (kb.digit7Key.wasPressedThisFrame || kb.numpad7Key.wasPressedThisFrame) OnSkill(1);
+            else if (kb.digit8Key.wasPressedThisFrame || kb.numpad8Key.wasPressedThisFrame) OnSkill(2);
         }
 
         /// <summary>Watch mode: whether a chest reveal is on screen, and one tap on it, so the bot's chests play out visibly.</summary>
@@ -360,6 +376,9 @@ namespace ClickDungeon.Unity.Screens
                 case TargetMode.Dash:
                     Submit(PlayerCommand.Dash(hero.Step(dir, Catalog.HeroClass(Run.Hero.ClassId).DashDistance)));
                     break;
+                case TargetMode.Skill:
+                    Submit(PlayerCommand.Skill(_skillSlot, hero.Step(dir)));
+                    break;
                 default:
                     if (Commands.TryContextual(Run, hero.Step(dir), out var command)) Submit(command);
                     break;
@@ -378,6 +397,9 @@ namespace ClickDungeon.Unity.Screens
                     break;
                 case TargetMode.Dash:
                     Submit(PlayerCommand.Dash(p));
+                    break;
+                case TargetMode.Skill:
+                    Submit(PlayerCommand.Skill(_skillSlot, p));
                     break;
                 default:
                     if (Commands.TryContextual(Run, p, out var command))
@@ -439,7 +461,25 @@ namespace ClickDungeon.Unity.Screens
                     ? "DASH: leap one or two tiles in a straight line, diagonals too, clearing traps."
                     : "DASH: leap one tile in a straight line, diagonals too, clearing traps.", Expression.Confident);
             }
+            else if (mode == TargetMode.Skill)
+            {
+                var skill = SkillAt(_skillSlot);
+                if (skill == null || SkillTargets(Run, _skillSlot).Count == 0)
+                {
+                    // The same courtesy the other two get: say why, and do not leave the player in a mode that cannot
+                    // be used. Mana is the usual reason, so name the number.
+                    Say(skill == null ? "No skill there."
+                        : !Mana.CanPay(Run.Hero, skill.ManaCost) ? $"Not enough mana for {skill.Name} ({Run.Hero.Mana}/{skill.ManaCost})."
+                        : $"Nothing in reach of {skill.Name}.", Expression.Worried);
+                    mode = TargetMode.Move;
+                }
+                else
+                {
+                    Say($"{skill.Name.ToUpperInvariant()}: {skill.Summary}", Expression.Confident);
+                }
+            }
 
+            if (mode != TargetMode.Skill) _skillSlot = -1;
             _mode = mode;
             Refresh(false);
         }
@@ -789,6 +829,7 @@ namespace ClickDungeon.Unity.Screens
             SetAbility(CommandKind.Slash, _mode == TargetMode.Slash, live && Commands.LegalTargets(run, CommandKind.Slash, Catalog).Count > 0, null);
             // SHIELD and DASH wear their mana price, dimmed while the pool cannot pay it (D-032).
             SetAbility(CommandKind.Shield, false, live && Mana.CanPay(hero, shieldCost), shieldCost.ToString(), true);
+            RefreshSkills(live);
             SetAbility(CommandKind.Dash, _mode == TargetMode.Dash, live && Commands.LegalTargets(run, CommandKind.Dash, Catalog).Count > 0,
                 dashCost.ToString(), true);
             SetAbility(CommandKind.Potion, false, live && Commands.Validate(run, PlayerCommand.Potion(), Catalog, out _), hero.Potions.ToString());
@@ -850,6 +891,9 @@ namespace ClickDungeon.Unity.Screens
                     case TargetMode.Dash:
                         legal.UnionWith(Commands.LegalTargets(run, CommandKind.Dash, Catalog));
                         break;
+                    case TargetMode.Skill:
+                        legal.UnionWith(SkillTargets(run, _skillSlot));
+                        break;
                     default:
                         foreach (var d in Directions.All)
                         {
@@ -862,6 +906,33 @@ namespace ClickDungeon.Unity.Screens
             _legal = legal;
             _board.Render(run, Catalog, _threats, legal, _mode != TargetMode.Move, _hover, animate);
             UpdateInspector();
+        }
+
+        /// <summary>
+        /// The skill strip (D-075). A slot the hero has not filled is hidden rather than drawn dead: with three skills
+        /// a class and three slots that is only the early game, but a Paladin who has climbed one branch should see the
+        /// one skill they have, not two empty frames.
+        /// </summary>
+        void RefreshSkills(bool live)
+        {
+            for (int slot = 0; slot < _skills.Count; slot++)
+            {
+                var button = _skills[slot];
+                var skill = SkillAt(slot);
+                button.Parts.Rect.gameObject.SetActive(skill != null);
+                if (skill == null) continue;
+
+                button.Parts.Label.text = skill.Name.ToUpperInvariant();
+                button.Cost.text = skill.ManaCost.ToString();
+                // Usable means the rules would accept it right now, asked of the rules: a self-cast is asked outright,
+                // and a targeted one is usable when there is something it can reach.
+                bool usable = live && (skill.Target == SkillTarget.Self
+                    ? Commands.Validate(Run, PlayerCommand.Skill(slot), Catalog, out _)
+                    : SkillTargets(Run, slot).Count > 0);
+                bool selected = _mode == TargetMode.Skill && _skillSlot == slot;
+                button.Selected.enabled = selected;
+                button.Group.alpha = usable || selected ? 1f : 0.45f;
+            }
         }
 
         void SetAbility(CommandKind kind, bool selected, bool usable, string badge, bool manaCost = false)
@@ -1352,6 +1423,81 @@ namespace ClickDungeon.Unity.Screens
         /// <summary>The sample art's ability buttons: 112 × 169 on the sheet, drawn here at the same proportions.</summary>
         static readonly Vector2 AbilityArtSize = new Vector2(110f, 166f);
         const float AbilityPitch = 150f;
+
+        /// <summary>
+        /// The skill strip (D-075): up to three buttons under the ability row. It is its own row rather than two more
+        /// buttons on that one, because the ability bar is laid over the reference art's own five and has nowhere to
+        /// put a sixth.
+        /// </summary>
+        void BuildSkillBar()
+        {
+            var bar = UiFactory.Rect(Root, "SkillBar");
+            bar.Place(Center, Center, new Vector2(0f, -446f), new Vector2(600f, 96f));
+
+            for (int i = 0; i < BoardRules.SkillSlots; i++)
+            {
+                int slot = i;
+                var parts = UiFactory.Button(bar, "Skill" + slot, "", Palette.ShieldButton, 20, () => OnSkill(slot));
+                parts.Rect.Place(Center, Center, new Vector2((slot - 1) * 196f, 0f), new Vector2(188f, 84f));
+                UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.AbilityButtonDefault);
+                parts.Label.rectTransform.Place(Center, Center, new Vector2(0f, 8f), new Vector2(180f, 40f));
+
+                var cost = UiFactory.Text(parts.Rect, "Cost", "", 16, Palette.ManaText, TextAnchor.LowerCenter, FontStyle.Bold);
+                cost.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(180f, 22f));
+
+                var selected = UiFactory.Image(parts.Rect, "Selected", Palette.Gold, Shapes.Frame, true);
+                selected.rectTransform.Stretch(-3, -3, -3, -3);
+                selected.enabled = false;
+
+                _skills.Add(new SkillButton
+                {
+                    Parts = parts,
+                    Selected = selected,
+                    Cost = cost,
+                    Group = parts.Rect.gameObject.AddComponent<CanvasGroup>(),
+                });
+            }
+        }
+
+        /// <summary>The skill in a slot, or null - the one place the screen asks, so it cannot disagree with the rules.</summary>
+        SkillDefinition SkillAt(int slot) => Skills.InSlot(Run, Catalog, slot);
+
+        void OnSkill(int slot)
+        {
+            if (Blocked || _app.AutomationMode) return;
+            var skill = SkillAt(slot);
+            if (skill == null) return;
+            // A skill aimed at the hero needs no tile, so it goes straight in rather than making the player click
+            // themselves. One that needs a target lights the tiles it can reach, exactly as SLASH and DASH do.
+            if (skill.Target == SkillTarget.Self)
+            {
+                Submit(PlayerCommand.Skill(slot));
+                return;
+            }
+            if (_mode == TargetMode.Skill && _skillSlot == slot)
+            {
+                SetMode(TargetMode.Move);
+                return;
+            }
+            _skillSlot = slot;
+            SetMode(TargetMode.Skill);
+        }
+
+        /// <summary>
+        /// The tiles a skill can be used on. Asked of the rules for every tile rather than worked out again here, so the
+        /// lit tiles and what the resolver will accept cannot drift apart - the reason Commands exists at all. Static so
+        /// it can be tested without standing up a screen.
+        /// </summary>
+        public static HashSet<GridPos> SkillTargets(RunState run, ContentCatalog catalog, int slot)
+        {
+            var legal = new HashSet<GridPos>();
+            if (Skills.InSlot(run, catalog, slot) == null) return legal;
+            foreach (var p in Board.AllCells)
+                if (Commands.Validate(run, PlayerCommand.Skill(slot, p), catalog, out _)) legal.Add(p);
+            return legal;
+        }
+
+        HashSet<GridPos> SkillTargets(RunState run, int slot) => SkillTargets(run, Catalog, slot);
 
         void BuildAbilityBar()
         {

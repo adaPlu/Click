@@ -931,6 +931,56 @@ then won 5 runs in 100 instead of 64 and died around floor 7; nothing was red be
 `FloorsPerThreat` — but that ships **off**: measured at one step per 8 floors it cost the casual bot five
 points on Knight's Trial and stretched the classes to the edge of the parity band.
 
+### 14.2 Usable skills *(D-075, tune numbers)*
+
+The ninety-six talents are all **passive**. A skill is the other thing: a command the player chooses, on a turn they
+spend, for mana. A hero carries up to **three**.
+
+- **Unlocking**: one talent a branch, at **tier 2**, names a skill; learning that talent unlocks it. There is no
+  separate currency and no separate screen — the tree already decides which branches a build climbed, so it already
+  decides which skills that build has. A finished tree carries three; a single-branch build carries one.
+- **Why tier 2**: a class may learn only one **capstone**, so skills hung off capstones could never all be reached.
+- **Slots**: three, and each class has exactly three skills today, so the loadout is not yet a choice. The profile
+  records it anyway, and an empty slot fills itself from what the build unlocked, in tree order.
+- **Cost**: mana, from the same pool SHIELD and DASH draw on (D-032). No cooldowns — those were deliberately replaced.
+- **Targets**: a skill aimed at the hero needs no tile. A targeted skill reaches an **awake** monster within its range,
+  and only an awake one: aiming at a sleeping monster under a cover would be a way to ask what is under it (§2.1).
+- **Telegraphs**: a skill is the hero's own action on their own turn, so it warns of nothing and needs no warning (§3.2).
+
+The five things a skill can do — adding one is a line in the catalog, not a branch in the resolver:
+
+| Effect | What it does |
+|---|---|
+| Heal | Mends the hero. Refused at full health, so a turn is never spent on nothing. |
+| Strike | Damages one monster in range. |
+| Banish | Damages one monster, **doubled against the undead** (D-072). |
+| Burst | Damages every awake monster beside the hero. Refused with nothing adjacent. |
+| Stagger | One monster loses its turn. A boss shrugs it off, as the talents that stagger cannot stagger one. |
+
+There is deliberately **no sight skill**. One was written and cut: every class already uncovers radius 1 as it walks,
+so a radius-1 reveal does nothing, and radius 2 from the middle of a five-by-five board is the *whole* board. Measured
+with one in: a levelled knight's runs fell from ~410 turns to ~200, because there was nothing left to look for. Finding
+the way down is the game (§2.1, D-023).
+
+The twenty-four skills, one a branch:
+
+| Class | Skills |
+|---|---|
+| Knight | Shockwave (burst 2), Rally (mend 2), Shield Bash (stagger) |
+| Paladin | Smite (4), Bulwark (burst 3), **Lay on Hands** (mend 3) |
+| Rogue | Throat Cut (5), Smoke Bomb (stagger at 2), Bandage (mend 3) |
+| Wizard | Firebolt (4 at 3), Arcane Nova (burst 3), Concussion (stagger at 2) |
+| Ranger | Aimed Shot (5 at 3), Poultice (mend 3), Snare (stagger at 3) |
+| Cleric | Mend (3), Ward (burst 2), **Dispel Undead** (3, doubled against the risen) |
+| Berserker | Whirlwind (burst 3), Second Wind (mend 4), War Cry (stagger) |
+| Engineer | Discharge (burst 3), Field Repairs (mend 3), EMP Charge (stagger at 2) |
+
+Each class carries one of three different effects, so no build is three of the same button.
+
+Measured, 40 blind seeds a class, careless, built-up: the classes went from a 1.73 spread to **1.33**. Skills compress
+rather than spread, because they pay the same whatever the player's footwork is like, and the classes that gained most
+(ranger +12, paladin +9, rogue +8) are the ones whose passives are conditional on standing in the right place.
+
 ## 15. Inventory *(D-028, tune numbers)*
 
 Equipment is found in runs and worn between them. **Lord Blobert** (50%), a vault's
