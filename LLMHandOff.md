@@ -1235,3 +1235,31 @@ Hardcore unchanged. Ruleset 16 -> 17.
 **Recorded**: the ten-playthrough career is now 10 of 10. The 240-seed sweep still loses one first run in eight at
 casual, so that is one seed and not over-correction - but with D-073's saturation finding it means a whole career can
 now pass with no loss at all. The late game is where the difficulty question now lives.
+
+### D-077 the hero outgrew the dungeon (2026-09-26)
+
+Why the late game has no teeth: not the late floors, but a health bar that grows faster than anything can hit it. A
+fresh knight is 10 hearts / 3 slash; a built-up one starts at 23/8 and ends a run on 44-53, against a deepest-floor
+monster with 8 hearts that hits for 4. The hero one-shots it and takes thirteen hits to die, holding four potions and a
+heal skill.
+
+**Ruled out, measured.** Renown is the system meant to answer this and it saturates at once (level 5 + 3 items already
+sits at the cap a level 12 build sits at); max threat 6 with the damage divisor halved moves a finished build from 100%
+to 97%. Cutting chest heart rewards is worse than nothing: chests are the biggest source of bulk, but they are what
+keeps a NEWCOMER alive - hp1 took a fresh player from 85% to 13% and the veteran from 100% to 96%. A cap on the hero's
+total hearts fails the same way, costing a careless newcomer ten points because they climb into it from below.
+
+**Shipped**: an allowance on what chests may add - 26 hearts a run, less whatever the hero arrived with above their
+class's base. Newcomer gets all of it, a built-up knight gets 13. Past it a heart draw pays a potion. Counted off the
+saved reward log, so it survives a save and a reopened vault cannot pay twice (REL-26). Veteran end hearts 52.7 -> 33.8;
+fresh casual 87% -> 86%. Ruleset 17 -> 18.
+
+**What it does not do, and this is the finding**: a finished build still wins 99-100%, and the best ANY combination of
+existing dials manages is 95% (allowance + max threat 6). On a 5x5 board the hero can always disengage, potions and mana
+refill every floor, and monster damage is bounded at 2-6. Threatening a veteran needs something qualitatively different
+- pressure that ignores position, resources that do not refill, or a cost to waiting - not a bigger number in
+RenownTuning. MaxThreat deliberately left at 3: raising it buys two points and widens the class spread 1.09 -> 1.33.
+
+**And the same bug a third time**: `AutoPlayer.Copy` did not carry `StartingMaxHp`. Movement and Threat were REL-44,
+Skills was D-075 - but this is the first one **caught before it shipped**, by the reflection guard D-075 added to
+`TheCopyCarriesEveryFieldARunHas`. It named the field and failed. That is what it was for.

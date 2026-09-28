@@ -378,6 +378,18 @@ Ordering is covered by automated tests.
   - An opened chest stays opened; taps cannot duplicate rewards.
   - Reward table (each draw): +1 potion (weight 2), +3 max HP and heal 3 (weight 3),
     +1 Slash damage (weight 1).
+  - **The heart allowance** *(D-077)*: a run's chests hand out at most **26** max HP in
+    total, **less whatever the hero arrived with above their class's own hearts**. A
+    newcomer brings nothing and gets all 26; a hero who starts thirteen hearts up on gear,
+    talents and tokens gets thirteen. Past it, a draw that rolled hearts pays **a potion**
+    instead — a chest is always worth opening, it just stops inflating a health bar that
+    has outgrown the dungeon. It is counted off the saved reward records, so it survives a
+    save and a reopened vault cannot pay into it twice (REL-26).
+    Why measured down from what the hero brought, rather than a flat cut: chest hearts are
+    what keeps a **new** hero alive and are merely decorative for a finished build. Cutting
+    them outright took a fresh player from 85% of runs won to 13% and moved a built-up one
+    from 100% to 96%. With the allowance, a veteran finishes a run on ~34 hearts instead of
+    ~53 and a newcomer is untouched (86% against 87%).
   - Opening is shown on the board: after the first tap the chest tile carries one pip per
     tap it needs, filled as taps land. The reward reveal that follows costs no turns and
     lists every reward the chest granted.

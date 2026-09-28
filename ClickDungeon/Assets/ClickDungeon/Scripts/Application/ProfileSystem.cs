@@ -53,6 +53,8 @@ namespace ClickDungeon.Application
             // Renown's threat (D-040, D-067). Floor 1 is already laid out, and threat only reaches the deep floors.
             run.Threat = Progression.Threat(profile, catalog);
             RunFactory.RevealByTalents(run, events ?? new List<GameEvent>());
+            // Everything the profile brought has landed by here; what the chests are allowed to add is measured from it.
+            run.StartingMaxHp = run.Hero.MaxHp;
         }
 
         /// <summary>

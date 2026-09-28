@@ -628,6 +628,10 @@ namespace ClickDungeon.Application
                 // abilities alone. It was found by measuring - the class table came back byte-identical to the one from
                 // before skills existed - and not by the test below, which could not see it.
                 Skills = run.Skills == null ? new List<string>() : new List<string>(run.Skills),
+                // The chests' heart allowance is measured down from this (D-077), so a look-ahead without it would
+                // score a hero being handed hearts the real run will refuse. Third field to be left out of this copy,
+                // and the first the reflection guard caught before it shipped rather than after.
+                StartingMaxHp = run.StartingMaxHp,
             };
         }
 

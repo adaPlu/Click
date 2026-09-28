@@ -1508,3 +1508,81 @@ Nothing after run 1 moved, because nothing after run 1 is touched.
 240-seed sweep still loses one first run in eight at casual and two in three at careless — but it does underline what
 D-073 already found. A built-up player wins essentially everything, and now the first run usually survives too, so a
 whole career can pass without a loss. The difficulty of the late game is the open question, and it is not this one.
+
+## D-077 The hero outgrew the dungeon
+
+The question was why the late game has no teeth. The answer is not the late floors; it is that the hero's health bar
+grows faster than anything in the game can hit it.
+
+| | fresh knight | built-up, at the start of a run | built-up, by floor 20 |
+|---|---|---|---|
+| max hearts | 10 | 23 | **44-53** |
+| slash | 3 | 8 | 8+ |
+
+Against that, the deepest floor's hardest monster has 8 hearts and hits for 4. The hero **one-shots** it and needs to
+be hit **thirteen** times to die, with four potions and a heal skill in reserve.
+
+### What was ruled out, with numbers
+
+**Renown is not the lever.** It is the system meant to scale the dungeon to the player, and it saturates almost
+immediately: `Renown = (level − 1) + worn items`, `Threat = min(3, renown / 2)`, so a level-5 hero with three items is
+already at the cap that a level-12 hero with six items sits at. What the cap buys the dungeon is +1 monster heart from
+floor 8 and +1 monster damage on seven floors of eighteen. Measured against a finished build: **max threat 6 with the
+damage divisor halved moves the win rate from 100% to 97%.** Raising it further was already tried and reverted once
+(it cost class parity); it is not worth revisiting.
+
+**Cutting the chest heart rewards is worse than doing nothing.** Chests are the single biggest source of bulk — more
+than gear, talents and the shop put together — so they were the obvious target, and the measurement was emphatic:
+
+| chest reward table | built-up | end hearts | fresh casual | fresh careless |
+|---|---|---|---|---|
+| shipped (hp 3, weight 3) | 100% | 52.7 | **85%** | **31%** |
+| hp 1 | 96% | 28.4 | **13%** | **0%** |
+| no hearts at all | 98% | 21.9 | 25% | 0% |
+
+Chest hearts are what keeps a **new** hero alive and are merely decorative for a finished one. Cutting them flat barely
+touches the veteran and annihilates the newcomer — it inverts the difficulty curve, and undoes D-076 besides. A cap on
+the hero's *total* hearts has the same shape for the same reason: a newcomer climbs into it from below, late in a run,
+and loses ten points of careless win rate.
+
+### What shipped
+
+**An allowance on what the chests may add, measured down by whatever the hero brought with them.** A run's chests hand
+out at most `MaxHeartsFromChests` (26) hearts, less the hearts the hero arrived with above their class's own. A
+newcomer brings nothing and gets all 26; a built-up knight arrives thirteen hearts up and gets thirteen. Past it, a
+chest that rolls hearts pays a potion — it stops inflating a health bar that has outgrown the dungeon, it does not stop
+paying.
+
+| budget | built-up end hearts | fresh casual | fresh careless |
+|---|---|---|---|
+| off | 52.7 | 87% | 35% |
+| 30 | 37.0 | 86% | 34% |
+| **26 (shipped)** | **33.8** | **86%** | **32%** |
+| 22 | 30.8 | 86% | 30% |
+
+A veteran finishes a run on ~34 hearts instead of ~53, and the newcomer is untouched.
+
+It is counted off the reward log rather than a counter of its own, which is what makes it survive a save and resist a
+reopened vault: the log is already what decides a chest pays once, by transaction id (REL-26).
+
+### What this does NOT do, stated plainly
+
+**It does not make the late game hard.** A finished build still wins 99-100% of runs; the best any combination of
+existing dials manages is 95% (allowance plus max threat 6). What changed is the shape: monsters hitting for 4-6 are
+now eight hits from killing a veteran rather than thirteen.
+
+The reason is structural and no number in this file will fix it. On a five-by-five board the hero can always disengage,
+potions and mana refill every floor, and monster damage is bounded at 2-6. Threatening a finished build needs something
+**qualitatively** different — pressure that does not care about position, resources that do not refill, or a cost to
+waiting — and that is a design decision rather than a tuning pass. Recorded here so the next attempt starts from the
+measurement instead of from the dials that have now been shown not to work.
+
+`MaxThreat` is deliberately left at 3. Raising it buys two or three points of difficulty and widens the class spread
+from 1.09 to 1.33 without changing any outcome.
+
+### And the same bug for the third time
+
+`AutoPlayer.Copy` did not carry `StartingMaxHp`, so the look-ahead would have scored a hero being handed hearts the
+real run refuses. That is the third field left out of that copy — Movement and Threat were REL-44, `Skills` was D-075 —
+but the **first one caught before it shipped**, by the reflection guard D-075 added to
+`TheCopyCarriesEveryFieldARunHas` after the second. The guard named the field and failed. That is what it was for.

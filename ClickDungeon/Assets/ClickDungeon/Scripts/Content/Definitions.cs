@@ -401,6 +401,20 @@ namespace ClickDungeon.Content
     /// <summary>What a run pays out into the profile (D-025, rules §13).</summary>
     public sealed class TreasureTuning
     {
+        /// <summary>
+        /// The most hearts one run's chests will hand out (D-077). Past it a chest that rolled hearts pays a potion
+        /// instead: still worth opening, but it stops adding to a health bar that has already outgrown the dungeon.
+        /// Zero switches the ceiling off.
+        ///
+        /// An allowance on what CHESTS add, not a cap on the hero's total, and that distinction is the whole design.
+        /// Measured: cutting the heart rewards outright took a FRESH player from 85% to 13% while barely moving a
+        /// finished build (100% to 96%) - chest hearts are what keeps a new hero alive and are merely decorative for a
+        /// veteran. Capping the TOTAL had the same shape, costing a careless newcomer ten points (35% to 25%) because
+        /// they climb into the ceiling from below late in a run. An allowance is the same for everyone: the newcomer
+        /// never reaches it, and the veteran stops running away.
+        /// </summary>
+        public int MaxHeartsFromChests = 26;
+
         /// <summary>Per reward drawn from a chest.</summary>
         public int CoinsPerChestReward = 4;
         /// <summary>For walking down the stairs off a floor.</summary>

@@ -48,6 +48,7 @@ namespace ClickDungeon.Tests
             run.ReturnPos = P(1, 1);
             run.VisitedVault = FloorState.CreateEmpty();
             run.VisitedVaultDoor = P(2, 2);
+            run.StartingMaxHp = 17;
             Assert.That(SaveSerializer.ToJson(AutoPlayer.Copy(run)), Is.EqualTo(SaveSerializer.ToJson(run)));
 
             // And the reason this test exists has to be enforced, not intended. Twice now a field has been added to

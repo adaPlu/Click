@@ -165,6 +165,7 @@ namespace ClickDungeon.Simulation
             {
                 var reward = RollReward(run.RunSeed, run.Floor.FloorIndex, cell, catalog, run.Floor.IsVault, draw);
                 if (run.HasReward(reward.TransactionId)) continue;
+                SoftenIfAlreadyBulky(run, reward, catalog);
                 reward.Turn = run.Turn;
                 run.Rewards.Add(reward);
                 Treasure.Coins(run, catalog.Treasure.CoinsPerChestReward + run.BonusCoinsPerChestReward, cell, events);
@@ -176,6 +177,34 @@ namespace ClickDungeon.Simulation
                 first = first ?? reward;
             }
             return first;
+        }
+
+        /// <summary>
+        /// The chests' heart allowance (D-077): once a run's chests have handed out
+        /// <see cref="TreasureTuning.MaxHeartsFromChests"/>, one that rolls hearts pays a potion instead.
+        ///
+        /// Counted off the reward log rather than a new field, because the log is already the thing that decides a
+        /// chest pays once: the records are saved with the run and a reopened vault is refused by transaction id
+        /// (REL-26), so the allowance survives a save and cannot be farmed by walking back through a door. The kind is
+        /// swapped before the record, the event and the overlay are made, so all three say the same thing and nobody
+        /// is shown a reward they did not get.
+        /// </summary>
+        static void SoftenIfAlreadyBulky(RunState run, RewardRecord reward, ContentCatalog catalog)
+        {
+            int allowance = catalog.Treasure.MaxHeartsFromChests;
+            if (allowance <= 0 || reward.Kind != RewardKind.MaxHp) return;
+            // Less for a hero who arrived bulky. A newcomer brings nothing and gets the whole allowance; a finished
+            // build has already spent its hearts on gear, talents and tokens, and the chests top it up by that much
+            // less. Both end a run in roughly the same shape, so the dungeon's numbers mean the same thing to both.
+            var heroClass = catalog.HeroClass(run.Hero.ClassId);
+            int broughtIn = heroClass == null || run.StartingMaxHp <= 0 ? 0 : System.Math.Max(0, run.StartingMaxHp - heroClass.MaxHp);
+            allowance = System.Math.Max(0, allowance - broughtIn);
+            int given = 0;
+            for (int i = 0; i < run.Rewards.Count; i++)
+                if (run.Rewards[i].Kind == RewardKind.MaxHp) given += run.Rewards[i].Amount;
+            if (given + reward.Amount <= allowance) return;
+            reward.Kind = RewardKind.Potion;
+            reward.Amount = 1;
         }
 
         static void Grant(HeroState hero, RewardRecord reward)

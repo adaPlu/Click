@@ -202,6 +202,13 @@ namespace ClickDungeon.Domain
         /// </summary>
         public List<string> Skills = new List<string>();
 
+        /// <summary>
+        /// The hero's max hearts the moment the run began, after everything the profile brought (D-077). The chests'
+        /// heart allowance is measured down from it, so a hero who arrives already bulky is handed less. Zero on a save
+        /// written before it existed, which reads as "start from the class's own hearts".
+        /// </summary>
+        public int StartingMaxHp;
+
         public int Perk(TalentEffect effect) => Perks != null && Perks.TryGetValue(effect.ToString(), out int v) ? v : 0;
 
         public bool HasReward(string transactionId)
