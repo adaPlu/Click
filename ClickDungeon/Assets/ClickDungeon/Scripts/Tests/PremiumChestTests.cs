@@ -147,16 +147,30 @@ namespace ClickDungeon.Tests
         public void TheBotStillFinishesRunsWithAKeyInItsPocket()
         {
             // A premium chest is extra loot, never a blocker: keyed runs must still be winnable.
-            int won = 0;
+            //
+            // Runs the dungeon's patience ended are set aside rather than counted as losses (D-078). On the seeds
+            // where that happens the bot never found the stairs - one of them burned the whole command cap on floor
+            // 14 before the clock existed - so it is a stall wearing a loss's clothes, and a stalled bot is evidence
+            // about the bot's pathing, not about whether a special key blocks a run. This is TEST-84's rule: a bot
+            // that stopped playing has to stay visible as one instead of quietly making a guard easier to pass.
+            int won = 0, pressedToDeath = 0;
             for (ulong seed = 1; seed <= 8; seed++)
             {
                 var run = KeyedRun(seed, 3);
                 var player = new AutoPlayer();
+                int pressed = 0;
                 for (int i = 0; i < BalanceTests.MaxCommands && run.Status == RunStatus.InProgress; i++)
-                    TurnResolver.Apply(run, player.Choose(run, Catalog, seed * 7919UL + (ulong)i), Catalog);
+                {
+                    var turn = TurnResolver.Apply(run, player.Choose(run, Catalog, seed * 7919UL + (ulong)i), Catalog);
+                    pressed += turn.Events.FindAll(e => e.Kind == GameEventKind.DungeonPressed).Sum(e => e.Amount);
+                }
                 if (run.Status == RunStatus.Won) won++;
+                else if (run.Status == RunStatus.Lost && pressed >= run.Hero.MaxHp) pressedToDeath++;
             }
-            Assert.That(won, Is.GreaterThanOrEqualTo(7));
+            Assert.That(pressedToDeath, Is.LessThanOrEqualTo(3),
+                $"The clock ended {pressedToDeath} of 8 runs: that is the bot failing to navigate, not a premium chest.");
+            Assert.That(won + pressedToDeath, Is.GreaterThanOrEqualTo(7),
+                $"Only {won} keyed runs were won and {pressedToDeath} were ended by the clock; a special key must never block a run.");
         }
     }
 }

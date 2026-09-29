@@ -482,6 +482,31 @@ Hero max HP is the Knight's. The Paladin has one more heart on every tier (D-047
 
 Damage and HP never drop below 1.
 
+### 4.3 The dungeon's patience *(D-078, tune numbers)*
+
+Below floor **11**, the dungeon will not wait forever. Each floor keeps its own clock, and when it runs out the dark
+presses in for **1** damage a turn, one more for every **10** further turns, capped at **3** a turn. Taking the stairs
+clears it: the next floor starts its own count. A vault is never pressed — its clock is the floor it hangs off, so
+looking in the treasure room costs nothing.
+
+It is **announced three turns ahead** (`SOMETHING STIRS 3`), then shown every turn it is running
+(`THE DARK CLOSES IN 2/TURN`), and the hero says so out loud. It is not a monster's blow and does not pretend to be a
+telegraph (§3.2 is about attacks); it is weather. It never touches a tile, so nothing about it can differ on what a
+cover hides (§2.1). **A raised shield does not stop it** — if Guard answered it, waiting would be free again.
+
+**How long the hero gets is the tier's budget less their own renown**, at 7 turns a point:
+
+| | Squire's Stroll | Knight's Trial | Blobert's Wrath |
+|---|---|---|---|
+| A hero with no renown (a first run) | 75 | 60 | 60 |
+| A returning hero at full renown | 54 | 39 | 39 |
+
+That is what aims it. Depth alone could not: a fresh **casual** player reaches floors 11–20 on four floors in five, so
+a flat budget cost them as much as it cost a veteran. Renown is the game's own measure of how far a player has come and
+is exactly zero on a first run, so a newcomer keeps the whole budget and rarely meets this at all. The saturation that
+makes renown useless for scaling monsters (D-077) is precisely what makes it right here: the question is not *how
+strong* but *have you been here before*.
+
 ### 10.0 The first run *(D-076)*
 
 The **first** run of a profile — and only the first, counted by `RunsFinished`, won or lost — starts with a few more

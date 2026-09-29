@@ -817,7 +817,11 @@ namespace ClickDungeon.Unity.Screens
             if (_portraitRoot != null) _portraitRoot.SetActive(!_matched || hero.IdentityId != ArtKeys.MascotId);
             if (_goal != null) _goal.text = Goal(run, Catalog);
             if (_status != null) _status.text = $"TURN {run.Turn + 1}   ·   SLASH {Lines.SlashRange(run, Catalog)}   ·   KEY {(hero.HasKey ? "YES" : "NO")}"
-                           + (hero.SpecialKeys > 0 ? $"   ·   SPECIAL KEYS {hero.SpecialKeys}" : "");
+                           + (hero.SpecialKeys > 0 ? $"   ·   SPECIAL KEYS {hero.SpecialKeys}" : "")
+                           // The dungeon's patience (D-078). Shown for every turn it is running out and every turn it
+                           // is spent: a cost the player cannot see is a gotcha, and this one is meant to be answered
+                           // by taking the stairs.
+                           + Lines.StirBadge(run, Catalog);
             RefreshPurse();
             _floorTitle.text = $"FLOOR {run.Floor.FloorIndex}";
             _floorName.text = run.Floor.IsVault

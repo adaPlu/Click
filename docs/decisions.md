@@ -1586,3 +1586,71 @@ from 1.09 to 1.33 without changing any outcome.
 real run refuses. That is the third field left out of that copy — Movement and Threat were REL-44, `Skills` was D-075 —
 but the **first one caught before it shipped**, by the reflection guard D-075 added to
 `TheCopyCarriesEveryFieldARunHas` after the second. The guard named the field and failed. That is what it was for.
+
+## D-078 A cost to waiting
+
+D-077 ended by naming what the late game would need, having shown that no existing dial could give it: pressure that
+ignores position, resources that do not refill, or **a cost to waiting**. This is the third one.
+
+The veteran's real advantage was never a number. On a five-by-five board they can always step away, and potions and
+mana refill on every staircase, so **time was free** - a finished build simply out-waited anything the dungeon had.
+
+**Below floor 11 the dungeon stops waiting.** Each floor keeps its own clock; when it runs out the dark presses in for
+1 a turn, one more every 10 turns after that, capped at 3. The stairs clear it - the next floor starts its own count.
+A vault is never pressed, because its clock is the floor it hangs off and charging for the treasure room is the
+opposite of the point.
+
+Announced three turns ahead, shown every turn it runs, and spoken by the hero. It is weather, not a telegraphed blow
+(rules 3.2 is about attacks), and it never touches a tile, so nothing about it can differ on what a cover hides (2.1).
+A raised shield does not stop it: if Guard answered it, waiting would be free again.
+
+### What aims it
+
+Not depth. A fresh **casual** player reaches floors 11-20 on four floors in five, and a flat budget cost them nine
+points where it cost a veteran eight - that is not targeting, it is a difficulty increase in a disguise.
+
+**Renown aims it**: the patience is the tier's budget less 7 turns a point. Renown is the game's own measure of how far
+a player has come and is exactly zero on a first run, so a newcomer keeps the whole budget and a returning hero, who is
+at the cap by level five, keeps least. The saturation that made renown useless for scaling monsters in D-077 is
+precisely what makes it right here - the question is not *how strong* but *have you been here before*.
+
+| | Squire's Stroll | Knight's Trial | Blobert's Wrath |
+|---|---|---|---|
+| no renown (a first run) | 75 | 60 | 60 |
+| full renown (a returning hero) | 54 | 39 | 39 |
+
+Blobert's Wrath shares Knight's Trial's clock deliberately. At 50 its class spread went to 1.76, past the parity band,
+which is D-071's failure mode: pressure pulls the classes apart and pulls hardest on the fragile ones.
+
+### Measured
+
+40 blind seeds a class built-up, 120 a tier fresh:
+
+| tier | built-up off → on | spread | runs touched | clock-ended | fresh casual | fresh careless |
+|---|---|---|---|---|---|---|
+| Squire's Stroll | 100 → 91 | 1.21 | 18% | 8% | 100 → 99 | 99 → 96 |
+| Knight's Trial | 99 → 94 | 1.33 | 64% | 4% | 87 → 83 | 29 → 27 |
+| Blobert's Wrath | 99 → 92 | 1.25 | 57% | 7% | 43 → 39 | 4 → 3 |
+
+Five to nine points off a finished build against one to four off a newcomer, with every spread inside the band. It is
+the first thing in three decisions to move a veteran off ~100% at a price a newcomer can afford.
+
+### The instrument nearly paid for it, twice
+
+**The bot could not see the clock.** `AutoPlayer.Copy(FloorState)` did not carry `TurnsHere`, so the look-ahead never
+knew the dungeon was losing patience. The first measurement said this cost a veteran ten points on Knight's Trial; with
+the copy fixed and the pressure priced in `Score` - the stairs clear it, so "I am being crushed" can become "leave" -
+it costs five. **Half of what the first number reported was the instrument failing to respond, not the game getting
+harder.** That is the fourth field lost from that copy (Movement and Threat were REL-44, Skills D-075, this one), and
+the first on `FloorState`, where the reflection guard written after the third had a blind side. It walks both now.
+
+**And a clock that kills quietly destroys every stall guard in the repo.** This project's guards rest on telling "the
+hero died" from "the bot stopped playing" (TEST-84, MAINT-15). Pressed to death on a floor it never solved, a stalled
+bot now reads as an ordinary loss - so every stall guard would have silently got easier the day this shipped, while
+measuring less. `AutoRunResult` records what the clock took and `PressedToDeath` names those runs, and the premium-key
+guard sets them aside rather than counting them: one of its seeds was already burning the whole command cap on floor 14
+**before** this existed, so it is evidence about the bot's pathing, not about special keys.
+
+**Open**: a run the clock ends is 4-8% of built-up runs, and all of them are the bot failing to navigate a 25-tile
+board rather than a player being punished. A human who cannot find the stairs in sixty turns on five-by-five is not the
+case this was built for. If that number climbs, it is measuring the bot, not the dungeon.

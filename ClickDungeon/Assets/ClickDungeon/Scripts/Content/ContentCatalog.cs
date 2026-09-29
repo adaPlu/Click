@@ -63,6 +63,39 @@ namespace ClickDungeon.Content
         /// <summary>Extra hearts and potions for the first run of a profile, set by the tier (D-076).</summary>
         public int FirstRunHearts, FirstRunPotions;
 
+        /// <summary>Turns the deep dungeon lets the hero linger on a floor before it presses in (D-078); 0 is off.</summary>
+        public int StirAfterTurns;
+
+        /// <summary>
+        /// The first floor the dungeon is impatient on (D-078). The deep floors only: a hero who has outgrown the
+        /// dungeon is always down here, and a player still learning it usually is not - blind and careless, a fresh
+        /// hero reached floors 11-20 eighty-five times over forty runs where a built-up one reached them 349.
+        /// </summary>
+        public int StirFirstFloor = 11;
+
+        /// <summary>Turns of lingering past the budget that add one more to the pressure, so waiting cannot be out-healed.</summary>
+        public int StirEscalationTurns = 10;
+
+        /// <summary>
+        /// Turns of patience the dungeon takes back for each point of the hero's renown (D-078). This is what aims the
+        /// mechanic. Depth alone does not: a fresh CASUAL player reaches floors 11-20 on four floors in five, so a flat
+        /// budget cost them as much as it cost a veteran - nine points against eight, which is not targeting, it is a
+        /// difficulty increase wearing a disguise.
+        ///
+        /// Renown is the game's own measure of how far a player has come, and it is exactly zero for someone on their
+        /// first runs: they get the whole budget and never meet this. A returning hero is at the cap by level five and
+        /// meets all of it. The saturation that makes renown useless for scaling monsters (D-077) is precisely what
+        /// makes it right here - the question is not "how strong" but "have you been here before".
+        /// </summary>
+        public int StirPatienceLostPerThreat = 7;
+
+        /// <summary>
+        /// The most the dungeon will ever press for in one turn (D-078). Uncapped, a player who cannot find the way
+        /// down is killed by the clock rather than slowed by it - and being lost should be expensive, not fatal. It is
+        /// still unanswerable by healing at the cap, because the cap is per turn and the turns keep coming.
+        /// </summary>
+        public int StirMaxPressure = 3;
+
         /// <summary>
         /// Turns the hero is stuck when a spider webs them (D-061), set by the tier (D-074). It was the literal 1,
         /// written into EnemyAi where no tier could reach it.
@@ -1121,6 +1154,8 @@ namespace ClickDungeon.Content
                 WebTurns = 1, BombFuse = 2, BossPuffTurns = -1, DeflatedTurns = 2,
                 SummonCount = -1, ReassembleTurns = 1, MaxMinions = 0,
                 FirstRunHearts = 3, FirstRunPotions = 1,
+                // Room to dawdle: on the gentlest tier only real circling ever meets the dungeon's patience (D-078).
+                StirAfterTurns = 75,
             };
             c.Difficulties[Difficulty.Medium] = new DifficultyDefinition
             {
@@ -1134,6 +1169,9 @@ namespace ClickDungeon.Content
                 WebTurns = 1, BombFuse = 1, BossPuffTurns = 0, DeflatedTurns = 1,
                 SummonCount = 0, ReassembleTurns = 0, MaxMinions = 0,
                 FirstRunHearts = 3, FirstRunPotions = 1,
+                // Sixty, less seven a point of renown: a newcomer keeps all of it and a returning hero is down to 39,
+                // which is the ninetieth percentile of their own deep floors. Ordinary play never meets it; circling does.
+                StirAfterTurns = 60,
             };
             c.Difficulties[Difficulty.Hardcore] = new DifficultyDefinition
             {
@@ -1150,6 +1188,10 @@ namespace ClickDungeon.Content
                 // None here, for the same reason the stairs give none (D-073): this tier is opt-in, its card says so,
                 // and nobody meets the game for the first time on it by accident.
                 FirstRunHearts = 0, FirstRunPotions = 0,
+                // The same clock as Knight's Trial, deliberately. This tier is already harsher by every other number
+                // it carries, and at 50 the class spread went to 1.76 - past the parity band - which is D-071's failure
+                // mode: pressure pulls the classes apart, and the ones it pulls hardest are the fragile ones.
+                StirAfterTurns = 60,
             };
             return c;
         }
@@ -1163,6 +1205,7 @@ namespace ClickDungeon.Content
             // blow with no warning, so the floor here is the telegraph contract and not a taste call (rules 3.2).
             FirstRunHearts = Math.Max(0, d.FirstRunHearts);
             FirstRunPotions = Math.Max(0, d.FirstRunPotions);
+            StirAfterTurns = Math.Max(0, d.StirAfterTurns);
             WebTurns = Math.Max(1, d.WebTurns);
             DeflatedTurns = Math.Max(1, d.DeflatedTurns);
             Hazards.BombFuse = Math.Max(1, d.BombFuse);

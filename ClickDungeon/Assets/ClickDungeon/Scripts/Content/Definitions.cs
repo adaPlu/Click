@@ -306,6 +306,16 @@ namespace ClickDungeon.Content
         /// </summary>
         public int FirstRunHearts;
         public int FirstRunPotions;
+
+        /// <summary>
+        /// Turns the deep dungeon will let the hero linger on one floor before it starts pressing in (D-078). Zero
+        /// switches it off for the tier.
+        ///
+        /// Measured before it was chosen: on floors 11-20 a built-up player spends a median of 24 turns a floor and 40
+        /// at the ninetieth percentile, so a budget at 40 taxes the long tail - the floors where someone is circling
+        /// rather than playing - and leaves ordinary play alone.
+        /// </summary>
+        public int StirAfterTurns;
     }
 
     /// <summary>What a vault room holds (D-018): either one great chest or a handful of ordinary ones.</summary>

@@ -18,6 +18,16 @@ namespace ClickDungeon.Application
         public int MaxHp;
         /// <summary>Chest rewards granted during the run.</summary>
         public int Rewards;
+        /// <summary>
+        /// Hearts the dungeon's patience took this run (D-078). Recorded because a run the clock killed on a floor the
+        /// bot never solved is a STALL wearing a loss's clothes, and this repo's guards exist on the principle that a
+        /// bot which stopped playing must be visible as one (TEST-84, MAINT-15). Without this, every stall guard in
+        /// the suite would quietly get easier the day the clock shipped.
+        /// </summary>
+        public int PressedDamage;
+
+        /// <summary>A run the dungeon's patience ended: lost, and the clock did enough to be the reason.</summary>
+        public bool PressedToDeath => Status == RunStatus.Lost && PressedDamage >= MaxHp;
 
         public override string ToString() => $"seed {Seed} {Difficulty} {Status} floor {Floor} turn {Turns} hp {Hp}/{MaxHp}";
     }
@@ -254,7 +264,11 @@ namespace ClickDungeon.Application
             var ranked = slip && Model == MistakeModel.Misjudged ? new List<(PlayerCommand command, double score)>() : null;
             // The exit is always one click away in Free Roam, so a healthy player finishes the chests they know about first;
             // only danger is a reason to leave loot behind.
-            bool holdForLoot = Loots && view.Hero.Hp * 2 > view.Hero.MaxHp && KnownLoot(view, catalog) > 0 && !AnyAwakeEnemy(view);
+            // A hero being crushed does not stay for a chest (D-078). Without this the bot holds its ground for known
+            // loot while the dungeon presses, which is not a decision a player would make and turns the clock into
+            // something that only kills the instrument rather than something it answers.
+            bool holdForLoot = Loots && view.Hero.Hp * 2 > view.Hero.MaxHp && KnownLoot(view, catalog) > 0
+                && !AnyAwakeEnemy(view) && Stir.Pressure(view, catalog) == 0;
             foreach (var command in LegalCommands(view, catalog))
             {
                 // Believing a move is legal is not enough: the real board still refuses it, exactly as it would a player.
@@ -322,12 +336,18 @@ namespace ClickDungeon.Application
             var run = RunFactory.NewRun(seed, catalog, events, heroId ?? ContentCatalog.DefaultHeroId, movement);
             // The same five steps the game takes, through the same function, so the harness cannot drift from it.
             ProfileSystem.ProvisionRun(profile, run, catalog, events);
+            int pressed = 0;
             for (int i = 0; i < maxCommands && run.Status == RunStatus.InProgress; i++)
-                TurnResolver.Apply(run, player.Choose(run, catalog, seed * 7919UL + (ulong)i), catalog);
+            {
+                var turn = TurnResolver.Apply(run, player.Choose(run, catalog, seed * 7919UL + (ulong)i), catalog);
+                for (int e = 0; e < turn.Events.Count; e++)
+                    if (turn.Events[e].Kind == GameEventKind.DungeonPressed) pressed += turn.Events[e].Amount;
+            }
             return new AutoRunResult
             {
                 Seed = seed, Difficulty = run.Difficulty, Status = run.Status, Floor = run.Floor.FloorIndex,
                 Turns = run.Turn, Hp = run.Hero.Hp, MaxHp = run.Hero.MaxHp, Rewards = run.Rewards.Count,
+                PressedDamage = pressed,
             };
         }
 
@@ -419,6 +439,12 @@ namespace ClickDungeon.Application
             foreach (var board in Boards(run))
                 foreach (var enemy in board.Enemies)
                     score -= enemy.Hp * (catalog.Enemy(enemy.DefId).IsBoss ? 90 : 35);
+
+            // The dungeon's patience, if it has run out (D-078). One turn of look-ahead cannot see a clock - every
+            // command loses the same hearts this turn, so the pressure alone never steers a choice - but the STAIRS
+            // clear it, because the next floor starts its own count. Pricing it here is what turns "I am being
+            // crushed" into "leave", which is the decision the mechanic exists to ask for.
+            score -= Stir.Pressure(run, catalog) * 500;
 
             // Without hints, uncovering tiles is the only way to find the key, so a blind player values it directly.
             if (blind) score += RevealedCells(floor) * 40;
@@ -648,6 +674,10 @@ namespace ClickDungeon.Application
             {
                 FloorIndex = f.FloorIndex, IsBossFloor = f.IsBossFloor, IsVault = f.IsVault, TemplateId = f.TemplateId, Transform = f.Transform,
                 AttemptIndex = f.AttemptIndex, Start = f.Start, Exit = f.Exit, ExitUnlocked = f.ExitUnlocked, NextActorId = f.NextActorId,
+                // The floor's own clock (D-078). Without it the look-ahead cannot see the dungeon running out of
+                // patience, so the bot never hurries and simply stands there being pressed - which is exactly what it
+                // did until this line existed.
+                TurnsHere = f.TurnsHere,
                 Cells = new CellState[f.Cells.Length],
             };
             for (int i = 0; i < f.Cells.Length; i++)

@@ -60,6 +60,10 @@ namespace ClickDungeon.Simulation
         HeroWebbed,
         /// <summary>A skill was used (D-075): Source is its id, Amount what it did, To the tile it was aimed at.</summary>
         SkillUsed,
+        /// <summary>The deep dungeon is about to lose patience with this floor (D-078). Amount is the turns left.</summary>
+        DungeonStirring,
+        /// <summary>It has. Amount is what it presses in for, every turn, until the hero takes the stairs.</summary>
+        DungeonPressed,
         KeyDropped,
         // The act bosses (D-062), appended.
         BossEnraged,

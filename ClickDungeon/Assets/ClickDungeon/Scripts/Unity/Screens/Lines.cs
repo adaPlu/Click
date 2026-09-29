@@ -119,6 +119,12 @@ namespace ClickDungeon.Unity.Screens
                     line = "Ha! The Shield of Clickington!";
                     face = Expression.Confident;
                     return 55;
+                // The dungeon losing patience (D-078). The warning is said once and loudly - above a chest, below the
+                // hero's own peril - because it is the one cue that the answer is the stairs and not another lap.
+                case GameEventKind.DungeonStirring:
+                    line = Pick("Something's waking up down here.", "The walls are... closer?", "We should not still be here.");
+                    face = Expression.Worried;
+                    return 65;
                 case GameEventKind.EnemyWoke:
                     line = e.Source == "fire_imp" ? "Is it warm in here, or is that an imp?"
                         : e.Source == "crowned_slime" ? "That slime is wearing a crown. Rude."
@@ -371,6 +377,19 @@ namespace ClickDungeon.Unity.Screens
         {
             Talents.SlashSpan(run, catalog, out int low, out int high);
             return high > low ? $"{low}-{high}" : low.ToString();
+        }
+
+        /// <summary>
+        /// The dungeon's patience on this floor (D-078), or empty while there is plenty. Counts down over the last few
+        /// turns and then says what it is pressing in for, every turn, so the player always knows why they are losing
+        /// hearts and what answers it.
+        /// </summary>
+        public static string StirBadge(RunState run, ContentCatalog catalog)
+        {
+            int pressure = Stir.Pressure(run, catalog);
+            if (pressure > 0) return $"   ·   <color=#E0533F>THE DARK CLOSES IN  {pressure}/TURN</color>";
+            int left = Stir.TurnsOfPatienceLeft(run, catalog);
+            return left > 0 && left <= Stir.Warning ? $"   ·   <color=#E8C46A>SOMETHING STIRS  {left}</color>" : "";
         }
 
         public static string IntentBadge(EnemyState enemy, EnemyDefinition def, int extraDamage = 0)

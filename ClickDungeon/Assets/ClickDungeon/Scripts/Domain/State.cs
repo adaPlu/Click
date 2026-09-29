@@ -103,6 +103,12 @@ namespace ClickDungeon.Domain
         public CellState[] Cells;
         public List<EnemyState> Enemies = new List<EnemyState>();
         public int NextActorId = 1;
+        /// <summary>
+        /// Turns the hero has spent on this floor (D-078). Each floor keeps its own count, so the one a vault hangs off
+        /// still remembers how long the hero was there before they stepped through the door. Zero on a save written
+        /// before it existed, which simply gives that floor its patience back.
+        /// </summary>
+        public int TurnsHere;
 
         public CellState this[GridPos p] => Cells[p.Index];
 

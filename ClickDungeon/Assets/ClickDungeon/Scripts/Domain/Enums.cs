@@ -29,8 +29,9 @@ namespace ClickDungeon.Domain
         // 16 for the usable skills, the first verb the game has had beyond move, slash, shield, dash, drink and open
         // (D-075). A ruleset-15 save resumes with no skills until the next run starts and takes them from the profile.
         // 17 for the first run of a profile starting with a few more hearts and a potion (D-076); 18 for the chests'
-        // heart allowance, measured down by whatever the hero brought with them (D-077).
-        public const int Ruleset = 18;
+        // heart allowance, measured down by whatever the hero brought with them (D-077); 19 for the deep dungeon
+        // losing patience with a hero who lingers, and the patience being the tier's less their renown (D-078).
+        public const int Ruleset = 19;
         // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
         // 3: the first expansion monsters join the floors' enemy pools (D-058), so floors from seed N differ again.
         // 4: twenty floors in acts, the second wave in the pools and the key warden holding keys (D-062). A seven-floor save

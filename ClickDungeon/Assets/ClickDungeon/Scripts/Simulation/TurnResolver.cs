@@ -144,8 +144,9 @@ namespace ClickDungeon.Simulation
                 if (run.Status != RunStatus.InProgress) return result;
             }
 
-            // 7-8. Environment, then deaths
+            // 7-8. Environment, then deaths. The dungeon's own patience is weather, so it runs with the rest of it (D-078).
             Hazards.TickEnvironment(run, catalog, events);
+            Stir.Tick(run, catalog, events);
             Combat.ResolveDeaths(run, catalog, events);
             if (run.Status != RunStatus.InProgress) return result;
 

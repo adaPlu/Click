@@ -1263,3 +1263,28 @@ RenownTuning. MaxThreat deliberately left at 3: raising it buys two points and w
 **And the same bug a third time**: `AutoPlayer.Copy` did not carry `StartingMaxHp`. Movement and Threat were REL-44,
 Skills was D-075 - but this is the first one **caught before it shipped**, by the reflection guard D-075 added to
 `TheCopyCarriesEveryFieldARunHas`. It named the field and failed. That is what it was for.
+
+### D-078 a cost to waiting (2026-09-28)
+
+The third of the three things D-077 said the late game would need. Below floor 11 each floor keeps its own clock; when
+it runs out the dark presses for 1 a turn, +1 every 10, capped at 3. The stairs clear it, vaults are never pressed, a
+shield does not stop it, and it is announced three turns ahead and shown every turn after.
+
+**Renown aims it, not depth**: patience is the tier's budget less 7 a point of renown (75/60/60 at zero renown,
+54/39/39 at the cap). A fresh CASUAL player reaches floors 11-20 on four floors in five, so a flat budget cost them
+nine points where it cost a veteran eight. Renown is zero on a first run - the saturation that made it useless for
+scaling monsters (D-077) is what makes it right for asking "have you been here before".
+
+Measured: built-up 100->91 / 99->94 / 99->92 by tier, spreads 1.21/1.33/1.25 (inside the band), fresh casual
+100->99 / 87->83 / 43->39. Ruleset 18 -> 19. 446 headless tests.
+
+**Two instrument findings, both bigger than the mechanic.** `AutoPlayer.Copy(FloorState)` did not carry `TurnsHere`, so
+the bot could not see the clock: the first measurement said ten points on Knight's Trial, and with the copy fixed and
+the pressure priced into Score it is five - **half the original number was the instrument failing to respond**. Fourth
+field lost from that copy, and the first on FloorState, where the reflection guard had a blind side; it walks both now.
+And a clock that kills quietly turns every stalled run into an ordinary loss, which would have made every stall guard
+in the repo easier while measuring less (TEST-84, MAINT-15). `AutoRunResult.PressedToDeath` names those runs and the
+premium-key guard sets them aside.
+
+**Open**: 4-8% of built-up runs end on the clock, and every one is the bot failing to navigate 25 tiles. If that climbs
+it is measuring the bot, not the dungeon.
