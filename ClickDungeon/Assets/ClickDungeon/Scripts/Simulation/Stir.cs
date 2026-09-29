@@ -43,11 +43,8 @@ namespace ClickDungeon.Simulation
             int over = run.Floor.TurnsHere - Patience(run, catalog) + 1;
             if (over <= 0) return 0;
             int step = 1 + (over - 1) / System.Math.Max(1, catalog.StirEscalationTurns);
-            // Priced against the hero's own hearts, so it costs every class the same share of what it has rather than
-            // the same number (D-080). The cap counts steps, not hearts, or a big bar would buy immunity.
             if (catalog.StirMaxPressure > 0) step = System.Math.Min(step, catalog.StirMaxPressure);
-            int perPressure = catalog.StirHeartsPerPressure;
-            return perPressure <= 0 ? step : System.Math.Max(1, step * run.Hero.MaxHp / perPressure);
+            return step;
         }
 
         /// <summary>

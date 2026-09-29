@@ -97,18 +97,6 @@ namespace ClickDungeon.Content
         public int StirMaxPressure = 3;
 
         /// <summary>
-        /// Hearts of the hero's own bar that one point of pressure costs (D-080). Zero keeps the flat damage D-078
-        /// shipped with.
-        ///
-        /// Flat pressure is not class-neutral: one to three a turn is a tenth of a Wizard's bar and a twentieth of a
-        /// Berserker's, so the same clock charged the fragile classes about twice as much and the careless spread went
-        /// from 1.33 to 2.31 - D-071's failure mode, where pressure pulls the classes apart. Priced against the hero's
-        /// own hearts it costs everyone the same SHARE of what they have, which is also the D-077 direction: being
-        /// bulky stops being free.
-        /// </summary>
-        public int StirHeartsPerPressure;
-
-        /// <summary>
         /// Turns the hero is stuck when a spider webs them (D-061), set by the tier (D-074). It was the literal 1,
         /// written into EnemyAi where no tier could reach it.
         /// </summary>
