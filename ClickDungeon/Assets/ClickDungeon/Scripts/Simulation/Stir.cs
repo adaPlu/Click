@@ -42,10 +42,12 @@ namespace ClickDungeon.Simulation
             // three, two, one and the blow lands, with no silent turn in between for the player to wonder about.
             int over = run.Floor.TurnsHere - Patience(run, catalog) + 1;
             if (over <= 0) return 0;
-            int pressure = 1 + (over - 1) / System.Math.Max(1, catalog.StirEscalationTurns);
-            // Capped, so a player who cannot find the stairs is bled rather than executed. The cost of waiting should
-            // be a reason to leave, not a timer that kills anyone whose sense of direction fails them.
-            return catalog.StirMaxPressure > 0 ? System.Math.Min(pressure, catalog.StirMaxPressure) : pressure;
+            int step = 1 + (over - 1) / System.Math.Max(1, catalog.StirEscalationTurns);
+            // Priced against the hero's own hearts, so it costs every class the same share of what it has rather than
+            // the same number (D-080). The cap counts steps, not hearts, or a big bar would buy immunity.
+            if (catalog.StirMaxPressure > 0) step = System.Math.Min(step, catalog.StirMaxPressure);
+            int perPressure = catalog.StirHeartsPerPressure;
+            return perPressure <= 0 ? step : System.Math.Max(1, step * run.Hero.MaxHp / perPressure);
         }
 
         /// <summary>

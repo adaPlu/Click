@@ -4,6 +4,7 @@ using ClickDungeon.Content;
 using ClickDungeon.Domain;
 using ClickDungeon.Simulation;
 using ClickDungeon.Unity.Screens;
+using ClickDungeon.Unity.Ui;
 using NUnit.Framework;
 
 namespace ClickDungeon.UnityTests
@@ -84,6 +85,30 @@ namespace ClickDungeon.UnityTests
             run.Hero.Mana = Catalog.Skill("cle_dispel").ManaCost - 1;
             Assert.That(GameScreen.SkillTargets(run, Catalog, 0), Is.Empty,
                 "A skill that cannot be paid for lights no tiles, rather than lighting them and refusing the click.");
+        }
+
+        [Test]
+        public void AButtonSaysWhichOfTheThreeThingsIsWrongWithIt()
+        {
+            // "Not now" is not an answer: a player holding six mana and looking at a three-mana skill needs to know
+            // whether to walk towards something or to wait for mana, and those have opposite answers. The cost is the
+            // discriminator because it is the thing in question.
+            var ready = GameScreen.LookOf(usable: true, affordable: true);
+            var noTarget = GameScreen.LookOf(usable: false, affordable: true);
+            var tooDear = GameScreen.LookOf(usable: false, affordable: false);
+
+            Assert.That(ready.Alpha, Is.GreaterThan(noTarget.Alpha), "A skill the rules would accept is the brightest.");
+            Assert.That(noTarget.Alpha, Is.GreaterThan(tooDear.Alpha), "And one that can be paid for outshines one that cannot.");
+            Assert.That(ready.Label, Is.EqualTo(Palette.Gold), "Gold is the game's colour for what can be done now.");
+            Assert.That(noTarget.Label, Is.EqualTo(tooDear.Label), "The NAME does not report the purse; the cost does.");
+
+            Assert.That(noTarget.Cost, Is.EqualTo(ready.Cost), "Affordable reads the same whether or not there is a target.");
+            Assert.That(tooDear.Cost, Is.EqualTo(Palette.Danger), "And unaffordable is the one that turns red.");
+            Assert.That(tooDear.Cost, Is.Not.EqualTo(noTarget.Cost),
+                "The two reasons a button is dark have to look different, which is the whole point of this.");
+
+            // A skill the hero cannot pay for is never also drawn as ready, whatever else is true.
+            Assert.That(GameScreen.LookOf(usable: false, affordable: false).Alpha, Is.LessThan(1f));
         }
 
         [Test]

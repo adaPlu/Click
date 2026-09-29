@@ -43,7 +43,7 @@ namespace ClickDungeon.Simulation
                     // The only rule a self-cast has is "do not spend a turn on nothing".
                     if (skill.Effect == SkillEffect.Heal && hero.Hp >= hero.MaxHp)
                         return Fail(out reason, "Already at full health.");
-                    if (skill.Effect == SkillEffect.Burst && !AnyAwakeNeighbour(run))
+                    if ((skill.Effect == SkillEffect.Burst || skill.Effect == SkillEffect.Smoke) && !AnyAwakeNeighbour(run))
                         return Fail(out reason, "Nothing next to you to hit.");
                     return true;
 
@@ -106,6 +106,35 @@ namespace ClickDungeon.Simulation
                     foreach (var enemy in run.Floor.Enemies.ToArray())
                         if (enemy.Awake && enemy.Hp > 0 && enemy.Pos.IsAdjacent(hero.Pos))
                             Combat.DamageEnemy(run, enemy, skill.Amount, skill.Id, catalog, events);
+                    break;
+                }
+
+                case SkillEffect.Blast:
+                {
+                    var struck = run.Floor.EnemyAt(target);
+                    events.Add(GameEvent.Of(GameEventKind.SkillUsed, struck?.Id ?? 0, hero.Pos, target, skill.Amount, skill.Id));
+                    // The tile it lands on and everything around that tile - the hero included if they lobbed it at
+                    // their own feet, which is their business.
+                    foreach (var enemy in run.Floor.Enemies.ToArray())
+                        if (enemy.Awake && enemy.Hp > 0 && (enemy.Pos == target || enemy.Pos.IsAdjacent(target)))
+                            Combat.DamageEnemy(run, enemy, skill.Amount, skill.Id, catalog, events);
+                    break;
+                }
+
+                case SkillEffect.Smoke:
+                {
+                    events.Add(GameEvent.Of(GameEventKind.SkillUsed, to: hero.Pos, amount: skill.Amount, source: skill.Id));
+                    foreach (var enemy in run.Floor.Enemies.ToArray())
+                    {
+                        if (!enemy.Awake || enemy.Hp <= 0 || !enemy.Pos.IsAdjacent(hero.Pos)) continue;
+                        Combat.DamageEnemy(run, enemy, skill.Amount, skill.Id, catalog, events);
+                        // Reeling, not asleep: a boss shrugs it off, exactly as it shrugs off every other stagger.
+                        if (enemy.Hp > 0 && !catalog.Enemy(enemy.DefId).IsBoss)
+                        {
+                            enemy.Staggered = true;
+                            events.Add(GameEvent.Of(GameEventKind.EnemyStaggered, enemy.Id, to: enemy.Pos, subject: enemy.DefId));
+                        }
+                    }
                     break;
                 }
 

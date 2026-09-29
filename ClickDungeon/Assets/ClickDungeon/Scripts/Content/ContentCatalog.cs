@@ -97,6 +97,18 @@ namespace ClickDungeon.Content
         public int StirMaxPressure = 3;
 
         /// <summary>
+        /// Hearts of the hero's own bar that one point of pressure costs (D-080). Zero keeps the flat damage D-078
+        /// shipped with.
+        ///
+        /// Flat pressure is not class-neutral: one to three a turn is a tenth of a Wizard's bar and a twentieth of a
+        /// Berserker's, so the same clock charged the fragile classes about twice as much and the careless spread went
+        /// from 1.33 to 2.31 - D-071's failure mode, where pressure pulls the classes apart. Priced against the hero's
+        /// own hearts it costs everyone the same SHARE of what they have, which is also the D-077 direction: being
+        /// bulky stops being free.
+        /// </summary>
+        public int StirHeartsPerPressure;
+
+        /// <summary>
         /// Turns the hero is stuck when a spider webs them (D-061), set by the tier (D-074). It was the literal 1,
         /// written into EnemyAi where no tier could reach it.
         /// </summary>
@@ -196,11 +208,12 @@ namespace ClickDungeon.Content
 
         /// <summary>A usable skill (D-075), named by the talent that unlocks it.</summary>
         static void Skill(ContentCatalog c, string id, string classId, string name, string summary,
-            int manaCost, SkillEffect effect, int amount, SkillTarget target, int range = 1) =>
+            int manaCost, SkillEffect effect, int amount, SkillTarget target, int range = 1, string icon = null) =>
             c.Skills.Add(id, new SkillDefinition
             {
                 Id = id, ClassId = classId, Name = name, Summary = summary,
                 ManaCost = manaCost, Effect = effect, Amount = amount, Target = target, Range = range,
+                Icon = icon,
             });
 
         public TalentDefinition Talent(string id)
@@ -704,8 +717,9 @@ namespace ClickDungeon.Content
                 "SHIELD deals 1 damage to every awake enemy next to you", TalentEffect.Consecrate, requires: "e_shock_plating");
             Talent(c, "e_salvage", "engineer", "tactics", 1, 2, "Salvage", "Spare parts are worth coin.",
                 "+3 coins for every chest reward", TalentEffect.CoinsPerChestReward, amount: 3);
+            // e_lockpicks now names the bomb rather than the EMP it replaced.
             Talent(c, "e_lockpicks", "engineer", "tactics", 2, 1, "Lockpicks", "A gadget for every lock.",
-                "Chests open with one tap fewer (never below 1)", TalentEffect.ChestTapCut, requires: "e_salvage", skill: "eng_emp");
+                "Chests open with one tap fewer (never below 1)", TalentEffect.ChestTapCut, requires: "e_salvage", skill: "eng_bomb");
             Talent(c, "e_survey_drone", "engineer", "tactics", 3, 1, "Survey Drone", "It flies ahead.",
                 "Each new floor starts with its exit uncovered", TalentEffect.Hawkeye, requires: "e_lockpicks");
             Talent(c, "e_field_repairs", "engineer", "tactics", 4, 1, "Field Repairs", "Patched up between floors.",
@@ -1093,14 +1107,16 @@ namespace ClickDungeon.Content
                 manaCost: 4, effect: SkillEffect.Strike, amount: 4, target: SkillTarget.Enemy);
             Skill(c, "pal_bulwark", "paladin", "Bulwark", "3 damage to everything beside you.",
                 manaCost: 4, effect: SkillEffect.Burst, amount: 3, target: SkillTarget.Self);
-            Skill(c, "pal_lay_on_hands", "paladin", "Lay on Hands", "Mend 3 hearts.",
-                manaCost: 3, effect: SkillEffect.Heal, amount: 3, target: SkillTarget.Self);
+            // The same button as the Cleric's, and deliberately the weaker one: the Paladin mends, she heals.
+            Skill(c, "pal_lay_on_hands", "paladin", "Lay on Hands", "Mend 2 hearts.",
+                manaCost: 3, effect: SkillEffect.Heal, amount: 2, target: SkillTarget.Self);
 
             // Rogue - openings, not fights.
             Skill(c, "rog_throat_cut", "rogue", "Throat Cut", "5 damage to one monster beside you.",
                 manaCost: 4, effect: SkillEffect.Strike, amount: 5, target: SkillTarget.Enemy);
-            Skill(c, "rog_smoke", "rogue", "Smoke Bomb", "Leave one monster reeling.",
-                manaCost: 2, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy, range: 2);
+            // Shadowcut disappears in the confusion: a little damage, and everything beside him loses its turn.
+            Skill(c, "rog_smoke", "rogue", "Smoke Bomb", "1 damage to everything beside you, and they all lose track of you.",
+                manaCost: 3, effect: SkillEffect.Smoke, amount: 1, target: SkillTarget.Self);
             Skill(c, "rog_bandage", "rogue", "Bandage", "Mend 3 hearts.",
                 manaCost: 3, effect: SkillEffect.Heal, amount: 3, target: SkillTarget.Self);
 
@@ -1121,8 +1137,9 @@ namespace ClickDungeon.Content
                 manaCost: 3, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy, range: 3);
 
             // Cleric - mend, ward, and the answer to the risen.
-            Skill(c, "cle_mend", "cleric", "Mend", "Mend 3 hearts.",
-                manaCost: 3, effect: SkillEffect.Heal, amount: 3, target: SkillTarget.Self);
+            // The Cleric is the healer, so hers is the strongest mend in the game.
+            Skill(c, "cle_mend", "cleric", "Heal", "Mend 4 hearts.",
+                manaCost: 3, effect: SkillEffect.Heal, amount: 4, target: SkillTarget.Self);
             Skill(c, "cle_ward", "cleric", "Ward", "2 damage to everything beside you.",
                 manaCost: 3, effect: SkillEffect.Burst, amount: 2, target: SkillTarget.Self);
             Skill(c, "cle_dispel", "cleric", "Dispel Undead", "3 damage, doubled against the risen.",
@@ -1141,8 +1158,9 @@ namespace ClickDungeon.Content
                 manaCost: 3, effect: SkillEffect.Burst, amount: 3, target: SkillTarget.Self);
             Skill(c, "eng_repair", "engineer", "Field Repairs", "Mend 3 hearts.",
                 manaCost: 3, effect: SkillEffect.Heal, amount: 3, target: SkillTarget.Self);
-            Skill(c, "eng_emp", "engineer", "EMP Charge", "Leave one monster reeling, at two tiles.",
-                manaCost: 2, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy, range: 2);
+            // Gearspark builds things that go off. Lobbed at a tile, it catches whatever is standing around it.
+            Skill(c, "eng_bomb", "engineer", "Bomb", "Lob a charge: 3 damage to the tile and everything around it.",
+                manaCost: 3, effect: SkillEffect.Blast, amount: 3, target: SkillTarget.Enemy, range: 2);
 
             c.Difficulties[Difficulty.Easy] = new DifficultyDefinition
             {

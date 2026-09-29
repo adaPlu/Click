@@ -132,6 +132,27 @@ namespace ClickDungeon.Unity.Ui
         public const string ExitLocked = "tile_exit_locked";
         /// <summary>The way in, as the reference draws it: a raised stone staircase climbing up out of the floor.</summary>
         public const string EntranceStairs = "tile_entrance_stairs";
+        /// <summary>The green cross and the bomb from the Core UI pack: what a usable skill wears (D-079).</summary>
+        public const string SkillHeal = "icon_skill_heal";
+        public const string SkillBomb = "icon_skill_bomb";
+
+        /// <summary>
+        /// The picture on a skill's button. A skill may name its own; otherwise its effect chooses, so a new skill is
+        /// a line in the catalog and still arrives with a picture rather than a word.
+        /// </summary>
+        public static string SkillIcon(SkillDefinition skill)
+        {
+            if (skill == null) return null;
+            if (!string.IsNullOrEmpty(skill.Icon)) return skill.Icon;
+            switch (skill.Effect)
+            {
+                case SkillEffect.Heal: return SkillHeal;
+                case SkillEffect.Blast:
+                case SkillEffect.Smoke: return SkillBomb;
+                case SkillEffect.Stagger: return AbilityIcon(CommandKind.Dash);
+                default: return AbilityIcon(CommandKind.Slash);
+            }
+        }
         public const string ExitOpen = "tile_exit_open";
         // Production tile set (rules §11). The sheets name the exit "stair down", so both spellings are accepted.
         public const string StairDownLocked = "tile_stair_down_locked";
@@ -448,7 +469,7 @@ namespace ClickDungeon.Unity.Ui
             var keys = new List<string>
             {
                 FloorStone, Wall, Pit, Spikes, Bomb, BombArmed, Key, ChestClosed, ChestOpen, PremiumChestClosed, PremiumChestOpen,
-                SpecialLockBadge, SpecialKeyIcon, Potion, EntranceStairs, ExitLocked, ExitOpen,
+                SpecialLockBadge, SpecialKeyIcon, Potion, EntranceStairs, ExitLocked, ExitOpen, SkillHeal, SkillBomb,
                 StairDownLocked, StairDown, StairUp, TrapPit, TrapSpike, TrapBomb, Lava, Water, Shadow, FloorCracked, FloorMoss,
                 WallCorner, TorchWall, DoorLocked, DoorOpen, PressurePlate, Teleport, FountainHeal,
                 Logo, TitleBackground, GameplayBackground, TitleBackgroundPortrait, GameplayBackgroundPortrait,

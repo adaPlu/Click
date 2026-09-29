@@ -28,7 +28,9 @@ namespace ClickDungeon.Unity.Screens
             public UiFactory.ButtonParts Parts;
             public Image Selected;
             public Text Cost;
+            public RectTransform Icon;
             public CanvasGroup Group;
+            public string IconKey;
         }
 
         sealed class AbilityButton
@@ -912,6 +914,30 @@ namespace ClickDungeon.Unity.Screens
             UpdateInspector();
         }
 
+        /// <summary>How a skill button is drawn: see <see cref="LookOf"/> for what the three states mean.</summary>
+        public readonly struct SkillLook
+        {
+            public readonly float Alpha;
+            public readonly Color Label;
+            public readonly Color Cost;
+            public SkillLook(float alpha, Color label, Color cost) { Alpha = alpha; Label = label; Cost = cost; }
+        }
+
+        /// <summary>
+        /// THREE states, not two (D-075). One dimmed look said only "not now", so a player holding six mana and looking
+        /// at a three-mana skill could not tell "nothing to aim it at" from "you cannot pay for it" - two situations
+        /// with completely different answers, one of which is "walk towards something".
+        ///
+        /// The cost is the discriminator, because it is the thing in question: blue while the hero can pay, red when
+        /// they cannot. The name goes gold the moment the rules would accept the skill. Pure, so all three states are
+        /// provable without standing up a screen - the lit one is hard to catch in a screenshot, since it needs a
+        /// monster in reach on the very turn the shot is taken.
+        /// </summary>
+        public static SkillLook LookOf(bool usable, bool affordable) =>
+            usable ? new SkillLook(1f, Palette.Gold, Palette.ManaText)
+            : affordable ? new SkillLook(0.72f, Palette.TextDim, Palette.ManaText)
+            : new SkillLook(0.45f, Palette.TextDim, Palette.Danger);
+
         /// <summary>
         /// The skill strip (D-075). A slot the hero has not filled is hidden rather than drawn dead: with three skills
         /// a class and three slots that is only the early game, but a Paladin who has climbed one branch should see the
@@ -928,6 +954,13 @@ namespace ClickDungeon.Unity.Screens
 
                 button.Parts.Label.text = skill.Name.ToUpperInvariant();
                 button.Cost.text = skill.ManaCost.ToString();
+                string iconKey = ArtKeys.SkillIcon(skill);
+                if (button.Icon != null && iconKey != button.IconKey)
+                {
+                    button.IconKey = iconKey;
+                    for (int c = button.Icon.childCount - 1; c >= 0; c--) UnityEngine.Object.Destroy(button.Icon.GetChild(c).gameObject);
+                    Icons.TryArt(button.Icon, iconKey, button.Icon.sizeDelta.x);
+                }
                 // Usable means the rules would accept it right now, asked of the rules: a self-cast is asked outright,
                 // and a targeted one is usable when there is something it can reach.
                 bool usable = live && (skill.Target == SkillTarget.Self
@@ -935,7 +968,11 @@ namespace ClickDungeon.Unity.Screens
                     : SkillTargets(Run, slot).Count > 0);
                 bool selected = _mode == TargetMode.Skill && _skillSlot == slot;
                 button.Selected.enabled = selected;
-                button.Group.alpha = usable || selected ? 1f : 0.45f;
+
+                var look = LookOf(usable || selected, Mana.CanPay(Run.Hero, skill.ManaCost));
+                button.Group.alpha = look.Alpha;
+                button.Parts.Label.color = look.Label;
+                button.Cost.color = look.Cost;
             }
         }
 
@@ -1462,13 +1499,21 @@ namespace ClickDungeon.Unity.Screens
             for (int i = 0; i < BoardRules.SkillSlots; i++)
             {
                 int slot = i;
-                var parts = UiFactory.Button(bar, "Skill" + slot, "", Palette.ShieldButton, portrait ? 22 : 18, () => OnSkill(slot));
+                var parts = UiFactory.Button(bar, "Skill" + slot, "", Palette.ShieldButton, portrait ? 20 : 15, () => OnSkill(slot));
                 parts.Rect.Place(Center, Center,
                     portrait ? new Vector2((slot - 1) * SkillPitchPortrait, 0f) : new Vector2(0f, (1 - slot) * SkillPitch),
                     portrait ? new Vector2(312f, 72f) : new Vector2(200f, 48f));
                 UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.AbilityButtonDefault);
-                parts.Label.rectTransform.Place(Center, Center, new Vector2(portrait ? -18f : -12f, 0f),
-                    new Vector2(portrait ? 250f : 160f, 30f));
+                // Between the icon on the left and the cost on the right, not on top of either: the first pass laid the
+                // label across the whole button and the picture sat over its first letters - "OCKWAVE", "ELD BASH".
+                parts.Label.rectTransform.Place(Center, Center, new Vector2(portrait ? 9f : 4f, 0f),
+                    new Vector2(portrait ? 174f : 104f, 30f));
+
+                // The picture, left of the name. A skill with no art of its own still gets the one its effect suggests,
+                // so no button is ever just a word (D-079).
+                var icon = UiFactory.Rect(parts.Rect, "Icon");
+                icon.Place(new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(portrait ? 40f : 26f, 0f),
+                    new Vector2(portrait ? 56f : 36f, portrait ? 56f : 36f));
 
                 var cost = UiFactory.Text(parts.Rect, "Cost", "", portrait ? 20 : 16, Palette.ManaText, TextAnchor.MiddleRight, FontStyle.Bold);
                 cost.rectTransform.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(portrait ? -16f : -12f, 0f),
@@ -1483,6 +1528,7 @@ namespace ClickDungeon.Unity.Screens
                     Parts = parts,
                     Selected = selected,
                     Cost = cost,
+                    Icon = icon,
                     Group = parts.Rect.gameObject.AddComponent<CanvasGroup>(),
                 });
             }

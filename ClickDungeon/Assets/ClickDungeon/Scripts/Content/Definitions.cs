@@ -98,6 +98,11 @@ namespace ClickDungeon.Content
         public SkillTarget Target;
         /// <summary>For a targeted skill: how far it reaches, in king's moves. Ignored when it targets the hero.</summary>
         public int Range = 1;
+        /// <summary>
+        /// The art key for this skill's button. Null falls back to the one its effect suggests, so a new skill is a
+        /// line in the catalog and still arrives with a picture rather than a word.
+        /// </summary>
+        public string Icon;
     }
 
     /// <summary>A hero shown on Hero Select as coming soon: art and words only, no class yet (D-037).</summary>

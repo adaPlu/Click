@@ -150,6 +150,72 @@ namespace ClickDungeon.Tests
         }
 
         [Test]
+        public void TheEngineersBombCatchesWhatStandsAroundTheTileItLandsOn()
+        {
+            // D-079: Gearspark builds things that go off. A thrown charge is not a punch - what makes it a bomb is
+            // that it hurts the tile's neighbours too.
+            var run = As(Revealed(Run(".....", ".....", "H....", ".....", ".....")), "gearspark");
+            var centre = EnemyAi.Spawn(run.Floor, Catalog.Enemy("goblin"), P(2, 2), awake: true);
+            var beside = EnemyAi.Spawn(run.Floor, Catalog.Enemy("goblin"), P(2, 1), awake: true);
+            var far = EnemyAi.Spawn(run.Floor, Catalog.Enemy("goblin"), P(4, 4), awake: true);
+            foreach (var e in new[] { centre, beside, far }) e.MaxHp = e.Hp = 40;
+            run.Skills = new List<string> { "eng_bomb" };
+            run.Hero.MaxMana = run.Hero.Mana = 9;
+
+            int amount = Catalog.Skill("eng_bomb").Amount;
+            DoOk(run, PlayerCommand.Skill(0, centre.Pos));
+            Assert.That(40 - centre.Hp, Is.EqualTo(amount), "The tile it landed on.");
+            Assert.That(40 - beside.Hp, Is.EqualTo(amount), "And everything around that tile.");
+            Assert.That(far.Hp, Is.EqualTo(40), "But not the far side of the room.");
+        }
+
+        [Test]
+        public void TheRoguesSmokeHurtsAndLeavesThemAllReeling()
+        {
+            // The stealth, said in the vocabulary the game has: everything beside the hero loses its turn. Putting a
+            // monster back to sleep does not work - Visibility.Update wakes anything on a revealed tile the same turn.
+            var run = As(Revealed(Run(".....", ".....", "H....", ".....", ".....")), "shadowcut");
+            var near = EnemyAi.Spawn(run.Floor, Catalog.Enemy("goblin"), P(1, 2), awake: true);
+            var far = EnemyAi.Spawn(run.Floor, Catalog.Enemy("goblin"), P(4, 4), awake: true);
+            foreach (var e in new[] { near, far }) e.MaxHp = e.Hp = 40;
+            run.Skills = new List<string> { "rog_smoke" };
+            run.Hero.MaxMana = run.Hero.Mana = 9;
+
+            var result = DoOk(run, PlayerCommand.Skill(0));
+            Assert.That(40 - near.Hp, Is.EqualTo(Catalog.Skill("rog_smoke").Amount), "A little damage...");
+            Assert.That(Has(result, GameEventKind.EnemyStaggered), Is.True, "...and it loses track of him.");
+            Assert.That(far.Hp, Is.EqualTo(40), "Only what is beside him.");
+            Assert.That(far.Staggered, Is.False);
+        }
+
+        [Test]
+        public void SmokeDoesNotDazeABoss()
+        {
+            // Every other stagger in the game leaves a boss alone, so this one does too (D-037).
+            var run = As(Revealed(Run(Catalog.RunFloorCount, 42UL, ".....", ".....", "HB...", ".....", ".....")), "shadowcut");
+            var boss = run.Floor.Enemies[0];
+            Assert.That(Catalog.Enemy(boss.DefId).IsBoss, Is.True, "Test setup: that is a boss.");
+            boss.Awake = true;
+            run.Skills = new List<string> { "rog_smoke" };
+            run.Hero.MaxMana = run.Hero.Mana = 9;
+            run.Hero.MaxHp = run.Hero.Hp = 99;
+
+            DoOk(run, PlayerCommand.Skill(0));
+            Assert.That(boss.Staggered, Is.False, "A boss shrugs off the smoke, as it shrugs off every other stagger.");
+        }
+
+        [Test]
+        public void TheClericHealsHarderThanThePaladin()
+        {
+            // Asked for outright: the same button on both, and the Paladin's is the weaker one. She is the healer.
+            var cleric = Catalog.Skill("cle_mend");
+            var paladin = Catalog.Skill("pal_lay_on_hands");
+            Assert.That(cleric.Effect, Is.EqualTo(SkillEffect.Heal));
+            Assert.That(paladin.Effect, Is.EqualTo(cleric.Effect), "The same button.");
+            Assert.That(paladin.Amount, Is.LessThan(cleric.Amount), "And the Paladin's mends less.");
+        }
+
+        [Test]
         public void ASkillCannotBeAimedAtSomethingACoverHides()
         {
             // Rules 2.1, the rule the whole board is built on: nothing may differ on what an unrevealed cover hides. A

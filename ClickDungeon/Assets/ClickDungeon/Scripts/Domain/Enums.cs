@@ -121,6 +121,15 @@ namespace ClickDungeon.Domain
         Burst = 3,
         /// <summary>Leaves one monster reeling, so it loses its next turn - the same stagger a talent can cause. Bosses shrug it off.</summary>
         Stagger = 4,
+        /// <summary>A charge lobbed at a tile: it hurts what stands there and everything around it. The Engineer's own.</summary>
+        Blast = 5,
+        /// <summary>
+        /// Smoke: a little damage to everything beside the hero, and every one of them left reeling. The Rogue vanishing
+        /// in the confusion - "they lose track of you for a turn", said in the vocabulary the game already has, because
+        /// putting a monster back to sleep does not work: Visibility.Update wakes anything standing on a revealed tile
+        /// again the same turn, so unawareness would be undone before the player saw it.
+        /// </summary>
+        Smoke = 6,
         // There was a Reveal here, and five skills used it. It cannot work on this board: every class already uncovers
         // radius 1 as it walks, so a radius-1 sight skill does nothing at all, and radius 2 from the middle of a
         // five-by-five board is the WHOLE board - a two-mana button that deletes the fog. Measured before it was cut: a

@@ -1113,6 +1113,16 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 180d0ebd502666147a5a0a7cc86e1575, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_skill_bomb
+    Frames:
+    - {fileID: 21300000, guid: 1c696ee1ac5627e4ca6c05bdcd81fe99, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_heal
+    Frames:
+    - {fileID: 21300000, guid: d66be37328bfb4d42934db121ab49d25, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_special_lock
     Frames:
     - {fileID: 21300000, guid: 0f7c54dcba12b36478bfb4486baa8236, type: 3}
