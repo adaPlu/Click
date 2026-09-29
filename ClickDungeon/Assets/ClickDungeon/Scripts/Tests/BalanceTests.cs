@@ -490,10 +490,18 @@ namespace ClickDungeon.Tests
         /// measures an empty profile, so a talent tree could be broken end to end - as Judgement was until audit 3 -
         /// without moving one of them. This is the guard that would have seen it.
         /// </summary>
-        [Test]
+        // 960 runs: past EditMode's 180-second default, like the sweep at the top of this file (D-081).
+        [Test, Timeout(600000)]
         public void EveryClassTreeIsWorthPlaying()
         {
-            const int runs = 40;
+            // ONE HUNDRED AND TWENTY, not forty (D-081). At forty the floor was `runs * 3 / 4` and the weakest class
+            // measured exactly 30 of 40 - the floor WAS the Wizard's expected value, so the guard was a coin flip and
+            // any change that merely perturbed the RNG stream had about an even chance of turning it red. It had been
+            // that way since D-078 while its comment still claimed "37-40 of 40" and four sigma of room. The Wizard's
+            // true rate is 75% (30/40, 44/60, 93/120), and a tree that has stopped paying lands at 50-66% (D-069), so
+            // there are nine points to fit a floor into and forty seeds cannot resolve them. This is TEST-82's remedy
+            // applied to TEST-82's sibling: buy the margin with seeds, never by widening the band.
+            const int runs = 120;
             var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
             var wins = new List<(string id, int won)>();
             foreach (var heroClass in catalog.HeroClasses.Values)
@@ -505,7 +513,7 @@ namespace ClickDungeon.Tests
                 for (ulong seed = 1; seed <= runs; seed++)
                 {
                     // A fresh profile a seed: a run spends the provisions off the one it is given, so sharing one would
-                    // arm seed 1 and leave the other thirty-nine measuring a different player (MAINT-94).
+                    // arm seed 1 and leave the rest measuring a different player (MAINT-94).
                     var r = AutoPlayer.PlayRun(catalog, seed, MaxCommands, AutoPlayer.CasualMistakeRate,
                         MovementMode.Free, blind: true, loots: true, heroId: heroId, profile: BuiltUp(catalog, heroClass.Id));
                     if (r.Status == RunStatus.Won) won++;
@@ -528,10 +536,12 @@ namespace ClickDungeon.Tests
             // under an arm advertising 50%, and the one that would have gone red first (TEST-83). The spread is
             // measured where there is room to see one, by NoClassIsHopelessForACarelessPlayer.
             //
-            // Thirty of forty, against a measured minimum of 37. It is the broken-tree floor: D-069 puts the same eight
-            // classes at 50-66% with an EMPTY profile, so a tree that has stopped paying altogether lands at 20-26 and
-            // this catches it, while four sigma of room keeps it from going red on noise.
-            Assert.That(weakest.won, Is.GreaterThanOrEqualTo(runs * 3 / 4),
+            // Two thirds of 120, against a measured table of kni 114, pal 110, rog 117, wiz 93, ran 114, cle 110,
+            // ber 118, eng 119. It is the broken-tree floor: D-069 puts the same eight classes at 50-66% with an EMPTY
+            // profile, so a tree that has stopped paying altogether falls below 80 of 120 and this catches it, while
+            // the Wizard's 93 clears it by 2.1 sigma. The Wizard is what makes this tight - every other class is at
+            // 110 or better - and that is a balance question this guard can only point at, not answer.
+            Assert.That(weakest.won, Is.GreaterThanOrEqualTo(runs * 2 / 3),
                 $"{weakest.id} won {weakest.won}/{runs} with its whole tree spent and the best gear worn. A class tree "
                 + $"that buys nothing is a broken talent, not a hard dungeon. ({table})");
         }
@@ -645,8 +655,9 @@ namespace ClickDungeon.Tests
                 if (row.won < weakest.won) weakest = row;
                 if (row.won > strongest.won) strongest = row;
             }
-            // Measured 33% to 71% over 60 seeds a class after D-071, against 15% to 61% before it. A fifth of the runs
-            // sits well below the weakest and far above a class that has stopped working for a careless player.
+            // Measured 36% to 88% over 60 seeds a class after D-081 (kni 30, pal 40, rog 24, wiz 22, ran 32, cle 42,
+            // ber 39, eng 53), against 33%-71% after D-071 and 15%-61% before it. A fifth of the runs sits 2.7 sigma
+            // below the weakest and far above a class that has stopped working for a careless player.
             Assert.That(weakest.won, Is.GreaterThanOrEqualTo(runs / 5),
                 $"{weakest.id} won {weakest.won}/{runs} for a careless player. ({table})");
             // Three to one, not the eight-fifths careful play is held to: these are sloppy runs and the spread is wider

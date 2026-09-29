@@ -1654,3 +1654,85 @@ guard sets them aside rather than counting them: one of its seeds was already bu
 **Open**: a run the clock ends is 4-8% of built-up runs, and all of them are the bot failing to navigate a 25-tile
 board rather than a player being punished. A human who cannot find the stairs in sixty turns on five-by-five is not the
 case this was built for. If that number climbs, it is measuring the bot, not the dungeon.
+
+## D-081 The bot was healing into the clock
+
+D-078's entry ends by warning that if the clock-ended share climbs, "it is measuring the bot, not the dungeon." This
+is that warning arriving from the other direction: a measurement that was reading the bot rather than the game, and
+had been for as long as skills have existed.
+
+**Two classes won twice as often as the other six.** Berserker and Engineer took 22 of 24 built-up careless runs where
+the rest took 10 to 12. The obvious suspects were wrong, and the measurements that cleared them are worth keeping:
+
+| suspect | ablation | result |
+|---|---|---|
+| Berserker's Rage | `Perks["Rage"] = 0` | 43/48 → 43/48. **Nothing.** |
+| Bloodlust, DroneRange, ArcChain | each zeroed | nothing |
+| Engineer's Bomb | 3 damage → 2, then → 0 | identical, class by class, to the win |
+| Engineer's Drone | `Perks["Drone"] = 0` | 43 → 34. The one real perk. |
+
+Rage is the Berserker's name and its trait text, and it buys no wins at all. That is recorded here because it is true,
+not because anything is being done about it yet.
+
+### What it actually was
+
+Every class dies on floor 17-18 with 32-35 hearts; the two winners reached 19.7. The whole difference was **hearts
+restored per turn spent**, and the bot was spending turns terribly:
+
+| | heals | baseline | with its heal disabled |
+|---|---|---|---|
+| Berserker | 4 | 43/48 | 33 |
+| Engineer | 3 | 43/48 | 38 |
+| Knight | 2 | 25/48 | **34** |
+| Cleric | 4 | 26/48 | **32** |
+
+**The Knight and the Cleric played better with an ability taken away.** A bot that improves by losing a button is not
+measuring the class; it is measuring its own valuation, and every class number in this repo was read off it.
+
+The cause is arithmetic. A heal costs a turn, and the rules only forbid casting one at full health, so a one-turn
+look-ahead - which scores a heart the same whether it is the last or the first - mended whenever the hero was a heart
+down. Twelve Knight runs cast Rally **838 times**: 14% of every turn spent undoing half a monster's blow while the
+monsters swung and the dungeon's patience ran out. Removing Rally cut a Knight run from 6227 turns to 5479.
+
+**The bot mends below half now**, and nowhere else. It is a rule about the bot, not about the game: `Skills.CanUse`
+still allows a scratch to be mended, because a player may spend their turn however they like.
+
+### Why not a weight
+
+Three attempts at repricing the health bar failed first, and they failed in a way worth writing down. Hearts were worth
+120 below half and 60 above it, against 60 for a step of progress - so topping up always scored at least as well as
+walking to the stairs.
+
+| | total wins /192 | class spread | classes that improve without their heal |
+|---|---|---|---|
+| shipped (120/60) | 112 | 2.20 | Knight, Cleric |
+| a cheap top band (120/60/10) | 121 | 2.67 | Knight |
+| a cheap middle too (120/25/10) | 106 | 4.80 | Knight |
+| **mend below half** | **125** | **2.00** | Knight |
+
+A single weight has to serve two jobs - "respect your health" and "decline a cheap heal" - and it cannot do both. The
+cheap middle band made the Wizard reckless (it has no heal at all: 11 wins → 5) while still not stopping the Knight.
+The threshold is the honest lever, and at three quarters instead of half it is worse on every axis (118, spread 2.10,
+Cleric broken again).
+
+Stir damage fell everywhere as a result - Knight 70 → 18.5, Cleric 113 → 45 - because a bot that stops mending
+scratches actually advances, which is the clock doing exactly what D-078 built it to do.
+
+**Still open, and not fixed here**: the Knight *still* plays better with Rally removed entirely (26 vs 34), and
+buffing Rally to heal 4 makes it worse rather than better (24). Whatever is left is not the size of the heal - it is
+that the Knight's turn is worth more spent almost anywhere else, which a one-turn look-ahead cannot price.
+
+### The guard that was a coin flip
+
+`EveryClassTreeIsWorthPlaying` asserted the weakest built-up casual class wins at least `runs * 3 / 4` of 40. The
+Wizard measures exactly 30 of 40. **The floor was the Wizard's expected value**, so the guard had about an even chance
+of going red on any change that merely perturbed the RNG stream, and it had been that way since D-078 while its
+comment still advertised "37-40 of 40" and four sigma of room.
+
+The Wizard's true rate is 75% (30/40, 44/60, 93/120) and a tree that has stopped paying lands at 50-66%, which leaves
+nine points to fit a floor into - more than forty seeds can resolve. It runs at **120 seeds with a floor of two
+thirds** now, where the Wizard's 93 clears by 2.1 sigma: TEST-82's remedy applied to TEST-82's sibling, buying margin
+with seeds rather than by widening the band. It costs the headless suite 2m40s, and the same again in EditMode.
+
+**Open**: the Wizard at 75% casual and 36% careless is what makes that floor hard to place - every other class is at
+110 or better of 120. This guard can point at that; it cannot answer it.

@@ -88,6 +88,41 @@ namespace ClickDungeon.Tests
                 "Only the branch that was climbed pays a skill, so the tree choice is the skill choice.");
         }
 
+        /// <summary>
+        /// D-081: the bot mends when hurt, not when scratched. A heal costs a turn, and the only thing the RULES
+        /// forbid is casting one at full health - so a one-turn look-ahead, which scores a heart the same whether it
+        /// was the last or the first, mended whenever it was a heart down. Twelve Knight runs cast Rally 838 times.
+        /// The bot then played BETTER for having its heal taken away (+9 wins in 48 for the Knight, +6 for the
+        /// Cleric), which means the class numbers were reading off the bot's valuation rather than the class.
+        /// </summary>
+        [Test]
+        public void TheBotWillNotSpendATurnMendingAScratch()
+        {
+            var run = As(Revealed(Run(".....", ".....", "H....", ".....", ".....")), "dawnward");
+            run.Skills = new List<string> { "pal_lay_on_hands" };
+            run.Hero.MaxHp = 20;
+            run.Hero.MaxMana = run.Hero.Mana = 9;
+
+            bool MendOffered() => AutoPlayer.LegalCommands(run, Catalog)
+                .Any(c => c.Kind == CommandKind.Skill && c.Slot == 0);
+
+            run.Hero.Hp = 19;
+            Assert.That(MendOffered(), Is.False, "One heart down is not worth a turn.");
+            run.Hero.Hp = 11;
+            Assert.That(MendOffered(), Is.False, "Still above half: the turn buys more somewhere else.");
+
+            run.Hero.Hp = 10;
+            Assert.That(MendOffered(), Is.True, "At half the hero is in trouble and a mend is worth the turn.");
+            run.Hero.Hp = 4;
+            Assert.That(MendOffered(), Is.True, "And below it.");
+
+            // The distinction that matters: this is the BOT's policy, not a rule of the game. A player may still
+            // press the button on a scratch, and the HUD must go on offering it.
+            run.Hero.Hp = 19;
+            Assert.That(Skills.CanUse(run, Catalog, 0, GridPos.Invalid, out _), Is.True,
+                "The game still allows it - only the bot declines to.");
+        }
+
         [Test]
         public void LayOnHandsMendsTheHeroForManaAndATurn()
         {

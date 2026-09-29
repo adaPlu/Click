@@ -204,6 +204,15 @@ namespace ClickDungeon.Application
             {
                 var skill = Skills.InSlot(run, catalog, slot);
                 if (skill == null) continue;
+                // MEND WHEN HURT, NOT WHEN SCRATCHED (D-081). A heal costs a turn, and a turn costs a monster's blow
+                // and a tick of the dungeon's patience; the rules only forbid one at full health. A one-turn look-ahead
+                // cannot see that, because a heart is scored the same whether it was the last one or the first, so the
+                // bot mended whenever it was a heart down: twelve Knight runs cast Rally 838 times, 14% of every turn
+                // spent undoing half a blow while the clock ran. It made the bot play BETTER for having its heal taken
+                // away - +9 wins in 48 for the Knight, +6 for the Cleric - so the class numbers were reading off the
+                // bot's own valuation rather than the class. Below half is the same threshold Sanctuary and Bloodlust
+                // already use for "in trouble".
+                if (skill.Effect == SkillEffect.Heal && run.Hero.Hp * 2 > run.Hero.MaxHp) continue;
                 if (skill.Target == SkillTarget.Self)
                 {
                     var command = PlayerCommand.Skill(slot);
