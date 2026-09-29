@@ -278,12 +278,17 @@ namespace ClickDungeon.Unity
         {
             profile.Coins = 1248;
             profile.Gems = 152;
-            profile.Xp = Progression.XpForLevel(7);
+            // Nine, not seven: enough points to reach all three of the knight's tier-2 talents, which is what unlocks
+            // his three usable skills (D-075). A demo profile that shows one slot of three is not a demo of the game.
+            profile.Xp = Progression.XpForLevel(9);
             profile.Items.AddRange(new[] { "steel_sword", "iron_shield", "royal_plate", "healing_charm", "lucky_wand" });
             foreach (var id in new[] { "steel_sword", "iron_shield", "royal_plate", "healing_charm" })
                 Inventory.Equip(profile, ContentCatalog.CreateDefault(), id);
             var demo = ContentCatalog.CreateDefault();
-            foreach (var id in new[] { "k_opening_strike", "k_opening_strike", "k_sturdy", "k_cleave", "k_executioner" })
+            // In tier order, and k_light_step before k_treasure_sense: a tier-2 talent needs the tier-1 above it, so
+            // without the step the third skill never unlocks and the strip shows two slots of three.
+            foreach (var id in new[] { "k_opening_strike", "k_opening_strike", "k_sturdy", "k_light_step",
+                                       "k_cleave", "k_shield_wall", "k_treasure_sense", "k_executioner" })
                 Progression.TryLearn(profile, demo, id);
             profile.RunsFinished = 14;
             profile.RunsWon = 2;

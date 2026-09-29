@@ -1433,21 +1433,46 @@ namespace ClickDungeon.Unity.Screens
         /// buttons on that one, because the ability bar is laid over the reference art's own five and has nowhere to
         /// put a sixth.
         /// </summary>
+        /// <summary>
+        /// Where the three skill buttons sit: a column to the RIGHT of the five ability buttons, filling the band
+        /// between them and the right-hand banner.
+        ///
+        /// It was a row underneath them first, and a screenshot is the only reason that is not still true - at -446 it
+        /// landed exactly behind the INVENTORY / TALENTS / SHOP bar and all that showed was a sliver of its top edge.
+        /// It compiled, the targeting tests passed, and it was invisible. There is no room for a sixth button in the
+        /// reference art's row and none under it, so the skills go beside it instead - which also reads correctly,
+        /// since they are a different kind of action from the five verbs every hero has.
+        /// </summary>
+        static readonly Vector2 SkillBarCentre = new Vector2(565f, -331f);
+        const float SkillPitch = 54f;
+        /// <summary>Portrait has no room beside the ability row, and the space under the goal panel is empty.</summary>
+        static readonly Vector2 SkillBarCentrePortrait = new Vector2(0f, -520f);
+        const float SkillPitchPortrait = 330f;
+
         void BuildSkillBar()
         {
+            // Two layouts, because the same offset cannot serve both. Beside the ability row in landscape; a row of
+            // its own under the goal panel in portrait, where +565 is past the edge of a 1080-wide stage and the
+            // buttons were sliced clean off the screen - which a screenshot found and a compile never would.
+            bool portrait = RefLayout.Portrait;
             var bar = UiFactory.Rect(Root, "SkillBar");
-            bar.Place(Center, Center, new Vector2(0f, -446f), new Vector2(600f, 96f));
+            bar.Place(Center, Center, portrait ? SkillBarCentrePortrait : SkillBarCentre,
+                portrait ? new Vector2(1020f, 80f) : new Vector2(210f, 170f));
 
             for (int i = 0; i < BoardRules.SkillSlots; i++)
             {
                 int slot = i;
-                var parts = UiFactory.Button(bar, "Skill" + slot, "", Palette.ShieldButton, 20, () => OnSkill(slot));
-                parts.Rect.Place(Center, Center, new Vector2((slot - 1) * 196f, 0f), new Vector2(188f, 84f));
+                var parts = UiFactory.Button(bar, "Skill" + slot, "", Palette.ShieldButton, portrait ? 22 : 18, () => OnSkill(slot));
+                parts.Rect.Place(Center, Center,
+                    portrait ? new Vector2((slot - 1) * SkillPitchPortrait, 0f) : new Vector2(0f, (1 - slot) * SkillPitch),
+                    portrait ? new Vector2(312f, 72f) : new Vector2(200f, 48f));
                 UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.AbilityButtonDefault);
-                parts.Label.rectTransform.Place(Center, Center, new Vector2(0f, 8f), new Vector2(180f, 40f));
+                parts.Label.rectTransform.Place(Center, Center, new Vector2(portrait ? -18f : -12f, 0f),
+                    new Vector2(portrait ? 250f : 160f, 30f));
 
-                var cost = UiFactory.Text(parts.Rect, "Cost", "", 16, Palette.ManaText, TextAnchor.LowerCenter, FontStyle.Bold);
-                cost.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(180f, 22f));
+                var cost = UiFactory.Text(parts.Rect, "Cost", "", portrait ? 20 : 16, Palette.ManaText, TextAnchor.MiddleRight, FontStyle.Bold);
+                cost.rectTransform.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(portrait ? -16f : -12f, 0f),
+                    new Vector2(portrait ? 34f : 28f, 30f));
 
                 var selected = UiFactory.Image(parts.Rect, "Selected", Palette.Gold, Shapes.Frame, true);
                 selected.rectTransform.Stretch(-3, -3, -3, -3);

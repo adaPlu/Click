@@ -1288,3 +1288,24 @@ premium-key guard sets them aside.
 
 **Open**: 4-8% of built-up runs end on the clock, and every one is the bot failing to navigate 25 tiles. If that climbs
 it is measuring the bot, not the dungeon.
+
+### The skill strip's placement (2026-09-28)
+
+D-075 shipped with its placement 'verified by a compile and nothing else'. It was wrong twice, and both were only
+findable by looking at it.
+
+1. **Landscape: it was behind the nav bar.** A row at y -446 sat exactly under INVENTORY / TALENTS / SHOP and all that
+   showed was a sliver of its top edge. The reference art's ability row has no space for a sixth button and none
+   beneath it, so the skills are a column beside it now, in the band between POTION and the right banner.
+2. **Portrait: it was off the screen.** The landscape fix put it at x +565, which on a 1080-wide portrait stage is
+   past the edge - the three buttons were sliced down to `HOC`, `RA`, `HIEL` against the right border. The placement
+   is layout-aware now: a column beside the abilities in landscape, a row under the goal panel in portrait, where
+   there was empty space all along.
+
+The demo profile also reached only one skill of three (it learned `k_cleave` but never `k_light_step`, so
+`k_treasure_sense` stayed locked), which is why a screenshot of it was not a screenshot of the feature. It is level 9
+now and learns all three tier-2 talents in tier order.
+
+**Still open, and honest**: every capture had all three skills legitimately unusable - no adjacent monster and full
+health - so the LIT state has never been seen, only the dim one. And a dimmed button reads the same whether it has no
+target or cannot be afforded, which on a screen showing 6/6 mana and costs of 3/3/2 is misleading.
