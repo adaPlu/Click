@@ -78,13 +78,32 @@ namespace ClickDungeon.Domain
         /// <summary>Mana (D-032): SHIELD and DASH spend it; +1 at the end of every turn, full on every new floor.</summary>
         public int Mana;
         public int MaxMana;
-        /// <summary>Divine Shield (D-037) has saved the hero on this floor; it comes back on the next.</summary>
-        public bool WardSpent;
+        /// <summary>
+        /// A resurrection in place (D-082): the hearts the next lethal blow gives back instead of ending the run.
+        /// Zero is none. It used to be <c>WardSpent</c>, a flag read against a talent that was always silently armed;
+        /// making it a NUMBER THE HERO CARRIES is what lets a Phoenix Feather place one, and what makes "only one at
+        /// a time" a fact about the hero rather than a rule written separately everywhere that could place it.
+        /// </summary>
+        public int Ward;
+
+        /// <summary>What the hero is carrying that can be spent on a turn (D-082). Potions are not in here.</summary>
+        public List<CarriedUsable> Usables = new List<CarriedUsable>();
         /// <summary>Dodge (D-063) has turned a blow aside on this floor; it comes back on the next.</summary>
         public bool DodgeSpent;
 
         /// <summary>Caught in a Cave Spider's web (D-061): while above zero the hero cannot Move or Dash. One turn.</summary>
         public int WebbedTurns;
+    }
+
+    /// <summary>
+    /// One usable in the hero's pack (D-082), and how many charges are left on it. A multi-use item is one entry with
+    /// several charges rather than several entries, so "how many do I have" has one answer.
+    /// </summary>
+    [Serializable]
+    public sealed class CarriedUsable
+    {
+        public string Id;
+        public int Charges;
     }
 
     [Serializable]
@@ -214,6 +233,12 @@ namespace ClickDungeon.Domain
         /// written before it existed, which reads as "start from the class's own hearts".
         /// </summary>
         public int StartingMaxHp;
+        /// <summary>
+        /// Phoenix Feathers bought from the shop while this run was underway (D-084). The dungeon sells one cheaper
+        /// than the title screen does, and exactly once: without the cap, a refunded feather (DATA-53) could be bought
+        /// low, carried out unspent and banked, and the dearer title-screen offer would be dead content.
+        /// </summary>
+        public int DungeonFeathersBought;
 
         public int Perk(TalentEffect effect) => Perks != null && Perks.TryGetValue(effect.ToString(), out int v) ? v : 0;
 

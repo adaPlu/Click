@@ -14,10 +14,19 @@ namespace ClickDungeon.Application
     {
         PotionRation, HeartToken, SpecialKey, CoinPouch, GemPouch,
         ManaTonic, StrengthElixir, FortuneScroll, WisdomScroll, GearChest, RoyalChest,
+        // Appended (D-082), so no existing value moves.
+        PhoenixFeather,
     }
 
     /// <summary>What the shop tabs hold (D-036).</summary>
     public enum ShopTab { Boosts, Gear, Chests, Exchange }
+
+    /// <summary>
+    /// Where the shop was opened from (D-084). It is one overlay shown in two places - the title screen and the nav
+    /// bar of a run in progress - and until now it sold the same things at the same prices in both. The Phoenix
+    /// Feather is the first thing that differs: cheaper below, and only once a run.
+    /// </summary>
+    public enum ShopPlace { Title = 0, Dungeon = 1 }
 
     /// <summary>
     /// The shop (D-025, D-036, rules §13). Prices live here so the rules doc and the shop screen cannot drift apart. It only
@@ -31,6 +40,22 @@ namespace ClickDungeon.Application
         public const int StrengthElixirCoins = 150;
         public const int FortuneScrollCoins = 100;
         public const int WisdomScrollCoins = 100;
+        /// <summary>
+        /// Dearer than anything else the shop sells for coins - past the gear chest's 400, which was the ceiling.
+        /// It is the only thing that answers death itself, it is carried rather than spent at the door, and since
+        /// REL-93 it outranks a capstone's ward rather than being blocked by one, so it is worth buying on all eight
+        /// classes. An unspent one now comes home (DATA-53), which is what stops the price being a gamble.
+        /// </summary>
+        /// <summary>
+        /// The feather is the only thing the shop sells for BOTH currencies, and the only thing whose price depends on
+        /// where you are standing (D-084). Underground it is a find: gems and a serious pile of coin, once per run.
+        /// On the title screen it costs double, because there it is a certainty rather than a chance - you can always
+        /// walk in and buy one, and that reliability is what you are paying for.
+        /// </summary>
+        public const int PhoenixFeatherGems = 12;
+        public const int PhoenixFeatherCoins = 300;
+        /// <summary>How many the dungeon will sell in one run. One: see ShopPlace.</summary>
+        public const int PhoenixFeathersPerRun = 1;
         /// <summary>Priced in gems, as on the store card (D-026).</summary>
         public const int SpecialKeyGems = 25;
         /// <summary>A chest with one random piece of gear, weighted by rarity; the royal one holds only rare or better.</summary>
@@ -50,12 +75,40 @@ namespace ClickDungeon.Application
         public static readonly ShopItem[] Stock =
         {
             ShopItem.PotionRation, ShopItem.HeartToken, ShopItem.ManaTonic, ShopItem.StrengthElixir,
-            ShopItem.FortuneScroll, ShopItem.WisdomScroll, ShopItem.SpecialKey,
+            ShopItem.FortuneScroll, ShopItem.WisdomScroll, ShopItem.PhoenixFeather, ShopItem.SpecialKey,
         };
         public static readonly ShopItem[] Chests = { ShopItem.GearChest, ShopItem.RoyalChest };
         public static readonly ShopItem[] Exchanges = { ShopItem.CoinPouch, ShopItem.GemPouch };
 
         const ulong ChestSalt = 0x53484F505F434845UL, StockSalt = 0x53484F505F535443UL;
+
+        /// <summary>The coins this costs where it is being sold. Zero when it is bought with gems alone.</summary>
+        public static int CoinCost(ShopItem item, ShopPlace place = ShopPlace.Title)
+        {
+            if (item == ShopItem.PhoenixFeather) return PhoenixFeatherCoins * (place == ShopPlace.Dungeon ? 1 : 2);
+            return PricedInGems(item) ? 0 : Price(item);
+        }
+
+        /// <summary>The gems this costs where it is being sold. Zero when it is bought with coins alone.</summary>
+        public static int GemCost(ShopItem item, ShopPlace place = ShopPlace.Title)
+        {
+            if (item == ShopItem.PhoenixFeather) return PhoenixFeatherGems * (place == ShopPlace.Dungeon ? 1 : 2);
+            return PricedInGems(item) ? Price(item) : 0;
+        }
+
+        /// <summary>
+        /// What is on the shelf. The dungeon withdraws the feather once this run has had its one (D-084); everything
+        /// else is the same list in both places.
+        /// </summary>
+        public static ShopItem[] StockFor(ShopPlace place, RunState run)
+        {
+            if (place != ShopPlace.Dungeon || DungeonWillSellAFeather(run)) return Stock;
+            return System.Array.FindAll(Stock, i => i != ShopItem.PhoenixFeather);
+        }
+
+        /// <summary>Whether this run still has its one dungeon feather to buy.</summary>
+        public static bool DungeonWillSellAFeather(RunState run) =>
+            run != null && run.DungeonFeathersBought < PhoenixFeathersPerRun;
 
         public static int Price(ShopItem item)
         {
@@ -71,6 +124,7 @@ namespace ClickDungeon.Application
                 case ShopItem.WisdomScroll: return WisdomScrollCoins;
                 case ShopItem.GearChest: return GearChestCoins;
                 case ShopItem.RoyalChest: return RoyalChestGems;
+                case ShopItem.PhoenixFeather: return PhoenixFeatherCoins;
                 default: return PotionRationCoins;
             }
         }
@@ -95,6 +149,7 @@ namespace ClickDungeon.Application
                 case ShopItem.WisdomScroll: return "WISDOM SCROLL";
                 case ShopItem.GearChest: return "GEAR CHEST";
                 case ShopItem.RoyalChest: return "ROYAL CHEST";
+                case ShopItem.PhoenixFeather: return "PHOENIX FEATHER";
                 default: return "POTION RATION";
             }
         }
@@ -117,6 +172,13 @@ namespace ClickDungeon.Application
                 case ShopItem.WisdomScroll: return $"+{t.WisdomScrollXp} XP for every floor walked down on your next run.";
                 case ShopItem.GearChest: return "One random piece of gear. Rarer gear is rarer. One you own becomes coins.";
                 case ShopItem.RoyalChest: return "One random piece of rare, epic or legendary gear.";
+                case ShopItem.PhoenixFeather:
+                {
+                    var feather = catalog.UsableOrNull("phoenix_feather");
+                    return feather == null ? "A Phoenix Feather, carried into your next run."
+                        : $"Carried into your next run. Use it to place a resurrection: the blow that would end you "
+                          + $"leaves you at {feather.Amount} hearts instead. Only one can be in place at a time.";
+                }
                 default: return $"+{t.PotionRationPotions} potion on your next run.";
             }
         }
@@ -133,12 +195,16 @@ namespace ClickDungeon.Application
                 case ShopItem.StrengthElixir: return profile.StrengthElixirs;
                 case ShopItem.FortuneScroll: return profile.FortuneScrolls;
                 case ShopItem.WisdomScroll: return profile.WisdomScrolls;
+                case ShopItem.PhoenixFeather: return profile.PhoenixFeathers;
                 default: return -1;
             }
         }
 
-        public static bool CanAfford(ProfileState profile, ShopItem item) =>
-            profile != null && (PricedInGems(item) ? profile.Gems : profile.Coins) >= Price(item);
+        public static bool CanAfford(ProfileState profile, ShopItem item) => CanAfford(profile, item, ShopPlace.Title);
+
+        /// <summary>Both purses, because one thing the shop sells asks for both (D-084).</summary>
+        public static bool CanAfford(ProfileState profile, ShopItem item, ShopPlace place) =>
+            profile != null && profile.Coins >= CoinCost(item, place) && profile.Gems >= GemCost(item, place);
 
         /// <summary>Buys one, or returns false and changes nothing when the coins or gems are not there.</summary>
         public static bool TryBuy(ProfileState profile, ShopItem item) => TryBuy(profile, item, null, out _);
@@ -147,13 +213,24 @@ namespace ClickDungeon.Application
         /// Buys one. A chest needs the catalog and reports what it held in <paramref name="found"/> (an item id), which has
         /// already joined the inventory or, if owned, become coins.
         /// </summary>
-        public static bool TryBuy(ProfileState profile, ShopItem item, ContentCatalog catalog, out string found)
+        public static bool TryBuy(ProfileState profile, ShopItem item, ContentCatalog catalog, out string found) =>
+            TryBuy(profile, item, catalog, ShopPlace.Title, null, out found);
+
+        /// <summary>
+        /// Buys one where the player is standing (D-084). The dungeon sells the feather cheaper and only while this
+        /// run still has its one; `run` is what remembers that, so it must be passed for a dungeon sale to be capped.
+        /// </summary>
+        public static bool TryBuy(ProfileState profile, ShopItem item, ContentCatalog catalog, ShopPlace place,
+            RunState run, out string found)
         {
             found = null;
             bool chest = item == ShopItem.GearChest || item == ShopItem.RoyalChest;
-            if (!CanAfford(profile, item) || chest && (catalog == null || catalog.Items.Count == 0)) return false;
-            if (PricedInGems(item)) profile.Gems -= Price(item);
-            else profile.Coins -= Price(item);
+            if (!CanAfford(profile, item, place) || chest && (catalog == null || catalog.Items.Count == 0)) return false;
+            // The cap is enforced HERE and not only by what the shelf shows: a shelf is a view, and a view is not a rule.
+            if (item == ShopItem.PhoenixFeather && place == ShopPlace.Dungeon && !DungeonWillSellAFeather(run)) return false;
+            profile.Coins -= CoinCost(item, place);
+            profile.Gems -= GemCost(item, place);
+            if (item == ShopItem.PhoenixFeather && place == ShopPlace.Dungeon && run != null) run.DungeonFeathersBought++;
             switch (item)
             {
                 case ShopItem.HeartToken: profile.HeartTokens++; break;
@@ -164,6 +241,7 @@ namespace ClickDungeon.Application
                 case ShopItem.StrengthElixir: profile.StrengthElixirs++; break;
                 case ShopItem.FortuneScroll: profile.FortuneScrolls++; break;
                 case ShopItem.WisdomScroll: profile.WisdomScrolls++; break;
+                case ShopItem.PhoenixFeather: profile.PhoenixFeathers++; break;
                 case ShopItem.GearChest:
                 case ShopItem.RoyalChest:
                     // Each chest draws on the profile's own count, so reopening the game cannot re-roll one.

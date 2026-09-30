@@ -65,6 +65,10 @@ namespace ClickDungeon.Simulation
                     if (hero.Hp >= hero.MaxHp) return Fail(out reason, "Already at full health.");
                     return true;
 
+                case CommandKind.Use:
+                    // Like a skill, a web pins the feet and not the hands (D-082).
+                    return Usables.CanUse(run, catalog, command.Slot, out reason);
+
                 case CommandKind.Skill:
                     // A web pins the hero's feet, not their hands: the message has always said "Slash, shield, drink or
                     // wait it out", and a skill is one of the things they can still do standing still (D-075).

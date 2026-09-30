@@ -40,6 +40,9 @@ namespace ClickDungeon.Unity.Screens
         Action _changed;
         string _extraNote;
         ShopTab _tab;
+        /// <summary>Where this shop is standing, and the run it is standing in (D-084). Null run = the title screen.</summary>
+        ShopPlace _place;
+        RunState _run;
 
         public ShopOverlay(RectTransform parent)
         {
@@ -97,10 +100,13 @@ namespace ClickDungeon.Unity.Screens
         /// <paramref name="note"/> is added to every tab's line, for the game screen's "outfits your next run".
         /// </summary>
         public void Open(ContentCatalog catalog, ProfileState profile, Func<DateTime> today, Action changed, ShopTab tab = ShopTab.Boosts,
-            string note = null)
+            string note = null, RunState run = null)
         {
             _catalog = catalog;
             _profile = profile;
+            // A run in hand means we are below ground, where the feather is cheaper and rationed (D-084).
+            _run = run;
+            _place = run != null ? ShopPlace.Dungeon : ShopPlace.Title;
             _today = today ?? (() => DateTime.Now);
             _changed = changed;
             _extraNote = note;
@@ -147,7 +153,8 @@ namespace ClickDungeon.Unity.Screens
                     for (int i = 0; i < Shop.Exchanges.Length; i++) ItemCard(Shop.Exchanges[i], Slot(i, Shop.Exchanges.Length));
                     break;
                 default:
-                    for (int i = 0; i < Shop.Stock.Length; i++) ItemCard(Shop.Stock[i], Slot(i, Shop.Stock.Length));
+                    var shelf = Shop.StockFor(_place, _run);
+                    for (int i = 0; i < shelf.Length; i++) ItemCard(shelf[i], Slot(i, shelf.Length));
                     break;
             }
         }
@@ -169,7 +176,8 @@ namespace ClickDungeon.Unity.Screens
             Body(card, Shop.Describe(item, _catalog));
             int waiting = Shop.Waiting(_profile, item);
             if (waiting > 0) Badge(card, $"x{waiting}");
-            Price(card, item.ToString(), Shop.Price(item), Shop.PricedInGems(item), Shop.CanAfford(_profile, item), null, () => Buy(item));
+            Price(card, item.ToString(), Shop.CoinCost(item, _place), Shop.GemCost(item, _place),
+                Shop.CanAfford(_profile, item, _place), null, () => Buy(item));
         }
 
         void GearCard(ItemDefinition item, Vector2 pos)
@@ -180,8 +188,10 @@ namespace ClickDungeon.Unity.Screens
             Label(card, item.DisplayName.ToUpperInvariant(), RarityColor(item.Rarity));
             Body(card, $"{item.Rarity} {item.Slot.ToString().ToLowerInvariant()}. {item.Effect}.");
             bool afford = (Shop.GearPricedInGems(item) ? _profile.Gems : _profile.Coins) >= Shop.GearPrice(item);
-            Price(card, item.Id, Shop.GearPrice(item), Shop.GearPricedInGems(item), afford && !owned, owned ? "OWNED" : null,
-                () => BuyGear(item));
+            // Gear is one currency or the other, never both: the coin slot or the gem slot, and zero in the other.
+            bool gearGems = Shop.GearPricedInGems(item);
+            Price(card, item.Id, gearGems ? 0 : Shop.GearPrice(item), gearGems ? Shop.GearPrice(item) : 0,
+                afford && !owned, owned ? "OWNED" : null, () => BuyGear(item));
         }
 
         RectTransform Card(string name, Vector2 pos, ItemRarity? rarity)
@@ -235,7 +245,11 @@ namespace ClickDungeon.Unity.Screens
         }
 
         /// <summary>The price button: the currency's icon and amount, dimmed when the purse cannot pay, or a word instead.</summary>
-        static void Price(RectTransform card, string id, int amount, bool gems, bool enabled, string word, Action buy)
+        /// <summary>
+        /// The buy button. One currency draws an icon and a number, as it always has; a price in BOTH (D-084 - only
+        /// the Phoenix Feather asks for both) draws gems then coins, so the button says exactly what it will take.
+        /// </summary>
+        static void Price(RectTransform card, string id, int coins, int gems, bool enabled, string word, Action buy)
         {
             var parts = UiFactory.Button(card, "Buy " + id, "", enabled ? Palette.PlayGreen : Palette.StoneDark, 24, buy);
             parts.Rect.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 12f), new Vector2(CardWidth - 40f, 50f));
@@ -246,12 +260,39 @@ namespace ClickDungeon.Unity.Screens
                 parts.Label.color = Palette.TextDim;
                 return;
             }
+
+            if (coins > 0 && gems > 0)
+            {
+                // Two pairs, centred together: [gem] 12  [coin] 300.
+                parts.Label.enabled = false;
+                var row = UiFactory.Rect(parts.Rect, "Both");
+                row.Place(Center, Center, Vector2.zero, new Vector2(CardWidth - 60f, 40f));
+                CostPair(row, -0.24f, gems, true);
+                CostPair(row, 0.26f, coins, false);
+                return;
+            }
+
+            bool inGems = gems > 0;
+            int amount = inGems ? gems : coins;
             parts.Label.text = amount.ToString("N0", CultureInfo.InvariantCulture);
             parts.Label.rectTransform.Stretch(44, 4, 8, 4);
             var icon = UiFactory.Rect(parts.Rect, "Icon");
             icon.Place(new Vector2(0.5f, 0.5f), Center, new Vector2(-38f - amount.ToString().Length * 6f, 0f), new Vector2(34f, 34f));
-            if (Icons.TryArtImage(icon, gems ? ArtKeys.GemIcon : ArtKeys.CoinIcon, 34f) == null)
-                Icons.Shape(icon, Shapes.Circle, gems ? Palette.Summon : Palette.Gold, Vector2.zero, new Vector2(26f, 26f));
+            if (Icons.TryArtImage(icon, inGems ? ArtKeys.GemIcon : ArtKeys.CoinIcon, 34f) == null)
+                Icons.Shape(icon, Shapes.Circle, inGems ? Palette.Summon : Palette.Gold, Vector2.zero, new Vector2(26f, 26f));
+        }
+
+        /// <summary>One icon-and-number of a two-currency price, anchored at a fraction across the button.</summary>
+        static void CostPair(RectTransform row, float at, int amount, bool gems)
+        {
+            var anchor = new Vector2(0.5f + at, 0.5f);
+            var icon = UiFactory.Rect(row, (gems ? "Gem" : "Coin") + "Icon");
+            icon.Place(anchor, Center, new Vector2(-22f, 0f), new Vector2(30f, 30f));
+            if (Icons.TryArtImage(icon, gems ? ArtKeys.GemIcon : ArtKeys.CoinIcon, 30f) == null)
+                Icons.Shape(icon, Shapes.Circle, gems ? Palette.Summon : Palette.Gold, Vector2.zero, new Vector2(24f, 24f));
+            var text = UiFactory.Text(row, (gems ? "Gem" : "Coin") + "Text",
+                amount.ToString("N0", CultureInfo.InvariantCulture), 24, Palette.TextLight, TextAnchor.MiddleLeft, FontStyle.Bold);
+            text.rectTransform.Place(anchor, new Vector2(0f, 0.5f), new Vector2(-2f, 0f), new Vector2(90f, 34f));
         }
 
         static Text PurseCount(RectTransform panel, Vector2 pos, string iconKey, Color fallback)
@@ -285,9 +326,11 @@ namespace ClickDungeon.Unity.Screens
         {
             bool chest = item == ShopItem.GearChest || item == ShopItem.RoyalChest;
             var owned = new HashSet<string>(_profile.Items ?? new List<string>());
-            if (!Shop.TryBuy(_profile, item, _catalog, out var found))
+            if (!Shop.TryBuy(_profile, item, _catalog, _place, _run, out var found))
             {
-                _status.text = "Not enough " + (Shop.PricedInGems(item) ? "gems." : "coins.");
+                _status.text = Shop.CoinCost(item, _place) > 0 && Shop.GemCost(item, _place) > 0
+                    ? "Not enough coins or gems."
+                    : "Not enough " + (Shop.GemCost(item, _place) > 0 ? "gems." : "coins.");
                 return;
             }
             if (chest)

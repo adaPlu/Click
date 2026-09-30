@@ -49,22 +49,49 @@ namespace ClickDungeon.Tests
             run.VisitedVault = FloorState.CreateEmpty();
             run.VisitedVaultDoor = P(2, 2);
             run.StartingMaxHp = 17;
+            run.DungeonFeathersBought = 1;
+            // ORDER MATTERS, and it did not hold. This block used to sit BELOW the assertion, so at the moment Copy
+            // was compared the hero still held Ward 0 and an empty pack: both sides serialised the same defaults and
+            // dropping either field from Copy(HeroState) left the whole suite green. The walk further down only
+            // enforces that a field HAS a value - the comparison is what tests Copy - so the values must be in place
+            // before it (TEST-106).
+            // HeroState is walked too (D-082). Copy(HeroState) lists its fields BY HAND, so a field added there is
+            // as easy to forget as one on RunState - and this guard could not see it, because it only ever walked
+            // the outer object. Ward and the pack were the two that prompted this.
+            run.Hero.Ward = 4;
+            run.Hero.Usables.Add(new CarriedUsable { Id = "phoenix_feather", Charges = 2 });
+            // The rest of the hero, so the walk below can see every one of its fields differ from a blank.
+            run.Hero.HasKey = true;
+            run.Hero.Guard = true;
+            run.Hero.Potions = 3;
+            run.Hero.Mana = 5;
+            run.Hero.MaxMana = 9;
+            run.Hero.Hp = 7;
+            run.Hero.MaxHp = 13;
+            run.Hero.SlashDamage = 4;
             Assert.That(SaveSerializer.ToJson(AutoPlayer.Copy(run)), Is.EqualTo(SaveSerializer.ToJson(run)));
 
             // And the reason this test exists has to be enforced, not intended. Twice now a field has been added to
             // RunState and left out of Copy - Movement and Threat (REL-44), then Skills (D-075) - and both times this
             // test was green, because a field nobody thought to set above is a field it cannot see. So: every field of
             // RunState must differ from a fresh one. Add a field, and this names it until it is given a value here.
+
             var fresh = new RunState();
-            foreach (var field in typeof(RunState).GetFields(BindingFlags.Public | BindingFlags.Instance))
+            var blankHero = new HeroState();
+            foreach (var pair in new[]
+                     {
+                         System.Tuple.Create(typeof(RunState), (object)run, (object)fresh),
+                         System.Tuple.Create(typeof(HeroState), (object)run.Hero, (object)blankHero),
+                     })
+            foreach (var field in pair.Item1.GetFields(BindingFlags.Public | BindingFlags.Instance))
             {
                 // The version stamps and the status of a live run are the same on any run; there is no "non-default"
                 // to give them, and Copy carrying them is pinned by the JSON comparison above.
                 if (field.Name.EndsWith("Version") || field.Name == "Status") continue;
-                Assert.That(Newtonsoft.Json.JsonConvert.SerializeObject(field.GetValue(run)),
-                    Is.Not.EqualTo(Newtonsoft.Json.JsonConvert.SerializeObject(field.GetValue(fresh))),
-                    $"RunState.{field.Name} still holds its default here, so this test cannot tell whether Copy carries it. "
-                    + "Give it a value above.");
+                Assert.That(Newtonsoft.Json.JsonConvert.SerializeObject(field.GetValue(pair.Item2)),
+                    Is.Not.EqualTo(Newtonsoft.Json.JsonConvert.SerializeObject(field.GetValue(pair.Item3))),
+                    $"{pair.Item1.Name}.{field.Name} still holds its default here, so this test cannot tell whether "
+                    + "Copy carries it. Give it a value above.");
             }
         }
 

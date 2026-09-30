@@ -19,6 +19,12 @@ namespace ClickDungeon.Domain
         public int PotionRations;
         /// <summary>Bought and not yet spent: extra hearts the next run starts with.</summary>
         public int HeartTokens;
+        /// <summary>
+        /// Bought and not yet spent: Phoenix Feathers the next run sets out carrying (D-082). Unlike every other
+        /// provision, this one is not spent at the door - it goes into the pack and the player chooses the moment.
+        /// A profile written before this reads 0, which is why ProfileSchema does not move.
+        /// </summary>
+        public int PhoenixFeathers;
 
         /// <summary>The shop's boosts for the next run (D-036), bought and not yet spent.</summary>
         public int ManaTonics;

@@ -24,6 +24,17 @@ namespace ClickDungeon.Application
             profile.Gems += Math.Max(0, run.GemsFound);
             // A key whose chest was never reached is not lost: it goes back in the pocket for the next run.
             if (run.Hero != null) profile.SpecialKeys += Math.Max(0, run.Hero.SpecialKeys);
+            // And neither is a feather that was never needed (DATA-53). Every OTHER provision is converted into a
+            // starting number at the door and has nothing left to give back; a usable is CARRIED and chosen, which
+            // makes it the special key's kin, not the potion ration's. Without this a player who bought two feathers
+            // and died on floor 2 lost 500 coins, while their unused key came straight back - and it contradicted
+            // Abandon's own promise that giving up is not a way to lose coins.
+            if (run.Hero?.Usables != null)
+                foreach (var carried in run.Hero.Usables)
+                {
+                    if (carried == null || carried.Charges <= 0) continue;
+                    if (carried.Id == "phoenix_feather") profile.PhoenixFeathers += carried.Charges;
+                }
             profile.RunsFinished++;
             if (run.Status == RunStatus.Won) profile.RunsWon++;
             profile.MonstersSlain += Math.Max(0, run.MonstersSlain);
@@ -53,6 +64,10 @@ namespace ClickDungeon.Application
             // Renown's threat (D-040, D-067). Floor 1 is already laid out, and threat only reaches the deep floors.
             run.Threat = Progression.Threat(profile, catalog);
             RunFactory.RevealByTalents(run, events ?? new List<GameEvent>());
+            // The talent's ward, now that the talents exist (D-082). SetupFloor places it on every floor, but it runs
+            // BEFORE this - while the hero is still a blank class with no perks - so floor one, the floor a capstone
+            // is most likely to be needed on, would have had none. The tests caught it; nothing else would have.
+            Usables.PlaceTalentWard(run, events);
             // Everything the profile brought has landed by here; what the chests are allowed to add is measured from it.
             run.StartingMaxHp = run.Hero.MaxHp;
         }
@@ -88,6 +103,15 @@ namespace ClickDungeon.Application
             {
                 run.Hero.Potions += profile.PotionRations * catalog.Treasure.PotionRationPotions;
                 profile.PotionRations = 0;
+            }
+            // The feathers go into the PACK, not into a starting number (D-082). Every other provision is spent at the
+            // door and the run never knows it existed; this one the player carries and chooses the moment for, which
+            // is the whole point of it being a usable rather than another boost.
+            if (profile.PhoenixFeathers > 0)
+            {
+                var feather = catalog.UsableOrNull("phoenix_feather");
+                if (feather != null) Usables.Give(run.Hero, feather, profile.PhoenixFeathers);
+                profile.PhoenixFeathers = 0;
             }
             // The shop's other boosts (D-036): each is spent into the run's starting numbers.
             var t = catalog.Treasure;
@@ -309,6 +333,7 @@ namespace ClickDungeon.Application
                 profile.HeartTokens = Math.Max(0, profile.HeartTokens);
                 profile.SpecialKeys = Math.Max(0, profile.SpecialKeys);
                 profile.ManaTonics = Math.Max(0, profile.ManaTonics);
+                profile.PhoenixFeathers = Math.Max(0, profile.PhoenixFeathers);
                 profile.StrengthElixirs = Math.Max(0, profile.StrengthElixirs);
                 profile.FortuneScrolls = Math.Max(0, profile.FortuneScrolls);
                 profile.WisdomScrolls = Math.Max(0, profile.WisdomScrolls);

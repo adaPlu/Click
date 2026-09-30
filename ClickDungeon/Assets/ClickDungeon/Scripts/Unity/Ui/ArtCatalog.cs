@@ -153,6 +153,20 @@ namespace ClickDungeon.Unity.Ui
                 default: return AbilityIcon(CommandKind.Slash);
             }
         }
+        /// <summary>The picture on a carried usable's button (D-083); null falls back to what its effect suggests.</summary>
+        public static string UsableIcon(UsableDefinition usable)
+        {
+            if (usable == null) return null;
+            if (!string.IsNullOrEmpty(usable.Icon)) return usable.Icon;
+            switch (usable.Effect)
+            {
+                // Until a feather is sliced, the mend's green cross is the closest true thing: it is the icon the game
+                // already uses for "this gives hearts back". A wrong picture is worse than a plain one.
+                case UsableEffect.Ward: return SkillHeal;
+                default: return AbilityIcon(CommandKind.Potion);
+            }
+        }
+
         public const string ExitOpen = "tile_exit_open";
         // Production tile set (rules §11). The sheets name the exit "stair down", so both spellings are accepted.
         public const string StairDownLocked = "tile_stair_down_locked";

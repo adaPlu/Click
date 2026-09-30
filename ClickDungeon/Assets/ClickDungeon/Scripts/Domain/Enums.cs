@@ -30,8 +30,11 @@ namespace ClickDungeon.Domain
         // (D-075). A ruleset-15 save resumes with no skills until the next run starts and takes them from the profile.
         // 17 for the first run of a profile starting with a few more hearts and a potion (D-076); 18 for the chests'
         // heart allowance, measured down by whatever the hero brought with them (D-077); 19 for the deep dungeon
-        // losing patience with a hero who lingers, and the patience being the tier's less their renown (D-078).
-        public const int Ruleset = 19;
+        // losing patience with a hero who lingers, and the patience being the tier's less their renown (D-078);
+        // 20 for carried usables and the resurrection becoming a ward that is PLACED rather than a passive that
+        // silently waits (D-082). A ruleset-19 save resumes with an empty pack; the ward is re-placed by the talent
+        // on the next floor, so nothing is lost but the floor it is resumed on.
+        public const int Ruleset = 20;
         // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
         // 3: the first expansion monsters join the floors' enemy pools (D-058), so floors from seed N differ again.
         // 4: twenty floors in acts, the second wave in the pools and the key warden holding keys (D-062). A seven-floor save
@@ -94,7 +97,17 @@ namespace ClickDungeon.Domain
     public enum MovementMode { Free = 0, Step = 1 }
 
     // Skill is appended, so no saved or recorded command changes meaning (D-075).
-    public enum CommandKind { Move = 0, Wait, Slash, Shield, Dash, Potion, Interact, Skill }
+    public enum CommandKind { Move = 0, Wait, Slash, Shield, Dash, Potion, Interact, Skill, Use }
+
+    /// <summary>
+    /// What a carried usable does when it is spent (D-082). Potions are not one of these: they are older than the
+    /// system, have their own command and their own button, and moving them would change what every save means.
+    /// </summary>
+    public enum UsableEffect
+    {
+        /// <summary>Places a resurrection: the next blow that would end the run leaves the hero at <c>Amount</c> hearts.</summary>
+        Ward = 0,
+    }
 
     /// <summary>What a usable skill needs pointed at it (D-075).</summary>
     public enum SkillTarget

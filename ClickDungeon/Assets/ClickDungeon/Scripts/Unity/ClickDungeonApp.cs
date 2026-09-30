@@ -116,6 +116,9 @@ namespace ClickDungeon.Unity
                     for (int f = 0; f < 3; f++) yield return null;
                 }
             }
+            // -cdPocket n: the last slot shows pocket n (0 is the potion). Without it a screenshot can only ever
+            // show the default, and the swapped state would be verified by a compile and nothing else (D-083).
+            if (_game != null && int.TryParse(ArgValue("-cdPocket"), out var pocket)) _game.AutomationPocket(pocket);
             var overlay = ArgValue("-cdOverlay");
             if (overlay != null)
             {
@@ -290,6 +293,9 @@ namespace ClickDungeon.Unity
             foreach (var id in new[] { "k_opening_strike", "k_opening_strike", "k_sturdy", "k_light_step",
                                        "k_cleave", "k_shield_wall", "k_treasure_sense", "k_executioner" })
                 Progression.TryLearn(profile, demo, id);
+            // Two feathers, for the same reason the level is nine (D-083): with an empty pack the last slot has
+            // nothing to swap to, so a screenshot of it is a screenshot of the old POTION button and proves nothing.
+            profile.PhoenixFeathers = 2;
             profile.RunsFinished = 14;
             profile.RunsWon = 2;
             profile.MonstersSlain = 61;

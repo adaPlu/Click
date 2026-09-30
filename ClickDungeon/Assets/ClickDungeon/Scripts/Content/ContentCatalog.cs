@@ -116,6 +116,8 @@ namespace ClickDungeon.Content
         public readonly List<RewardEntry> ChestRewards = new List<RewardEntry>();
         /// <summary>Equipment, in drop-table order (D-028). A drop picks one by hash; a duplicate becomes coins at banking.</summary>
         public readonly List<ItemDefinition> Items = new List<ItemDefinition>();
+        /// <summary>What can be carried and spent on a turn (D-082), by id.</summary>
+        public readonly Dictionary<string, UsableDefinition> Usables = new Dictionary<string, UsableDefinition>();
         public int DuplicateItemCoins = 25;
         /// <summary>The daily reward's week (D-029): day one after a missed day, and again after day seven.</summary>
         public readonly List<RewardBundle> DailyRewards = new List<RewardBundle>();
@@ -194,6 +196,14 @@ namespace ClickDungeon.Content
                 PerRank = perRank, Effect = effect, Amount = amount, Requires = requires, SkillId = skill,
             });
 
+        /// <summary>Something carried and spent on a turn (D-082).</summary>
+        static void Usable(ContentCatalog c, string id, string name, string summary, int charges, UsableEffect effect,
+            int amount, string icon = null) =>
+            c.Usables.Add(id, new UsableDefinition
+            {
+                Id = id, DisplayName = name, Summary = summary, Charges = charges, Effect = effect, Amount = amount, Icon = icon,
+            });
+
         /// <summary>A usable skill (D-075), named by the talent that unlocks it.</summary>
         static void Skill(ContentCatalog c, string id, string classId, string name, string summary,
             int manaCost, SkillEffect effect, int amount, SkillTarget target, int range = 1, string icon = null) =>
@@ -212,6 +222,9 @@ namespace ClickDungeon.Content
         }
 
         public List<TalentDefinition> TalentsOf(string classId) => Talents.FindAll(t => t.ClassId == classId);
+
+        /// <summary>The usable with this id, or null. For the places that hold an id they did not choose - a save, a pack.</summary>
+        public UsableDefinition UsableOrNull(string id) => id != null && Usables.TryGetValue(id, out var u) ? u : null;
 
         public ItemDefinition Item(string id)
         {
@@ -254,6 +267,9 @@ namespace ClickDungeon.Content
         }
 
         public SkillDefinition Skill(string id) => Get(Skills, id, "skill");
+
+        /// <summary>The usable with this id. For the places that name one they chose (D-082).</summary>
+        public UsableDefinition Usable(string id) => Get(Usables, id, "usable");
 
         /// <summary>The skill with this id, or null. For the places that hold an id they did not choose - a save, a profile.</summary>
         public SkillDefinition SkillOrNull(string id) => id != null && Skills.TryGetValue(id, out var s) ? s : null;
@@ -617,8 +633,10 @@ namespace ClickDungeon.Content
                 "SHIELD costs 1 less mana", TalentEffect.ShieldCostCut, requires: "c_faith", skill: "cle_ward");
             Talent(c, "c_blessed_ward", "cleric", "sanctity", 3, 1, "Blessed Ward", "Every block, a blessing.",
                 "Blocked attacks heal 1 more", TalentEffect.Sanctuary, requires: "c_swift_grace");
-            Talent(c, "c_miracle", "cleric", "sanctity", 4, 1, "Miracle", "Not yet.",
-                "Once per floor, a blow that would end you leaves you at 1 heart and heals 3", TalentEffect.DivineShield, amount: 3, requires: "c_blessed_ward");
+            // D-082: the Cleric's capstone is the Phoenix Feather in its spell form. It places the same resurrection
+            // the carried feather does, on every floor, and the same rule governs both - one in place at a time.
+            Talent(c, "c_miracle", "cleric", "sanctity", 4, 1, "Phoenix Feather", "Not yet.",
+                "Every floor a resurrection is placed: a blow that would end you leaves you at 1 heart and heals 3", TalentEffect.DivineShield, amount: 3, requires: "c_blessed_ward");
             Talent(c, "c_rebuke", "cleric", "judgement", 1, 3, "Rebuke", "Strike the one who faltered.",
                 "+1 slash damage against a staggered enemy", TalentEffect.Judgement);
             Talent(c, "c_holy_light", "cleric", "judgement", 2, 1, "Holy Light", "Light bursts from the raised shield.",
@@ -1132,6 +1150,13 @@ namespace ClickDungeon.Content
                 manaCost: 3, effect: SkillEffect.Burst, amount: 2, target: SkillTarget.Self);
             Skill(c, "cle_dispel", "cleric", "Dispel Undead", "3 damage, doubled against the risen.",
                 manaCost: 3, effect: SkillEffect.Banish, amount: 3, target: SkillTarget.Enemy, range: 2);
+
+            // SEVEN, against the four a DivineShield capstone places (1 + 3). The feather has to outrank the talent
+            // or the Paladin, Wizard, Cleric and Berserker could never use one - their capstone holds the only slot on
+            // every floor, so a bought feather was destroyed for nothing (REL-93). Stronger, so it upgrades what is
+            // there; equal or weaker would be wasted, which is the rule feather-on-feather still follows.
+            Usable(c, "phoenix_feather", "Phoenix Feather", "Places a resurrection: the blow that would end you leaves you at 7 hearts instead. Replaces a weaker one.",
+                charges: 1, effect: UsableEffect.Ward, amount: 7);
 
             // Berserker - forward, always.
             Skill(c, "ber_whirl", "berserker", "Whirlwind", "3 damage to everything beside you.",

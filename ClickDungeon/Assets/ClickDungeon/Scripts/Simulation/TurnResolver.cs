@@ -104,6 +104,10 @@ namespace ClickDungeon.Simulation
                     if (run.Perk(TalentEffect.Sanctified) > 0) Mana.Refill(hero);
                     break;
                 }
+                case CommandKind.Use:
+                    Usables.Use(run, catalog, command.Slot, events);
+                    break;
+
                 case CommandKind.Interact:
                     if (Board.SleepingMimicAt(run.Floor, command.Target))
                     {

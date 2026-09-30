@@ -57,6 +57,15 @@ namespace ClickDungeon.Unity.Screens
         readonly List<SkillButton> _skills = new List<SkillButton>();
         /// <summary>Which slot is being aimed while <see cref="TargetMode.Skill"/> is on, or -1.</summary>
         int _skillSlot = -1;
+        /// <summary>
+        /// Which of <see cref="Usables.Pockets"/> the last slot is showing (D-083). Zero is the potion, which is
+        /// always there, so the bar never loses its fifth button however empty the pack is.
+        /// </summary>
+        int _pocket;
+        UnityEngine.UI.Image _pocketIcon;
+        UnityEngine.UI.Text _pocketLabel;
+        RectTransform _pocketCard;
+        RectTransform _pocketSwap;
         readonly List<string> _log = new List<string>();
 
         Text _face;
@@ -311,6 +320,8 @@ namespace ClickDungeon.Unity.Screens
             else if (kb.digit3Key.wasPressedThisFrame || kb.numpad3Key.wasPressedThisFrame) OnAbility(CommandKind.Shield);
             else if (kb.digit4Key.wasPressedThisFrame || kb.numpad4Key.wasPressedThisFrame) OnAbility(CommandKind.Dash);
             else if (kb.digit5Key.wasPressedThisFrame || kb.numpad5Key.wasPressedThisFrame) OnAbility(CommandKind.Potion);
+            // 6, 7 and 8 are the skills, so the pocket swaps on Tab (D-083).
+            else if (kb.tabKey.wasPressedThisFrame) CyclePocket();
             else if (kb.digit6Key.wasPressedThisFrame || kb.numpad6Key.wasPressedThisFrame) OnSkill(0);
             else if (kb.digit7Key.wasPressedThisFrame || kb.numpad7Key.wasPressedThisFrame) OnSkill(1);
             else if (kb.digit8Key.wasPressedThisFrame || kb.numpad8Key.wasPressedThisFrame) OnSkill(2);
@@ -435,7 +446,7 @@ namespace ClickDungeon.Unity.Screens
                     Submit(PlayerCommand.Shield());
                     break;
                 case CommandKind.Potion:
-                    Submit(PlayerCommand.Potion());
+                    Submit(CurrentPocket().Command);
                     break;
             }
         }
@@ -700,7 +711,10 @@ namespace ClickDungeon.Unity.Screens
             {
                 _app.Session.SaveProfile();
                 RefreshPurse();
-            }, tab, "<color=#F2C14E>Buys outfit your NEXT run.</color>" + found);
+                // The run goes with it (D-084): down here the feather is cheaper and there is one to be had.
+            }, tab, "<color=#F2C14E>Buys outfit your NEXT run.</color>" + found
+               + (Shop.DungeonWillSellAFeather(Run) ? "  <color=#F2C94C>A Phoenix Feather is going cheap down here - one per run.</color>" : ""),
+               Run);
         }
 
         void OpenHelp()
@@ -820,6 +834,10 @@ namespace ClickDungeon.Unity.Screens
             if (_goal != null) _goal.text = Goal(run, Catalog);
             if (_status != null) _status.text = $"TURN {run.Turn + 1}   ·   SLASH {Lines.SlashRange(run, Catalog)}   ·   KEY {(hero.HasKey ? "YES" : "NO")}"
                            + (hero.SpecialKeys > 0 ? $"   ·   SPECIAL KEYS {hero.SpecialKeys}" : "")
+                           // The resurrection, if one is in place (REL-92). It became a carried, spendable, purchasable
+                           // thing and the player still had no way to read it: the bot could see hero.Ward and decline
+                           // a pointless spend, the human could not.
+                           + (hero.Ward > 0 ? $"   ·   <color=#F2C94C>WARD {hero.Ward}</color>" : "")
                            // The dungeon's patience (D-078). Shown for every turn it is running out and every turn it
                            // is spent: a cost the player cannot see is a gotcha, and this one is meant to be answered
                            // by taking the stairs.
@@ -838,7 +856,7 @@ namespace ClickDungeon.Unity.Screens
             RefreshSkills(live);
             SetAbility(CommandKind.Dash, _mode == TargetMode.Dash, live && Commands.LegalTargets(run, CommandKind.Dash, Catalog).Count > 0,
                 dashCost.ToString(), true);
-            SetAbility(CommandKind.Potion, false, live && Commands.Validate(run, PlayerCommand.Potion(), Catalog, out _), hero.Potions.ToString());
+            RefreshPocket(live);
 
             _threats = Threats.Compute(run, Catalog);
             RenderBoard(animate);
@@ -974,6 +992,38 @@ namespace ClickDungeon.Unity.Screens
                 button.Parts.Label.color = look.Label;
                 button.Cost.color = look.Cost;
             }
+        }
+
+        /// <summary>
+        /// The last slot (D-083). It used to be POTION and nothing else; it now shows whichever pocket is selected,
+        /// and the count on it is that pocket's - potions left, or charges on the thing in the pack.
+        /// </summary>
+        void RefreshPocket(bool live)
+        {
+            var run = Run;
+            var pocket = CurrentPocket();
+            // Dimmed when pressing it would buy nothing (REL-92). The rules still allow the waste - the button stays
+            // clickable, exactly as a dim SHIELD does - but a feather that is about to be destroyed for nothing no
+            // longer looks identical to one that is about to save your life.
+            bool worthwhile = !Usables.WouldWaste(run, Catalog.UsableOrNull(pocket.UsableId));
+            SetAbility(CommandKind.Potion, false,
+                live && worthwhile && Commands.Validate(run, pocket.Command, Catalog, out _),
+                pocket.Count.ToString());
+
+            // The reference art draws a potion into the button itself, so anything else needs its own picture over
+            // the top. The potion shows nothing here and lets the button's own art through.
+            if (_pocketCard != null)
+            {
+                var def = pocket.IsPotion ? null : Catalog.UsableOrNull(pocket.UsableId);
+                _pocketCard.gameObject.SetActive(def != null);
+                if (def != null)
+                {
+                    _pocketIcon.enabled = UiArt.Apply(_pocketIcon, ArtKeys.UsableIcon(def));
+                    _pocketLabel.text = pocket.Label;
+                }
+            }
+            // Nothing to swap between is a swap button that would lie about what pressing it does.
+            if (_pocketSwap != null) _pocketSwap.gameObject.SetActive(Usables.Pockets(run, Catalog).Count > 1);
         }
 
         void SetAbility(CommandKind kind, bool selected, bool usable, string badge, bool manaCost = false)
@@ -1574,6 +1624,37 @@ namespace ClickDungeon.Unity.Screens
 
         HashSet<GridPos> SkillTargets(RunState run, int slot) => SkillTargets(run, Catalog, slot);
 
+        /// <summary>What the last slot is holding right now, with the index kept inside the list it indexes.</summary>
+        Usables.Pocket CurrentPocket()
+        {
+            var pockets = Usables.Pockets(Run, Catalog);
+            // The pack shrinks when the last feather is spent, so an index that was valid a turn ago may not be.
+            if (_pocket < 0 || _pocket >= pockets.Count) _pocket = 0;
+            return pockets[_pocket];
+        }
+
+        /// <summary>Automation only: put the last slot on a given pocket so a screenshot can show a swapped one.</summary>
+        public void AutomationPocket(int index)
+        {
+            _pocket = Math.Max(0, index);
+            Refresh(false);
+        }
+
+        /// <summary>Swaps the last slot to the next thing the hero is carrying, wrapping back to the potion.</summary>
+        void CyclePocket()
+        {
+            var pockets = Usables.Pockets(Run, Catalog);
+            if (pockets.Count <= 1)
+            {
+                Say("Nothing else in your pack to swap to.", Expression.Neutral);
+                return;
+            }
+            _pocket = (_pocket + 1) % pockets.Count;
+            var pocket = pockets[_pocket];
+            Say(pocket.IsPotion ? "Potion ready." : $"{pocket.Label} ready.", Expression.Neutral);
+            Refresh(false);
+        }
+
         void BuildAbilityBar()
         {
             var bar = UiFactory.Rect(Root, "AbilityBar");
@@ -1640,6 +1721,40 @@ namespace ClickDungeon.Unity.Screens
                 if (matched && kind == CommandKind.Move) selected.gameObject.SetActive(false);
                 var badge = UiFactory.Text(badgeBack.rectTransform, "Text", "", 26, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
                 badge.rectTransform.Stretch();
+
+                // The last slot is the pocket (D-083): a picture over the button for whatever is not the potion, and a
+                // pip to swap, shown only when there is something to swap to.
+                if (kind == CommandKind.Potion)
+                {
+                    // A CARD OVER THE WHOLE BUTTON, not a picture on top of it. The reference art bakes the potion
+                    // bottle AND the word POTION into the background, so an overlaid icon left a feather stuck to a
+                    // potion under a label reading POTION. Only covering the lot can say what is really in the slot.
+                    _pocketCard = UiFactory.Rect(parts.Rect, "PocketCard");
+                    _pocketCard.Stretch();
+                    var cardBg = UiFactory.Image(_pocketCard, "Bg", Palette.Navy, Shapes.Rounded, true);
+                    cardBg.rectTransform.Stretch();
+                    var cardBorder = UiFactory.Image(_pocketCard, "Border", Palette.GoldDark, Shapes.Frame, true);
+                    cardBorder.rectTransform.Stretch();
+                    UiArt.ApplyPanel(cardBg, cardBorder, ArtKeys.AbilityButtonDefault);
+
+                    _pocketIcon = UiFactory.Image(_pocketCard, "Icon", Color.white, Shapes.Square);
+                    _pocketIcon.rectTransform.Place(Center, Center, new Vector2(0f, 18f), new Vector2(66f, 66f));
+                    _pocketLabel = UiFactory.Text(_pocketCard, "Label", "", 17, Palette.TextLight, TextAnchor.LowerCenter, FontStyle.Bold);
+                    _pocketLabel.rectTransform.Place(new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(128f, 42f));
+                    _pocketLabel.horizontalOverflow = HorizontalWrapMode.Wrap;
+                    _pocketCard.gameObject.SetActive(false);
+
+                    // INSIDE the button, mirroring the count badge in the opposite corner. Outside it, over the
+                    // dungeon wall, it was dark-on-dark and read as a rendering artifact rather than a control - the
+                    // skill strip's mistake, found the same way it was: by looking at the screen (D-083).
+                    var swap = UiFactory.Button(parts.Rect, "Swap", "⇄", Palette.Navy, 28, CyclePocket);
+                    swap.Rect.Place(TopLeft, Center, new Vector2(32f, -32f), new Vector2(50f, 50f));
+                    _pocketSwap = swap.Rect;
+                    _pocketSwap.gameObject.SetActive(false);
+                    // The card is built after the count badge, so without this it covers it and a feather shows no
+                    // charges - which is the one number that button exists to carry.
+                    badgeBack.rectTransform.SetAsLastSibling();
+                }
 
                 _abilities[kind] = new AbilityButton { Parts = parts, Selected = selected, BadgeBack = badgeBack, Badge = badge, Group = group };
             }

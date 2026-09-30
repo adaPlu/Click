@@ -54,13 +54,15 @@ namespace ClickDungeon.Simulation
             if (blockable && soften > 0 && hero.Hp * 2 <= hero.MaxHp) amount = Math.Max(1, amount - soften);
             hero.Hp = Math.Max(0, hero.Hp - amount);
             events.Add(GameEvent.Of(GameEventKind.HeroDamaged, to: hero.Pos, amount: amount, source: source));
-            // Divine Shield (D-037): once per floor, the last heart holds.
-            int ward = run.Perk(TalentEffect.DivineShield);
-            if (hero.Hp == 0 && ward > 0 && !hero.WardSpent)
+            // The resurrection in place, if there is one (D-037, D-082). It used to be a flag checked against the
+            // DivineShield talent here; it is a number the hero carries now, so this asks only "is one in place" and
+            // does not care which of the roads to one placed it - the Cleric's capstone, a spent feather, or the next
+            // thing that can. Spending it is what makes room for another.
+            if (hero.Hp == 0 && hero.Ward > 0)
             {
-                hero.WardSpent = true;
-                hero.Hp = Math.Min(hero.MaxHp, 1 + ward);
-                events.Add(GameEvent.Of(GameEventKind.HeroHealed, to: hero.Pos, amount: hero.Hp, source: "divine_shield"));
+                hero.Hp = Math.Min(hero.MaxHp, hero.Ward);
+                hero.Ward = 0;
+                events.Add(GameEvent.Of(GameEventKind.HeroHealed, to: hero.Pos, amount: hero.Hp, source: "ward"));
             }
             return false;
         }

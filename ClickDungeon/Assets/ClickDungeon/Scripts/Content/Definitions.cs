@@ -328,6 +328,24 @@ namespace ClickDungeon.Content
     /// A piece of equipment (D-028, rules §15). What it does is a set of numbers added to the hero a run starts with, so an
     /// item is never read during a run.
     /// </summary>
+    /// <summary>
+    /// Something the hero carries and spends on a turn (D-082). An ItemDefinition is worn and passive; this is the
+    /// other kind, and the game had exactly one of them before now - the potion, which predates the idea and keeps
+    /// its own command and its own button.
+    /// </summary>
+    public sealed class UsableDefinition
+    {
+        public string Id;
+        public string DisplayName;
+        public string Summary;
+        /// <summary>Charges one of these carries when it is found or bought. One is a single use.</summary>
+        public int Charges = 1;
+        public UsableEffect Effect;
+        public int Amount;
+        /// <summary>The art key for its button; null falls back to the one its effect suggests.</summary>
+        public string Icon;
+    }
+
     public sealed class ItemDefinition
     {
         public string Id;

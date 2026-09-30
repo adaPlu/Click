@@ -80,6 +80,63 @@ namespace ClickDungeon.Tests
         }
 
         /// <summary>
+        /// The Wizard, which is the weakest class on both parity guards and the one that makes the casual floor hard
+        /// to place. Two candidate causes, separated here:
+        ///
+        ///   THE FIXTURE. BuiltUp spends breadth-first in catalogue order, and on the first pass it reaches every
+        ///   branch's tier-3 gate having spent 3 points where the gate wants 4 - except the third branch's, reached at
+        ///   5. So EVERY class silently loses its SECOND branch's tier-3 talent. For seven of them that is a minor
+        ///   perk (the Knight's Riposte, the Berserker's Pain Is Progress); for the Wizard it is Soul Siphon, the
+        ///   Relentless that D-081 measured as worth 13 wins to the Berserker, and its only sustain.
+        ///
+        ///   THE CLASS. The Wizard is the only one of eight whose three abilities include no mend, so it cannot turn
+        ///   the largest mana pool in the game into hearts. Its arcana tier 2 unlocks Arcane Nova, a Burst.
+        /// </summary>
+        [Test, Explicit("Measurement: the Wizard's missing sustain, fixture against class")]
+        public void Wizard()
+        {
+            // Instrument check first: the arcana build must actually carry Relentless, or every row below is noise.
+            var probe = ContentCatalog.CreateDefault(Difficulty.Medium);
+            string wiz = probe.HeroIdentities.Values.First(h => h.ClassId == "wizard").Id;
+            foreach (var branch in new[] { null, "arcana" })
+            {
+                var events = new List<GameEvent>();
+                var run = RunFactory.NewRun(7UL, probe, events, wiz, MovementMode.Free);
+                ProfileSystem.ProvisionRun(BalanceTests.BuiltUp(probe, "wizard", 12, branch), run, probe, events);
+                var perks = (run.Perks ?? new Dictionary<string, int>()).Where(x => x.Value != 0)
+                    .OrderBy(x => x.Key).Select(x => $"{x.Key} {x.Value}");
+                TestContext.Progress.WriteLine($"build {branch ?? "default",-8} hp {run.Hero.MaxHp,3} slash {run.Hero.SlashDamage,2} mana {run.Hero.MaxMana,2} | {string.Join(", ", perks)}");
+            }
+
+            var variants = new (string label, string branch, Action<ContentCatalog> tweak)[]
+            {
+                ("default (shipped)",  null,     null),
+                ("arcana build",       "arcana", null),
+                ("Nova -> mend 3",     null,     c => { var n = c.Skill("wiz_nova"); n.Effect = SkillEffect.Heal; n.Amount = 3; n.Target = SkillTarget.Self; n.ManaCost = 3; }),
+                ("both",               "arcana", c => { var n = c.Skill("wiz_nova"); n.Effect = SkillEffect.Heal; n.Amount = 3; n.Target = SkillTarget.Self; n.ManaCost = 3; }),
+            };
+
+            foreach (var (label, branch, tweak) in variants)
+            {
+                var c = ContentCatalog.CreateDefault(Difficulty.Medium);
+                tweak?.Invoke(c);
+                string heroId = c.HeroIdentities.Values.First(h => h.ClassId == "wizard").Id;
+                var line = new System.Text.StringBuilder($"{label,-18}");
+                foreach (var (cfg, runs, rate) in new[]
+                         { ("casual @120", 120, AutoPlayer.CasualMistakeRate), ("careless@60", 60, BalanceTests.NoviceMistakeRate) })
+                {
+                    int won = 0;
+                    for (ulong seed = 1; seed <= (ulong)runs; seed++)
+                        if (AutoPlayer.PlayRun(c, seed, BalanceTests.MaxCommands, rate, MovementMode.Free,
+                                blind: true, loots: true, heroId: heroId,
+                                profile: BalanceTests.BuiltUp(c, "wizard", 12, branch)).Status == RunStatus.Won) won++;
+                    line.Append($"   {cfg} {won,3}/{runs} ({100 * won / runs,3}%)");
+                }
+                TestContext.Progress.WriteLine(line.ToString());
+            }
+        }
+
+        /// <summary>
         /// The two built-up parity guards' own tables, at their own seed counts, so their floors can be set against a
         /// measurement rather than a memory. EveryClassTreeIsWorthPlaying is casual at 40; NoClassIsHopeless... is
         /// careless at 60.

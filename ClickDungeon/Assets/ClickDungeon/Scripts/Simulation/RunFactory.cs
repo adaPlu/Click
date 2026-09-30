@@ -261,7 +261,9 @@ namespace ClickDungeon.Simulation
             hero.HasKey = false;
             hero.Guard = false;
             hero.WebbedTurns = 0;
-            hero.WardSpent = false;
+            // D-082: the talent's ward is PLACED on arrival rather than waiting invisibly to be checked. Place never
+            // lowers one, so a hero carrying a stronger ward - a spent feather's - up the stairs keeps it.
+            Usables.PlaceTalentWard(run, events);
             hero.DodgeSpent = false;
             Mana.Refill(hero);
 

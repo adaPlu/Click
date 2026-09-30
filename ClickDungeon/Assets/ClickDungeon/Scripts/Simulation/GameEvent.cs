@@ -72,6 +72,13 @@ namespace ClickDungeon.Simulation
         HeroDodged,
         EnemyKnockedBack,
         DroneZapped,
+        // Carried usables and the placed ward (D-082), appended.
+        /// <summary>A usable was spent. Source is its id, Amount the charges left on it.</summary>
+        UsableSpent,
+        /// <summary>A resurrection is now in place. Amount is the hearts it will give back.</summary>
+        WardPlaced,
+        /// <summary>One was spent on a hero who already had a resurrection in place, and bought nothing.</summary>
+        WardWasted,
     }
 
     /// <summary>A record of something the simulation already decided. Presentation only reacts to these.</summary>
@@ -130,6 +137,8 @@ namespace ClickDungeon.Simulation
         /// <summary>A skill from one of the hero's slots (D-075). <paramref name="target"/> is ignored by a skill aimed at the hero.</summary>
         public static PlayerCommand Skill(int slot, GridPos target) => new PlayerCommand(CommandKind.Skill, target, slot);
         public static PlayerCommand Skill(int slot) => new PlayerCommand(CommandKind.Skill, GridPos.Invalid, slot);
+        /// <summary>Spend what is in this pocket of the pack (D-082).</summary>
+        public static PlayerCommand Use(int slot) => new PlayerCommand(CommandKind.Use, GridPos.Invalid, slot);
 
         public override string ToString() => Kind == CommandKind.Skill ? $"Skill{Slot}{Target}" : $"{Kind}{Target}";
     }

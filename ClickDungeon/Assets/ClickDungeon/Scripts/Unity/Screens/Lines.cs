@@ -256,9 +256,19 @@ namespace ClickDungeon.Unity.Screens
                 case GameEventKind.HeroBlocked:
                     return $"<color=#F2C94C>Shield blocked {e.Amount}</color> from {SourceName(e.Source, catalog)}.";
                 case GameEventKind.HeroHealed:
-                    return e.Source == "stairs"
+                    return e.Source == "ward"
+                        ? $"<color=#F2C94C>The resurrection took the blow: you are back at {e.Amount}.</color>"
+                        : e.Source == "stairs"
                         ? $"<color=#9FD8A0>Caught your breath on the stairs: healed {e.Amount}.</color>"
                         : $"<color=#9FD8A0>Healed {e.Amount}.</color>";
+                // D-082's three. Without these the simulation announced a ward and the player heard nothing: a feather
+                // spent, placed or WASTED all looked identical - the item simply vanished from the bar (REL-92).
+                case GameEventKind.WardPlaced:
+                    return $"<color=#F2C94C>A resurrection is in place: the blow that would end you leaves you at {e.Amount}.</color>";
+                case GameEventKind.WardWasted:
+                    return $"<color=#FF6B5E>Wasted: a resurrection of {e.Amount} was already in place.</color>";
+                case GameEventKind.UsableSpent:
+                    return e.Amount > 0 ? $"Used one. {e.Amount} left." : "Used the last one.";
                 case GameEventKind.EnemyMissed:
                     return $"{SourceName(e.Source, catalog)} hit an empty tile.";
                 case GameEventKind.EnemyFired:

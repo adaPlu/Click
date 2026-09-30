@@ -197,6 +197,16 @@ namespace ClickDungeon.Application
                 var command = new PlayerCommand(kind, GridPos.Invalid);
                 if (Commands.Validate(run, command, catalog, out _)) commands.Add(command);
             }
+            // The pack (D-082). A ward spent on a hero who already has one is legal and wastes the charge, so the
+            // bot is the one that declines it - playing well, not a rule of the game, the same split as D-081's heal.
+            for (int slot = 0; slot < (run.Hero?.Usables?.Count ?? 0); slot++)
+            {
+                var usable = Usables.InSlot(run, catalog, slot);
+                if (usable == null) continue;
+                if (Usables.WouldWaste(run, usable)) continue;
+                var use = PlayerCommand.Use(slot);
+                if (Commands.Validate(run, use, catalog, out _)) commands.Add(use);
+            }
             // The hero's skills (D-075). Without this the bot never uses one, and every balance number measured with a
             // built-up profile would silently be measuring a hero who left three of their abilities alone - the TEST-23
             // failure exactly, one system later.
@@ -666,15 +676,19 @@ namespace ClickDungeon.Application
                 // The chests' heart allowance is measured down from this (D-077), so a look-ahead without it would
                 // score a hero being handed hearts the real run will refuse. Third field to be left out of this copy,
                 // and the first the reflection guard caught before it shipped rather than after.
-                StartingMaxHp = run.StartingMaxHp,
+                StartingMaxHp = run.StartingMaxHp, DungeonFeathersBought = run.DungeonFeathersBought,
             };
         }
 
         static HeroState Copy(HeroState h) => new HeroState
         {
             IdentityId = h.IdentityId, ClassId = h.ClassId, Pos = h.Pos, Hp = h.Hp, MaxHp = h.MaxHp, SlashDamage = h.SlashDamage,
-            Potions = h.Potions, HasKey = h.HasKey, SpecialKeys = h.SpecialKeys, Guard = h.Guard, Mana = h.Mana, WardSpent = h.WardSpent, DodgeSpent = h.DodgeSpent, WebbedTurns = h.WebbedTurns,
+            Potions = h.Potions, HasKey = h.HasKey, SpecialKeys = h.SpecialKeys, Guard = h.Guard, Mana = h.Mana, Ward = h.Ward, DodgeSpent = h.DodgeSpent, WebbedTurns = h.WebbedTurns,
             MaxMana = h.MaxMana,
+            // D-082, and the fifth field this copy has had to be told about. The pack is a LIST, so copying the
+            // reference would let the look-ahead spend the hero's real feather while only pretending to.
+            Usables = h.Usables == null ? new List<CarriedUsable>()
+                : h.Usables.ConvertAll(u => new CarriedUsable { Id = u.Id, Charges = u.Charges }),
         };
 
         static FloorState Copy(FloorState f)

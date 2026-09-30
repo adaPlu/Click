@@ -16,6 +16,11 @@ namespace ClickDungeon.Tests
         static RunState With(RunState run, params (TalentEffect effect, int value)[] perks)
         {
             foreach (var (effect, value) in perks) run.Perks[effect.ToString()] = value;
+            // D-082: a ward is a thing the hero CARRIES, placed when the floor begins. Granting the talent after the
+            // floor was built is a thing only a test does, so the placement the game would have done happens here -
+            // through PRODUCTION's own function, not a copy of its arithmetic. Writing `1 + ward` out here again made
+            // the test below pass with production's placement deleted entirely (TEST-107).
+            Usables.PlaceTalentWard(run, null);
             return run;
         }
 

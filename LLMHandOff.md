@@ -1309,3 +1309,83 @@ now and learns all three tier-2 talents in tier order.
 **Still open, and honest**: every capture had all three skills legitimately unusable - no adjacent monster and full
 health - so the LIT state has never been seen, only the dim one. And a dimmed button reads the same whether it has no
 target or cannot be afforded, which on a screen showing 6/6 mana and costs of 3/3/2 is misleading.
+
+---
+
+# Audit 7 — D-082 usable items / Phoenix Feather, D-083 the action-bar pocket (2026-09-29)
+
+**Scope**: the 375 uncommitted insertions across 19 modified + 2 new files on `main` at efc00e7. Six read-only
+auditors (ward model, pack lifecycle + serialization, bot copy, UI pocket, shop/content, test quality), each
+independently verified; every High re-verified by the lead against the source before entering this table.
+The three stale worktrees under `.claude/worktrees` (at 4076142) were excluded from every brief.
+
+**Not covered**: no test suite was executed and no build was run during the audit — every verdict rests on source
+tracing plus the gate results already recorded this session (461 headless / 551 EditMode green). No Unity Editor
+run, no play test. MAINT-99's visual severity is corroborated by a screenshot captured earlier this session; the
+rest of the layout arithmetic is code-derived only. `Discovery.CanMark` gating of the three new event kinds was
+only partly traced and should be re-checked if REL-92 is fixed.
+
+| ID | Severity | Evidence | Title |
+|---|---|---|---|
+| REL-92 | High | VERIFIED | The ward is invisible and wasting a feather is silent — no signal before, during or after |
+| REL-93 | High | VERIFIED | The four DivineShield capstone classes are permanently warded, so a bought feather is always wasted |
+| DATA-53 | High | VERIFIED | Unspent feathers are destroyed at run end while unused Special Keys are refunded |
+| TEST-106 | High | VERIFIED | The Copy guard's new HeroState half is inert — the fixture is populated after the only assertion |
+| TEST-107 | High | VERIFIED | `With()` re-implements production, so nothing pins the ward to `1 + talent.Amount` |
+| REL-94 | Medium | VERIFIED | `Use` and `Place` give two different answers to "may this ward be replaced?" |
+| TEST-109 | Medium | VERIFIED | The whole UI half of D-083 (107 lines) has no test coverage |
+| MAINT-96 | Medium | VERIFIED | Two talents and a shop item now share the name "Phoenix Feather"; 3 of 4 kept the old wording |
+| TEST-111 | Medium | VERIFIED | The Copy guard still does not walk FloorState / CellState / EnemyState |
+| REL-95 | Low | VERIFIED | A ruleset-19 save resumes with no ward; understated for the last floor and act-boss floors |
+| DATA-54 | Low | VERIFIED (unreachable) | `Provision` zeroes `PhoenixFeathers` outside the `feather != null` guard |
+| MAINT-97 | Low | VERIFIED | `ArtKeys.ShopIcon` has no PhoenixFeather case; the shop card draws a blank grey box |
+| MAINT-98 | Low | VERIFIED | The usable's Summary hard-codes "4"; nothing enumerates `catalog.Usables` |
+| MAINT-99 | Low | VERIFIED | The pocket card covers the reference art's painted badge backing (matched landscape only) |
+| MAINT-100 | Low | VERIFIED | `AdoptFrom` does not carry `_pocket`; `-cdPocket` + `-cdRelayout` shoots the unswapped slot |
+| MAINT-101 | Low | NEEDS_MORE_EVIDENCE | `ProfileState.Copy()` drops `PhoenixFeathers` — no live caller today |
+| TEST-112 | Low | VERIFIED | `SaveSerializer.Validate` has no clause for the new pack, unlike the analogous `run.Skills` |
+| REL-96 | Low | NEEDS_MORE_EVIDENCE | `_pocket` can re-aim at a different usable — latent until a second usable ships |
+| MAINT-102 | Low | VERIFIED | `Score` never prices `Ward`; the bot's feather policy is emergent and undocumented |
+| MAINT-103 | Low | VERIFIED | `UsableDefinition` was inserted under `ItemDefinition`'s doc comment |
+| MAINT-104 | Low | VERIFIED | `PlayerCommand.ToString` and telemetry lose the `Use` slot |
+| TEST-113 | Low | VERIFIED | A vacuous assertion inside `AFeatherPlacesAResurrectionThatTakesTheKillingBlow` |
+
+## Negative results worth not re-deriving
+
+- **The one-ward invariant is structurally total.** One storage location, one consumption site, three write sites,
+  all enumerated. No counterexample could be constructed.
+- **Vault farming is impossible.** `EnterVault`/`LeaveVault` call `ArriveOnFloor`, not `SetupFloor`; `BeginFloor`
+  has three callers and the floor index is strictly monotonic; `Board.CanFallThrough` excludes vaults.
+- **`SaveSchema`/`ProfileSchema` staying at 1 is correct**, not contract drift. `CarriedUsable` is `[Serializable]`,
+  absent members keep their field initialisers (so an old save yields an empty pack, not null), `MissingMemberHandling.Ignore`
+  discards the removed `WardSpent`, and `SaveSchemaVersion` is compared with `!=` and throws — bumping it would
+  invalidate every existing save for an additive change.
+- **`AutoPlayer.Copy` is itself correct**: HeroState 16/16, RunState 32/32, FloorState 13/13, CellState 12/12,
+  EnemyState 16/16, and the pack deep-copy is genuine. The defect is in the guard, not the copy.
+- **Determinism holds.** `ContentCatalog.Usables` is a Dictionary but is never enumerated.
+- **Damage-type behaviour is unchanged** for all five `blockable: false` sources (spikes, lava, pit, stir).
+- **No stale-slot misfire today**: the command is rebuilt at press time and `TurnResolver.Apply` validates and
+  mutates in one call.
+
+## Remediation graph — shown, not implemented
+
+```
+A. TEST-106 (reorder the fixture above the assertion)  ──┐
+B. TEST-107 (make With() call production, pin 1+N)     ──┼─► F. re-run gates, re-baseline nothing
+C. TEST-111 (walk Floor/Cell/Enemy in the guard)       ──┘     (A,B,C share BalanceTests/ClassTalentTests —
+                                                                SERIALIZE, one worktree)
+
+D. REL-93 ─► REL-92 ─► MAINT-97/MAINT-99   (decide the feather's rule BEFORE building its feedback;
+   (the rule)  (the UI)   (its art)          all three touch the same player-facing story)
+
+E. DATA-53 (refund the pack in Bank) ∥ DATA-54 ∥ MAINT-101   (ProfileSystem/Profile — group, one agent)
+
+G. REL-94 ∥ REL-96 ∥ MAINT-104   (the "latent until a second usable" cluster — fix together or not at all)
+
+H. MAINT-96 (naming + wording) ∥ MAINT-98 ∥ MAINT-103 ∥ TEST-112 ∥ TEST-113 ∥ MAINT-100 ∥ MAINT-102
+   (independent, parallel-safe)
+
+Edge that inverts severity: D's REL-93 is a design decision and must precede REL-92, even though REL-92
+reads as the more urgent player-facing bug. Building feedback for a rule that is about to change is waste.
+```
+
