@@ -356,6 +356,22 @@
         1448
       ],
       "label": "Theater Curtain Demon (D-062)"
+    },
+    "ref-icons-consumables": {
+      "file": "IconsConsumablesStatus.png",
+      "size": [
+        1672,
+        941
+      ],
+      "label": "Consumable/usable item icons and status-effect icons (D-085)"
+    },
+    "ref-icons-abilities": {
+      "file": "IconsClassAbilities.png",
+      "size": [
+        1448,
+        1086
+      ],
+      "label": "Class ability icons, three per class for all eight (D-085)"
     }
   },
   "slices": [
@@ -8760,6 +8776,576 @@
       "folder": "Icons",
       "wired": true,
       "note": "The unlit bomb: the Engineer's charge and the Rogue's smoke."
+    },
+    {
+      "key": "icon_usable_phoenix_feather",
+      "source": "ref-icons-consumables",
+      "rect": [
+        474,
+        185,
+        133,
+        133
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "The feather itself. It wore the mend's green cross until now - true enough for 'gives hearts back' but it reads as a heal, and the shop card had no icon at all (MAINT-97)."
+    },
+    {
+      "key": "icon_skill_kni_shockwave",
+      "source": "ref-icons-abilities",
+      "rect": [
+        28,
+        326,
+        98,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for kni_shockwave (D-085)."
+    },
+    {
+      "key": "icon_skill_kni_rally",
+      "source": "ref-icons-abilities",
+      "rect": [
+        135,
+        326,
+        99,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for kni_rally (D-085)."
+    },
+    {
+      "key": "icon_skill_kni_shield_bash",
+      "source": "ref-icons-abilities",
+      "rect": [
+        243,
+        326,
+        99,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for kni_shield_bash (D-085)."
+    },
+    {
+      "key": "icon_skill_pal_smite",
+      "source": "ref-icons-abilities",
+      "rect": [
+        386,
+        326,
+        97,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for pal_smite (D-085)."
+    },
+    {
+      "key": "icon_skill_pal_bulwark",
+      "source": "ref-icons-abilities",
+      "rect": [
+        493,
+        326,
+        98,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for pal_bulwark (D-085)."
+    },
+    {
+      "key": "icon_skill_pal_lay_on_hands",
+      "source": "ref-icons-abilities",
+      "rect": [
+        601,
+        326,
+        98,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for pal_lay_on_hands (D-085)."
+    },
+    {
+      "key": "icon_skill_rog_throat_cut",
+      "source": "ref-icons-abilities",
+      "rect": [
+        749,
+        326,
+        97,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for rog_throat_cut (D-085)."
+    },
+    {
+      "key": "icon_skill_rog_smoke",
+      "source": "ref-icons-abilities",
+      "rect": [
+        856,
+        326,
+        98,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for rog_smoke (D-085)."
+    },
+    {
+      "key": "icon_skill_rog_bandage",
+      "source": "ref-icons-abilities",
+      "rect": [
+        964,
+        326,
+        99,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for rog_bandage (D-085)."
+    },
+    {
+      "key": "icon_skill_wiz_firebolt",
+      "source": "ref-icons-abilities",
+      "rect": [
+        1106,
+        326,
+        99,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for wiz_firebolt (D-085)."
+    },
+    {
+      "key": "icon_skill_wiz_nova",
+      "source": "ref-icons-abilities",
+      "rect": [
+        1214,
+        326,
+        98,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for wiz_nova (D-085)."
+    },
+    {
+      "key": "icon_skill_wiz_concussion",
+      "source": "ref-icons-abilities",
+      "rect": [
+        1322,
+        326,
+        100,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for wiz_concussion (D-085)."
+    },
+    {
+      "key": "icon_skill_ran_aimed_shot",
+      "source": "ref-icons-abilities",
+      "rect": [
+        28,
+        763,
+        98,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for ran_aimed_shot (D-085)."
+    },
+    {
+      "key": "icon_skill_ran_poultice",
+      "source": "ref-icons-abilities",
+      "rect": [
+        135,
+        763,
+        99,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for ran_poultice (D-085)."
+    },
+    {
+      "key": "icon_skill_ran_snare",
+      "source": "ref-icons-abilities",
+      "rect": [
+        243,
+        763,
+        99,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for ran_snare (D-085)."
+    },
+    {
+      "key": "icon_skill_cle_mend",
+      "source": "ref-icons-abilities",
+      "rect": [
+        386,
+        763,
+        97,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for cle_mend (D-085)."
+    },
+    {
+      "key": "icon_skill_cle_ward",
+      "source": "ref-icons-abilities",
+      "rect": [
+        493,
+        763,
+        98,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for cle_ward (D-085)."
+    },
+    {
+      "key": "icon_skill_cle_dispel",
+      "source": "ref-icons-abilities",
+      "rect": [
+        601,
+        763,
+        98,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for cle_dispel (D-085)."
+    },
+    {
+      "key": "icon_skill_ber_whirl",
+      "source": "ref-icons-abilities",
+      "rect": [
+        749,
+        763,
+        97,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for ber_whirl (D-085)."
+    },
+    {
+      "key": "icon_skill_ber_second_wind",
+      "source": "ref-icons-abilities",
+      "rect": [
+        856,
+        763,
+        98,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for ber_second_wind (D-085)."
+    },
+    {
+      "key": "icon_skill_ber_warcry",
+      "source": "ref-icons-abilities",
+      "rect": [
+        964,
+        763,
+        99,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for ber_warcry (D-085)."
+    },
+    {
+      "key": "icon_skill_eng_discharge",
+      "source": "ref-icons-abilities",
+      "rect": [
+        1106,
+        763,
+        99,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for eng_discharge (D-085)."
+    },
+    {
+      "key": "icon_skill_eng_repair",
+      "source": "ref-icons-abilities",
+      "rect": [
+        1214,
+        763,
+        98,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for eng_repair (D-085)."
+    },
+    {
+      "key": "icon_skill_eng_bomb",
+      "source": "ref-icons-abilities",
+      "rect": [
+        1322,
+        763,
+        100,
+        105
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Ability art for eng_bomb (D-085)."
+    },
+    {
+      "key": "icon_status_heal",
+      "source": "ref-icons-consumables",
+      "rect": [
+        107,
+        603,
+        102,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: heal (D-085)."
+    },
+    {
+      "key": "icon_status_damage",
+      "source": "ref-icons-consumables",
+      "rect": [
+        224,
+        603,
+        101,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: damage (D-085)."
+    },
+    {
+      "key": "icon_status_shield",
+      "source": "ref-icons-consumables",
+      "rect": [
+        340,
+        603,
+        104,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: shield (D-085)."
+    },
+    {
+      "key": "icon_status_burst",
+      "source": "ref-icons-consumables",
+      "rect": [
+        459,
+        603,
+        103,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: burst (D-085)."
+    },
+    {
+      "key": "icon_status_stagger",
+      "source": "ref-icons-consumables",
+      "rect": [
+        578,
+        603,
+        103,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: stagger (D-085)."
+    },
+    {
+      "key": "icon_status_smoke",
+      "source": "ref-icons-consumables",
+      "rect": [
+        697,
+        603,
+        104,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: smoke (D-085)."
+    },
+    {
+      "key": "icon_status_banish",
+      "source": "ref-icons-consumables",
+      "rect": [
+        817,
+        603,
+        104,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: banish (D-085)."
+    },
+    {
+      "key": "icon_status_blast",
+      "source": "ref-icons-consumables",
+      "rect": [
+        936,
+        603,
+        104,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: blast (D-085)."
+    },
+    {
+      "key": "icon_status_poison",
+      "source": "ref-icons-consumables",
+      "rect": [
+        1056,
+        603,
+        101,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: poison (D-085)."
+    },
+    {
+      "key": "icon_status_burn",
+      "source": "ref-icons-consumables",
+      "rect": [
+        1172,
+        603,
+        104,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: burn (D-085)."
+    },
+    {
+      "key": "icon_status_freeze",
+      "source": "ref-icons-consumables",
+      "rect": [
+        1292,
+        603,
+        106,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: freeze (D-085)."
+    },
+    {
+      "key": "icon_status_ward",
+      "source": "ref-icons-consumables",
+      "rect": [
+        1414,
+        603,
+        106,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: ward (D-085)."
+    },
+    {
+      "key": "icon_status_lock",
+      "source": "ref-icons-consumables",
+      "rect": [
+        1536,
+        603,
+        107,
+        106
+      ],
+      "mode": "icon",
+      "size": 128,
+      "folder": "Icons",
+      "wired": true,
+      "note": "Status/effect icon: lock (D-085)."
     }
   ]
 }

@@ -1113,9 +1113,54 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 180d0ebd502666147a5a0a7cc86e1575, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_skill_ber_second_wind
+    Frames:
+    - {fileID: 21300000, guid: 97ac0ed371a3d1349ba2a64237bee271, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_ber_warcry
+    Frames:
+    - {fileID: 21300000, guid: bf9681ec988b38c448048bc89f215d6b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_ber_whirl
+    Frames:
+    - {fileID: 21300000, guid: 2429e1365c616cb4780117595467bd92, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_skill_bomb
     Frames:
     - {fileID: 21300000, guid: 1c696ee1ac5627e4ca6c05bdcd81fe99, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_cle_dispel
+    Frames:
+    - {fileID: 21300000, guid: 7c8daa2fa5ca9064bad99bd11af0bf5d, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_cle_mend
+    Frames:
+    - {fileID: 21300000, guid: af99fc99cfb08984d905e9a15c1295b6, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_cle_ward
+    Frames:
+    - {fileID: 21300000, guid: cf474defe5b422c4d840a1cf2178644c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_eng_bomb
+    Frames:
+    - {fileID: 21300000, guid: 7eae1486c7687b74f8c6d4ad4b401fcf, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_eng_discharge
+    Frames:
+    - {fileID: 21300000, guid: cf1d8b001a160294e9dd79c4c08b96ee, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_eng_repair
+    Frames:
+    - {fileID: 21300000, guid: 0ab03edd2a9fc9f4e8431da0378da382, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: icon_skill_heal
@@ -1123,9 +1168,149 @@ MonoBehaviour:
     - {fileID: 21300000, guid: d66be37328bfb4d42934db121ab49d25, type: 3}
     Fps: 12
     Placeholder: 1
+  - Key: icon_skill_kni_rally
+    Frames:
+    - {fileID: 21300000, guid: 7716610a0419ead439224394b492ab33, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_kni_shield_bash
+    Frames:
+    - {fileID: 21300000, guid: 906b08495d2bf0541a9d2e287d4ce755, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_kni_shockwave
+    Frames:
+    - {fileID: 21300000, guid: 290baee3585e9df40aafbc0d574aba29, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_pal_bulwark
+    Frames:
+    - {fileID: 21300000, guid: 2d449548463101547af0a64a19762225, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_pal_lay_on_hands
+    Frames:
+    - {fileID: 21300000, guid: eaf159fe215b1dc47b81814c2763e695, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_pal_smite
+    Frames:
+    - {fileID: 21300000, guid: 12b6892a89496dc49a5f34a6c3d14e8b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_ran_aimed_shot
+    Frames:
+    - {fileID: 21300000, guid: c6c3c53a240eaa34885c3ef2abd8be8b, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_ran_poultice
+    Frames:
+    - {fileID: 21300000, guid: dc6147a8f6a73024d8f86dc12cc85660, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_ran_snare
+    Frames:
+    - {fileID: 21300000, guid: 99af39b2f01445d489169e4c45937608, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_rog_bandage
+    Frames:
+    - {fileID: 21300000, guid: a616c4aff70bbde45bb246a2695461a3, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_rog_smoke
+    Frames:
+    - {fileID: 21300000, guid: c293a6d40fa99264f946f423ba29277c, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_rog_throat_cut
+    Frames:
+    - {fileID: 21300000, guid: 61055b05fe1d98a42b1f0e3064987ab9, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_wiz_concussion
+    Frames:
+    - {fileID: 21300000, guid: 601b413030cfb094f842e07032082d02, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_wiz_firebolt
+    Frames:
+    - {fileID: 21300000, guid: d0a7f0c63db1255468c8f229ff145f84, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_skill_wiz_nova
+    Frames:
+    - {fileID: 21300000, guid: 729791c6f53a64a4ca649df5ef456490, type: 3}
+    Fps: 12
+    Placeholder: 1
   - Key: icon_special_lock
     Frames:
     - {fileID: 21300000, guid: 0f7c54dcba12b36478bfb4486baa8236, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_banish
+    Frames:
+    - {fileID: 21300000, guid: 0395620559b63494da47929f49889a8e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_blast
+    Frames:
+    - {fileID: 21300000, guid: 358c20773ac60fc4e904bdd31849db70, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_burn
+    Frames:
+    - {fileID: 21300000, guid: c169d40779dea3b40ba7aa5ee44aeade, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_burst
+    Frames:
+    - {fileID: 21300000, guid: 434369bda35f02649b00256c7aaaf3b9, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_damage
+    Frames:
+    - {fileID: 21300000, guid: 537639a9b289ee046a230f7ba89b9c46, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_freeze
+    Frames:
+    - {fileID: 21300000, guid: 377d7fe0985d6b147a3ca4c931b50445, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_heal
+    Frames:
+    - {fileID: 21300000, guid: 5d212c351b7883f468f891c7e14970fa, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_lock
+    Frames:
+    - {fileID: 21300000, guid: 61fa63103f8ca19408a0df6915a42f7e, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_poison
+    Frames:
+    - {fileID: 21300000, guid: 8b4e9368e57dfdb4ba729992f330cdf4, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_shield
+    Frames:
+    - {fileID: 21300000, guid: e26d01710b47adb4085226d6110acae5, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_smoke
+    Frames:
+    - {fileID: 21300000, guid: e1c36e3535835fb468bf5c1e8df99648, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_stagger
+    Frames:
+    - {fileID: 21300000, guid: 1e9ee2c936d5ebd4d82cbce75cf55211, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_status_ward
+    Frames:
+    - {fileID: 21300000, guid: 0b6dda147ada81046983d446a3e85227, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: icon_talent_b_blood_frenzy
@@ -1631,6 +1816,11 @@ MonoBehaviour:
   - Key: icon_underfoot_spikes
     Frames:
     - {fileID: 21300000, guid: c63b899de75cfe149ac85e3f4c007503, type: 3}
+    Fps: 12
+    Placeholder: 1
+  - Key: icon_usable_phoenix_feather
+    Frames:
+    - {fileID: 21300000, guid: 93d725d7106adc84595a8477ec9bb35f, type: 3}
     Fps: 12
     Placeholder: 1
   - Key: logo_clickdungeon

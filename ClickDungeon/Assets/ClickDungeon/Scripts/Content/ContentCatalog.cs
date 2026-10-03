@@ -1102,54 +1102,72 @@ namespace ClickDungeon.Content
             // for mana. One a branch at tier 2, so a build that climbs all three earns all three.
             // Knight - the line holds, and then it moves.
             Skill(c, "kni_shockwave", "knight", "Shockwave", "2 damage to everything beside you.",
-                manaCost: 3, effect: SkillEffect.Burst, amount: 2, target: SkillTarget.Self);
+                manaCost: 3, effect: SkillEffect.Burst, amount: 2, target: SkillTarget.Self,
+                icon: "icon_skill_kni_shockwave");
             Skill(c, "kni_rally", "knight", "Rally", "Mend 2 hearts.",
-                manaCost: 3, effect: SkillEffect.Heal, amount: 2, target: SkillTarget.Self);
+                manaCost: 3, effect: SkillEffect.Heal, amount: 2, target: SkillTarget.Self,
+                icon: "icon_skill_kni_rally");
             Skill(c, "kni_shield_bash", "knight", "Shield Bash", "Leave one monster beside you reeling.",
-                manaCost: 2, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy);
+                manaCost: 2, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy,
+                icon: "icon_skill_kni_shield_bash");
 
             // Paladin - the hammer, the shield and the hands.
             Skill(c, "pal_smite", "paladin", "Smite", "4 damage to one monster.",
-                manaCost: 4, effect: SkillEffect.Strike, amount: 4, target: SkillTarget.Enemy);
+                manaCost: 4, effect: SkillEffect.Strike, amount: 4, target: SkillTarget.Enemy,
+                icon: "icon_skill_pal_smite");
             Skill(c, "pal_bulwark", "paladin", "Bulwark", "3 damage to everything beside you.",
-                manaCost: 4, effect: SkillEffect.Burst, amount: 3, target: SkillTarget.Self);
+                manaCost: 4, effect: SkillEffect.Burst, amount: 3, target: SkillTarget.Self,
+                icon: "icon_skill_pal_bulwark");
             // The same button as the Cleric's, and deliberately the weaker one: the Paladin mends, she heals.
             Skill(c, "pal_lay_on_hands", "paladin", "Lay on Hands", "Mend 2 hearts.",
-                manaCost: 3, effect: SkillEffect.Heal, amount: 2, target: SkillTarget.Self);
+                manaCost: 3, effect: SkillEffect.Heal, amount: 2, target: SkillTarget.Self,
+                icon: "icon_skill_pal_lay_on_hands");
 
             // Rogue - openings, not fights.
             Skill(c, "rog_throat_cut", "rogue", "Throat Cut", "5 damage to one monster beside you.",
-                manaCost: 4, effect: SkillEffect.Strike, amount: 5, target: SkillTarget.Enemy);
+                manaCost: 4, effect: SkillEffect.Strike, amount: 5, target: SkillTarget.Enemy,
+                icon: "icon_skill_rog_throat_cut");
             // Shadowcut disappears in the confusion: a little damage, and everything beside him loses its turn.
             Skill(c, "rog_smoke", "rogue", "Smoke Bomb", "1 damage to everything beside you, and they all lose track of you.",
-                manaCost: 3, effect: SkillEffect.Smoke, amount: 1, target: SkillTarget.Self);
+                manaCost: 3, effect: SkillEffect.Smoke, amount: 1, target: SkillTarget.Self,
+                icon: "icon_skill_rog_smoke");
             Skill(c, "rog_bandage", "rogue", "Bandage", "Mend 3 hearts.",
-                manaCost: 3, effect: SkillEffect.Heal, amount: 3, target: SkillTarget.Self);
+                manaCost: 3, effect: SkillEffect.Heal, amount: 3, target: SkillTarget.Self,
+                icon: "icon_skill_rog_bandage");
 
             // Wizard - reach, sight and a shove.
             Skill(c, "wiz_firebolt", "wizard", "Firebolt", "4 damage at three tiles.",
-                manaCost: 3, effect: SkillEffect.Strike, amount: 4, target: SkillTarget.Enemy, range: 3);
+                manaCost: 3, effect: SkillEffect.Strike, amount: 4, target: SkillTarget.Enemy, range: 3,
+                icon: "icon_skill_wiz_firebolt");
             Skill(c, "wiz_nova", "wizard", "Arcane Nova", "3 damage to everything beside you.",
-                manaCost: 4, effect: SkillEffect.Burst, amount: 3, target: SkillTarget.Self);
+                manaCost: 4, effect: SkillEffect.Burst, amount: 3, target: SkillTarget.Self,
+                icon: "icon_skill_wiz_nova");
             Skill(c, "wiz_concussion", "wizard", "Concussion", "Leave one monster reeling, at two tiles.",
-                manaCost: 3, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy, range: 2);
+                manaCost: 3, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy, range: 2,
+                icon: "icon_skill_wiz_concussion");
 
             // Ranger - distance, and what grows by the path.
             Skill(c, "ran_aimed_shot", "ranger", "Aimed Shot", "5 damage at three tiles.",
-                manaCost: 4, effect: SkillEffect.Strike, amount: 5, target: SkillTarget.Enemy, range: 3);
+                manaCost: 4, effect: SkillEffect.Strike, amount: 5, target: SkillTarget.Enemy, range: 3,
+                icon: "icon_skill_ran_aimed_shot");
             Skill(c, "ran_poultice", "ranger", "Poultice", "Mend 3 hearts.",
-                manaCost: 3, effect: SkillEffect.Heal, amount: 3, target: SkillTarget.Self);
+                manaCost: 3, effect: SkillEffect.Heal, amount: 3, target: SkillTarget.Self,
+                icon: "icon_skill_ran_poultice");
             Skill(c, "ran_snare", "ranger", "Snare", "Leave one monster reeling, at three tiles.",
-                manaCost: 3, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy, range: 3);
+                manaCost: 3, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy, range: 3,
+                icon: "icon_skill_ran_snare");
 
             // Cleric - mend, ward, and the answer to the risen.
             // The Cleric is the healer, so hers is the strongest mend in the game.
             Skill(c, "cle_mend", "cleric", "Heal", "Mend 4 hearts.",
-                manaCost: 3, effect: SkillEffect.Heal, amount: 4, target: SkillTarget.Self);
+                manaCost: 3, effect: SkillEffect.Heal, amount: 4, target: SkillTarget.Self,
+                icon: "icon_skill_cle_mend");
             Skill(c, "cle_ward", "cleric", "Ward", "2 damage to everything beside you.",
-                manaCost: 3, effect: SkillEffect.Burst, amount: 2, target: SkillTarget.Self);
+                manaCost: 3, effect: SkillEffect.Burst, amount: 2, target: SkillTarget.Self,
+                icon: "icon_skill_cle_ward");
             Skill(c, "cle_dispel", "cleric", "Dispel Undead", "3 damage, doubled against the risen.",
-                manaCost: 3, effect: SkillEffect.Banish, amount: 3, target: SkillTarget.Enemy, range: 2);
+                manaCost: 3, effect: SkillEffect.Banish, amount: 3, target: SkillTarget.Enemy, range: 2,
+                icon: "icon_skill_cle_dispel");
 
             // SEVEN, against the four a DivineShield capstone places (1 + 3). The feather has to outrank the talent
             // or the Paladin, Wizard, Cleric and Berserker could never use one - their capstone holds the only slot on
@@ -1160,20 +1178,26 @@ namespace ClickDungeon.Content
 
             // Berserker - forward, always.
             Skill(c, "ber_whirl", "berserker", "Whirlwind", "3 damage to everything beside you.",
-                manaCost: 3, effect: SkillEffect.Burst, amount: 3, target: SkillTarget.Self);
+                manaCost: 3, effect: SkillEffect.Burst, amount: 3, target: SkillTarget.Self,
+                icon: "icon_skill_ber_whirl");
             Skill(c, "ber_second_wind", "berserker", "Second Wind", "Mend 4 hearts.",
-                manaCost: 4, effect: SkillEffect.Heal, amount: 4, target: SkillTarget.Self);
+                manaCost: 4, effect: SkillEffect.Heal, amount: 4, target: SkillTarget.Self,
+                icon: "icon_skill_ber_second_wind");
             Skill(c, "ber_warcry", "berserker", "War Cry", "Leave one monster reeling.",
-                manaCost: 2, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy);
+                manaCost: 2, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy,
+                icon: "icon_skill_ber_warcry");
 
             // Engineer - the drone, the toolkit and the sweep.
             Skill(c, "eng_discharge", "engineer", "Discharge", "3 damage to everything beside you.",
-                manaCost: 3, effect: SkillEffect.Burst, amount: 3, target: SkillTarget.Self);
+                manaCost: 3, effect: SkillEffect.Burst, amount: 3, target: SkillTarget.Self,
+                icon: "icon_skill_eng_discharge");
             Skill(c, "eng_repair", "engineer", "Field Repairs", "Mend 3 hearts.",
-                manaCost: 3, effect: SkillEffect.Heal, amount: 3, target: SkillTarget.Self);
+                manaCost: 3, effect: SkillEffect.Heal, amount: 3, target: SkillTarget.Self,
+                icon: "icon_skill_eng_repair");
             // Gearspark builds things that go off. Lobbed at a tile, it catches whatever is standing around it.
             Skill(c, "eng_bomb", "engineer", "Bomb", "Lob a charge: 3 damage to the tile and everything around it.",
-                manaCost: 3, effect: SkillEffect.Blast, amount: 3, target: SkillTarget.Enemy, range: 2);
+                manaCost: 3, effect: SkillEffect.Blast, amount: 3, target: SkillTarget.Enemy, range: 2,
+                icon: "icon_skill_eng_bomb");
 
             c.Difficulties[Difficulty.Easy] = new DifficultyDefinition
             {

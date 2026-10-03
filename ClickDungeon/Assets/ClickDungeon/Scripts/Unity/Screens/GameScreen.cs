@@ -1556,14 +1556,23 @@ namespace ClickDungeon.Unity.Screens
                 UiArt.ApplyPanel(parts.Background, parts.Border, ArtKeys.AbilityButtonDefault);
                 // Between the icon on the left and the cost on the right, not on top of either: the first pass laid the
                 // label across the whole button and the picture sat over its first letters - "OCKWAVE", "ELD BASH".
-                parts.Label.rectTransform.Place(Center, Center, new Vector2(portrait ? 9f : 4f, 0f),
-                    new Vector2(portrait ? 174f : 104f, 30f));
+                // ANCHORED to the gap rather than centred in the button (D-085). Centring left it reaching back UNDER
+                // the icon by ten pixels, which did not show while the art was a transparent cut-out and showed the
+                // moment every skill got a framed picture of its own: "SHOCKWAVE" lost its S again.
+                // The gap has to be WIDE as well as clear: the first attempt at this anchored the label clear of the
+                // icon and left it 86 wide, so "SHOCKWAVE" and "SHIELD BASH" wrapped onto two lines instead. The icon
+                // moves left to pay for it, and the label never wraps - a name that cannot fit overflows its box rather
+                // than folding, because half a word on two lines is harder to read than a slightly tight one.
+                float labelLeft = portrait ? 104f : 56f, labelRight = portrait ? 56f : 42f;
+                parts.Label.rectTransform.Place(new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(labelLeft, 0f),
+                    new Vector2((portrait ? 312f : 200f) - labelLeft - labelRight, 30f));
+                parts.Label.horizontalOverflow = HorizontalWrapMode.Overflow;
 
                 // The picture, left of the name. A skill with no art of its own still gets the one its effect suggests,
                 // so no button is ever just a word (D-079).
                 var icon = UiFactory.Rect(parts.Rect, "Icon");
-                icon.Place(new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(portrait ? 40f : 26f, 0f),
-                    new Vector2(portrait ? 56f : 36f, portrait ? 56f : 36f));
+                icon.Place(new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(portrait ? 40f : 18f, 0f),
+                    new Vector2(portrait ? 56f : 32f, portrait ? 56f : 32f));
 
                 var cost = UiFactory.Text(parts.Rect, "Cost", "", portrait ? 20 : 16, Palette.ManaText, TextAnchor.MiddleRight, FontStyle.Bold);
                 cost.rectTransform.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(portrait ? -16f : -12f, 0f),

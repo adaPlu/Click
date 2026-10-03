@@ -144,15 +144,31 @@ namespace ClickDungeon.Unity.Ui
         {
             if (skill == null) return null;
             if (!string.IsNullOrEmpty(skill.Icon)) return skill.Icon;
-            switch (skill.Effect)
+            return StatusIcon(skill.Effect);
+        }
+
+        /// <summary>
+        /// The picture for a skill EFFECT (D-085). Every shipped skill names its own art, so this is the fallback a
+        /// new one gets before anybody draws it - and the status sheet covers all seven effects exactly, which the
+        /// old fallback did not: Blast and Smoke both wore the bomb, and Strike wore the SLASH button's sword.
+        /// </summary>
+        public static string StatusIcon(SkillEffect effect)
+        {
+            switch (effect)
             {
-                case SkillEffect.Heal: return SkillHeal;
-                case SkillEffect.Blast:
-                case SkillEffect.Smoke: return SkillBomb;
-                case SkillEffect.Stagger: return AbilityIcon(CommandKind.Dash);
-                default: return AbilityIcon(CommandKind.Slash);
+                case SkillEffect.Heal: return "icon_status_heal";
+                case SkillEffect.Strike: return "icon_status_damage";
+                case SkillEffect.Burst: return "icon_status_burst";
+                case SkillEffect.Stagger: return "icon_status_stagger";
+                case SkillEffect.Smoke: return "icon_status_smoke";
+                case SkillEffect.Banish: return "icon_status_banish";
+                case SkillEffect.Blast: return "icon_status_blast";
+                default: return "icon_status_damage";
             }
         }
+
+        /// <summary>A resurrection in place (D-082/D-085). Nothing draws it yet; the HUD says WARD n in words.</summary>
+        public const string StatusWard = "icon_status_ward";
         /// <summary>The picture on a carried usable's button (D-083); null falls back to what its effect suggests.</summary>
         public static string UsableIcon(UsableDefinition usable)
         {
@@ -160,12 +176,13 @@ namespace ClickDungeon.Unity.Ui
             if (!string.IsNullOrEmpty(usable.Icon)) return usable.Icon;
             switch (usable.Effect)
             {
-                // Until a feather is sliced, the mend's green cross is the closest true thing: it is the icon the game
-                // already uses for "this gives hearts back". A wrong picture is worse than a plain one.
-                case UsableEffect.Ward: return SkillHeal;
+                case UsableEffect.Ward: return UsablePhoenixFeather;
                 default: return AbilityIcon(CommandKind.Potion);
             }
         }
+
+        /// <summary>The Phoenix Feather (D-085). One picture, worn by the pack button and the shop card alike.</summary>
+        public const string UsablePhoenixFeather = "icon_usable_phoenix_feather";
 
         public const string ExitOpen = "tile_exit_open";
         // Production tile set (rules §11). The sheets name the exit "stair down", so both spellings are accepted.
@@ -379,6 +396,9 @@ namespace ClickDungeon.Unity.Ui
                 case ClickDungeon.Application.ShopItem.SpecialKey: return SpecialKeyIcon;
                 case ClickDungeon.Application.ShopItem.CoinPouch: return CoinIcon;
                 case ClickDungeon.Application.ShopItem.GemPouch: return GemIcon;
+                // MAINT-97: without this the default arm synthesised "icon_shop_phoenix_feather", which the catalogue
+                // does not contain, and the card drew a blank grey box. Confirmed on screen before it was fixed.
+                case ClickDungeon.Application.ShopItem.PhoenixFeather: return UsablePhoenixFeather;
                 default:
                     var name = item.ToString();
                     var snake = new System.Text.StringBuilder();
@@ -488,6 +508,12 @@ namespace ClickDungeon.Unity.Ui
                 WallCorner, TorchWall, DoorLocked, DoorOpen, PressurePlate, Teleport, FountainHeal,
                 Logo, TitleBackground, GameplayBackground, TitleBackgroundPortrait, GameplayBackgroundPortrait,
             };
+            // D-085: every skill names its own picture now, and every effect has a fallback - both belong in the
+            // coverage report, or a missing one is only noticed by a player looking at a blank button.
+            foreach (var skill in catalog.Skills.Values) keys.Add(SkillIcon(skill));
+            foreach (SkillEffect effect in System.Enum.GetValues(typeof(SkillEffect))) keys.Add(StatusIcon(effect));
+            foreach (var usable in catalog.Usables.Values) keys.Add(UsableIcon(usable));
+            keys.Add(StatusWard);
             foreach (var enemy in catalog.Enemies.Values) keys.Add(Actor(enemy.Id));
             foreach (var enemy in catalog.Enemies.Values) keys.Add(EnemyPortrait(enemy.Id));
             foreach (var item in catalog.Items) keys.Add(ItemIcon(item.Id));
