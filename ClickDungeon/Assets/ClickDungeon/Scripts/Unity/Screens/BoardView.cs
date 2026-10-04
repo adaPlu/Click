@@ -51,6 +51,43 @@ namespace ClickDungeon.Unity.Screens
             public Image Highlight;
         }
 
+        /// <summary>
+        /// A standing state worth showing under an actor (D-086). NOT a popup: a popup says a thing HAPPENED and is
+        /// gone next turn, which is right for "-2" or "BLOCK!" and wrong for a state the player has to keep in mind
+        /// while deciding. The two the hero carries were told once in the log and then invisible: a resurrection in
+        /// place (REL-92 - the bot could read it and the player could not) and being stuck in a web, which forbids
+        /// Move and Dash for as long as it lasts.
+        ///
+        /// Monsters need none of these. A staggered one already turns its intent to Recover and the badge reads DAZED,
+        /// a boss's mode is drawn into its body, and a disguised mimic must NOT be marked at all - rules 2.1.
+        /// </summary>
+        public readonly struct StatusPip
+        {
+            public readonly string IconKey;
+            /// <summary>The number beside it, or null when the pip speaks for itself.</summary>
+            public readonly string Text;
+
+            public StatusPip(string iconKey, string text)
+            {
+                IconKey = iconKey;
+                Text = text;
+            }
+        }
+
+        /// <summary>
+        /// The hero's standing states, in the order they are shown. Pure, so it can be tested without a board.
+        /// </summary>
+        public static List<StatusPip> HeroStatuses(RunState run)
+        {
+            var pips = new List<StatusPip>();
+            var hero = run?.Hero;
+            if (hero == null) return pips;
+            if (hero.Ward > 0) pips.Add(new StatusPip(ArtKeys.StatusWard, hero.Ward.ToString()));
+            if (hero.WebbedTurns > 0)
+                pips.Add(new StatusPip(ArtKeys.StatusWebbed, hero.WebbedTurns > 1 ? hero.WebbedTurns.ToString() : null));
+            return pips;
+        }
+
         sealed class Token
         {
             public RectTransform Rect;
@@ -61,6 +98,9 @@ namespace ClickDungeon.Unity.Screens
             public Text Badge;
             public RectTransform HpBack;
             public RectTransform HpFill;
+            public RectTransform StatusRow;
+            /// <summary>What the row is currently showing, so it is only rebuilt when the states actually change.</summary>
+            public string StatusKey;
             public string VisualKey;
             public GridPos Pos;
             /// <summary>Incremented on every placement; a running move tween stops once it is no longer the latest.</summary>
@@ -490,7 +530,7 @@ namespace ClickDungeon.Unity.Screens
             var alive = new HashSet<int> { HeroTokenId };
             string heroId = run.Hero.IdentityId;
             UpsertToken(HeroTokenId, "hero:" + heroId + ":" + run.Hero.Guard, run.Hero.Pos, animate,
-                body => Icons.Hero(body, run.Hero.Guard, heroId), null, null, null, 0, 0);
+                body => Icons.Hero(body, run.Hero.Guard, heroId), null, null, null, 0, 0, HeroStatuses(run));
 
             foreach (var enemy in run.Floor.Enemies)
             {
@@ -539,7 +579,8 @@ namespace ClickDungeon.Unity.Screens
         }
 
         void UpsertToken(int id, string visualKey, GridPos pos, bool animate, Action<RectTransform> draw,
-            string badge, string badgeIconKey, Color? badgeColor, int hp, int maxHp)
+            string badge, string badgeIconKey, Color? badgeColor, int hp, int maxHp,
+            IReadOnlyList<StatusPip> statuses = null)
         {
             if (!_tokens.TryGetValue(id, out var token))
             {
@@ -582,6 +623,53 @@ namespace ClickDungeon.Unity.Screens
 
             token.HpBack.gameObject.SetActive(maxHp > 0);
             if (maxHp > 0) token.HpFill.anchorMax = new Vector2(Mathf.Clamp01(hp / (float)maxHp), 1f);
+
+            DrawStatuses(token, statuses);
+        }
+
+        /// <summary>
+        /// Lays the standing-state pips out in a row, centred under the actor (D-086). Rebuilt only when the set
+        /// changes - a token is redrawn every turn and these are the same most of them.
+        /// </summary>
+        static void DrawStatuses(Token token, IReadOnlyList<StatusPip> statuses)
+        {
+            int count = statuses?.Count ?? 0;
+            string key = string.Empty;
+            for (int i = 0; i < count; i++) key += statuses[i].IconKey + "=" + statuses[i].Text + ";";
+            if (key == token.StatusKey) return;
+            token.StatusKey = key;
+
+            for (int c = token.StatusRow.childCount - 1; c >= 0; c--)
+                UnityEngine.Object.Destroy(token.StatusRow.GetChild(c).gameObject);
+            token.StatusRow.gameObject.SetActive(count > 0);
+            if (count == 0) return;
+
+            const float pip = 30f, gap = 4f;
+            for (int i = 0; i < count; i++)
+            {
+                var s = statuses[i];
+                bool numbered = !string.IsNullOrEmpty(s.Text);
+                float width = numbered ? pip + 20f : pip;
+                // Centre the whole row: each pip steps right from the left edge of the run.
+                float x = (i - (count - 1) * 0.5f) * (pip + gap + 10f);
+
+                // Nine-sliced at the intent badge's density, so the corner stays a corner on both the narrow pip and
+                // the wider numbered one rather than being stretched with the box.
+                var cell = UiFactory.Image(token.StatusRow, "Pip" + i, new Color(0f, 0f, 0f, 0.62f), Shapes.Rounded, true);
+                cell.pixelsPerUnitMultiplier = 4f;
+                cell.rectTransform.Place(Center, Center, new Vector2(x, 0f), new Vector2(width, pip));
+
+                var icon = UiFactory.Image(cell.rectTransform, "Icon", Color.white, null);
+                icon.preserveAspect = true;
+                icon.rectTransform.Place(new Vector2(0f, 0.5f), Center, new Vector2(15f, 0f), new Vector2(24f, 24f));
+                if (!Art.TryGetSprite(s.IconKey, out var sprite)) icon.enabled = false;
+                else icon.sprite = sprite;
+
+                if (!numbered) continue;
+                var text = UiFactory.Text(cell.rectTransform, "Text", s.Text, 17, Palette.Gold, TextAnchor.MiddleRight, FontStyle.Bold);
+                text.rectTransform.Place(new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-5f, 0f), new Vector2(22f, 24f));
+                UiFactory.Outline(text, new Color(0f, 0f, 0f, 0.8f), 1f);
+            }
         }
 
         Token CreateToken(int id)
@@ -603,6 +691,11 @@ namespace ClickDungeon.Unity.Screens
             badgeIcon.rectTransform.Place(new Vector2(0f, 0.5f), Center, new Vector2(17f, 0f), new Vector2(26f, 26f));
             badgeIcon.gameObject.SetActive(false);
 
+            // The standing-state pips (D-086), between the body and the health bar so they clash with neither the
+            // intent badge above nor the bar below.
+            var statusRow = UiFactory.Rect(rt, "Status");
+            statusRow.Place(Center, Center, new Vector2(0f, -CellSize * 0.5f + 30f), new Vector2(CellSize, 28f));
+
             var hpBack = UiFactory.Image(rt, "HpBack", Palette.HpBack, null);
             // The monster pack's health bar when it is in the catalog, the flat bar otherwise.
             bool barArt = UiArt.Apply(hpBack, ArtKeys.EnemyHpBack);
@@ -614,7 +707,8 @@ namespace ClickDungeon.Unity.Screens
             hpFill.rectTransform.offsetMin = Vector2.zero;
             hpFill.rectTransform.offsetMax = Vector2.zero;
 
-            return new Token { Rect = rt, Body = body, BadgeBack = badgeBack, BadgeIcon = badgeIcon, Badge = badge, HpBack = hpBack.rectTransform, HpFill = hpFill.rectTransform };
+            return new Token { Rect = rt, Body = body, BadgeBack = badgeBack, BadgeIcon = badgeIcon, Badge = badge,
+                HpBack = hpBack.rectTransform, HpFill = hpFill.rectTransform, StatusRow = statusRow };
         }
 
         void PlayPendingCues()

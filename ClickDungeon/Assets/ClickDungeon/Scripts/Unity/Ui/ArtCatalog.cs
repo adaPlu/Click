@@ -167,8 +167,14 @@ namespace ClickDungeon.Unity.Ui
             }
         }
 
-        /// <summary>A resurrection in place (D-082/D-085). Nothing draws it yet; the HUD says WARD n in words.</summary>
+        /// <summary>A resurrection in place (D-082), drawn as a pip under the hero (D-086).</summary>
         public const string StatusWard = "icon_status_ward";
+
+        /// <summary>
+        /// Stuck in a web (D-061), drawn as a pip under the hero (D-086). The icon sheets have no web, so it borrows
+        /// the Ranger's snare - a rope is what being held in place looks like, and a near-miss picture beats none.
+        /// </summary>
+        public const string StatusWebbed = "icon_skill_ran_snare";
         /// <summary>The picture on a carried usable's button (D-083); null falls back to what its effect suggests.</summary>
         public static string UsableIcon(UsableDefinition usable)
         {

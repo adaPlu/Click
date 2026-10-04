@@ -119,6 +119,15 @@ namespace ClickDungeon.Unity
             // -cdPocket n: the last slot shows pocket n (0 is the potion). Without it a screenshot can only ever
             // show the default, and the swapped state would be verified by a compile and nothing else (D-083).
             if (_game != null && int.TryParse(ArgValue("-cdPocket"), out var pocket)) _game.AutomationPocket(pocket);
+            // -cdWard n / -cdWebbed n: put the hero in a standing state so its pip can be SEEN (D-086). A Knight has
+            // no DivineShield capstone and the demo profile spends no feather, so without these the board's pips
+            // would ship verified by a compile and nothing else - the D-075 mistake, twice corrected since.
+            if (Session?.Run?.Hero != null)
+            {
+                if (int.TryParse(ArgValue("-cdWard"), out var ward)) Session.Run.Hero.Ward = System.Math.Max(0, ward);
+                if (int.TryParse(ArgValue("-cdWebbed"), out var webbed)) Session.Run.Hero.WebbedTurns = System.Math.Max(0, webbed);
+                _game?.AutomationRefresh();
+            }
             var overlay = ArgValue("-cdOverlay");
             if (overlay != null)
             {

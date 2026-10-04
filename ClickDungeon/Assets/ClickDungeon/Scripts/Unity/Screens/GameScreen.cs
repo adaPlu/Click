@@ -1642,6 +1642,9 @@ namespace ClickDungeon.Unity.Screens
             return pockets[_pocket];
         }
 
+        /// <summary>Automation only: redraw after the harness has put the hero in a state worth photographing.</summary>
+        public void AutomationRefresh() => Refresh(false);
+
         /// <summary>Automation only: put the last slot on a given pocket so a screenshot can show a swapped one.</summary>
         public void AutomationPocket(int index)
         {
