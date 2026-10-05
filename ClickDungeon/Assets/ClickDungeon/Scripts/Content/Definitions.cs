@@ -73,11 +73,23 @@ namespace ClickDungeon.Content
         /// <summary>The talent that must be learned first, or null.</summary>
         public string Requires;
         /// <summary>
+        /// Points spent in this class before the node opens (D-087). The tree used to be three parallel branches and a
+        /// global tier table could gate them all; a LINE's rows cost whatever the pathway above them costs, which
+        /// differs by class, so the gate belongs on the node rather than in one shared array.
+        /// </summary>
+        public int RequiresPoints;
+        /// <summary>
         /// The usable skill learning this talent unlocks, or null for the passive ones (D-075). One per branch, at tier
         /// 2, so a build that climbs all three branches earns all three and a build that specialises does not.
         /// </summary>
         public string SkillId;
-        public bool Capstone => Tier >= 4;
+        /// <summary>
+        /// The end of the line (D-087). It used to be computed - tier 4 of any branch - because the tree was three
+        /// parallel branches and a build could reach only one of their ends, which is the rule Progression enforces.
+        /// A line has ONE end, so the flag is set rather than derived: deriving it from the row would have made every
+        /// node of the second pathway a capstone and let a build take exactly one of them.
+        /// </summary>
+        public bool Capstone;
     }
 
     /// <summary>

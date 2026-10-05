@@ -199,25 +199,29 @@ namespace ClickDungeon.Tests
         /// </param>
         public static ProfileState BuiltUp(ContentCatalog catalog, string classId, int level = 12, string capstoneBranch = null)
         {
+            // Twelve, as before (D-087). The triangle costs 16 to 18 points to walk in full, and eleven buys the apex
+            // skill and ONE of its two roads - which is the whole point of the shape: a build chooses a corner, and
+            // pays for the one it skipped with the skill it does not get. A fixture that filled the tree would be
+            // measuring a player no amount of levelling makes typical, and would hide the choice entirely.
             var profile = new ProfileState { Xp = Progression.XpForLevel(level) };
             if (capstoneBranch != null)
             {
-                // Climb the named branch first. Skipping the other capstones is not enough on its own: a capstone opens
-                // at seven points spent and needs its own tier-3 beneath it, and a build that spreads evenly reaches
-                // whichever branch the catalogue happens to list first. So: take the next rung of this branch if one is
-                // open, and otherwise buy a point anywhere below tier 4 to move the tier gate along.
-                var chain = catalog.TalentsOf(classId).Where(t => t.BranchId == capstoneBranch).OrderBy(t => t.Tier).ToList();
-                string capstoneId = chain.Last(t => t.Tier == 4).Id;
-                bool progress = true;
-                while (Progression.Rank(profile, capstoneId) == 0 && progress)
+                // WHICH ROAD (D-087). It used to name a branch to climb; a triangle has two roads out of the apex, and
+                // spending in list order always walks the left one - the same first-listed bias MAINT-90 was written
+                // for. Naming a road walks that one first, so a guard can measure the corner it means to measure.
+                foreach (var talent in catalog.TalentsOf(classId).Where(t => t.BranchId == "apex"))
+                    Progression.TryLearn(profile, catalog, talent.Id);
+                var road = catalog.TalentsOf(classId).Where(t => t.BranchId == capstoneBranch).OrderBy(t => t.Tier).ToList();
+                bool climbing = true;
+                while (climbing)
                 {
-                    progress = false;
-                    foreach (var talent in chain)
-                        if (Progression.TryLearn(profile, catalog, talent.Id)) { progress = true; break; }
-                    if (progress) continue;
-                    foreach (var talent in catalog.TalentsOf(classId))
-                        if (talent.Tier < 4 && Progression.TryLearn(profile, catalog, talent.Id)) { progress = true; break; }
+                    climbing = false;
+                    foreach (var talent in road)
+                        if (Progression.TryLearn(profile, catalog, talent.Id)) { climbing = true; break; }
                 }
+                // And then the corner that road ends at.
+                foreach (var talent in catalog.TalentsOf(classId))
+                    if (talent.SkillId != null) Progression.TryLearn(profile, catalog, talent.Id);
             }
             // Spend every point the level bought, in the order the tree lists them: a real player's build is not this
             // tidy, but it is a build rather than a blank, and it is the same one on every seed.
@@ -587,9 +591,12 @@ namespace ClickDungeon.Tests
             foreach (var heroClass in catalog.HeroClasses.Values)
             {
                 string heroId = catalog.HeroIdentities.Values.First(h => h.ClassId == heroClass.Id).Id;
+                // The two edges that END in a skill (D-087). The third is the base between the corners and has no
+                // endpoint of its own, so there is no build for it to carry.
                 foreach (var branch in heroClass.Branches)
                 {
-                    var capstone = catalog.TalentsOf(heroClass.Id).Single(t => t.Tier == 4 && t.BranchId == branch.Id);
+                    var capstone = catalog.TalentsOf(heroClass.Id).SingleOrDefault(t => t.Tier == 4 && t.BranchId == branch.Id);
+                    if (capstone == null) continue;
                     // The assertion that keeps this from measuring the first capstone three times over.
                     Assert.That(Progression.Rank(BuiltUp(catalog, heroClass.Id, capstoneBranch: branch.Id), capstone.Id),
                         Is.GreaterThan(0), $"{capstone.Id} was never learned, so this run measures a different build.");

@@ -19,7 +19,7 @@ namespace ClickDungeon.Unity.Screens
     {
         static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
         static readonly Vector2 TopLeft = new Vector2(0f, 1f);
-        const float NodeSize = 108f, CapstoneSize = 136f, TierPitch = 172f, BranchPitch = 330f;
+        const float NodeSize = 108f, CapstoneSize = 136f;
 
         readonly RectTransform _root;
         readonly RectTransform _tree;
@@ -256,65 +256,112 @@ namespace ClickDungeon.Unity.Screens
                     _upright ? new Vector2((float)rng.NextDouble() * 980f - 490f, (float)rng.NextDouble() * 920f - 460f)
                               : new Vector2((float)rng.NextDouble() * 1120f - 560f, (float)rng.NextDouble() * 780f - 390f), new Vector2(size, size));
             }
-            var gate = UiFactory.Text(_tree, "Gates", "", 18, Palette.TextDim, TextAnchor.MiddleLeft);
-            for (int tier = 1; tier <= 4; tier++)
-            {
-                float y = TierY(tier);
-                var label = UiFactory.Text(_tree, "Tier " + tier, tier == 4 ? "CAPSTONE\nchoose one" : $"TIER {tier}\n{Progression.TierPoints[tier]} pts",
-                    17, tier == 4 ? Palette.Gold : Palette.TextDim, TextAnchor.MiddleLeft, FontStyle.Bold);
-                label.rectTransform.Place(Center, Center, new Vector2(_upright ? -436f : -490f, y), new Vector2(_upright ? 120f : 140f, 60f));
-            }
-            UiFactory.SafeDestroy(gate.gameObject);
-
+            // THE TRIANGLE (D-087). The apex skill sits at the top and two edges run down to a corner skill each;
+            // the third edge is the base between those corners. A build walks one edge or the other, which is what
+            // makes the tree a choice - so the picture has to show the fork, not three columns side by side.
             var tree = _catalog.TalentsOf(_classId);
-            for (int b = 0; b < heroClass.Branches.Length; b++)
+            var apexTalent = tree.Find(t => t.BranchId == "apex");
+            float top = _upright ? 330f : 272f, bottom = _upright ? -300f : -276f, cx = _upright ? 0f : 40f;
+            float half = _upright ? 280f : 430f;
+            var apex = new Vector2(cx, top);
+            var cornerL = new Vector2(cx - half, bottom);
+            var cornerR = new Vector2(cx + half, bottom);
+
+            var skillEdges = new List<string>();
+            foreach (var branch in heroClass.Branches)
+                if (tree.Exists(t => t.BranchId == branch.Id && t.SkillId != null)) skillEdges.Add(branch.Id);
+
+            foreach (var branch in heroClass.Branches)
             {
-                var branch = heroClass.Branches[b];
                 Color color = Parse(branch.Color);
-                float x = (b - (heroClass.Branches.Length - 1) * 0.5f) * (_upright ? 290f : BranchPitch) + (_upright ? 70f : 40f);
                 var path = tree.FindAll(t => t.BranchId == branch.Id);
+                if (path.Count == 0) continue;
                 path.Sort((l, r) => l.Tier.CompareTo(r.Tier));
 
-                // Links first, so the nodes sit on top of them.
-                for (int i = 1; i < path.Count; i++)
-                {
-                    bool lit = Progression.Rank(_profile, path[i - 1].Id) > 0;
-                    Link(new Vector2(x, TierY(path[i - 1].Tier)), new Vector2(x, TierY(path[i].Tier)), lit ? color : Palette.StoneLight.WithAlpha(0.35f), lit);
-                }
-                foreach (var talent in path) Node(talent, new Vector2(x, TierY(talent.Tier)), color);
+                int which = skillEdges.IndexOf(branch.Id);
+                bool isBase = which < 0;
+                Vector2 from = isBase ? cornerL : apex;
+                Vector2 to = isBase ? cornerR : (which == 0 ? cornerL : cornerR);
 
-                var name = UiFactory.Text(_tree, "Branch " + branch.Id, branch.Name, 30, color, TextAnchor.MiddleCenter, FontStyle.Bold);
-                name.rectTransform.Place(Center, Center, new Vector2(x, _upright ? -410f : -364f), new Vector2(_upright ? 280f : 300f, 36f));
+                // A skill edge ends ON its corner, because that corner IS the skill. The base belongs to neither corner,
+                // so its nodes take interior steps and it closes with a link to the far corner - stepping it like an edge
+                // landed its last node on top of the right-hand skill.
+                int steps = isBase ? path.Count + 1 : path.Count;
+                var at = new List<Vector2>();
+                for (int i = 0; i < path.Count; i++) at.Add(Vector2.Lerp(from, to, (i + 1) / (float)steps));
+
+                var prev = from;
+                string prevId = isBase
+                    ? (skillEdges.Count > 0 ? tree.Find(t => t.BranchId == skillEdges[0] && t.SkillId != null)?.Id : null)
+                    : apexTalent?.Id;
+                for (int i = 0; i < path.Count; i++)
+                {
+                    bool lit = prevId != null && Progression.Rank(_profile, prevId) > 0;
+                    Link(prev, at[i], lit ? color : Palette.StoneLight.WithAlpha(0.35f), lit);
+                    prev = at[i];
+                    prevId = path[i].Id;
+                }
+                if (isBase)
+                {
+                    bool lit = prevId != null && Progression.Rank(_profile, prevId) > 0;
+                    Link(prev, to, lit ? color : Palette.StoneLight.WithAlpha(0.35f), lit);
+                }
+
+                int side = isBase ? 0 : which == 0 ? -1 : 1;
+                float labelWidth = isBase ? half * 2f / steps - 10f : 0f;
+                for (int i = 0; i < path.Count; i++)
+                {
+                    // The node a skill edge ENDS on is a bottom corner, so its name goes under it like the base's do:
+                    // beside it, the right-hand corner's name ran off the tree and under the detail panel.
+                    bool corner = !isBase && i == path.Count - 1;
+                    Node(path[i], at[i], color, corner ? 0 : side, corner ? (_upright ? 180f : 260f) : labelWidth);
+                }
+
+                // The branch names have to clear the node names, which now fan outwards: the two skill paths are headed
+                // from the top corners they descend from, and the base is named in the empty middle of the triangle.
+                var heading = isBase
+                    ? new Vector2(cx, bottom + 226f)
+                    : new Vector2(cx + (which == 0 ? -1f : 1f) * (_upright ? 300f : 400f), top - 30f);
+                var name = UiFactory.Text(_tree, "Branch " + branch.Id, branch.Name, 26, color, TextAnchor.MiddleCenter, FontStyle.Bold);
+                name.rectTransform.Place(Center, Center, heading, new Vector2(250f, 32f));
                 UiFactory.Shadow(name, Color.black, 2f);
-                var focus = UiFactory.Text(_tree, "Focus " + branch.Id, branch.Focus, 17, Palette.TextDim, TextAnchor.MiddleCenter);
-                focus.rectTransform.Place(Center, Center, new Vector2(x, _upright ? -440f : -392f), new Vector2(_upright ? 280f : 310f, 24f));
+                var focus = UiFactory.Text(_tree, "Focus " + branch.Id, branch.Focus, 15, Palette.TextDim, TextAnchor.MiddleCenter);
+                focus.rectTransform.Place(Center, Center, heading + new Vector2(0f, -26f), new Vector2(260f, 22f));
                 focus.resizeTextForBestFit = true;
-                focus.resizeTextMinSize = 12;
-                focus.resizeTextMaxSize = 17;
+                focus.resizeTextMinSize = 11;
+                focus.resizeTextMaxSize = 15;
             }
+
+            if (apexTalent != null) Node(apexTalent, apex, theme, 2, 0f);
         }
 
-        // Portrait's tree is taller, and each name sits under its node, so the tiers stand further apart.
-        float TierY(int tier) => _upright
-            ? -268f + (tier - 1) * 205f + (tier == 4 ? 14f : 0f)
-            : -262f + (tier - 1) * TierPitch + (tier == 4 ? 14f : 0f);
-
+        /// <summary>
+        /// One edge of the tree, at any angle (D-087). It used to draw a vertical bar and nothing else, because three
+        /// parallel branches only ever needed straight down; a triangle's edges run diagonally and its base runs flat,
+        /// so the bar is rotated to face its destination.
+        /// </summary>
         void Link(Vector2 from, Vector2 to, Color color, bool lit)
         {
-            var line = UiFactory.Image(_tree, "Link", color, null);
             var mid = (from + to) * 0.5f;
             float length = Vector2.Distance(from, to);
-            line.rectTransform.Place(Center, Center, mid, new Vector2(lit ? 8f : 4f, length));
-            line.raycastTarget = false;
+            var delta = to - from;
+            // The bar is drawn tall and rotated, so zero degrees means "straight down" as it always did.
+            float angle = -Mathf.Atan2(delta.x, delta.y) * Mathf.Rad2Deg + 180f;
+
             if (lit)
             {
                 var glow = UiFactory.Image(_tree, "Glow", color.WithAlpha(0.25f), null);
                 glow.rectTransform.Place(Center, Center, mid, new Vector2(22f, length));
+                glow.rectTransform.localEulerAngles = new Vector3(0f, 0f, angle);
                 glow.raycastTarget = false;
             }
+            var line = UiFactory.Image(_tree, "Link", color, null);
+            line.rectTransform.Place(Center, Center, mid, new Vector2(lit ? 8f : 4f, length));
+            line.rectTransform.localEulerAngles = new Vector3(0f, 0f, angle);
+            line.raycastTarget = false;
         }
 
-        void Node(TalentDefinition talent, Vector2 pos, Color branchColor)
+        void Node(TalentDefinition talent, Vector2 pos, Color branchColor, int side, float labelWidth)
         {
             int rank = Progression.Rank(_profile, talent.Id);
             bool learned = rank > 0;
@@ -368,16 +415,34 @@ namespace ClickDungeon.Unity.Screens
             count.raycastTarget = false;
 
             var name = UiFactory.Text(_tree, "Name " + talent.Id, talent.Name, 18, learned ? Palette.TextLight : available ? Palette.Gold : Palette.TextDim,
-                TextAnchor.MiddleLeft, FontStyle.Bold);
-            if (_upright)
+                TextAnchor.MiddleCenter, FontStyle.Bold);
+            // Each name points AWAY from the triangle on its own side: the left edge's to the left, the right edge's to
+            // the right, the base's under it and the apex's above. One fixed side suited columns and piled up here.
+            float reach = size * 0.5f + 14f;
+            float wide = _upright ? 140f : 172f;
+            if (side == -1)
             {
-                name.alignment = TextAnchor.MiddleCenter;
-                name.rectTransform.Place(Center, Center, pos + new Vector2(0f, -size * 0.5f - 34f), new Vector2(270f, 28f));
+                name.alignment = TextAnchor.MiddleRight;
+                name.rectTransform.Place(Center, Center, pos + new Vector2(-reach - wide * 0.5f, 0f), new Vector2(wide, 46f));
+            }
+            else if (side == 1)
+            {
+                name.alignment = TextAnchor.MiddleLeft;
+                name.rectTransform.Place(Center, Center, pos + new Vector2(reach + wide * 0.5f, 0f), new Vector2(wide, 46f));
+            }
+            else if (side == 2)
+            {
+                name.rectTransform.Place(Center, Center, pos + new Vector2(0f, reach + 42f), new Vector2(300f, 30f));
             }
             else
             {
-                name.rectTransform.Place(Center, Center, pos + new Vector2(size * 0.5f + 88f, 0f), new Vector2(160f, 44f));
+                // A fixed drop, not one measured from this node: the capstone corner is wider than the rest, and
+                // measuring from it hung its name alone below the others and into the footer.
+                name.rectTransform.Place(Center, Center, pos + new Vector2(0f, -NodeSize * 0.5f - 46f), new Vector2(Mathf.Max(96f, labelWidth), 30f));
             }
+            name.resizeTextForBestFit = true;
+            name.resizeTextMinSize = 10;
+            name.resizeTextMaxSize = 18;
             name.raycastTarget = false;
         }
 

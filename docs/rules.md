@@ -816,10 +816,21 @@ point** for **every class**: each class spends the level's points on its own tre
 (D-037), so switching heroes never costs a build. Talents shape every run that class
 starts; unlike shop boosts they are never used up. Resetting a tree is free.
 
-Each tree has three **paths** of four tiers. Tier 1 is open at once; tier 2 needs 2
-points spent in the class, tier 3 needs 4, and the tier-4 **capstone** needs 7. Every
-talent past tier 1 needs the talent below it in its path. A class takes **one
-capstone** only, so a build commits to a path.
+Each tree is a **triangle** (D-087). One skill sits at the **apex** and is where every
+build starts. Two **edges** run down from it, each of four talents ending in a skill at
+its bottom corner; the **base** joins the two corners and pays bonuses only. A talent
+needs the one before it on its own edge, nothing else — the edge *is* the gate, so no
+talent carries a points-spent threshold.
+
+That shape is the choice: a class has three skills, and reaching a corner's skill costs
+the whole edge, so a build that walks one edge cannot also have the other's skill until
+it has the points for both. One of the two corner skills is the **capstone** (the
+right-hand one, as the screen draws it), and a class takes one capstone only.
+
+Eleven talents a class: the apex, four on each edge, two on the base.
+
+> The per-class tables below predate D-063 and D-087 and no longer match the catalog —
+> `ContentCatalog` is the source of truth for what each tree holds.
 
 **Knight (Sir Clickington): versatile vanguard.**
 

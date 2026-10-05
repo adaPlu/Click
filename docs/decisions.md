@@ -1736,3 +1736,54 @@ with seeds rather than by widening the band. It costs the headless suite 2m40s, 
 
 **Open**: the Wizard at 75% casual and 36% careless is what makes that floor hard to place - every other class is at
 110 or better of 120. This guard can point at that; it cannot answer it.
+
+---
+
+## D-087 The talent tree is a triangle
+
+- **DECISION**: every class tree is a triangle of eleven talents: one **skill at the apex**,
+  two **edges of four** running down from it to a **skill at each bottom corner**, and a
+  **base of two** joining the corners that pays bonuses only. A talent needs the one before
+  it on its own edge and nothing else; no talent carries a points-spent threshold any more.
+  One corner skill is the capstone, and a class still takes one capstone only.
+- **WHY**: three parallel columns of four made the tree a shopping list. D-075 had established
+  that *the tree choice is the skill choice* — a build that climbs one path pays for that
+  path's skill — but three columns drawn side by side show no fork, so the picture argued
+  against the rule the catalog enforced. A triangle shows it: the apex is where every build
+  starts, and the two edges are visibly the fork, each ending in the skill it costs to skip.
+  The base is the road between the corners, which is why it pays bonuses and no skill.
+- **DEPENDENCIES**: `ContentCatalog` (all 88 talents re-emitted), `TalentDefinition.Capstone`
+  (a stored flag now, not `Tier >= 4`), `TalentOverlay.DrawTree` and `Link` (which had to
+  learn to draw an edge at any angle), and `ClickDungeonApp.FillDemoProfile`, whose fixed
+  learn order was valid under columns and silently learned nothing but the apex under the
+  triangle — see below.
+- **REVERSIBILITY**: moderate. The shape lives in the catalog and the overlay; `Ruleset` is
+  unbumped because talents are profile state and resetting a tree has always been free.
+
+### The demo profile stopped learning
+
+`FillDemoProfile` learns the Knight's talents from a fixed list. Under columns that order was
+valid; under the triangle `k_opening_strike` needs `k_cleave` first, so `TryLearn` returned
+false for all but one and said nothing. **Every automation screenshot and the on-screen bot
+demo would have shown one skill slot of three and a near-empty tree**, and no gate covers the
+demo profile because it exists only to be looked at. It learns down the dependency chain now,
+at level 12 — the apex plus both corners costs nine points — with the two spare points on a
+second rank and on the base, so the screen shows a multi-rank node and a bonus road as well.
+
+This is the D-075 failure shape once more: a thing verified by a compile and nothing else. The
+remedy each time has been to make the screenshot the proof, which is why it was caught here.
+
+### What the layout cost
+
+Three label passes and one geometry fix, all of them found by looking at the screenshot:
+
+| symptom | cause |
+|---|---|
+| names piled up along both edges | every name was placed to the *right* of its node, which only ever worked in columns |
+| two nodes stacked at the bottom-right | the base was stepped like a skill edge, so its last node landed *on* the right-hand corner skill |
+| "Treasure Sense" ran under the detail panel | a corner's name has nowhere to go sideways; the corners' names sit under them now |
+| the capstone's name hung alone into the footer | the bottom row measured its drop from each node, and the capstone is wider |
+
+Names fan outwards by side now — left edge to the left, right edge to the right, base and
+corners below, apex above — and the branch headings moved off them: the two skill paths are
+named at the top corners they descend from, the base in the empty middle of the triangle.

@@ -290,19 +290,23 @@ namespace ClickDungeon.Unity
         {
             profile.Coins = 1248;
             profile.Gems = 152;
-            // Nine, not seven: enough points to reach all three of the knight's tier-2 talents, which is what unlocks
-            // his three usable skills (D-075). A demo profile that shows one slot of three is not a demo of the game.
-            profile.Xp = Progression.XpForLevel(9);
+            // Twelve, not nine (D-087): the triangle's three skills are its apex and its two corners, and reaching
+            // both corners from the apex costs nine points. A demo profile that shows one slot of three is not a
+            // demo of the game.
+            profile.Xp = Progression.XpForLevel(12);
             profile.Items.AddRange(new[] { "steel_sword", "iron_shield", "royal_plate", "healing_charm", "lucky_wand" });
             foreach (var id in new[] { "steel_sword", "iron_shield", "royal_plate", "healing_charm" })
                 Inventory.Equip(profile, ContentCatalog.CreateDefault(), id);
             var demo = ContentCatalog.CreateDefault();
-            // In tier order, and k_light_step before k_treasure_sense: a tier-2 talent needs the tier-1 above it, so
-            // without the step the third skill never unlocks and the strip shows two slots of three.
-            foreach (var id in new[] { "k_opening_strike", "k_opening_strike", "k_sturdy", "k_light_step",
-                                       "k_cleave", "k_shield_wall", "k_treasure_sense", "k_executioner" })
+            // Down the apex and then both edges, each talent after the one it needs: the order is the dependency
+            // chain, so a line out of place costs a skill rather than failing loudly. The last two spend the spare
+            // points on a second rank and on the base, so the screen shows a multi-rank node and a bonus road too.
+            foreach (var id in new[] { "k_cleave",
+                                       "k_opening_strike", "k_executioner", "k_bastion", "k_shield_wall",
+                                       "k_sturdy", "k_riposte", "k_second_wind", "k_treasure_sense",
+                                       "k_opening_strike", "k_light_step" })
                 Progression.TryLearn(profile, demo, id);
-            // Two feathers, for the same reason the level is nine (D-083): with an empty pack the last slot has
+            // Two feathers, for the same reason the level is twelve (D-083): with an empty pack the last slot has
             // nothing to swap to, so a screenshot of it is a screenshot of the old POTION button and proves nothing.
             profile.PhoenixFeathers = 2;
             profile.RunsFinished = 14;

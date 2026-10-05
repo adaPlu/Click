@@ -12,7 +12,11 @@ namespace ClickDungeon.Application
     /// </summary>
     public static class Progression
     {
-        /// <summary>Points spent in a class before each tier opens: tier 1 at once, then 2, 4 and 7.</summary>
+        /// <summary>
+        /// Points spent in a class before each tier opened, when the tree was three parallel branches of four (D-037).
+        /// The line that replaced it gates each node with its own <c>RequiresPoints</c> (D-087); this is kept only
+        /// because the shape of the old tree is worth being able to read.
+        /// </summary>
         public static readonly int[] TierPoints = { 0, 0, 2, 4, 7 };
 
         /// <summary>
@@ -82,8 +86,8 @@ namespace ClickDungeon.Application
             var talent = catalog.Talent(talentId);
             if (talent == null || profile == null) return "Unknown talent.";
             if (Rank(profile, talent.Id) >= talent.MaxRank) return "Fully learned.";
-            if (talent.Tier < TierPoints.Length && PointsSpent(profile, catalog, talent.ClassId) < TierPoints[talent.Tier])
-                return $"Needs {TierPoints[talent.Tier]} points spent in this tree.";
+            if (talent.RequiresPoints > 0 && PointsSpent(profile, catalog, talent.ClassId) < talent.RequiresPoints)
+                return $"Needs {talent.RequiresPoints} points spent in this tree.";
             if (talent.Requires != null && Rank(profile, talent.Requires) <= 0)
                 return $"Needs {catalog.Talent(talent.Requires).Name} first.";
             if (talent.Capstone)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ClickDungeon.Application;
 using ClickDungeon.Content;
 using ClickDungeon.Domain;
 using ClickDungeon.Simulation;
@@ -150,6 +151,28 @@ namespace ClickDungeon.Tests
         }
 
         public static CommandResult Do(RunState run, PlayerCommand command) => TurnResolver.Apply(run, command, Catalog);
+
+        /// <summary>
+        /// Learns a talent and everything it stands on (D-087). The tree is a triangle now: every node but the apex
+        /// needs the one below it on its edge, so a test that wants one talent has to walk to it. Returns false only
+        /// when the profile genuinely cannot afford the walk, which is a real failure worth asserting.
+        /// </summary>
+        public static bool LearnTo(ProfileState profile, string talentId, ContentCatalog catalog = null)
+        {
+            catalog = catalog ?? Catalog;
+            var chain = new List<string>();
+            for (var t = catalog.Talent(talentId); t != null; t = t.Requires == null ? null : catalog.Talent(t.Requires))
+            {
+                chain.Insert(0, t.Id);
+                if (chain.Count > 16) break;      // a cycle would otherwise spin forever
+            }
+            // Everything beneath it, then one rank of the thing itself - so this behaves exactly like TryLearn and
+            // calling it twice still buys two ranks.
+            foreach (var id in chain)
+                if (id != talentId && Progression.Rank(profile, id) == 0
+                    && !Progression.TryLearn(profile, catalog, id)) return false;
+            return Progression.TryLearn(profile, catalog, talentId);
+        }
 
         public static CommandResult DoOk(RunState run, PlayerCommand command)
         {

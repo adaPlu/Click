@@ -71,11 +71,17 @@ namespace ClickDungeon.Tests
             var profile = new ProfileState { Xp = Progression.XpForLevel(3), FortuneScrolls = 1 };
             profile.Talents["k_light_step"] = 1;
             profile.Talents["k_treasure_sense"] = 1;
-            profile.Talents["k_fortune"] = 1;
-            var run = RunFactory.NewRun(9UL, Catalog, new List<GameEvent>());
+            // The chest-coin bonus left the Knight with the node the triangle dropped (D-087). The Rogue's Fence still
+            // pays it, and what this test is about is a TALENT and a scroll adding up rather than replacing each other.
+            var coinTalent = Catalog.Talents.First(t => t.Effect == TalentEffect.CoinsPerChestReward);
+            profile.Talents[coinTalent.Id] = 1;
+            // The Rogue's run, because the coin talent is the Rogue's: Progression.Apply only reads the talents of
+            // the class actually being played, so learning one on another class's sheet would prove nothing.
+            string rogueId = Catalog.HeroIdentities.Values.First(h => h.ClassId == coinTalent.ClassId).Id;
+            var run = RunFactory.NewRun(9UL, Catalog, new List<GameEvent>(), rogueId);
             ProfileSystem.Provision(profile, run, Catalog);
             Progression.Apply(profile, run, Catalog);
-            Assert.That(run.BonusCoinsPerChestReward, Is.EqualTo(Catalog.Treasure.FortuneScrollCoins + Catalog.Talent("k_fortune").Amount));
+            Assert.That(run.BonusCoinsPerChestReward, Is.EqualTo(Catalog.Treasure.FortuneScrollCoins + coinTalent.Amount));
         }
 
         [Test]

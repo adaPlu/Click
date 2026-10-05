@@ -67,8 +67,8 @@ namespace ClickDungeon.Tests
         public void ATalentThatSharpensAClassRuleAddsToIt()
         {
             var profile = new ProfileState { Xp = Progression.XpForLevel(12) };
-            Assert.That(Progression.TryLearn(profile, Catalog, "ro_cruel_edge"), Is.True);
-            Assert.That(Progression.TryLearn(profile, Catalog, "w_deep_well"), Is.True);
+            Assert.That(LearnTo(profile, "ro_cruel_edge"), Is.True);
+            Assert.That(LearnTo(profile, "w_deep_well"), Is.True);
             var rogue = RunFactory.NewRun(7UL, Catalog, new List<GameEvent>(), "shadowcut");
             Progression.Apply(profile, rogue, Catalog);
             Assert.That(rogue.Perk(TalentEffect.Ambush), Is.EqualTo(3), "The class's 2, and Cruel Edge's 1.");

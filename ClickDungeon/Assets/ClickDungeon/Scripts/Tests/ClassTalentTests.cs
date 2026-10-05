@@ -30,14 +30,23 @@ namespace ClickDungeon.Tests
             foreach (var heroClass in Catalog.HeroClasses.Values)
             {
                 var tree = Catalog.TalentsOf(heroClass.Id);
-                Assert.That(tree.Count, Is.GreaterThanOrEqualTo(12), heroClass.Id);
+                // Eleven: three skills and the eight bonuses on the roads between them (D-087).
+                Assert.That(tree.Count, Is.EqualTo(11), heroClass.Id);
                 Assert.That(heroClass.Branches.Length, Is.EqualTo(3), heroClass.Id);
+                // The three branches are the triangle's three EDGES now (D-087). Two run from the apex skill to a
+                // corner skill - three bonuses then the skill, so tiers 1-4 - and the third is the base between the
+                // corners, two bonuses and no skill of its own. Every edge is still a chain: each rung needs the one
+                // below it, which is what makes skipping an edge cost you the skill at its end.
                 foreach (var branch in heroClass.Branches)
                 {
                     var path = tree.Where(t => t.BranchId == branch.Id).OrderBy(t => t.Tier).ToList();
-                    Assert.That(path.Select(t => t.Tier), Is.EqualTo(new[] { 1, 2, 3, 4 }), branch.Id);
+                    var tiers = path.Select(t => t.Tier).ToArray();
+                    Assert.That(tiers, Is.EqualTo(new[] { 1, 2, 3, 4 }).Or.EqualTo(new[] { 1, 2 }), branch.Id);
+                    Assert.That(path.Count(t => t.SkillId != null), Is.EqualTo(tiers.Length == 4 ? 1 : 0), branch.Id);
                     for (int i = 1; i < path.Count; i++) Assert.That(path[i].Requires, Is.EqualTo(path[i - 1].Id), path[i].Id);
                 }
+                // And the apex skill, which belongs to no edge because both start from it.
+                Assert.That(tree.Count(t => t.BranchId == "apex"), Is.EqualTo(1), heroClass.Id);
                 foreach (var talent in tree)
                 {
                     Assert.That(talent.Name, Is.Not.Empty);
@@ -54,24 +63,45 @@ namespace ClickDungeon.Tests
         [Test]
         public void TiersOpenWithPointsSpentAndTheTalentBelow()
         {
+            // An edge is a chain: every rung needs the one below it, and the apex needs nothing because both edges
+            // start there (D-087). The old tier table is gone - what gates a node now is the node beneath it.
             var profile = new ProfileState { Xp = Progression.XpForLevel(12) };
-            Assert.That(Progression.Locked(profile, Catalog, "k_cleave"), Does.Contain("points"));
-            Assert.That(Progression.TryLearn(profile, Catalog, "k_sturdy"), Is.True);
-            Assert.That(Progression.TryLearn(profile, Catalog, "k_sturdy"), Is.True);
-            Assert.That(Progression.Locked(profile, Catalog, "k_cleave"), Does.Contain("Opening Strike"), "Two points spent, but not in its path.");
-            Assert.That(Progression.TryLearn(profile, Catalog, "k_opening_strike"), Is.True);
-            Assert.That(Progression.TryLearn(profile, Catalog, "k_cleave"), Is.True);
-            Assert.That(Progression.TryLearn(profile, Catalog, "k_cleave"), Is.False, "One rank.");
+            var tree = Catalog.TalentsOf("knight");
+            var apex = tree.Single(t => t.BranchId == "apex");
+            var edge = tree.Where(t => t.BranchId == apex.BranchId).ToList();
+            var road = tree.Where(t => t.Requires == apex.Id).ToList();
+            Assert.That(road.Count, Is.EqualTo(2), "Two edges leave the apex.");
+
+            Assert.That(Progression.Locked(profile, Catalog, apex.Id), Is.Null, "The apex is open from the start.");
+            var first = road[0];
+            var second = tree.Single(t => t.Requires == first.Id);
+            Assert.That(Progression.Locked(profile, Catalog, second.Id), Does.Contain(first.Name),
+                "A rung names the one below it while that one is unlearned.");
+
+            Assert.That(LearnTo(profile, apex.Id), Is.True);
+            Assert.That(LearnTo(profile, apex.Id), Is.False, "One rank.");
+            Assert.That(Progression.Locked(profile, Catalog, first.Id), Is.Null, "And now the edge is open.");
         }
 
         [Test]
         public void AClassTakesOnlyOneCapstone()
         {
-            var profile = new ProfileState { Xp = Progression.XpForLevel(30) };
-            foreach (var id in new[] { "k_opening_strike", "k_sturdy", "k_light_step", "k_cleave", "k_shield_wall",
-                         "k_executioner", "k_riposte", "k_relentless" })
-                Assert.That(Progression.TryLearn(profile, Catalog, id), Is.True, id);
-            Assert.That(Progression.Locked(profile, Catalog, "k_bastion"), Does.Contain("Only one capstone"));
+            // WHAT REPLACED THE CAPSTONE RULE (D-087). Three parallel branches each ended in a capstone and a
+            // class could learn one, which is what made the tree a choice. A triangle makes the choice differently:
+            // two edges run from the apex to a corner skill, and eleven points buy one of them, not both. So the
+            // thing to assert is no longer "a second capstone is refused" - there is only one - but that a build
+            // which walks one edge cannot also have the skill at the end of the other.
+            var tree = Catalog.TalentsOf("knight");
+            var apex = tree.Single(t => t.BranchId == "apex");
+            var corners = tree.Where(t => t.SkillId != null && t.BranchId != "apex").ToList();
+            Assert.That(corners.Count, Is.EqualTo(2), "Two corner skills, one at the end of each edge.");
+
+            var profile = new ProfileState { Xp = Progression.XpForLevel(12) };
+            Assert.That(LearnTo(profile, apex.Id), Is.True, "The apex skill is where every build starts.");
+            Assert.That(LearnTo(profile, corners[0].Id), Is.True, "Eleven points walk one edge to its corner.");
+            Assert.That(Progression.Rank(profile, corners[1].Id), Is.Zero,
+                "And cannot also reach the other: skipping an edge costs you the skill at its end.");
+
             Progression.Reset(profile, Catalog, "knight");
             Assert.That(Progression.PointsSpent(profile, Catalog, "knight"), Is.Zero, "Reset refunds the class's points.");
         }
@@ -79,11 +109,13 @@ namespace ClickDungeon.Tests
         [Test]
         public void EachClassSpendsTheLevelsPointsOnItsOwnTree()
         {
-            var profile = new ProfileState { Xp = Progression.XpForLevel(3) };
-            Assert.That(Progression.TryLearn(profile, Catalog, "k_sturdy"), Is.True);
-            Assert.That(Progression.TryLearn(profile, Catalog, "k_sturdy"), Is.True);
+            // Four, not three: reaching any bonus now costs the apex skill beneath it as well (D-087), so three
+            // points buy the apex and two ranks of the node this test is about.
+            var profile = new ProfileState { Xp = Progression.XpForLevel(4) };
+            Assert.That(LearnTo(profile, "k_sturdy"), Is.True);
+            Assert.That(LearnTo(profile, "k_sturdy"), Is.True);
             Assert.That(Progression.PointsFree(profile, Catalog, "knight"), Is.Zero);
-            Assert.That(Progression.PointsFree(profile, Catalog, "paladin"), Is.EqualTo(2), "The Paladin has its own points.");
+            Assert.That(Progression.PointsFree(profile, Catalog, "paladin"), Is.EqualTo(3), "The Paladin has its own points.");
             Progression.Reset(profile, Catalog, "paladin");
             Assert.That(Progression.Rank(profile, "k_sturdy"), Is.EqualTo(2), "Resetting one class leaves the other.");
         }
@@ -100,8 +132,8 @@ namespace ClickDungeon.Tests
         public void OnlyThePlayingClassesTalentsShapeTheRun()
         {
             var profile = new ProfileState { Xp = Progression.XpForLevel(5) };
-            Progression.TryLearn(profile, Catalog, "k_sturdy");
-            Progression.TryLearn(profile, Catalog, "p_holy_wrath");
+            LearnTo(profile, "k_sturdy");
+            LearnTo(profile, "p_holy_wrath");
             var knight = RunFactory.NewRun(3UL, Catalog, new List<GameEvent>());
             Progression.Apply(profile, knight, Catalog);
             Assert.That(knight.Hero.MaxHp, Is.EqualTo(Catalog.HeroClass("knight").MaxHp + 1));
@@ -373,12 +405,19 @@ namespace ClickDungeon.Tests
             Assert.That(run.Hero.Mana, Is.EqualTo(run.Hero.MaxMana), "A potion refills mana.");
 
             var profile = new ProfileState { Xp = Progression.XpForLevel(20) };
-            foreach (var id in new[] { "p_blessed_draught", "p_plated", "p_prayer", "p_plated", "p_guiding_light" })
-                Assert.That(Progression.TryLearn(profile, Catalog, id), Is.True, id);
+            foreach (var id in new[] { "p_blessed_draught", "p_plated", "p_prayer", "p_plated" })
+                Assert.That(LearnTo(profile, id), Is.True, id);
             var session = new GameSession(Catalog, null);
             foreach (var kv in profile.Talents) session.Profile.Talents[kv.Key] = kv.Value;
             session.Profile.Xp = profile.Xp;
-            session.StartNewRun(21UL, Difficulty.Medium, MovementMode.Free, "dawnward");
+
+            // GuidingLight left the Paladin with the bonus the triangle dropped (D-087). The Ranger's Tracker still
+            // grants it, and the EFFECT is what this test is about - so it is learned AND PLAYED as the Ranger,
+            // because Progression.Apply only reads the talents of the class actually in the dungeon.
+            var tracker = Catalog.Talents.Single(t => t.Effect == TalentEffect.GuidingLight);
+            Assert.That(LearnTo(session.Profile, tracker.Id), Is.True, tracker.Id);
+            string ranger = Catalog.HeroIdentities.Values.First(h => h.ClassId == tracker.ClassId).Id;
+            session.StartNewRun(21UL, Difficulty.Medium, MovementMode.Free, ranger);
             var floor = session.Run.Floor;
             var key = Board.AllCells.FirstOrDefault(p => floor[p].Content == ContentKind.Key);
             Assert.That(floor[key].Knowledge, Is.EqualTo(Knowledge.Revealed), "The key starts uncovered.");

@@ -20,7 +20,7 @@ namespace ClickDungeon.Tests
             var profile = new ProfileState { Xp = Progression.XpForLevel(20) };
             foreach (var talent in Catalog.TalentsOf(classId).OrderBy(t => t.Tier))
             {
-                Progression.TryLearn(profile, Catalog, talent.Id);
+                LearnTo(profile, talent.Id);
                 if (Progression.Rank(profile, talentId) > 0) break;
             }
             return profile;
@@ -53,8 +53,20 @@ namespace ClickDungeon.Tests
                 var granting = Catalog.Talents.Where(t => t.SkillId == skill.Id).ToList();
                 Assert.That(granting.Count, Is.EqualTo(1), $"{skill.Id} is named by {granting.Count} talents.");
                 Assert.That(granting[0].ClassId, Is.EqualTo(skill.ClassId), $"{skill.Id} hangs off another class's tree.");
-                Assert.That(granting[0].Tier, Is.LessThan(4),
-                    $"{skill.Id} hangs off a capstone, and a class may learn only one capstone - two of its three skills would be unreachable.");
+                // Reachability, asked of the rules rather than guessed from the row (D-087). It used to read
+                // "Tier < 4", which stood for "not a capstone, so not one of three a build can only have one of".
+                // A triangle has no such rule - its corners are reached by walking a road - so the proxy would now
+                // refuse a perfectly reachable skill. This walks to it the way a player would.
+                var reach = new ProfileState { Xp = Progression.XpForLevel(60) };
+                bool moved = true;
+                while (moved && Progression.Rank(reach, granting[0].Id) == 0)
+                {
+                    moved = false;
+                    foreach (var t in Catalog.TalentsOf(skill.ClassId))
+                        if (Progression.TryLearn(reach, Catalog, t.Id)) { moved = true; break; }
+                }
+                Assert.That(Progression.Rank(reach, granting[0].Id), Is.GreaterThan(0),
+                    $"{skill.Id} cannot be reached by any build, so nobody can ever use it.");
             }
 
             // Three slots, and no class may own more than it can carry.
@@ -78,14 +90,19 @@ namespace ClickDungeon.Tests
                     Is.EqualTo(BoardRules.SkillSlots), $"{heroClass.Id}: a finished tree fills every slot.");
             }
 
-            // And a narrow build carries less. One branch climbed, and only that branch's skill answers.
+            // And a narrow build carries less: the apex skill, plus the one at the end of the single edge climbed.
+            // The edge has to be one that ENDS in a skill - the triangle's third branch is the base between the two
+            // corners and pays bonuses only (D-087), so climbing that one would prove nothing about the choice.
+            var tree = Catalog.TalentsOf("paladin");
+            var apex = tree.Single(t => t.BranchId == "apex");
+            var edge = tree.Where(t => t.Tier == 4 && t.SkillId != null).First();
             var narrow = new ProfileState { Xp = Progression.XpForLevel(60) };
-            foreach (var talent in Catalog.TalentsOf("paladin").Where(t => t.BranchId == "devotion").OrderBy(t => t.Tier))
+            foreach (var talent in tree.Where(t => t.BranchId == "apex" || t.BranchId == edge.BranchId).OrderBy(t => t.Tier))
                 for (int rank = 0; rank < talent.MaxRank; rank++)
                     Progression.TryLearn(narrow, Catalog, talent.Id);
             var carried = Progression.EquippedSkills(narrow, Catalog, "paladin");
-            Assert.That(carried, Is.EqualTo(new[] { "pal_lay_on_hands" }),
-                "Only the branch that was climbed pays a skill, so the tree choice is the skill choice.");
+            Assert.That(carried, Is.EquivalentTo(new[] { apex.SkillId, edge.SkillId }),
+                "One edge climbed pays its own skill and the apex's - and not the skill at the end of the edge skipped.");
         }
 
         /// <summary>

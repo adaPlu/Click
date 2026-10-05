@@ -93,7 +93,7 @@ namespace ClickDungeon.Tests
             string cleric = catalog.HeroIdentities.Values.First(h => h.ClassId == "cleric").Id;
             // By the branch, because a class may learn ONE capstone (MAINT-90): spending in tier order takes whichever
             // the catalogue lists first and locks this one out, which is how this test first failed.
-            var profile = BalanceTests.BuiltUp(catalog, "cleric", capstoneBranch: "sanctity");
+            var profile = BalanceTests.BuiltUp(catalog, "cleric", capstoneBranch: "mercy");
             Assert.That(Progression.Rank(profile, "c_miracle"), Is.GreaterThan(0), "Test setup: the capstone is learned.");
 
             var events = new List<GameEvent>();
@@ -124,7 +124,7 @@ namespace ClickDungeon.Tests
             string cleric = catalog.HeroIdentities.Values.First(h => h.ClassId == "cleric").Id;
             var events = new List<GameEvent>();
             var run = RunFactory.NewRun(11UL, catalog, events, cleric, MovementMode.Free);
-            ProfileSystem.ProvisionRun(BalanceTests.BuiltUp(catalog, "cleric", capstoneBranch: "sanctity"), run, catalog, events);
+            ProfileSystem.ProvisionRun(BalanceTests.BuiltUp(catalog, "cleric", capstoneBranch: "mercy"), run, catalog, events);
 
             Assert.That(run.Hero.Ward, Is.EqualTo(1 + talent.Amount),
                 "The ward is the talent's amount plus the heart the hero is left standing on.");
@@ -146,7 +146,7 @@ namespace ClickDungeon.Tests
             string cleric = catalog.HeroIdentities.Values.First(h => h.ClassId == "cleric").Id;
             var events = new List<GameEvent>();
             var run = RunFactory.NewRun(11UL, catalog, events, cleric, MovementMode.Free);
-            ProfileSystem.ProvisionRun(BalanceTests.BuiltUp(catalog, "cleric", capstoneBranch: "sanctity"), run, catalog, events);
+            ProfileSystem.ProvisionRun(BalanceTests.BuiltUp(catalog, "cleric", capstoneBranch: "mercy"), run, catalog, events);
             Assert.That(run.Hero.Ward, Is.EqualTo(talentWard), "Test setup: the capstone's ward is in place.");
 
             Usables.Give(run.Hero, feather);

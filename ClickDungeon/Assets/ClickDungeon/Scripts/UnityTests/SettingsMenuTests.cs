@@ -113,7 +113,9 @@ namespace ClickDungeon.UnityTests
         [Test]
         public void TalentsShowTheTreeLockWhatIsNotOpenAndLearnOnConfirm()
         {
-            // D-037: nodes are icons; tapping selects, LEARN confirms; a tier-2 node stays locked at level 2.
+            // D-037: nodes are icons; tapping selects, LEARN confirms. D-087: what stays locked at level 2 is no
+            // longer "tier 2" - there is no points-spent threshold any more - but a talent on an edge, because the
+            // edge is the gate and the apex above it has not been learned.
             var catalog = ClickDungeon.Content.ContentCatalog.CreateDefault();
             var profile = new ClickDungeon.Domain.ProfileState { Xp = ClickDungeon.Application.Progression.XpForLevel(2) };
             int saved = 0;
@@ -124,14 +126,15 @@ namespace ClickDungeon.UnityTests
                 Assert.That(Buttons().Any(b => b.name == "Node " + talent.Id), Is.True, talent.Id);
             Button Learn() => Buttons().First(b => b.name == "Learn");
 
-            Buttons().First(b => b.name == "Node k_cleave").onClick.Invoke();
-            Assert.That(Learn().interactable, Is.False, "Tier 2 is not open yet.");
             Buttons().First(b => b.name == "Node k_opening_strike").onClick.Invoke();
-            Assert.That(Learn().interactable, Is.True);
+            Assert.That(Learn().interactable, Is.False, "The edge is locked until the apex above it is learned.");
+            Buttons().First(b => b.name == "Node k_cleave").onClick.Invoke();
+            Assert.That(Learn().interactable, Is.True, "The apex is where every build starts.");
             Learn().onClick.Invoke();
-            Assert.That(ClickDungeon.Application.Progression.Rank(profile, "k_opening_strike"), Is.EqualTo(1));
+            Assert.That(ClickDungeon.Application.Progression.Rank(profile, "k_cleave"), Is.EqualTo(1));
             Assert.That(saved, Is.EqualTo(1));
-            Assert.That(Learn().interactable, Is.False, "Out of points.");
+            Buttons().First(b => b.name == "Node k_opening_strike").onClick.Invoke();
+            Assert.That(Learn().interactable, Is.False, "Open now, but the one point is spent.");
 
             Buttons().First(b => b.name == "Class paladin").onClick.Invoke();
             Assert.That(Buttons().Any(b => b.name == "Node p_holy_wrath"), Is.True, "The Paladin's own tree, with its own point.");
