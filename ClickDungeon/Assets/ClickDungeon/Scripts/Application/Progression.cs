@@ -13,13 +13,6 @@ namespace ClickDungeon.Application
     public static class Progression
     {
         /// <summary>
-        /// Points spent in a class before each tier opened, when the tree was three parallel branches of four (D-037).
-        /// The line that replaced it gates each node with its own <c>RequiresPoints</c> (D-087); this is kept only
-        /// because the shape of the old tree is worth being able to read.
-        /// </summary>
-        public static readonly int[] TierPoints = { 0, 0, 2, 4, 7 };
-
-        /// <summary>
         /// The highest level the game counts to (DATA-17). Without a ceiling the level search walks up one level at a time
         /// for as long as the curve keeps rising, and the curve cannot rise past 2^30 in <c>int</c>, so a profile carrying a
         /// billion experience would never stop climbing. The cap is far beyond any real run; experience past it is kept but
@@ -86,10 +79,26 @@ namespace ClickDungeon.Application
             var talent = catalog.Talent(talentId);
             if (talent == null || profile == null) return "Unknown talent.";
             if (Rank(profile, talent.Id) >= talent.MaxRank) return "Fully learned.";
-            if (talent.RequiresPoints > 0 && PointsSpent(profile, catalog, talent.ClassId) < talent.RequiresPoints)
-                return $"Needs {talent.RequiresPoints} points spent in this tree.";
             if (talent.Requires != null && Rank(profile, talent.Requires) <= 0)
                 return $"Needs {catalog.Talent(talent.Requires).Name} first.";
+            // EITHER capstone opens the base rail (D-088), so the shared bonuses belong to both specialisations. A
+            // points-spent gate was tried instead and rejected: levels run to 500, so any finite point threshold only
+            // postpones a node and can never make one road exclude the other.
+            if (talent.RequiresAny != null && talent.RequiresAny.Length > 0)
+            {
+                bool opened = false;
+                foreach (var id in talent.RequiresAny) if (Rank(profile, id) > 0) { opened = true; break; }
+                if (!opened)
+                {
+                    var names = new List<string>();
+                    foreach (var id in talent.RequiresAny) names.Add(catalog.Talent(id)?.Name ?? id);
+                    return $"Needs {string.Join(" or ", names)} first.";
+                }
+            }
+            // THE FORK (D-088). Both bottom corners are capstones, so learning one refuses the other for good - a build
+            // carries the apex skill and the skill of the corner it committed to, and the one it skipped is the price.
+            // D-087 flagged a single corner, which made this unreachable and the choice merely a matter of being short
+            // of points; resetting the tree is still free, so the commitment is firm but never permanent.
             if (talent.Capstone)
                 foreach (var other in catalog.TalentsOf(talent.ClassId))
                     if (other.Capstone && other.Id != talent.Id && Rank(profile, other.Id) > 0)

@@ -83,11 +83,11 @@ namespace ClickDungeon.Tests
         /// The Wizard, which is the weakest class on both parity guards and the one that makes the casual floor hard
         /// to place. Two candidate causes, separated here:
         ///
-        ///   THE FIXTURE. BuiltUp spends breadth-first in catalogue order, and on the first pass it reaches every
-        ///   branch's tier-3 gate having spent 3 points where the gate wants 4 - except the third branch's, reached at
-        ///   5. So EVERY class silently loses its SECOND branch's tier-3 talent. For seven of them that is a minor
-        ///   perk (the Knight's Riposte, the Berserker's Pain Is Progress); for the Wizard it is Soul Siphon, the
-        ///   Relentless that D-081 measured as worth 13 wins to the Berserker, and its only sustain.
+        ///   THE FIXTURE. This was written against the points-spent tier table, which made every class silently lose
+        ///   its second branch's tier-3 talent - for the Wizard, Soul Siphon, its only sustain. That table is gone
+        ///   (D-087) and the fixture now commits to ONE corner and walks it to the end (D-088), so what a build lacks
+        ///   is the whole of the road it turned down rather than one node it could not afford. The rows below compare
+        ///   the two roads; read the delta as "which corner the Wizard wants", not as a missing tier-3.
         ///
         ///   THE CLASS. The Wizard is the only one of eight whose three abilities include no mend, so it cannot turn
         ///   the largest mana pool in the game into hearts. Its arcana tier 2 unlocks Arcane Nova, a Burst.
@@ -137,6 +137,84 @@ namespace ClickDungeon.Tests
         }
 
         /// <summary>
+        /// The Knight, which D-088 left as the only class whose BOTH roads are far below the field (17 and 14 of 60
+        /// careless, against 22-56). Moving max hearts to the shared rail bought it 7 and fixed the Cleric outright,
+        /// so the shape rule is sound and the Knight needs something of its own. Two candidates, measured rather
+        /// than argued:
+        ///
+        ///   SECOND WIND TO THE RAIL. Its +3 hearts on every new floor is the Knight's largest sustain and sits on
+        ///   one road. Swapping it with Relentless puts it where both builds get it - the same rule that fixed the
+        ///   Cleric, applied to the Knight's own essential instead of to hearts.
+        ///
+        ///   RALLY MENDS MORE. The Knight's verbs are weak in absolute terms: Rally mends 2 where the Berserker's
+        ///   Second Wind mends 4 and the Engineer's Bomb deals 3 to a tile and everything around it. This asks
+        ///   whether the kit is the problem rather than where it sits.
+        /// </summary>
+        [Test, Explicit("Measurement: the Knight's two candidates, both roads")]
+        public void Knight()
+        {
+            // Second Wind (bulwark t3) trades places with Relentless (rail t2), gates and all.
+            void SecondWindToTheRail(ContentCatalog c)
+            {
+                var sw = c.Talent("k_second_wind");
+                var rel = c.Talent("k_relentless");
+                sw.BranchId = rel.BranchId; sw.Tier = rel.Tier; sw.Requires = rel.Requires;
+                rel.BranchId = "bulwark"; rel.Tier = 3; rel.Requires = "k_riposte";
+                c.Talent("k_treasure_sense").Requires = "k_relentless";
+            }
+
+            // MEASURED AND REFUTED: Second Wind on the rail. It reads as the Cleric's fix applied to the Knight, but
+            // the rail has two slots and moving it there displaces Relentless - and the blade build values Relentless
+            // far more. Blade went 76 -> 79 casual and 17 -> 12 careless, and with Rally mended it cost 24 wins
+            // (104 -> 80). `SecondWindToTheRail` is kept as the thing that was tried, not as a candidate.
+            //
+            // Shield Bash as a MEND is a diagnostic, not a proposal: it asks whether the bulwark road is short of a
+            // verb at all, or short of something a skill cannot supply.
+            // SHIPPED NOW: Rally mends 4 (76 -> 104 casual on the blade road). What is left to settle is the bulwark
+            // road, whose corner is a bare adjacent stagger. Reach is the lever that keeps it a stagger - Concussion
+            // reaches two tiles and Snare three, both for 3 mana, and Shield Bash reaches one for 2.
+            //
+            // `ShieldBash mends 4` stays as the CEILING, not a proposal: it is what the road is worth with a real
+            // heal on it (115 casual, 26 careless), and it would make both Knight corners mends, which is the one
+            // thing the fork cannot afford. Cost is not the lever - at 1 mana the runs came back byte-identical.
+            var variants = new (string label, Action<ContentCatalog> tweak)[]
+            {
+                ("shipped (Rally 4)",   null),
+                ("ShieldBash reach 2",  c => c.Skill("kni_shield_bash").Range = 2),
+                ("ShieldBash reach 3",  c => c.Skill("kni_shield_bash").Range = 3),
+                ("ShieldBash mends 4",  c => { var s = c.Skill("kni_shield_bash"); s.Effect = SkillEffect.Heal; s.Amount = 4; s.Target = SkillTarget.Self; }),
+            };
+
+            foreach (var (label, tweak) in variants)
+            {
+                var line = new System.Text.StringBuilder($"{label,-20}");
+                foreach (var road in new[] { "blade", "bulwark" })
+                {
+                    var c = ContentCatalog.CreateDefault(Difficulty.Medium);
+                    tweak?.Invoke(c);
+                    string heroId = c.HeroIdentities.Values.First(h => h.ClassId == "knight").Id;
+                    // The instrument check the Wizard probe taught: if the build does not carry the thing being
+                    // measured, every number in the row is noise.
+                    var built = BalanceTests.BuiltUp(c, "knight", 12, road);
+                    int sustain = Progression.Rank(built, "k_second_wind") + Progression.Rank(built, "k_sturdy");
+                    line.Append($"  {road,-7} [sustain {sustain}]");
+                    foreach (var (cfg, runs, rate) in new[]
+                             { ("cas@120", 120, AutoPlayer.CasualMistakeRate), ("car@60", 60, BalanceTests.NoviceMistakeRate) })
+                    {
+                        int won = 0;
+                        for (ulong seed = 1; seed <= (ulong)runs; seed++)
+                            if (AutoPlayer.PlayRun(c, seed, BalanceTests.MaxCommands, rate, MovementMode.Free,
+                                    blind: true, loots: true, heroId: heroId,
+                                    profile: BalanceTests.BuiltUp(c, "knight", 12, road)).Status == RunStatus.Won) won++;
+                        line.Append($" {cfg} {won,3}/{runs}");
+                    }
+                }
+                TestContext.Progress.WriteLine(line.ToString());
+            }
+        }
+
+
+        /// <summary>
         /// The two built-up parity guards' own tables, at their own seed counts, so their floors can be set against a
         /// measurement rather than a memory. EveryClassTreeIsWorthPlaying is casual at 40; NoClassIsHopeless... is
         /// careless at 60.
@@ -144,6 +222,9 @@ namespace ClickDungeon.Tests
         [Test, Explicit("Measurement: the parity guards' tables, for re-baselining")]
         public void GuardTables()
         {
+            // PER ROAD since D-088, because a class is two builds now and not one. Averaging them, or measuring
+            // whichever corner the catalogue happens to list first, hides a road that has stopped working - and the
+            // first measurement after the fork found exactly that, so this prints every road a player can choose.
             var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
             foreach (var (label, runs, rate) in new[]
                      { ("casual @120", 120, AutoPlayer.CasualMistakeRate), ("careless@60", 60, BalanceTests.NoviceMistakeRate) })
@@ -153,20 +234,29 @@ namespace ClickDungeon.Tests
                 foreach (var heroClass in catalog.HeroClasses.Values)
                 {
                     string heroId = catalog.HeroIdentities.Values.First(h => h.ClassId == heroClass.Id).Id;
-                    int won = 0;
-                    for (ulong seed = 1; seed <= (ulong)runs; seed++)
+                    foreach (var corner in catalog.TalentsOf(heroClass.Id).Where(t => t.Capstone))
                     {
-                        var r = AutoPlayer.PlayRun(catalog, seed, BalanceTests.MaxCommands, rate, MovementMode.Free,
-                            blind: true, loots: true, heroId: heroId, profile: BalanceTests.BuiltUp(catalog, heroClass.Id));
-                        if (r.Status == RunStatus.Won) won++;
-                        else if (r.Status == RunStatus.InProgress) stalledTotal++;
+                        int won = 0;
+                        for (ulong seed = 1; seed <= (ulong)runs; seed++)
+                        {
+                            var r = AutoPlayer.PlayRun(catalog, seed, BalanceTests.MaxCommands, rate, MovementMode.Free,
+                                blind: true, loots: true, heroId: heroId,
+                                profile: BalanceTests.BuiltUp(catalog, heroClass.Id, 12, corner.BranchId));
+                            if (r.Status == RunStatus.Won) won++;
+                            else if (r.Status == RunStatus.InProgress) stalledTotal++;
+                        }
+                        wins.Add(($"{heroClass.Id.Substring(0, 3)}/{corner.BranchId.Substring(0, 4)}", won));
                     }
-                    wins.Add((heroClass.Id, won));
                 }
                 int weak = wins.Min(w => w.won), strong = wins.Max(w => w.won);
+                // And the class's BEST road, which is what "can this class be played" actually asks.
+                var best = wins.GroupBy(w => w.id.Split('/')[0]).Select(g => g.Max(w => w.won)).ToList();
                 TestContext.Progress.WriteLine(
-                    $"{label}  {string.Join("  ", wins.Select(w => $"{w.id.Substring(0, 3)} {w.won,2}"))}" +
-                    $"  | weakest {weak}/{runs} ({100 * weak / runs}%)  strongest {strong}  ratio {strong / (double)Math.Max(1, weak):0.00}  stalled {stalledTotal}");
+                    $"{label}  {string.Join("  ", wins.Select(w => $"{w.id} {w.won,3}"))}");
+                TestContext.Progress.WriteLine(
+                    $"{label}  | weakest road {weak}/{runs} ({100 * weak / runs}%)  strongest {strong}" +
+                    $"  ratio {strong / (double)Math.Max(1, weak):0.00}  | weakest CLASS by its best road {best.Min()}/{runs}" +
+                    $"  ratio {best.Max() / (double)Math.Max(1, best.Min()):0.00}  stalled {stalledTotal}");
             }
         }
 
@@ -273,7 +363,9 @@ namespace ClickDungeon.Tests
 
                 ("knight",    "baseline",              null, null),
                 ("knight",    "Rally off",             c => c.Skill("kni_rally").ManaCost = 99, null),
-                ("knight",    "Rally heals 4",         c => c.Skill("kni_rally").Amount = 4, null),
+                // Rally mends 4 as of D-088, so this row is the shipped number; it is kept at 2 to measure what the
+                // change bought rather than repeating the baseline.
+                ("knight",    "Rally back to 2",       c => c.Skill("kni_rally").Amount = 2, null),
 
                 ("cleric",    "baseline",              null, null),
                 ("cleric",    "Heal off",              c => c.Skill("cle_mend").ManaCost = 99, null),

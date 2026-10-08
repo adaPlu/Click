@@ -1787,3 +1787,158 @@ Three label passes and one geometry fix, all of them found by looking at the scr
 Names fan outwards by side now — left edge to the left, right edge to the right, base and
 corners below, apex above — and the branch headings moved off them: the two skill paths are
 named at the top corners they descend from, the base in the empty middle of the triangle.
+
+---
+
+## D-088 Both corners are capstones, so the fork is real
+
+- **DECISION**: both bottom corners of the triangle carry `Capstone`, so learning one **refuses the other** until the
+  tree is reset. The action bar drops to **two slots**, because two is the most any build can hold: the apex skill and
+  the skill of the corner it committed to. The base becomes a **shared rail** gated by a new `RequiresAny` — either
+  capstone opens it — and the screen stops drawing its far end as a prerequisite.
+- **WHY**: D-087 said the two edges were the fork and that skipping one should cost its skill, and then flagged one
+  corner of the two. `Progression.Locked` can only refuse a capstone when a *different* one is already learned, so with
+  one per class the exclusion was **structurally inert**. Nine points bought both corners and all three skills, which
+  made the triangle a prettier completion track — the exact failure D-087 was created to escape. The rule was true only
+  while a player was short of points, and levels run to 500.
+- **DEPENDENCIES**: `ContentCatalog` (16 corners flagged, 8 rails re-gated), `TalentDefinition.RequiresAny` (and
+  `RequiresPoints` deleted — see below), `Progression.Locked`, `BoardRules.SkillSlots` 3 → 2, `SaveSystem` (a ruleset-20
+  save is trimmed, not refused), `TalentOverlay`, `HeroSelectOverlay`, `AutoPlayer.LearnTalents`, `BalanceTests.BuiltUp`.
+- **REVERSIBILITY**: moderate. `Ruleset` 20 → **21**, and this is the first bump that **removes** something a save may
+  hold rather than adding one, so the migration is a real one rather than a version number.
+
+### Why not a cost gate, and why not dropping the fork
+
+Three options were weighed. A **points-spent gate** on the capstone was rejected outright: one point a level with a cap
+of 500 means any finite threshold postpones a node and excludes nothing, so it cannot produce an either/or at all.
+**Dropping the commitment** was the cheaper engineering answer and the worse game: it keeps the triangle's language and
+picture around a system designed for eventual completion. If builds are ever abandoned deliberately, the presentation
+should be simplified at the same time rather than left making a promise the rules do not keep.
+
+`RequiresPoints` is deleted rather than kept. It was added by D-087 and **never given a non-zero value by any of the 88
+talents**, so the gate it fed could not fire; `Progression.TierPoints`, the array it replaced, had no readers left at
+all. Two dead gates side by side, one of them documented as the live one.
+
+### What the fork costs, and what it buys back
+
+A class now **defines three skills and carries two**. A third slot could never fill, and a permanently empty slot says
+the choice cost nothing — so the slot count is the fork felt in the action bar, on the turn the player presses it.
+Raise it again when the unlock pool is large enough that choosing *among* unlocked skills is itself a decision; D-075
+already recorded that three slots were a pool-size placeholder rather than a loadout.
+
+The rail is what stops the commitment feeling like a punishment: both specialisations spend into the same two bonuses,
+so the points past the corner always have somewhere to go.
+
+### The screen was drawing a dependency that did not exist
+
+`DrawTree` closed the triangle with a link from the rail's last node to the opposite corner, in the same colour, weight
+and glow it uses for prerequisites, lit by rank. Nothing in the catalog connects those two nodes. Worse, it invited a
+walk — apex, one edge, the rail, the far corner — that ends at a node the rules refuse. It is a row of faint dots now:
+the shape's outline, never a road, never lit. Link lighting also reads each node's **own** gate from the data; it used
+to re-derive the rail's parent from branch declaration order, which agreed with the catalog by coincidence.
+
+### The tests that could not fail
+
+`AClassTakesOnlyOneCapstone` read the rejected corner's rank **without ever attempting to learn it**. A talent nobody
+tries is rank 0 whatever the rules say, so it passed unconditionally — and the rule it named was false besides. It
+attempts the forbidden corner now, at a level with points to spare so the refusal cannot be the purse, over all eight
+classes and both directions, and checks the message names the chosen corner and that Reset reopens the road.
+
+`AFullBuildCarriesThreeSkills...` spent 59 points on "a finished tree" and asserted three slots full. It learned in
+tier order with no retry pass, so the rail — whose tier-1 node hangs off a tier-4 corner — was silently skipped and the
+"finished" tree was nine nodes of eleven.
+
+`BuiltUp` tried every talent carrying a skill and then spent the rest in catalogue order, producing a hero holding both
+corner skills: the one player the shape says cannot exist, measured by eight guards. It commits to a named corner now,
+and `TheBuiltUpProfileIsActuallyBuiltUp` asserts the properties of a committed build — no free points, the chosen
+corner reached, the rejected one at rank 0, exactly two skills, the road fully walked — instead of `Talents is not
+empty`, which the apex alone would have satisfied.
+
+### The eight talents D-087 dropped: kept dropped, deliberately
+
+The restructure cut 96 talents to 88 and said so nowhere. Reviewed one at a time, the concentrations it produced are
+**good class design and are kept**: `GuidingLight` now belongs to the Ranger alone (tracking is Ranger identity) and
+`CoinsPerChestReward` to the Rogue alone (chest-profit is Greed's). `Dawnstrike` to the Paladin and `WrathOfDawn` to
+Berserker and Paladin are the same story. The defect was that eight cuts happened silently inside a topology rewrite,
+not that the cuts were wrong. If a lost effect later proves to carry a class's fantasy, the fix is to migrate it onto a
+surviving node rather than to grow the tree back to twelve.
+
+### What the fork actually cost, measured
+
+The first measurement after the exclusion went live found the Knight at **10 of 60 careless runs** and the Cleric at
+26, against a field of 24-56. Making the fork real did not break them; it **revealed** that both only worked because
+breadth was free. Before D-088 the built-up fixture took every node at rank 1, so a Knight got its whole defensive
+road as a side effect of a build that was nominally about blades.
+
+The structural rule that follows, and it is the general one: **under a real fork, whatever a class needs to stay
+alive has to be on the apex or the shared rail**, because either road must stand alone. The Wizard was the accidental
+control - the only class whose rail already carried max hearts, the only one level on both roads (38/38), and the
+only one whose numbers went UP when the fork landed.
+
+Moving max hearts to the rail was then tried on all seven remaining classes at once, and the table refuted the
+blanket form of the rule while confirming the rule itself. Road B is identical before and after in every class - a
+road-B build buys road B plus the rail, and the swap only moved one node between those two - so each row below is a
+clean one-node comparison on the road-A build:
+
+| class | road A traded | careless/60 |
+|---|---|---|
+| Cleric | Rebuke -> **Faith (+hearts)** | 26 -> **40** |
+| Knight | Light Step -> **Sturdy (+hearts)** | 10 -> **17** |
+| Ranger | Fleet Foot -> hearts | 33 -> 33 |
+| Paladin | Blessed Draught -> hearts | 30 -> 29 |
+| Berserker | Headlong -> hearts | 41 -> 39 |
+| Rogue | Fence -> hearts | 26 -> **22** |
+| Engineer | **Long-Range Coil** -> hearts | 48 -> **36** |
+
+*Which* effect is essential is class-specific. For the Cleric it is hearts; for the Engineer it is the drone's reach,
+and trading it away cost 12 wins - consistent with D-081, which had already measured the drone as the Engineer's one
+real perk. **So the swap is kept for the Knight and the Cleric and reverted for the other five.** Hearts live on the
+shared rail in three classes (Knight, Cleric, Wizard) and on a road in five, and that asymmetry is a measurement, not
+an oversight.
+
+### The Knight needed its own answer, and it was its verbs
+
+Hearts bought the Knight 7 wins and left it still last by a distance. Both roads were probed:
+
+| variant | blade cas/car | bulwark cas/car |
+|---|---|---|
+| before | 76 / 17 | 93 / 14 |
+| Second Wind to the rail | 79 / **12** | 93 / 14 |
+| **Rally mends 4** | **104** / 19 | 93 / 14 |
+| **Shield Bash reaches 2** | 104 / 19 | **102** / **22** |
+| *Shield Bash mends 4 (ceiling, not shipped)* | *104 / 19* | *115 / 26* |
+
+**Second Wind on the rail is refuted, and the combined row is what proves it**: the rail has two slots, so it
+displaces Relentless, which the blade build values far more. Alone it reads as noise (+3 casual, -5 careless);
+stacked with Rally it costs 24 wins. Generalising the Cleric's fix to the Knight without checking what it pushed out
+was simply wrong.
+
+What the Knight actually had was the two weakest verbs in the game. Rally mended 2 where every other class mends 3 or
+4; Shield Bash was a bare adjacent stagger where Concussion and Snare reach two and three tiles. **Rally mends 4 and
+Shield Bash reaches 2.** Reach rather than damage because it keeps the corner a STAGGER, so the Knight's fork stays a
+real choice - blade ends in a mend, bulwark in control at range - where the mend-4 diagnostic would have made both
+corners heals and collapsed the choice. Three tiles measured WORSE than two (101/19 against 102/22): a turn spent
+reeling something three tiles away on a 5x5 board is a turn spent on a monster that was never going to arrive. Mana
+was never the lever - at 1 the runs came back byte-identical, so the button was not worth a turn at any price.
+
+### The guards now measure builds, not classes
+
+Sixteen builds on the shipping content, casual 102-120 and careless 19-56. Across the pass the weakest road went
+**80 -> 102** casual and **10 -> 19** careless, and the careless spread came in from **5.60:1 to 2.95:1**.
+
+Both parity guards measured whichever road a class declared first, so half the builds in the game were guarded by
+nothing. They iterate the corners now, with a per-build instrument check that the build reached the corner it names.
+`EveryClassTreeIsWorthPlaying` runs 80 seeds x 16 (1.3x the runs 8 x 120 cost) at a floor of 53, which the weakest
+clears by 4.7 sigma. `NoClassIsHopelessForACarelessPlayer` runs 100 x 16 at a floor of 20, 2.5 sigma - sixty was set
+when a class was one build and left the weakest of sixteen at 1.9 sigma. The headless suite costs 8m21s, up from
+5m31s.
+
+**The three-to-one ratio arm is demoted from gate to printed measurement.** The spread by build is 2.95:1 against a
+limit of 3 - one win from red, which goes red on noise about half the time. Buying 2.5 sigma needs roughly 600 seeds
+a build because the measured value sits right next to the band, and widening the band to four is the reflex this file
+exists to refuse (TEST-82, MAINT-91). It is a number on the record now; if it climbs back toward four to one that is
+a balance change to answer, not a threshold to loosen.
+
+**Open, and not measured here**: max hearts now sit behind a capstone for the Knight, Cleric and Wizard - six points
+rather than two, so level 7 rather than level 3. Every guard in this file builds at level 12 and is blind to it, and
+D-076 exists because the early floors have bitten new players before. It wants its own measurement.

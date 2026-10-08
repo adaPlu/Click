@@ -5,7 +5,7 @@ using ClickDungeon.Domain;
 namespace ClickDungeon.Simulation
 {
     /// <summary>
-    /// The usable skills (D-075, rules §14.2). Every one of the ninety-six talents is passive: the game had no verb for
+    /// The usable skills (D-075, rules §14.2). Every one of the eighty-eight talents is passive: the game had no verb for
     /// "do a thing now", so a class's whole identity had to be expressed as modifiers to a slash or a shield. A skill is
     /// that verb. It costs a turn and some mana, it is unlocked by learning the talent that names it, and the hero
     /// carries at most <see cref="ContentCatalog.SkillSlots"/> of them.

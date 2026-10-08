@@ -8,12 +8,14 @@ namespace ClickDungeon.Domain
         public const int CellCount = Size * Size;
 
         /// <summary>
-        /// How many usable skills a hero carries at once (D-075). Three, and each class has exactly three to find today -
-        /// one a branch - so the slots are not yet a choice. They are slots because the pool is meant to grow, and
-        /// because the profile has to record which three from the first version rather than from the day it matters.
-        /// It lives here rather than in the catalog: a save is validated against it, and validation has no catalog.
+        /// How many usable skills a hero carries at once. TWO since D-088: a class defines three, but the two bottom
+        /// corners exclude each other, so the most any build can hold is the apex skill plus the corner it committed to.
+        /// Three left a slot that could never fill and said the fork cost nothing. They are still slots because the pool
+        /// is meant to grow - raise the number when the unlock pool is big enough that choosing among them is itself a
+        /// decision, not before. It lives here rather than in the catalog: a save is validated against it, and
+        /// validation has no catalog.
         /// </summary>
-        public const int SkillSlots = 3;
+        public const int SkillSlots = 2;
     }
 
     public static class Versions
@@ -34,7 +36,11 @@ namespace ClickDungeon.Domain
         // 20 for carried usables and the resurrection becoming a ward that is PLACED rather than a passive that
         // silently waits (D-082). A ruleset-19 save resumes with an empty pack; the ward is re-placed by the talent
         // on the next floor, so nothing is lost but the floor it is resumed on.
-        public const int Ruleset = 20;
+        // 21 for the two bottom corners becoming capstones that exclude each other, which took the third skill slot
+        // with it (D-088). The FIRST bump that removes something a save may already hold rather than adding one: a
+        // ruleset-20 run carrying three skills is trimmed to two on load (SaveSystem) instead of being refused, so an
+        // in-progress run survives the update one button lighter.
+        public const int Ruleset = 21;
         // Bumped for the tile-set features (lava, teleports, fountains, doors and vaults): floors from seed N now differ.
         // 3: the first expansion monsters join the floors' enemy pools (D-058), so floors from seed N differ again.
         // 4: twenty floors in acts, the second wave in the pools and the key warden holding keys (D-062). A seven-floor save

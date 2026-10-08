@@ -283,29 +283,25 @@ namespace ClickDungeon.Unity.Screens
                 Vector2 from = isBase ? cornerL : apex;
                 Vector2 to = isBase ? cornerR : (which == 0 ? cornerL : cornerR);
 
-                // A skill edge ends ON its corner, because that corner IS the skill. The base belongs to neither corner,
-                // so its nodes take interior steps and it closes with a link to the far corner - stepping it like an edge
-                // landed its last node on top of the right-hand skill.
+                // A skill edge ends ON its corner, because that corner IS the skill. The base rail belongs to neither
+                // corner - either capstone opens it (D-088) - so its nodes take interior steps.
                 int steps = isBase ? path.Count + 1 : path.Count;
                 var at = new List<Vector2>();
                 for (int i = 0; i < path.Count; i++) at.Add(Vector2.Lerp(from, to, (i + 1) / (float)steps));
 
                 var prev = from;
-                string prevId = isBase
-                    ? (skillEdges.Count > 0 ? tree.Find(t => t.BranchId == skillEdges[0] && t.SkillId != null)?.Id : null)
-                    : apexTalent?.Id;
                 for (int i = 0; i < path.Count; i++)
                 {
-                    bool lit = prevId != null && Progression.Rank(_profile, prevId) > 0;
+                    // Lit by the NODE'S OWN gate, read from the data. Deriving it from branch order instead agreed with
+                    // the catalog only by the accident of how the branches happened to be declared.
+                    bool lit = Opened(path[i]);
                     Link(prev, at[i], lit ? color : Palette.StoneLight.WithAlpha(0.35f), lit);
                     prev = at[i];
-                    prevId = path[i].Id;
                 }
-                if (isBase)
-                {
-                    bool lit = prevId != null && Progression.Rank(_profile, prevId) > 0;
-                    Link(prev, to, lit ? color : Palette.StoneLight.WithAlpha(0.35f), lit);
-                }
+                // THE FAR END OF THE BASE IS NOT A PREREQUISITE (D-088). Nothing in the tree connects the last bonus to
+                // the opposite corner, and drawing it in the same language as a road said a build could walk the rail
+                // into the skill it turned down. The triangle still closes, in a line that cannot be mistaken for one.
+                if (isBase) Closing(prev, to);
 
                 int side = isBase ? 0 : which == 0 ? -1 : 1;
                 float labelWidth = isBase ? half * 2f / steps - 10f : 0f;
@@ -359,6 +355,31 @@ namespace ClickDungeon.Unity.Screens
             line.rectTransform.Place(Center, Center, mid, new Vector2(lit ? 8f : 4f, length));
             line.rectTransform.localEulerAngles = new Vector3(0f, 0f, angle);
             line.raycastTarget = false;
+        }
+
+        /// <summary>Whether this node's own prerequisite is satisfied: a named one, any one of several, or none (the apex).</summary>
+        bool Opened(TalentDefinition talent)
+        {
+            if (talent.Requires != null) return Progression.Rank(_profile, talent.Requires) > 0;
+            if (talent.RequiresAny == null || talent.RequiresAny.Length == 0) return true;
+            foreach (var id in talent.RequiresAny) if (Progression.Rank(_profile, id) > 0) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// The triangle's closing edge (D-088): the picture's third side, drawn as a row of faint dots so it reads as the
+        /// shape's outline and never as a road. It is never lit, because there is nothing behind it to open.
+        /// </summary>
+        void Closing(Vector2 from, Vector2 to)
+        {
+            float length = Vector2.Distance(from, to);
+            int dots = Mathf.Max(2, Mathf.RoundToInt(length / 34f));
+            for (int i = 0; i < dots; i++)
+            {
+                var at = Vector2.Lerp(from, to, (i + 0.5f) / dots);
+                var dot = Icons.Shape(_tree, Shapes.Circle, Palette.StoneLight.WithAlpha(0.22f), at, new Vector2(5f, 5f));
+                dot.raycastTarget = false;
+            }
         }
 
         void Node(TalentDefinition talent, Vector2 pos, Color branchColor, int side, float labelWidth)
@@ -464,7 +485,10 @@ namespace ClickDungeon.Unity.Screens
             int rank = Progression.Rank(_profile, talent.Id);
             _detailName.text = talent.Name.ToUpperInvariant();
             _detailName.color = color;
-            _detailPath.text = $"{branch?.Name} PATH  ·  " + (talent.Capstone ? "CAPSTONE (one per class)" : $"TIER {talent.Tier}");
+            // The apex belongs to no declared branch, so naming its path printed a leading blank - on the node the
+            // screen selects by default, which put it in every screenshot. It says what it is instead.
+            string where = branch != null ? $"{branch.Name} PATH" : "WHERE EVERY BUILD STARTS";
+            _detailPath.text = where + "  ·  " + (talent.Capstone ? "CAPSTONE (choose one, the other closes)" : $"TIER {talent.Tier}");
             _detailRank.text = $"Rank {rank} / {talent.MaxRank}";
             _detailSummary.text = talent.Summary;
             _detailEffect.text = (talent.MaxRank > 1 ? "Each rank: " : "") + talent.PerRank + ".";

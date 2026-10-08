@@ -190,12 +190,12 @@ namespace ClickDungeon.Content
 
         static void Talent(ContentCatalog c, string id, string classId, string branch, int tier, int maxRank, string name, string summary,
             string perRank, TalentEffect effect, int amount = 1, string requires = null, string skill = null,
-            int requiresPoints = 0, bool capstone = false) =>
+            string[] requiresAny = null, bool capstone = false) =>
             c.Talents.Add(new TalentDefinition
             {
                 Id = id, ClassId = classId, BranchId = branch, Tier = tier, MaxRank = maxRank, Name = name, Summary = summary,
                 PerRank = perRank, Effect = effect, Amount = amount, Requires = requires, SkillId = skill,
-                RequiresPoints = requiresPoints, Capstone = capstone,
+                RequiresAny = requiresAny, Capstone = capstone,
             });
 
         /// <summary>Something carried and spent on a turn (D-082).</summary>
@@ -409,8 +409,8 @@ namespace ClickDungeon.Content
             knight.Branches = new[]
             {
                 new TalentBranch { Id = "blade", Name = "BLADE", Focus = "First strikes and finishing blows", Color = "#E0533F" },
-                new TalentBranch { Id = "bulwark", Name = "BULWARK", Focus = "Shield work and hitting back", Color = "#4C8DE0" },
-                new TalentBranch { Id = "adventurer", Name = "ADVENTURER", Focus = "Dashes, chests and the long road", Color = "#6CC04A" },
+                new TalentBranch { Id = "bulwark", Name = "BULWARK", Focus = "Shield work, footwork and hitting back", Color = "#4C8DE0" },
+                new TalentBranch { Id = "adventurer", Name = "ADVENTURER", Focus = "Hearts, dashes and the long road", Color = "#6CC04A" },
             };
             var paladin = c.HeroClasses["paladin"];
             paladin.Role = "Holy guardian";
@@ -436,19 +436,19 @@ namespace ClickDungeon.Content
             Talent(c, "k_bastion", "knight", "blade", 3, 1, "Bastion", "Behind the shield, he mends.",
                 "Every SHIELD also restores 1 heart", TalentEffect.Bastion, requires: "k_executioner");
             Talent(c, "k_shield_wall", "knight", "blade", 4, 1, "Shield Wall", "Raise it without a second thought.",
-                "SHIELD costs 1 less mana", TalentEffect.ShieldCostCut, requires: "k_bastion", skill: "kni_rally");
-            Talent(c, "k_sturdy", "knight", "bulwark", 1, 3, "Sturdy", "More knight to go around.",
-                "+1 max heart", TalentEffect.MaxHearts, requires: "k_cleave");
+                "SHIELD costs 1 less mana", TalentEffect.ShieldCostCut, requires: "k_bastion", skill: "kni_rally", capstone: true);
+            Talent(c, "k_sturdy", "knight", "adventurer", 1, 3, "Sturdy", "More knight to go around.",
+                "+1 max heart", TalentEffect.MaxHearts, requiresAny: new[] { "k_shield_wall", "k_treasure_sense" });
             Talent(c, "k_riposte", "knight", "bulwark", 2, 2, "Riposte", "Block, then answer.",
-                "An attack your shield blocks deals 1 damage back to the attacker", TalentEffect.Riposte, requires: "k_sturdy");
+                "An attack your shield blocks deals 1 damage back to the attacker", TalentEffect.Riposte, requires: "k_light_step");
             Talent(c, "k_second_wind", "knight", "bulwark", 3, 1, "Second Wind", "Every staircase is a fresh start.",
                 "Arriving on a new floor restores 3 more hearts", TalentEffect.SecondWind, amount: 3, requires: "k_riposte");
             Talent(c, "k_treasure_sense", "knight", "bulwark", 4, 1, "Treasure Sense", "He knows exactly where to kick.",
                 "Chests open with one tap fewer (never below 1)", TalentEffect.ChestTapCut, requires: "k_second_wind", skill: "kni_shield_bash", capstone: true);
-            Talent(c, "k_light_step", "knight", "adventurer", 1, 2, "Light Step", "Travel light, dash often.",
-                "DASH costs 1 less mana (never below 1)", TalentEffect.DashCostCut, requires: "k_shield_wall");
+            Talent(c, "k_light_step", "knight", "bulwark", 1, 2, "Light Step", "Travel light, dash often.",
+                "DASH costs 1 less mana (never below 1)", TalentEffect.DashCostCut, requires: "k_cleave");
             Talent(c, "k_relentless", "knight", "adventurer", 2, 1, "Relentless", "Every kill fuels the next.",
-                "Slaying an enemy with a slash restores 1 heart and 2 mana", TalentEffect.Relentless, requires: "k_light_step");
+                "Slaying an enemy with a slash restores 1 heart and 2 mana", TalentEffect.Relentless, requires: "k_sturdy");
 
             // PALADIN (D-087): a triangle whose three EDGES are the branches this class already
             // declared. The apex skill opens hammer and aegis; each ENDS in a skill, so skipping one
@@ -462,7 +462,7 @@ namespace ClickDungeon.Content
             Talent(c, "p_divine_shield", "paladin", "hammer", 3, 1, "Divine Shield", "Not today.",
                 "Once per floor, a blow that would end you leaves you at 1 heart and heals 3", TalentEffect.DivineShield, amount: 3, requires: "p_dawnstrike");
             Talent(c, "p_holy_bulwark", "paladin", "hammer", 4, 1, "Holy Bulwark", "Every block is answered by grace.",
-                "An attack your shield blocks restores 2 mana", TalentEffect.HolyBulwark, amount: 2, requires: "p_divine_shield", skill: "pal_bulwark");
+                "An attack your shield blocks restores 2 mana", TalentEffect.HolyBulwark, amount: 2, requires: "p_divine_shield", skill: "pal_bulwark", capstone: true);
             Talent(c, "p_plated", "paladin", "aegis", 1, 3, "Plated", "Another layer of gold and faith.",
                 "+1 max heart", TalentEffect.MaxHearts, requires: "p_consecrate");
             Talent(c, "p_unyielding", "paladin", "aegis", 2, 1, "Unyielding", "Wounded, never broken.",
@@ -472,7 +472,7 @@ namespace ClickDungeon.Content
             Talent(c, "p_prayer", "paladin", "aegis", 4, 1, "Prayer", "Stillness restores the spirit.",
                 "Waiting a turn restores 1 extra mana", TalentEffect.Prayer, requires: "p_sanctified", skill: "pal_lay_on_hands", capstone: true);
             Talent(c, "p_blessed_draught", "paladin", "devotion", 1, 3, "Blessed Draught", "Every potion, a small miracle.",
-                "Potions heal 1 more", TalentEffect.PotionHeal, requires: "p_holy_bulwark");
+                "Potions heal 1 more", TalentEffect.PotionHeal, requiresAny: new[] { "p_holy_bulwark", "p_prayer" });
             Talent(c, "p_wrath_of_dawn", "paladin", "devotion", 2, 1, "Wrath of Dawn", "One falls, the rest reel.",
                 "Slaying an enemy with a slash staggers every other awake enemy next to you", TalentEffect.WrathOfDawn, requires: "p_blessed_draught");
 
@@ -509,7 +509,7 @@ namespace ClickDungeon.Content
             Talent(c, "ro_vanishing_act", "rogue", "shadows", 3, 1, "Vanishing Act", "Down the stairs and good as new.",
                 "Arriving on a new floor restores 3 more hearts", TalentEffect.SecondWind, amount: 3, requires: "ro_coup_de_grace");
             Talent(c, "ro_light_feet", "rogue", "shadows", 4, 1, "Light Feet", "Here, then there.",
-                "DASH costs 1 less mana (never below 1)", TalentEffect.DashCostCut, requires: "ro_vanishing_act", skill: "rog_smoke");
+                "DASH costs 1 less mana (never below 1)", TalentEffect.DashCostCut, requires: "ro_vanishing_act", skill: "rog_smoke", capstone: true);
             Talent(c, "ro_supple_leathers", "rogue", "evasion", 1, 3, "Supple Leathers", "Light, but not that light.",
                 "+1 max heart", TalentEffect.MaxHearts, requires: "ro_twin_fangs");
             Talent(c, "ro_slippery", "rogue", "evasion", 2, 1, "Slippery", "Missed me.",
@@ -519,7 +519,7 @@ namespace ClickDungeon.Content
             Talent(c, "ro_lockpick", "rogue", "evasion", 4, 1, "Lockpick", "Why kick what you can pick?",
                 "Chests open with one tap fewer (never below 1)", TalentEffect.ChestTapCut, requires: "ro_pickpocket", skill: "rog_bandage", capstone: true);
             Talent(c, "ro_fence", "rogue", "greed", 1, 2, "Fence", "Knows who pays best.",
-                "+3 coins for every chest reward", TalentEffect.CoinsPerChestReward, amount: 3, requires: "ro_light_feet");
+                "+3 coins for every chest reward", TalentEffect.CoinsPerChestReward, amount: 3, requiresAny: new[] { "ro_light_feet", "ro_lockpick" });
             Talent(c, "ro_eviscerate", "rogue", "greed", 2, 1, "Eviscerate", "They never saw it coming.",
                 "An ambush that does not kill staggers the target (not bosses)", TalentEffect.Eviscerate, requires: "ro_fence");
             // The Wizard (D-063): a heavy bolt that reaches down a clear line and shoves what it hits.
@@ -552,7 +552,7 @@ namespace ClickDungeon.Content
             Talent(c, "w_alchemy", "wizard", "pyromancy", 3, 1, "Alchemy", "He improved the recipe.",
                 "Potions also refill your mana, and fountains heal you fully", TalentEffect.Sanctified, requires: "w_cinders");
             Talent(c, "w_meditation", "wizard", "pyromancy", 4, 1, "Meditation", "Breathe in. Breathe fire.",
-                "Waiting a turn restores 1 extra mana", TalentEffect.Prayer, requires: "w_alchemy", skill: "wiz_nova");
+                "Waiting a turn restores 1 extra mana", TalentEffect.Prayer, requires: "w_alchemy", skill: "wiz_nova", capstone: true);
             Talent(c, "w_deep_well", "wizard", "arcana", 1, 3, "Deep Well", "Always a little more.",
                 "+1 max mana", TalentEffect.MaxMana, requires: "w_fireball");
             Talent(c, "w_soul_siphon", "wizard", "arcana", 2, 1, "Soul Siphon", "Waste not.",
@@ -562,7 +562,7 @@ namespace ClickDungeon.Content
             Talent(c, "w_quick_ward", "wizard", "arcana", 4, 1, "Quick Ward", "A flick of the wrist.",
                 "SHIELD costs 1 less mana", TalentEffect.ShieldCostCut, requires: "w_phoenix_feather", skill: "wiz_concussion", capstone: true);
             Talent(c, "w_warded_robes", "wizard", "warding", 1, 3, "Warded Robes", "Stitched with runes.",
-                "+1 max heart", TalentEffect.MaxHearts, requires: "w_meditation");
+                "+1 max heart", TalentEffect.MaxHearts, requiresAny: new[] { "w_meditation", "w_quick_ward" });
             Talent(c, "w_flame_ward", "wizard", "warding", 2, 1, "Flame Ward", "Hot to the touch.",
                 "SHIELD deals 1 damage to every awake enemy next to you", TalentEffect.Consecrate, requires: "w_warded_robes");
             // The Ranger (D-063): the longest reach, the fewest hearts, and more damage the further the shot.
@@ -595,7 +595,7 @@ namespace ClickDungeon.Content
             Talent(c, "r_second_wind", "ranger", "marksman", 3, 1, "Second Wind", "Fresh air on every stair.",
                 "Arriving on a new floor restores 3 more hearts", TalentEffect.SecondWind, amount: 3, requires: "r_kill_shot");
             Talent(c, "r_herbalism", "ranger", "marksman", 4, 1, "Herbalism", "A little moss makes it better.",
-                "Potions heal 1 more", TalentEffect.PotionHeal, requires: "r_second_wind", skill: "ran_poultice");
+                "Potions heal 1 more", TalentEffect.PotionHeal, requires: "r_second_wind", skill: "ran_poultice", capstone: true);
             Talent(c, "r_rangers_leathers", "ranger", "survival", 1, 3, "Ranger's Leathers", "Patched, and patched again.",
                 "+1 max heart", TalentEffect.MaxHearts, requires: "r_piercing_arrow");
             Talent(c, "r_endurance", "ranger", "survival", 2, 1, "Endurance", "Bent, not broken.",
@@ -605,7 +605,7 @@ namespace ClickDungeon.Content
             Talent(c, "r_tracker", "ranger", "survival", 4, 1, "Tracker", "Goblins leave footprints.",
                 "Each new floor starts with its key uncovered", TalentEffect.GuidingLight, requires: "r_hawkeye", skill: "ran_snare", capstone: true);
             Talent(c, "r_fleet_foot", "ranger", "awareness", 1, 2, "Fleet Foot", "Lighter than the wind.",
-                "DASH costs 1 less mana (never below 1)", TalentEffect.DashCostCut, requires: "r_herbalism");
+                "DASH costs 1 less mana (never below 1)", TalentEffect.DashCostCut, requiresAny: new[] { "r_herbalism", "r_tracker" });
             Talent(c, "r_pinning_shot", "ranger", "awareness", 2, 1, "Pinning Shot", "Stay right there.",
                 "A shot from 3 or more tiles away staggers the target (not bosses)", TalentEffect.PinningShot, requires: "r_fleet_foot");
             // The Cleric (D-063): a costly shield, and every block it makes heals her.
@@ -622,8 +622,8 @@ namespace ClickDungeon.Content
                 Branches = new[]
                 {
                     new TalentBranch { Id = "mercy", Name = "MERCY", Focus = "Potions, prayer and rest", Color = "#F4E6B0" },
-                    new TalentBranch { Id = "sanctity", Name = "SANCTITY", Focus = "Blocks that heal and protect", Color = "#8EC5F0" },
-                    new TalentBranch { Id = "judgement", Name = "JUDGEMENT", Focus = "Holy light that burns", Color = "#F2C14E" },
+                    new TalentBranch { Id = "sanctity", Name = "SANCTITY", Focus = "Holy light, and blocks that heal", Color = "#8EC5F0" },
+                    new TalentBranch { Id = "judgement", Name = "JUDGEMENT", Focus = "Hearts, and water that restores", Color = "#F2C14E" },
                 },
             };
             // CLERIC (D-087): a triangle whose three EDGES are the branches this class already
@@ -638,19 +638,19 @@ namespace ClickDungeon.Content
             Talent(c, "c_miracle", "cleric", "mercy", 3, 1, "Phoenix Feather", "Not yet.",
                 "Every floor a resurrection is placed: a blow that would end you leaves you at 1 heart and heals 3", TalentEffect.DivineShield, amount: 3, requires: "c_renewal");
             Talent(c, "c_swift_grace", "cleric", "mercy", 4, 1, "Swift Grace", "Quick to the light.",
-                "SHIELD costs 1 less mana", TalentEffect.ShieldCostCut, requires: "c_miracle", skill: "cle_ward");
-            Talent(c, "c_faith", "cleric", "sanctity", 1, 3, "Faith", "It holds her up.",
-                "+1 max heart", TalentEffect.MaxHearts, requires: "c_prayer");
+                "SHIELD costs 1 less mana", TalentEffect.ShieldCostCut, requires: "c_miracle", skill: "cle_ward", capstone: true);
+            Talent(c, "c_faith", "cleric", "judgement", 1, 3, "Faith", "It holds her up.",
+                "+1 max heart", TalentEffect.MaxHearts, requiresAny: new[] { "c_swift_grace", "c_holy_light" });
             Talent(c, "c_blessed_ward", "cleric", "sanctity", 2, 1, "Blessed Ward", "Every block, a blessing.",
-                "Blocked attacks heal 1 more", TalentEffect.Sanctuary, requires: "c_faith");
+                "Blocked attacks heal 1 more", TalentEffect.Sanctuary, requires: "c_rebuke");
             Talent(c, "c_radiance", "cleric", "sanctity", 3, 1, "Radiance", "Behind the light, she mends.",
                 "Every SHIELD also restores 1 heart", TalentEffect.Bastion, requires: "c_blessed_ward");
             Talent(c, "c_holy_light", "cleric", "sanctity", 4, 1, "Holy Light", "Light bursts from the raised shield.",
                 "SHIELD deals 1 damage to every awake enemy next to you", TalentEffect.Consecrate, requires: "c_radiance", skill: "cle_dispel", capstone: true);
-            Talent(c, "c_rebuke", "cleric", "judgement", 1, 3, "Rebuke", "Strike the one who faltered.",
-                "+1 slash damage against a staggered enemy", TalentEffect.Judgement, requires: "c_swift_grace");
+            Talent(c, "c_rebuke", "cleric", "sanctity", 1, 3, "Rebuke", "Strike the one who faltered.",
+                "+1 slash damage against a staggered enemy", TalentEffect.Judgement, requires: "c_prayer");
             Talent(c, "c_holy_water", "cleric", "judgement", 2, 1, "Holy Water", "Blessed waters, blessed wine.",
-                "Potions also refill your mana, and fountains heal you fully", TalentEffect.Sanctified, requires: "c_rebuke");
+                "Potions also refill your mana, and fountains heal you fully", TalentEffect.Sanctified, requires: "c_faith");
             // The Berserker (D-063): the least mana, and a slash that grows as he bleeds.
             c.HeroClasses["berserker"] = new HeroClassDefinition
             {
@@ -666,7 +666,7 @@ namespace ClickDungeon.Content
                 {
                     new TalentBranch { Id = "fury", Name = "FURY", Focus = "Rage, and what it does to an axe", Color = "#E0533F" },
                     new TalentBranch { Id = "hide", Name = "HIDE", Focus = "Hearts, grit and refusing to fall", Color = "#A0703C" },
-                    new TalentBranch { Id = "warpath", Name = "WARPATH", Focus = "Charges, plunder and war cries", Color = "#E09A2E" },
+                    new TalentBranch { Id = "warpath", Name = "WARPATH", Focus = "Charges, and blood that feeds the next swing", Color = "#E09A2E" },
                 },
             };
             // BERSERKER (D-087): a triangle whose three EDGES are the branches this class already
@@ -681,7 +681,7 @@ namespace ClickDungeon.Content
             Talent(c, "b_undying_rage", "berserker", "fury", 3, 1, "Undying Rage", "Too angry to fall.",
                 "Once per floor, a blow that would end you leaves you at 1 heart and heals 3", TalentEffect.DivineShield, amount: 3, requires: "b_brutal_finish");
             Talent(c, "b_iron_gut", "berserker", "fury", 4, 1, "Iron Gut", "Drinks it all in one go.",
-                "Potions heal 2 more", TalentEffect.PotionHeal, amount: 2, requires: "b_undying_rage", skill: "ber_second_wind");
+                "Potions heal 2 more", TalentEffect.PotionHeal, amount: 2, requires: "b_undying_rage", skill: "ber_second_wind", capstone: true);
             Talent(c, "b_thick_hide", "berserker", "hide", 1, 3, "Thick Hide", "More beard, more hearts.",
                 "+1 max heart", TalentEffect.MaxHearts, requires: "b_wide_swing");
             Talent(c, "b_pain_is_progress", "berserker", "hide", 2, 1, "Pain Is Progress", "He says it a lot.",
@@ -691,7 +691,7 @@ namespace ClickDungeon.Content
             Talent(c, "b_smash_open", "berserker", "hide", 4, 1, "Smash Open", "Locks are a suggestion.",
                 "Chests open with one tap fewer (never below 1)", TalentEffect.ChestTapCut, requires: "b_war_cry", skill: "ber_warcry", capstone: true);
             Talent(c, "b_headlong", "berserker", "warpath", 1, 2, "Headlong", "Straight through.",
-                "DASH costs 1 less mana (never below 1)", TalentEffect.DashCostCut, requires: "b_iron_gut");
+                "DASH costs 1 less mana (never below 1)", TalentEffect.DashCostCut, requiresAny: new[] { "b_iron_gut", "b_smash_open" });
             Talent(c, "b_blood_frenzy", "berserker", "warpath", 2, 1, "Blood Frenzy", "Every kill fuels the next.",
                 "Slaying an enemy with a slash restores 1 heart and 2 mana", TalentEffect.Relentless, requires: "b_headlong");
             // The Engineer (D-063): the weakest slash, and a drone that fights on every turn he spends elsewhere.
@@ -707,9 +707,9 @@ namespace ClickDungeon.Content
                 Playstyle = "Never fights alone. His own blade is feeble; the drone does the work on every turn he spends moving, shielding or drinking.",
                 Branches = new[]
                 {
-                    new TalentBranch { Id = "invention", Name = "INVENTION", Focus = "The drone, and making it better", Color = "#3FA7E0" },
-                    new TalentBranch { Id = "control", Name = "CONTROL", Focus = "Plating, shields and shocks", Color = "#8C9AB0" },
-                    new TalentBranch { Id = "tactics", Name = "TACTICS", Focus = "Locks, loot and the lay of the land", Color = "#E0B04A" },
+                    new TalentBranch { Id = "invention", Name = "INVENTION", Focus = "Wrenches, plating and shocks", Color = "#3FA7E0" },
+                    new TalentBranch { Id = "control", Name = "CONTROL", Focus = "Plating, locks and repairs", Color = "#8C9AB0" },
+                    new TalentBranch { Id = "tactics", Name = "TACTICS", Focus = "The drone's reach, and a coil that arcs", Color = "#E0B04A" },
                 },
             };
             // ENGINEER (D-087): a triangle whose three EDGES are the branches this class already
@@ -724,7 +724,7 @@ namespace ClickDungeon.Content
             Talent(c, "e_static_field", "engineer", "invention", 3, 1, "Static Field", "The air crackles.",
                 "SHIELD deals 1 damage to every awake enemy next to you", TalentEffect.Consecrate, requires: "e_shock_plating");
             Talent(c, "e_quick_deploy", "engineer", "invention", 4, 1, "Quick Deploy", "Shield up in a snap.",
-                "SHIELD costs 1 less mana", TalentEffect.ShieldCostCut, requires: "e_static_field", skill: "eng_repair");
+                "SHIELD costs 1 less mana", TalentEffect.ShieldCostCut, requires: "e_static_field", skill: "eng_repair", capstone: true);
             Talent(c, "e_riveted_plating", "engineer", "control", 1, 3, "Riveted Plating", "One more rivet.",
                 "+1 max heart", TalentEffect.MaxHearts, requires: "e_overclock");
             Talent(c, "e_survey_drone", "engineer", "control", 2, 1, "Survey Drone", "It flies ahead.",
@@ -734,7 +734,7 @@ namespace ClickDungeon.Content
             Talent(c, "e_lockpicks", "engineer", "control", 4, 1, "Lockpicks", "A gadget for every lock.",
                 "Chests open with one tap fewer (never below 1)", TalentEffect.ChestTapCut, requires: "e_field_repairs", skill: "eng_bomb", capstone: true);
             Talent(c, "e_long_range_coil", "engineer", "tactics", 1, 1, "Long-Range Coil", "A longer leash.",
-                "Your drone reaches monsters 2 tiles away", TalentEffect.DroneRange, requires: "e_quick_deploy");
+                "Your drone reaches monsters 2 tiles away", TalentEffect.DroneRange, requiresAny: new[] { "e_quick_deploy", "e_lockpicks" });
             Talent(c, "e_tesla_coil", "engineer", "tactics", 2, 1, "Tesla Coil", "Everybody gets a spark.",
                 "Your drone zaps every monster in reach, not just one", TalentEffect.ArcChain, requires: "e_long_range_coil");
 
@@ -1104,18 +1104,29 @@ namespace ClickDungeon.Content
             c.ChestRewards.Add(new RewardEntry { Kind = RewardKind.SlashDamage, Amount = 1, Weight = 1 });
 
             // ---------------------------------------------------------------- usable skills (D-075)
-            // The first verb the game has had. Every one of the ninety-six talents is passive, so a class could only ever
+            // The first verb the game has had. Every one of the eighty-eight talents is passive, so a class could only ever
             // be expressed as a modifier on a slash or a shield; these are things a player DOES, on a turn they choose,
             // for mana. One a branch at tier 2, so a build that climbs all three earns all three.
             // Knight - the line holds, and then it moves.
             Skill(c, "kni_shockwave", "knight", "Shockwave", "2 damage to everything beside you.",
                 manaCost: 3, effect: SkillEffect.Burst, amount: 2, target: SkillTarget.Self,
                 icon: "icon_skill_kni_shockwave");
-            Skill(c, "kni_rally", "knight", "Rally", "Mend 2 hearts.",
-                manaCost: 3, effect: SkillEffect.Heal, amount: 2, target: SkillTarget.Self,
+            // Four, not two (D-088). Rally was the smallest heal in the game - every other class mends 3 or 4 - and
+            // once the fork stopped a Knight holding both corners, the blade road was a build whose only sustain was
+            // the weakest button anywhere. Measured over 120 casual seeds: 76 wins -> 104, which moves the road from
+            // far below the field (108-120) to the bottom of it. The bulwark road is untouched by this; Rally is
+            // blade's corner skill and that road ends in Shield Bash.
+            Skill(c, "kni_rally", "knight", "Rally", "Mend 4 hearts.",
+                manaCost: 3, effect: SkillEffect.Heal, amount: 4, target: SkillTarget.Self,
                 icon: "icon_skill_kni_rally");
-            Skill(c, "kni_shield_bash", "knight", "Shield Bash", "Leave one monster beside you reeling.",
-                manaCost: 2, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy,
+            // Two tiles, not one (D-088). The bulwark road's corner was a bare adjacent stagger and the road was the
+            // weakest build in the game; reach is the lever that keeps it a STAGGER, so the Knight's fork stays a
+            // real choice - blade ends in a mend, bulwark in control at range - instead of two heals. Measured on
+            // the bulwark build: 93 -> 102 casual, 14 -> 22 careless. Three tiles is WORSE (101, 19), because a
+            // turn spent reeling something three tiles away on a 5x5 board is a turn spent on a monster that was
+            // never going to reach you. Mana was never the lever: at 1 the runs came back byte-identical.
+            Skill(c, "kni_shield_bash", "knight", "Shield Bash", "Leave one monster reeling, at two tiles.",
+                manaCost: 2, effect: SkillEffect.Stagger, amount: 0, target: SkillTarget.Enemy, range: 2,
                 icon: "icon_skill_kni_shield_bash");
 
             // Paladin - the hammer, the shield and the hands.

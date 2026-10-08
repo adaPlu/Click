@@ -37,16 +37,36 @@ namespace ClickDungeon.Tests
                 // corner skill - three bonuses then the skill, so tiers 1-4 - and the third is the base between the
                 // corners, two bonuses and no skill of its own. Every edge is still a chain: each rung needs the one
                 // below it, which is what makes skipping an edge cost you the skill at its end.
+                var apexNode = tree.Single(t => t.BranchId == "apex");
                 foreach (var branch in heroClass.Branches)
                 {
                     var path = tree.Where(t => t.BranchId == branch.Id).OrderBy(t => t.Tier).ToList();
                     var tiers = path.Select(t => t.Tier).ToArray();
                     Assert.That(tiers, Is.EqualTo(new[] { 1, 2, 3, 4 }).Or.EqualTo(new[] { 1, 2 }), branch.Id);
-                    Assert.That(path.Count(t => t.SkillId != null), Is.EqualTo(tiers.Length == 4 ? 1 : 0), branch.Id);
+                    bool isEdge = tiers.Length == 4;
+                    // WHERE the skill sits, not just how many (D-088). Counting alone let a corner skill be parked at
+                    // tier 1, where every build would get it free and skipping the edge would cost nothing.
+                    Assert.That(path.Count(t => t.SkillId != null), Is.EqualTo(isEdge ? 1 : 0), branch.Id);
+                    if (isEdge)
+                    {
+                        Assert.That(path[3].SkillId, Is.Not.Null, $"{branch.Id}: the skill belongs at the END of the edge.");
+                        Assert.That(path[3].Capstone, Is.True, $"{branch.Id}: the end of an edge is a capstone.");
+                        Assert.That(path.Take(3).Any(t => t.Capstone), Is.False, $"{branch.Id}: only the end is a capstone.");
+                    }
+                    // Rung 1 included: the root is the least obvious edge in the shape and used to be asserted by
+                    // nothing, so an edge could float free of the apex and the whole suite stayed green.
+                    if (isEdge)
+                        Assert.That(path[0].Requires, Is.EqualTo(apexNode.Id), $"{branch.Id}: an edge starts at the apex.");
+                    else
+                        Assert.That(path[0].RequiresAny, Is.EquivalentTo(tree.Where(t => t.Capstone).Select(t => t.Id)),
+                            $"{branch.Id}: the rail opens from either corner.");
                     for (int i = 1; i < path.Count; i++) Assert.That(path[i].Requires, Is.EqualTo(path[i - 1].Id), path[i].Id);
                 }
                 // And the apex skill, which belongs to no edge because both start from it.
                 Assert.That(tree.Count(t => t.BranchId == "apex"), Is.EqualTo(1), heroClass.Id);
+                Assert.That(apexNode.Requires, Is.Null, $"{heroClass.Id}: the apex stands on nothing.");
+                Assert.That(apexNode.SkillId, Is.Not.Null, $"{heroClass.Id}: the apex pays the skill every build starts with.");
+                Assert.That(tree.Count(t => t.Capstone), Is.EqualTo(2), $"{heroClass.Id}: two corners, and a build takes one.");
                 foreach (var talent in tree)
                 {
                     Assert.That(talent.Name, Is.Not.Empty);
@@ -86,38 +106,89 @@ namespace ClickDungeon.Tests
         [Test]
         public void AClassTakesOnlyOneCapstone()
         {
-            // WHAT REPLACED THE CAPSTONE RULE (D-087). Three parallel branches each ended in a capstone and a
-            // class could learn one, which is what made the tree a choice. A triangle makes the choice differently:
-            // two edges run from the apex to a corner skill, and eleven points buy one of them, not both. So the
-            // thing to assert is no longer "a second capstone is refused" - there is only one - but that a build
-            // which walks one edge cannot also have the skill at the end of the other.
-            var tree = Catalog.TalentsOf("knight");
-            var apex = tree.Single(t => t.BranchId == "apex");
-            var corners = tree.Where(t => t.SkillId != null && t.BranchId != "apex").ToList();
-            Assert.That(corners.Count, Is.EqualTo(2), "Two corner skills, one at the end of each edge.");
+            // THE FORK (D-088), and it is asserted by ATTEMPTING the forbidden corner. The version this replaced read
+            // the rejected corner's rank without ever trying to learn it - a talent nobody attempts is rank 0 whatever
+            // the rules say, so it passed unconditionally, and the rule it named was false besides: nine points bought
+            // both corners. Every class, both directions, and the refusal has to say why.
+            foreach (var heroClass in Catalog.HeroClasses.Values)
+            {
+                var tree = Catalog.TalentsOf(heroClass.Id);
+                if (tree.Count == 0) continue;
+                var apex = tree.Single(t => t.BranchId == "apex");
+                var corners = tree.Where(t => t.Capstone).ToList();
+                Assert.That(corners.Count, Is.EqualTo(2), $"{heroClass.Id}: two corners to choose between.");
+                Assert.That(corners.All(t => t.SkillId != null), Is.True,
+                    $"{heroClass.Id}: a corner is a capstone because it pays a skill.");
 
-            var profile = new ProfileState { Xp = Progression.XpForLevel(12) };
-            Assert.That(LearnTo(profile, apex.Id), Is.True, "The apex skill is where every build starts.");
-            Assert.That(LearnTo(profile, corners[0].Id), Is.True, "Eleven points walk one edge to its corner.");
-            Assert.That(Progression.Rank(profile, corners[1].Id), Is.Zero,
-                "And cannot also reach the other: skipping an edge costs you the skill at its end.");
+                for (int d = 0; d < 2; d++)
+                {
+                    var taken = corners[d];
+                    var refused = corners[1 - d];
+                    string who = $"{heroClass.Id} via {taken.BranchId}";
+                    // Level 20 - far more points than either road costs - so what stops the second corner is the rule
+                    // and not the purse. At level 12 a refusal proves nothing: the points would have run out anyway.
+                    var profile = new ProfileState { Xp = Progression.XpForLevel(20) };
+                    Assert.That(LearnTo(profile, apex.Id), Is.True, $"{who}: the apex is where every build starts.");
+                    Assert.That(LearnTo(profile, taken.Id), Is.True, $"{who}: could not walk its own road.");
 
-            Progression.Reset(profile, Catalog, "knight");
-            Assert.That(Progression.PointsSpent(profile, Catalog, "knight"), Is.Zero, "Reset refunds the class's points.");
+                    Assert.That(Progression.PointsFree(profile, Catalog, heroClass.Id), Is.GreaterThan(
+                        Catalog.TalentsOf(heroClass.Id).Count(t => t.BranchId == refused.BranchId)),
+                        $"{who}: not enough points left over for the refusal to mean anything.");
+                    Assert.That(LearnTo(profile, refused.Id), Is.False, $"{who}: took both corners.");
+                    Assert.That(Progression.Rank(profile, refused.Id), Is.Zero, $"{who}: the refused corner was learned.");
+                    Assert.That(Progression.Locked(profile, Catalog, refused.Id),
+                        Does.Contain(taken.Name), $"{who}: the refusal does not say which corner is chosen.");
+
+                    // And it is a commitment, not a sentence: resetting the tree reopens the other road.
+                    Progression.Reset(profile, Catalog, heroClass.Id);
+                    Assert.That(Progression.PointsSpent(profile, Catalog, heroClass.Id), Is.Zero, $"{who}: reset refunds the points.");
+                    Assert.That(LearnTo(profile, refused.Id), Is.True, $"{who}: reset did not reopen the other corner.");
+                }
+            }
+        }
+
+        [Test]
+        public void TheSharedRailOpensFromEitherCorner()
+        {
+            // The base is shared progression, not a road between the corners (D-088): whichever corner a build
+            // commits to opens it. Under D-087 it hung off one named corner, so half of every class's builds could
+            // not reach two of its eleven talents at all, while the screen drew a triangle saying they could.
+            foreach (var heroClass in Catalog.HeroClasses.Values)
+            {
+                var tree = Catalog.TalentsOf(heroClass.Id);
+                if (tree.Count == 0) continue;
+                var rail = tree.Where(t => t.RequiresAny != null && t.RequiresAny.Length > 0).ToList();
+                Assert.That(rail.Count, Is.EqualTo(1), $"{heroClass.Id}: one node joins the rail to the fork.");
+                var corners = tree.Where(t => t.Capstone).ToList();
+                Assert.That(rail[0].RequiresAny, Is.EquivalentTo(corners.Select(t => t.Id)),
+                    $"{heroClass.Id}: the rail opens from exactly the two corners.");
+
+                foreach (var corner in corners)
+                {
+                    var profile = new ProfileState { Xp = Progression.XpForLevel(20) };
+                    foreach (var name in corners.Select(t => t.Name))
+                        Assert.That(Progression.Locked(profile, Catalog, rail[0].Id), Does.Contain(name),
+                            $"{heroClass.Id}: the rail is open, or does not name both corners, before either is taken.");
+                    Assert.That(LearnTo(profile, corner.Id), Is.True, heroClass.Id);
+                    Assert.That(Progression.Locked(profile, Catalog, rail[0].Id), Is.Null,
+                        $"{heroClass.Id}: {corner.BranchId} did not open the shared rail.");
+                }
+            }
         }
 
         [Test]
         public void EachClassSpendsTheLevelsPointsOnItsOwnTree()
         {
-            // Four, not three: reaching any bonus now costs the apex skill beneath it as well (D-087), so three
-            // points buy the apex and two ranks of the node this test is about.
+            // Four, not three: reaching any bonus costs the apex skill beneath it as well (D-087), so three points buy
+            // the apex and two ranks of the node this test is about. It has to be a node ON A ROAD - the shared rail
+            // sits behind a capstone since D-088, so nothing there is reachable with three points.
             var profile = new ProfileState { Xp = Progression.XpForLevel(4) };
-            Assert.That(LearnTo(profile, "k_sturdy"), Is.True);
-            Assert.That(LearnTo(profile, "k_sturdy"), Is.True);
+            Assert.That(LearnTo(profile, "k_opening_strike"), Is.True);
+            Assert.That(LearnTo(profile, "k_opening_strike"), Is.True);
             Assert.That(Progression.PointsFree(profile, Catalog, "knight"), Is.Zero);
             Assert.That(Progression.PointsFree(profile, Catalog, "paladin"), Is.EqualTo(3), "The Paladin has its own points.");
             Progression.Reset(profile, Catalog, "paladin");
-            Assert.That(Progression.Rank(profile, "k_sturdy"), Is.EqualTo(2), "Resetting one class leaves the other.");
+            Assert.That(Progression.Rank(profile, "k_opening_strike"), Is.EqualTo(2), "Resetting one class leaves the other.");
         }
 
         [Test]
@@ -131,9 +202,12 @@ namespace ClickDungeon.Tests
         [Test]
         public void OnlyThePlayingClassesTalentsShapeTheRun()
         {
-            var profile = new ProfileState { Xp = Progression.XpForLevel(5) };
-            LearnTo(profile, "k_sturdy");
-            LearnTo(profile, "p_holy_wrath");
+            // Seven: the hearts moved to the shared rail (D-088), which opens only once a road has been walked to its
+            // capstone, so the +1 heart this asserts now costs six points rather than two. Points are per class, so
+            // the Paladin still pays only for its own.
+            var profile = new ProfileState { Xp = Progression.XpForLevel(7) };
+            Assert.That(LearnTo(profile, "k_sturdy"), Is.True, "k_sturdy");
+            Assert.That(LearnTo(profile, "p_holy_wrath"), Is.True, "p_holy_wrath");
             var knight = RunFactory.NewRun(3UL, Catalog, new List<GameEvent>());
             Progression.Apply(profile, knight, Catalog);
             Assert.That(knight.Hero.MaxHp, Is.EqualTo(Catalog.HeroClass("knight").MaxHp + 1));
@@ -404,9 +478,15 @@ namespace ClickDungeon.Tests
             DoOk(run, PlayerCommand.Potion());
             Assert.That(run.Hero.Mana, Is.EqualTo(run.Hero.MaxMana), "A potion refills mana.");
 
+            // The capstone FIRST (D-088). Blessed Draught is on the shared rail, which either corner opens, so walking
+            // to it from a blank profile commits to whichever corner the rail lists first - the Hammer - which would
+            // then refuse Prayer at the end of the Aegis road. Committing to Aegis first opens the rail from that
+            // side instead. The order is the build; it is not interchangeable any more.
             var profile = new ProfileState { Xp = Progression.XpForLevel(20) };
-            foreach (var id in new[] { "p_blessed_draught", "p_plated", "p_prayer", "p_plated" })
+            foreach (var id in new[] { "p_prayer", "p_plated", "p_blessed_draught" })
                 Assert.That(LearnTo(profile, id), Is.True, id);
+            Assert.That(Progression.Rank(profile, "p_plated"), Is.EqualTo(2),
+                "Plated twice - once on the way to Prayer, once for itself - and the rail reached through that capstone.");
             var session = new GameSession(Catalog, null);
             foreach (var kv in profile.Talents) session.Profile.Talents[kv.Key] = kv.Value;
             session.Profile.Xp = profile.Xp;

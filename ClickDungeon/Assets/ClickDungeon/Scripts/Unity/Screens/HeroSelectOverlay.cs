@@ -300,7 +300,7 @@ namespace ClickDungeon.Unity.Screens
             }
         }
 
-        /// <summary>A glimpse of the class's progression: each path's name and its capstone's icon, never the whole tree.</summary>
+        /// <summary>A glimpse of the class's progression: each path's name and the icon of where it ends, never the whole tree.</summary>
         void DrawPaths(HeroClassDefinition heroClass)
         {
             Clear(_paths);
@@ -316,7 +316,11 @@ namespace ClickDungeon.Unity.Screens
             {
                 var branch = heroClass.Branches[b];
                 var color = TalentOverlay.Parse(branch.Color);
-                var capstone = tree.Find(t => t.BranchId == branch.Id && t.Capstone);
+                // The branch's furthest node, not specifically its capstone. Only the two edges end in one; the shared
+                // rail never has one, so looking for a capstone drew an empty circle on a third of every class's cards.
+                var tip = tree.FindAll(t => t.BranchId == branch.Id);
+                tip.Sort((l, r) => l.Tier.CompareTo(r.Tier));
+                var capstone = tip.Count > 0 ? tip[tip.Count - 1] : null;
                 var card = UiFactory.Rect(_paths, "Path " + branch.Id);
                 card.Place(TopLeft, TopLeft, new Vector2(b * 256f, 0f), new Vector2(244f, 164f));
                 UiFactory.Image(card, "Back", color.Dim(0.22f).WithAlpha(0.95f), Shapes.Rounded, true).rectTransform.Stretch();

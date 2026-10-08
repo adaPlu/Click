@@ -50,6 +50,12 @@ namespace ClickDungeon.Application
             // Floors are generated from the current generation version, so a save from another one would diverge.
             if (run.GenerationVersion != Versions.Generation)
                 throw new FormatException($"Save uses floor generation {run.GenerationVersion} (expected {Versions.Generation}).");
+            // D-088 took the third skill slot away, which is the first ruleset change that REMOVES something a save may
+            // already hold. A run saved under ruleset 20 can carry three skills, and Validate would refuse the file
+            // outright - an in-progress run lost to an update. Trim it to the slots that exist instead, keeping the
+            // first two in the order the run recorded them, so the hero loses a button and nothing else.
+            if (run.RulesetVersion < 21 && run.Skills != null)
+                while (run.Skills.Count > BoardRules.SkillSlots) run.Skills.RemoveAt(run.Skills.Count - 1);
             Validate(run);
             // A hero retired from the roster is carried to the one that replaced it (D-057), so a run in progress survives
             // the roster changing under it: Sir Clickington's runs become Ironheart's. The successor shares the class, so

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -290,22 +291,27 @@ namespace ClickDungeon.Unity
         {
             profile.Coins = 1248;
             profile.Gems = 152;
-            // Twelve, not nine (D-087): the triangle's three skills are its apex and its two corners, and reaching
-            // both corners from the apex costs nine points. A demo profile that shows one slot of three is not a
-            // demo of the game.
-            profile.Xp = Progression.XpForLevel(12);
+            // Thirteen, and one point deliberately UNSPENT (D-088). Twelve spent every point, so no node could be
+            // learned and the screen's whole purpose - a gold node under a green LEARN - appeared in no screenshot
+            // ever taken with this profile. One spare buys both states at once.
+            profile.Xp = Progression.XpForLevel(13);
             profile.Items.AddRange(new[] { "steel_sword", "iron_shield", "royal_plate", "healing_charm", "lucky_wand" });
             foreach (var id in new[] { "steel_sword", "iron_shield", "royal_plate", "healing_charm" })
                 Inventory.Equip(profile, ContentCatalog.CreateDefault(), id);
             var demo = ContentCatalog.CreateDefault();
-            // Down the apex and then both edges, each talent after the one it needs: the order is the dependency
-            // chain, so a line out of place costs a skill rather than failing loudly. The last two spend the spare
-            // points on a second rank and on the base, so the screen shows a multi-rank node and a bonus road too.
+            // A COMMITTED build (D-088), not a completed one: the apex, then the blade edge to its capstone, then the
+            // shared rail it opens, then ranks. Both skill slots are full, Treasure Sense sits visibly refused on the
+            // road not taken, and one point is left over - so a single screenshot carries the fork, a maxed node, the
+            // shared bonuses and a live LEARN button. The order is the dependency chain; the guard below is what makes
+            // a line out of place fail loudly instead of quietly costing a skill.
             foreach (var id in new[] { "k_cleave",
                                        "k_opening_strike", "k_executioner", "k_bastion", "k_shield_wall",
-                                       "k_sturdy", "k_riposte", "k_second_wind", "k_treasure_sense",
-                                       "k_opening_strike", "k_light_step" })
-                Progression.TryLearn(profile, demo, id);
+                                       "k_light_step", "k_relentless",
+                                       "k_opening_strike", "k_opening_strike", "k_executioner", "k_sturdy" })
+                if (!Progression.TryLearn(profile, demo, id))
+                    throw new InvalidOperationException($"The demo profile could not learn {id}: this list and the "
+                        + "catalog disagree. Every screenshot taken with -cdDemoProfile would be wrong, so it stops "
+                        + "here rather than quietly photographing a smaller build (D-087 shipped exactly that).");
             // Two feathers, for the same reason the level is twelve (D-083): with an empty pack the last slot has
             // nothing to swap to, so a screenshot of it is a screenshot of the old POTION button and proves nothing.
             profile.PhoenixFeathers = 2;

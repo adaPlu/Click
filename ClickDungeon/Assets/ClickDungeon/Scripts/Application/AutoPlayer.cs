@@ -76,9 +76,14 @@ namespace ClickDungeon.Application
         public const double CasualMistakeRate = 0.2;
 
         /// <summary>
-        /// Spends a class's free talent points the way a player working through the whole tree might: a capstone as soon as
-        /// one opens; otherwise the point goes to the path with the fewest points so far (ties in tree order), on the
-        /// highest-tier talent that path can take now, so every path climbs tier by tier. Returns the names learned, in order.
+        /// Spends a class's free talent points the way a player working through the tree might: a capstone as soon as one
+        /// opens; otherwise the point goes to the path with the fewest points so far (ties in tree order), on the
+        /// highest-tier talent that path can take now, so the edges climb level with each other. Returns the names
+        /// learned, in order.
+        /// Since D-088 that first capstone is a COMMITMENT: taking it closes the other corner for the rest of the
+        /// profile, so the bot ends up specialised rather than complete. Which corner it commits to is decided by the
+        /// tie-break above - the first branch the class declares reaches tier 4 first - so it is deterministic, and the
+        /// bot measures one of the two roads rather than an average of both.
         /// </summary>
         public static List<string> LearnTalents(ProfileState profile, ContentCatalog catalog, string classId)
         {

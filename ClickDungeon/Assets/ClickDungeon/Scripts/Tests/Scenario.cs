@@ -153,15 +153,20 @@ namespace ClickDungeon.Tests
         public static CommandResult Do(RunState run, PlayerCommand command) => TurnResolver.Apply(run, command, Catalog);
 
         /// <summary>
-        /// Learns a talent and everything it stands on (D-087). The tree is a triangle now: every node but the apex
-        /// needs the one below it on its edge, so a test that wants one talent has to walk to it. Returns false only
-        /// when the profile genuinely cannot afford the walk, which is a real failure worth asserting.
+        /// Learns a talent and everything it stands on. The tree is a triangle: every node but the apex needs the one
+        /// below it on its edge, so a test that wants one talent has to walk to it. The base rail needs EITHER capstone
+        /// (D-088), and <see cref="Beneath"/> picks the one the profile already holds so the walk never spends the fork
+        /// on the test's behalf.
+        /// Returns false whenever the walk does not finish: unaffordable, already at max rank, an unknown id, or a
+        /// prerequisite that cannot be met. <c>Is.True</c> is therefore a sound setup guard; <c>Is.False</c> says only
+        /// that something stopped it, so a test that wants to prove a RULE must assert on
+        /// <see cref="Progression.Locked"/> instead.
         /// </summary>
         public static bool LearnTo(ProfileState profile, string talentId, ContentCatalog catalog = null)
         {
             catalog = catalog ?? Catalog;
             var chain = new List<string>();
-            for (var t = catalog.Talent(talentId); t != null; t = t.Requires == null ? null : catalog.Talent(t.Requires))
+            for (var t = catalog.Talent(talentId); t != null; t = Beneath(catalog, profile, t))
             {
                 chain.Insert(0, t.Id);
                 if (chain.Count > 16) break;      // a cycle would otherwise spin forever
@@ -172,6 +177,20 @@ namespace ClickDungeon.Tests
                 if (id != talentId && Progression.Rank(profile, id) == 0
                     && !Progression.TryLearn(profile, catalog, id)) return false;
             return Progression.TryLearn(profile, catalog, talentId);
+        }
+
+        /// <summary>
+        /// The node this one stands on, or null at the apex. For a <c>RequiresAny</c> node it is whichever option the
+        /// profile has ALREADY taken, falling back to the first - so walking to a base bonus on a committed build
+        /// follows the road that build chose, instead of trying to buy the capstone it turned down.
+        /// </summary>
+        static TalentDefinition Beneath(ContentCatalog catalog, ProfileState profile, TalentDefinition talent)
+        {
+            if (talent.Requires != null) return catalog.Talent(talent.Requires);
+            if (talent.RequiresAny == null || talent.RequiresAny.Length == 0) return null;
+            foreach (var id in talent.RequiresAny)
+                if (Progression.Rank(profile, id) > 0) return catalog.Talent(id);
+            return catalog.Talent(talent.RequiresAny[0]);
         }
 
         public static CommandResult DoOk(RunState run, PlayerCommand command)

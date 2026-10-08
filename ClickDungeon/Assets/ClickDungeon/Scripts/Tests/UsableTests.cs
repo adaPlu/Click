@@ -91,10 +91,11 @@ namespace ClickDungeon.Tests
 
             var catalog = ContentCatalog.CreateDefault(Difficulty.Medium);
             string cleric = catalog.HeroIdentities.Values.First(h => h.ClassId == "cleric").Id;
-            // By the branch, because a class may learn ONE capstone (MAINT-90): spending in tier order takes whichever
-            // the catalogue lists first and locks this one out, which is how this test first failed.
+            // By the branch, because a build commits to ONE corner (MAINT-90, D-088): an unnamed build takes whichever
+            // the catalogue lists first and closes the other road, which is how this test first failed. Miracle is on
+            // the mercy road - not itself a capstone; the corner at the end of that road is what the name buys.
             var profile = BalanceTests.BuiltUp(catalog, "cleric", capstoneBranch: "mercy");
-            Assert.That(Progression.Rank(profile, "c_miracle"), Is.GreaterThan(0), "Test setup: the capstone is learned.");
+            Assert.That(Progression.Rank(profile, "c_miracle"), Is.GreaterThan(0), "Test setup: the talent is learned.");
 
             var events = new List<GameEvent>();
             var run = RunFactory.NewRun(11UL, catalog, events, cleric, MovementMode.Free);

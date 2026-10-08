@@ -10,19 +10,21 @@ using static ClickDungeon.Tests.Scenario;
 namespace ClickDungeon.Tests
 {
     /// <summary>
-    /// D-075: the usable skills. Every one of the ninety-six talents is passive, so until now the game had no verb for
+    /// D-075: the usable skills. Every one of the eighty-eight talents is passive, so until now the game had no verb for
     /// "do a thing now" and a class could only be expressed as a modifier on a slash or a shield.
     /// </summary>
     public class SkillTests
     {
+        /// <summary>
+        /// A profile that has walked to one named talent and nothing else. It used to spend greedily in tier order
+        /// until the talent appeared, which since D-088 commits to the FIRST corner and so can never arrive at the
+        /// second one's - the build has already turned it down. Walking the talent's own chain asks for exactly the
+        /// road that talent is on.
+        /// </summary>
         static ProfileState WithTalent(string talentId, string classId)
         {
             var profile = new ProfileState { Xp = Progression.XpForLevel(20) };
-            foreach (var talent in Catalog.TalentsOf(classId).OrderBy(t => t.Tier))
-            {
-                LearnTo(profile, talent.Id);
-                if (Progression.Rank(profile, talentId) > 0) break;
-            }
+            Assert.That(LearnTo(profile, talentId), Is.True, $"Test setup: could not walk to {talentId}.");
             return profile;
         }
 
@@ -53,56 +55,72 @@ namespace ClickDungeon.Tests
                 var granting = Catalog.Talents.Where(t => t.SkillId == skill.Id).ToList();
                 Assert.That(granting.Count, Is.EqualTo(1), $"{skill.Id} is named by {granting.Count} talents.");
                 Assert.That(granting[0].ClassId, Is.EqualTo(skill.ClassId), $"{skill.Id} hangs off another class's tree.");
-                // Reachability, asked of the rules rather than guessed from the row (D-087). It used to read
-                // "Tier < 4", which stood for "not a capstone, so not one of three a build can only have one of".
-                // A triangle has no such rule - its corners are reached by walking a road - so the proxy would now
-                // refuse a perfectly reachable skill. This walks to it the way a player would.
+                // Reachable means SOME build reaches it, which since D-088 is the only sense available: the corners
+                // exclude each other, so no single profile can hold all three of a class's skills and a shared greedy
+                // walk would always report the second corner unreachable. A fresh profile a skill, walking that
+                // skill's own road the way a player who wanted it would.
                 var reach = new ProfileState { Xp = Progression.XpForLevel(60) };
-                bool moved = true;
-                while (moved && Progression.Rank(reach, granting[0].Id) == 0)
-                {
-                    moved = false;
-                    foreach (var t in Catalog.TalentsOf(skill.ClassId))
-                        if (Progression.TryLearn(reach, Catalog, t.Id)) { moved = true; break; }
-                }
-                Assert.That(Progression.Rank(reach, granting[0].Id), Is.GreaterThan(0),
+                Assert.That(LearnTo(reach, granting[0].Id), Is.True,
                     $"{skill.Id} cannot be reached by any build, so nobody can ever use it.");
+                Assert.That(Progression.Rank(reach, granting[0].Id), Is.GreaterThan(0), skill.Id);
             }
 
-            // Three slots, and no class may own more than it can carry.
+            // A class DEFINES three and can carry two (D-088): the corners exclude each other, so the third is always
+            // the one this build turned down. Asserting the defined count against the slots is what used to be here,
+            // and it would now fail for the right reason and the wrong one at once.
             foreach (var heroClass in Catalog.HeroClasses.Values)
-                Assert.That(Catalog.SkillsOf(heroClass.Id).Count, Is.LessThanOrEqualTo(BoardRules.SkillSlots), heroClass.Id);
+            {
+                int defined = Catalog.SkillsOf(heroClass.Id).Count;
+                if (defined == 0) continue;
+                Assert.That(defined, Is.EqualTo(BoardRules.SkillSlots + 1),
+                    $"{heroClass.Id}: a class offers one more skill than it can carry - that one is the fork.");
+            }
         }
 
         [Test]
-        public void AFullBuildCarriesThreeSkillsAndASingleBranchCarriesOne()
+        public void EveryBuildCarriesTheApexSkillAndExactlyOneCornersAndFillsBothSlots()
         {
-            // Why tier 2 and one a branch: three slots are only worth having if a build can fill them, and skipping a
-            // branch has to cost something. A capstone could not do this - a class may learn only one.
+            // THE SLOTS ARE THE FORK, FELT IN THE ACTION BAR (D-088). However many points a profile has, the two
+            // corners refuse each other, so the most any build holds is the apex skill and the skill of the road it
+            // committed to. The version this replaced spent 59 points on "a finished tree" and asserted three slots
+            // full - which measured a player the shape says cannot exist, and only passed because the exclusion was
+            // inert. It also learned in tier order with no retry, so the base rail (whose tier-1 node hangs off a
+            // tier-4 corner) was silently skipped and the "finished" tree was nine nodes of eleven.
             foreach (var heroClass in Catalog.HeroClasses.Values)
             {
-                var everything = new ProfileState { Xp = Progression.XpForLevel(60) };
-                foreach (var talent in Catalog.TalentsOf(heroClass.Id).OrderBy(t => t.Tier))
-                    for (int rank = 0; rank < talent.MaxRank; rank++)
-                        Progression.TryLearn(everything, Catalog, talent.Id);
+                var tree = Catalog.TalentsOf(heroClass.Id);
+                if (tree.Count == 0) continue;
+                var apex = tree.Single(t => t.BranchId == "apex");
 
-                Assert.That(Progression.EquippedSkills(everything, Catalog, heroClass.Id).Count,
-                    Is.EqualTo(BoardRules.SkillSlots), $"{heroClass.Id}: a finished tree fills every slot.");
+                foreach (var corner in tree.Where(t => t.Capstone))
+                {
+                    var other = tree.First(t => t.Capstone && t.Id != corner.Id);
+                    // Enough points to buy the whole tree twice over, so nothing here is about affording it.
+                    var profile = new ProfileState { Xp = Progression.XpForLevel(60) };
+                    Assert.That(LearnTo(profile, corner.Id), Is.True, $"{heroClass.Id}: could not walk {corner.BranchId}.");
+                    bool spending = true;
+                    while (spending)
+                    {
+                        spending = false;
+                        foreach (var talent in tree)
+                            if (Progression.TryLearn(profile, Catalog, talent.Id)) spending = true;
+                    }
+
+                    var carried = Progression.EquippedSkills(profile, Catalog, heroClass.Id);
+                    Assert.That(carried, Is.EquivalentTo(new[] { apex.SkillId, corner.SkillId }),
+                        $"{heroClass.Id} via {corner.BranchId}: a build carries the apex's skill and its own corner's, "
+                        + "and never the skill of the road it gave up - however many points it has.");
+                    Assert.That(carried.Count, Is.EqualTo(BoardRules.SkillSlots),
+                        $"{heroClass.Id}: a committed build fills every slot, so no slot is permanently empty.");
+                    Assert.That(Progression.Rank(profile, other.Id), Is.Zero, $"{heroClass.Id}: took both corners.");
+
+                    // And with every point in the world it still owns everything else - the rail included, which the
+                    // old tier-ordered single pass never reached.
+                    foreach (var talent in tree.Where(t => t.Id != other.Id))
+                        Assert.That(Progression.Rank(profile, talent.Id), Is.EqualTo(talent.MaxRank),
+                            $"{heroClass.Id}: {talent.Id} is not maxed on a build with points to spare.");
+                }
             }
-
-            // And a narrow build carries less: the apex skill, plus the one at the end of the single edge climbed.
-            // The edge has to be one that ENDS in a skill - the triangle's third branch is the base between the two
-            // corners and pays bonuses only (D-087), so climbing that one would prove nothing about the choice.
-            var tree = Catalog.TalentsOf("paladin");
-            var apex = tree.Single(t => t.BranchId == "apex");
-            var edge = tree.Where(t => t.Tier == 4 && t.SkillId != null).First();
-            var narrow = new ProfileState { Xp = Progression.XpForLevel(60) };
-            foreach (var talent in tree.Where(t => t.BranchId == "apex" || t.BranchId == edge.BranchId).OrderBy(t => t.Tier))
-                for (int rank = 0; rank < talent.MaxRank; rank++)
-                    Progression.TryLearn(narrow, Catalog, talent.Id);
-            var carried = Progression.EquippedSkills(narrow, Catalog, "paladin");
-            Assert.That(carried, Is.EquivalentTo(new[] { apex.SkillId, edge.SkillId }),
-                "One edge climbed pays its own skill and the apex's - and not the skill at the end of the edge skipped.");
         }
 
         /// <summary>

@@ -816,18 +816,25 @@ point** for **every class**: each class spends the level's points on its own tre
 (D-037), so switching heroes never costs a build. Talents shape every run that class
 starts; unlike shop boosts they are never used up. Resetting a tree is free.
 
-Each tree is a **triangle** (D-087). One skill sits at the **apex** and is where every
-build starts. Two **edges** run down from it, each of four talents ending in a skill at
-its bottom corner; the **base** joins the two corners and pays bonuses only. A talent
-needs the one before it on its own edge, nothing else — the edge *is* the gate, so no
-talent carries a points-spent threshold.
+Each tree is a **triangle** (D-087, corrected by D-088). One skill sits at the **apex**
+and is where every build starts. Two **edges** run down from it, each of four talents
+ending in a skill at its bottom **corner**. The **base** is a rail of two bonuses that
+either corner opens, so both specialisations share it.
 
-That shape is the choice: a class has three skills, and reaching a corner's skill costs
-the whole edge, so a build that walks one edge cannot also have the other's skill until
-it has the points for both. One of the two corner skills is the **capstone** (the
-right-hand one, as the screen draws it), and a class takes one capstone only.
+**Both corners are capstones, and a class learns one of them.** Taking one closes the
+other until the tree is reset, which is free. That is the fork: a build carries the apex
+skill and the skill of the corner it committed to, and the skill it gave up is what
+skipping that edge costs. A talent otherwise needs only the one before it on its own
+edge; no talent carries a points-spent threshold, because levels run to 500 and any
+finite point gate merely postpones a node instead of excluding anything.
 
-Eleven talents a class: the apex, four on each edge, two on the base.
+A class therefore **defines three skills and carries two** — one more than it can hold,
+and that one is the choice. The action bar has two slots; it grows when the unlock pool
+is big enough that choosing among them is itself a decision.
+
+Eleven talents a class: the apex, four on each edge, two on the shared rail. Nothing
+connects the rail's far end to the opposite corner, and the screen draws that side of the
+triangle as a dotted outline so it cannot be read as a road.
 
 > The per-class tables below predate D-063 and D-087 and no longer match the catalog —
 > `ContentCatalog` is the source of truth for what each tree holds.
@@ -1011,15 +1018,18 @@ points on Knight's Trial and stretched the classes to the edge of the parity ban
 
 ### 14.2 Usable skills *(D-075, tune numbers)*
 
-The ninety-six talents are all **passive**. A skill is the other thing: a command the player chooses, on a turn they
-spend, for mana. A hero carries up to **three**.
+The eighty-eight talents are all **passive**. A skill is the other thing: a command the player chooses, on a turn they
+spend, for mana. A hero carries up to **two** (D-088).
 
-- **Unlocking**: one talent a branch, at **tier 2**, names a skill; learning that talent unlocks it. There is no
-  separate currency and no separate screen — the tree already decides which branches a build climbed, so it already
-  decides which skills that build has. A finished tree carries three; a single-branch build carries one.
-- **Why tier 2**: a class may learn only one **capstone**, so skills hung off capstones could never all be reached.
-- **Slots**: three, and each class has exactly three skills today, so the loadout is not yet a choice. The profile
-  records it anyway, and an empty slot fills itself from what the build unlocked, in tree order.
+- **Unlocking**: three talents a class name a skill — the **apex**, and the **corner** at the end of each edge.
+  Learning that talent unlocks it. There is no separate currency and no separate screen: the tree already decides
+  which road a build climbed, so it already decides which skills that build has.
+- **Why the corners**: the corners are capstones and a class learns one, so the skill a build does not get is exactly
+  the price of the road it did not walk. D-075 hung skills at tier 2 *because* a capstone could be taken only once;
+  D-088 turns that around — the exclusion is the point, so the skill belongs on the capstone.
+- **Slots**: two, because two is the most any build can hold. A third slot could never fill, and a permanently empty
+  slot says the fork cost nothing. The profile records the loadout anyway, and an empty slot fills itself from what
+  the build unlocked, in tree order.
 - **Cost**: mana, from the same pool SHIELD and DASH draw on (D-032). No cooldowns — those were deliberately replaced.
 - **Targets**: a skill aimed at the hero needs no tile. A targeted skill reaches an **awake** monster within its range,
   and only an awake one: aiming at a sleeping monster under a cover would be a way to ask what is under it (§2.1).
@@ -1044,7 +1054,7 @@ The twenty-four skills, one a branch:
 
 | Class | Skills |
 |---|---|
-| Knight | Shockwave (burst 2), Rally (mend 2), Shield Bash (stagger) |
+| Knight | Shockwave (burst 2), Rally (mend 4), Shield Bash (stagger at 2) |
 | Paladin | Smite (4), Bulwark (burst 3), **Lay on Hands** (mend 3) |
 | Rogue | Throat Cut (5), Smoke Bomb (stagger at 2), Bandage (mend 3) |
 | Wizard | Firebolt (4 at 3), Arcane Nova (burst 3), Concussion (stagger at 2) |

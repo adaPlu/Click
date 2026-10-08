@@ -52,8 +52,10 @@ namespace ClickDungeon.Content
     }
 
     /// <summary>
-    /// One class talent (D-037). Tier 1 is open from the start; later tiers need the talent below them in the same path and
-    /// enough points spent in the class. Tier 4 is a capstone, and a class may take only one.
+    /// One class talent (D-037), on the triangle D-088 settled. The apex opens at once; every node of an edge needs the
+    /// one below it on that edge; the two bottom corners are capstones and a class may learn ONE of them, which is the
+    /// fork. The base rail hangs off <see cref="RequiresAny"/> - either capstone opens it - so the bonuses are shared by
+    /// both specialisations and neither road can walk through them into the skill it gave up.
     /// </summary>
     public sealed class TalentDefinition
     {
@@ -73,27 +75,29 @@ namespace ClickDungeon.Content
         /// <summary>The talent that must be learned first, or null.</summary>
         public string Requires;
         /// <summary>
-        /// Points spent in this class before the node opens (D-087). The tree used to be three parallel branches and a
-        /// global tier table could gate them all; a LINE's rows cost whatever the pathway above them costs, which
-        /// differs by class, so the gate belongs on the node rather than in one shared array.
+        /// Any ONE of these opens the node (D-088), where <see cref="Requires"/> demands a particular one. The base rail
+        /// uses it and nothing else does: both capstones satisfy it, so a build continues into the shared bonuses from
+        /// whichever corner it committed to. Under D-087 the rail hung off one named corner, which made it the property
+        /// of a single road and drew a fork that was really a Y.
         /// </summary>
-        public int RequiresPoints;
+        public string[] RequiresAny;
         /// <summary>
-        /// The usable skill learning this talent unlocks, or null for the passive ones (D-075). One per branch, at tier
-        /// 2, so a build that climbs all three branches earns all three and a build that specialises does not.
+        /// The usable skill learning this talent unlocks, or null for the passive ones (D-075). One at the apex, where
+        /// every build starts, and one at each bottom corner - so the corner a build commits to IS the second verb it
+        /// carries, and the one it gave up is the cost.
         /// </summary>
         public string SkillId;
         /// <summary>
-        /// The end of the line (D-087). It used to be computed - tier 4 of any branch - because the tree was three
-        /// parallel branches and a build could reach only one of their ends, which is the rule Progression enforces.
-        /// A line has ONE end, so the flag is set rather than derived: deriving it from the row would have made every
-        /// node of the second pathway a capstone and let a build take exactly one of them.
+        /// A bottom corner of the triangle (D-088): the end of an edge, carrying that edge's skill. BOTH corners are
+        /// flagged, because the flag is what <see cref="ClickDungeon.Application.Progression"/> reads to refuse the
+        /// second one - learning either closes the other until the class tree is reset. D-087 flagged one corner of the
+        /// two, which left the exclusion structurally inert and the fork true only while a player was short of points.
         /// </summary>
         public bool Capstone;
     }
 
     /// <summary>
-    /// A usable skill (D-075). Unlike the ninety-six talents, which are all passive, a skill is a command the player
+    /// A usable skill (D-075). Unlike the eighty-eight talents, which are all passive, a skill is a command the player
     /// spends a turn and some mana on. It is unlocked by learning the talent that names it, so the tree already decides
     /// which skills a build has: skip a branch and you skip its skill.
     /// </summary>
